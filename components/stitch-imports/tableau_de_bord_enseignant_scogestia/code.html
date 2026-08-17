@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scogestia - Tableau de bord Enseignant</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Public Sans & Work Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&amp;family=Work+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#213145",
+                        "inverse-primary": "#8bd6b6",
+                        "surface-container": "#e5eeff",
+                        "surface-container-highest": "#d3e4fe",
+                        "surface": "#f8f9ff",
+                        "outline-variant": "#bec9c2",
+                        "error-container": "#ffdad6",
+                        "primary": "#004532",
+                        "on-tertiary-container": "#c5c8ca",
+                        "background": "#f8f9ff",
+                        "on-secondary-fixed": "#111c2d",
+                        "on-primary-fixed-variant": "#00513b",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#d3e4fe",
+                        "primary-fixed": "#a6f2d1",
+                        "on-background": "#0b1c30",
+                        "secondary": "#545f73",
+                        "surface-bright": "#f8f9ff",
+                        "tertiary": "#393d3f",
+                        "tertiary-container": "#505456",
+                        "primary-fixed-dim": "#8bd6b6",
+                        "on-surface": "#0b1c30",
+                        "on-surface-variant": "#3f4944",
+                        "outline": "#6f7973",
+                        "surface-container-low": "#eff4ff",
+                        "tertiary-fixed": "#e0e3e5",
+                        "surface-tint": "#1b6b51",
+                        "on-secondary-container": "#586377",
+                        "primary-container": "#065f46",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "inverse-on-surface": "#eaf1ff",
+                        "surface-dim": "#cbdbf5",
+                        "on-tertiary-fixed": "#191c1e",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#8bd6b7",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "secondary-container": "#d5e0f8",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed": "#002116",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "surface-container-high": "#dce9ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "1rem",
+                        "lg": "1.5rem",
+                        "md": "1rem",
+                        "sm": "0.5rem",
+                        "xxl": "3rem",
+                        "xl": "2rem",
+                        "container-max": "1280px",
+                        "touch-target": "3rem",
+                        "xs": "0.25rem"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "headline-sm": ["Work Sans"],
+                        "headline-lg-mobile": ["Work Sans"],
+                        "label-md": ["Public Sans"],
+                        "headline-lg": ["Work Sans"],
+                        "body-lg": ["Public Sans"],
+                        "display-lg": ["Work Sans"],
+                        "headline-md": ["Work Sans"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #f8f9ff; /* surface */
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface antialiased min-h-screen flex">
+<!-- Shared Component: SideNavBar -->
+<nav class="bg-surface-container-lowest text-primary font-body-md text-body-md h-screen w-64 fixed left-0 top-0 border-r border-outline-variant flex flex-col py-xl px-md transition-all duration-200 ease-in-out z-20 hidden md:flex">
+<!-- Brand Area -->
+<div class="mb-xl px-sm">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Scogestia</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">School Management</p>
+</div>
+<!-- Navigation Links -->
+<ul class="flex flex-col gap-2 flex-grow">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">dashboard</span>
+<span>Dashboard</span>
+</a>
+</li>
+<li>
+<!-- Active State -->
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container font-semibold rounded-lg" href="#">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">school</span>
+<span>Classes</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">group</span>
+<span>Students</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">badge</span>
+<span>Staff</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">settings</span>
+<span>Settings</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- Main Content Wrapper (offset by sidebar width on desktop) -->
+<div class="flex-1 md:ml-64 flex flex-col min-h-screen">
+<!-- Shared Component: TopAppBar -->
+<header class="bg-surface-bright text-primary font-label-md text-label-md fixed top-0 right-0 md:left-64 left-0 h-16 border-b border-outline-variant flex justify-between items-center px-xl w-full md:w-[calc(100%-16rem)] z-10">
+<!-- Mobile Menu Toggle (Visible only on small screens) -->
+<button class="md:hidden text-on-surface-variant hover:text-primary transition-colors mr-4">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<!-- Search Area -->
+<div class="flex-1 max-w-md">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-full text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all" placeholder="Rechercher élève, classe..." type="text"/>
+</div>
+</div>
+<!-- Actions & Profile -->
+<div class="flex items-center gap-4 ml-auto">
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70 p-2 rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70 p-2 rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="w-10 h-10 rounded-full border-2 border-outline-variant overflow-hidden shrink-0 cursor-pointer hover:border-primary-container transition-colors ml-2">
+<img alt="Administrator Profile" class="w-full h-full object-cover" data-alt="A professional headshot portrait of a confident West African school administrator wearing a crisp white shirt, softly lit in a modern institutional office setting with neutral background, bright light-mode aesthetic, realistic photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYTywZcXDZojyEmt8aPrEYFgRqVTEhHopxCt7mI7J0KlyxixANE04MXFh4KgIWopsQd3r4HNYFwSeaB5TIRY6hmx8CCIh7xZtOTM1jHjEBH3F_hsuMyV3d4pRVK1abyV1olATGlCrKXCCeX8BLWy9xO63YgynIv1cVztavASV08H8jSKhgemFzmPm_S3Rv_SbitW9yeuIclvztWCXXd1js_j79S4M_gq8uD6cdhEHuxW81WxHityqRKg"/>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="mt-16 p-md md:p-xl flex-1 max-w-container-max mx-auto w-full">
+<!-- Page Header -->
+<div class="mb-xl">
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface">Mes Classes</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Gérez vos classes assignées et effectuez des actions rapides.</p>
+</div>
+<!-- Dashboard Layout: Hybrid Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-xl items-start">
+<!-- Left Column: Classes Grid (Bento style) -->
+<div class="xl:col-span-8 flex flex-col gap-lg">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<!-- Class Card: 6ème A -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col hover:border-primary-container transition-colors group">
+<div class="flex justify-between items-start mb-lg">
+<div>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface group-hover:text-primary-container transition-colors">6ème A</h3>
+<div class="flex items-center gap-2 mt-2">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">group</span>
+<span class="font-label-md text-label-md text-on-surface-variant">32 Élèves</span>
+</div>
+</div>
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary-container shrink-0">
+<span class="material-symbols-outlined text-[24px]">local_library</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-sm mt-auto pt-4 border-t border-outline-variant">
+<button class="flex flex-col items-center justify-center gap-1 p-2 rounded-lg bg-surface hover:bg-primary-container hover:text-on-primary-container border border-transparent hover:border-primary transition-all text-on-surface-variant min-h-touch-target">
+<span class="material-symbols-outlined text-[20px]">edit_document</span>
+<span class="font-label-sm text-label-sm text-center leading-tight">Saisir<br/>Notes</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 p-2 rounded-lg bg-surface hover:bg-primary-container hover:text-on-primary-container border border-transparent hover:border-primary transition-all text-on-surface-variant min-h-touch-target">
+<span class="material-symbols-outlined text-[20px]">fact_check</span>
+<span class="font-label-sm text-label-sm text-center leading-tight">Faire<br/>l'appel</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 p-2 rounded-lg bg-surface hover:bg-primary-container hover:text-on-primary-container border border-transparent hover:border-primary transition-all text-on-surface-variant min-h-touch-target">
+<span class="material-symbols-outlined text-[20px]">upload_file</span>
+<span class="font-label-sm text-label-sm text-center leading-tight">Publier<br/>Devoirs</span>
+</button>
+</div>
+</div>
+<!-- Class Card: 4ème B -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col hover:border-primary-container transition-colors group">
+<div class="flex justify-between items-start mb-lg">
+<div>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface group-hover:text-primary-container transition-colors">4ème B</h3>
+<div class="flex items-center gap-2 mt-2">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">group</span>
+<span class="font-label-md text-label-md text-on-surface-variant">28 Élèves</span>
+</div>
+</div>
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary-container shrink-0">
+<span class="material-symbols-outlined text-[24px]">science</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-sm mt-auto pt-4 border-t border-outline-variant">
+<button class="flex flex-col items-center justify-center gap-1 p-2 rounded-lg bg-surface hover:bg-primary-container hover:text-on-primary-container border border-transparent hover:border-primary transition-all text-on-surface-variant min-h-touch-target">
+<span class="material-symbols-outlined text-[20px]">edit_document</span>
+<span class="font-label-sm text-label-sm text-center leading-tight">Saisir<br/>Notes</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 p-2 rounded-lg bg-surface hover:bg-primary-container hover:text-on-primary-container border border-transparent hover:border-primary transition-all text-on-surface-variant min-h-touch-target">
+<span class="material-symbols-outlined text-[20px]">fact_check</span>
+<span class="font-label-sm text-label-sm text-center leading-tight">Faire<br/>l'appel</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 p-2 rounded-lg bg-surface hover:bg-primary-container hover:text-on-primary-container border border-transparent hover:border-primary transition-all text-on-surface-variant min-h-touch-target">
+<span class="material-symbols-outlined text-[20px]">upload_file</span>
+<span class="font-label-sm text-label-sm text-center leading-tight">Publier<br/>Devoirs</span>
+</button>
+</div>
+</div>
+<!-- Class Card: Terminale S2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col hover:border-primary-container transition-colors group">
+<div class="flex justify-between items-start mb-lg">
+<div>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface group-hover:text-primary-container transition-colors">Terminale S2</h3>
+<div class="flex items-center gap-2 mt-2">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">group</span>
+<span class="font-label-md text-label-md text-on-surface-variant">35 Élèves</span>
+</div>
+</div>
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary-container shrink-0">
+<span class="material-symbols-outlined text-[24px]">functions</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-sm mt-auto pt-4 border-t border-outline-variant">
+<button class="flex flex-col items-center justify-center gap-1 p-2 rounded-lg bg-surface hover:bg-primary-container hover:text-on-primary-container border border-transparent hover:border-primary transition-all text-on-surface-variant min-h-touch-target">
+<span class="material-symbols-outlined text-[20px]">edit_document</span>
+<span class="font-label-sm text-label-sm text-center leading-tight">Saisir<br/>Notes</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 p-2 rounded-lg bg-surface hover:bg-primary-container hover:text-on-primary-container border border-transparent hover:border-primary transition-all text-on-surface-variant min-h-touch-target">
+<span class="material-symbols-outlined text-[20px]">fact_check</span>
+<span class="font-label-sm text-label-sm text-center leading-tight">Faire<br/>l'appel</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 p-2 rounded-lg bg-surface hover:bg-primary-container hover:text-on-primary-container border border-transparent hover:border-primary transition-all text-on-surface-variant min-h-touch-target">
+<span class="material-symbols-outlined text-[20px]">upload_file</span>
+<span class="font-label-sm text-label-sm text-center leading-tight">Publier<br/>Devoirs</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Recent Activity Timeline -->
+<aside class="xl:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-lg sticky top-24">
+<div class="flex items-center justify-between mb-lg">
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Activité Récente</h3>
+<button class="text-primary-container hover:text-primary font-label-md text-label-md flex items-center gap-1">
+                            Tout voir <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+<div class="relative pl-6 border-l-2 border-surface-container-high space-y-xl">
+<!-- Activity Item -->
+<div class="relative">
+<div class="absolute -left-[35px] top-0 w-8 h-8 rounded-full bg-surface-container flex items-center justify-center border-4 border-surface-container-lowest text-primary-container">
+<span class="material-symbols-outlined text-[16px]">edit_document</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Notes du DS de Mathématiques saisies.</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-[#e5eeff] text-[#004532]">4ème B</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Il y a 2 heures</span>
+</div>
+</div>
+</div>
+<!-- Activity Item -->
+<div class="relative">
+<div class="absolute -left-[35px] top-0 w-8 h-8 rounded-full bg-surface-container flex items-center justify-center border-4 border-surface-container-lowest text-primary-container">
+<span class="material-symbols-outlined text-[16px]">upload_file</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Nouveau devoir publié : "Lecture analytique Chap 3".</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-[#e5eeff] text-[#004532]">6ème A</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Il y a 5 heures</span>
+</div>
+</div>
+</div>
+<!-- Activity Item -->
+<div class="relative">
+<div class="absolute -left-[35px] top-0 w-8 h-8 rounded-full bg-surface-container flex items-center justify-center border-4 border-surface-container-lowest text-primary-container">
+<span class="material-symbols-outlined text-[16px]">fact_check</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Appel terminé. 2 absents signalés.</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-[#e5eeff] text-[#004532]">Terminale S2</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Hier, 08:15</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+</div>
+</body></html>

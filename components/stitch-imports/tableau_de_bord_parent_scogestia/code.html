@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EduParent Togo - Tableau de bord</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&amp;family=Work+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#dce9ff",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#213145",
+                    "on-primary-fixed-variant": "#00513b",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-secondary": "#ffffff",
+                    "surface-variant": "#d3e4fe",
+                    "primary": "#004532",
+                    "secondary-fixed": "#d8e3fb",
+                    "on-secondary-fixed": "#111c2d",
+                    "secondary": "#545f73",
+                    "surface-container-low": "#eff4ff",
+                    "on-error-container": "#93000a",
+                    "on-primary": "#ffffff",
+                    "on-primary-fixed": "#002116",
+                    "secondary-fixed-dim": "#bcc7de",
+                    "surface-container": "#e5eeff",
+                    "primary-container": "#065f46",
+                    "on-surface": "#0b1c30",
+                    "on-tertiary-container": "#c5c8ca",
+                    "primary-fixed": "#a6f2d1",
+                    "surface-dim": "#cbdbf5",
+                    "surface": "#f8f9ff",
+                    "on-background": "#0b1c30",
+                    "tertiary-fixed": "#e0e3e5",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-primary-container": "#8bd6b7",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-container": "#586377",
+                    "on-tertiary-fixed-variant": "#444749",
+                    "outline": "#6f7973",
+                    "error-container": "#ffdad6",
+                    "surface-bright": "#f8f9ff",
+                    "tertiary": "#393d3f",
+                    "on-tertiary-fixed": "#191c1e",
+                    "background": "#f8f9ff",
+                    "surface-tint": "#1b6b51",
+                    "inverse-primary": "#8bd6b6",
+                    "on-secondary-fixed-variant": "#3c475a",
+                    "secondary-container": "#d5e0f8",
+                    "on-surface-variant": "#3f4944",
+                    "tertiary-fixed-dim": "#c4c7c9",
+                    "tertiary-container": "#505456",
+                    "primary-fixed-dim": "#8bd6b6",
+                    "on-error": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "outline-variant": "#bec9c2"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xl": "2rem",
+                    "lg": "1.5rem",
+                    "xxl": "3rem",
+                    "sm": "0.5rem",
+                    "gutter": "1rem",
+                    "md": "1rem",
+                    "xs": "0.25rem",
+                    "touch-target": "3rem",
+                    "container-max": "1280px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Work Sans"],
+                    "headline-sm": ["Work Sans"],
+                    "label-md": ["Public Sans"],
+                    "body-lg": ["Public Sans"],
+                    "body-md": ["Public Sans"],
+                    "label-sm": ["Public Sans"],
+                    "headline-lg": ["Work Sans"],
+                    "display-lg": ["Work Sans"],
+                    "headline-md": ["Work Sans"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #F8FAFC; /* Level 0 Surface */
+        }
+        .card {
+            background-color: white;
+            border: 1px solid #E2E8F0;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface pb-24 font-body-md">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline sticky top-0 z-40 w-full">
+<div class="flex justify-between items-center px-md h-touch-target w-full">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-icon="school_logo" data-weight="fill" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">EduParent Togo</span>
+</div>
+<!-- Child Selector (Trailing Action) -->
+<button class="flex items-center gap-xs px-sm py-xs rounded-lg hover:bg-surface-container-low transition-colors active:scale-95 transition-transform bg-surface-container border border-outline-variant">
+<span class="font-label-md text-label-md text-on-surface">Child: Koffi</span>
+<span class="material-symbols-outlined text-on-surface-variant">arrow_drop_down</span>
+</button>
+</div>
+</header>
+<main class="flex flex-col gap-md p-md max-w-container-max mx-auto">
+<!-- Welcome Message -->
+<div class="pt-sm">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Bonjour, Parent</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Voici le résumé pour Koffi aujourd'hui.</p>
+</div>
+<!-- Payment Alert Card -->
+<section class="card rounded-xl p-md border-error-container bg-error-container/20">
+<div class="flex items-start gap-md">
+<div class="p-sm bg-error-container rounded-full text-on-error-container flex-shrink-0">
+<span class="material-symbols-outlined" data-icon="warning" data-weight="fill" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="flex-1">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Paiement en attente</h2>
+<p class="font-body-lg text-body-lg text-error font-semibold mt-xs">125 000 FCFA</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-xs">Frais de scolarité - Trimestre 2</p>
+</div>
+</div>
+<button class="mt-md w-full h-touch-target bg-primary text-on-primary font-label-md text-label-md rounded-lg flex justify-center items-center gap-xs hover:bg-primary-container active:bg-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+                Payer maintenant
+            </button>
+</section>
+<!-- Attendance Summary -->
+<section class="card rounded-xl p-md flex items-center justify-between border-l-4 border-l-primary">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Présence</h3>
+<p class="font-headline-sm text-headline-sm text-on-surface mt-xs">Présent aujourd'hui</p>
+</div>
+<div class="h-12 w-12 bg-primary-container rounded-full flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</section>
+<!-- Bento Grid for Grades and Homework -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<!-- Latest Grades -->
+<section class="card rounded-xl p-md">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Dernières notes</h3>
+<button class="text-primary font-label-sm text-label-sm hover:underline">Voir tout</button>
+</div>
+<div class="flex flex-col gap-sm">
+<!-- Math -->
+<div class="flex justify-between items-center py-xs border-b border-surface-container-highest last:border-0">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="calculate">calculate</span>
+<span class="font-body-md text-body-md text-on-surface">Mathématiques</span>
+</div>
+<span class="font-label-md text-label-md bg-surface-container-high px-sm py-xs rounded text-on-surface">14/20</span>
+</div>
+<!-- French -->
+<div class="flex justify-between items-center py-xs border-b border-surface-container-highest last:border-0">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="menu_book">menu_book</span>
+<span class="font-body-md text-body-md text-on-surface">Français</span>
+</div>
+<span class="font-label-md text-label-md bg-primary-container text-on-primary-container px-sm py-xs rounded">16/20</span>
+</div>
+<!-- History -->
+<div class="flex justify-between items-center py-xs border-b border-surface-container-highest last:border-0">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="history_edu">history_edu</span>
+<span class="font-body-md text-body-md text-on-surface">Histoire</span>
+</div>
+<span class="font-label-md text-label-md bg-error-container text-on-error-container px-sm py-xs rounded">12/20</span>
+</div>
+</div>
+</section>
+<!-- Upcoming Homework -->
+<section class="card rounded-xl p-md">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Prochains devoirs</h3>
+</div>
+<div class="flex flex-col gap-sm">
+<!-- Homework 1 -->
+<div class="flex items-start gap-md p-sm bg-surface-container-lowest border border-outline-variant rounded-lg">
+<div class="bg-surface-variant p-sm rounded text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+</div>
+<div class="flex-1">
+<h4 class="font-label-md text-label-md text-on-surface">Mathématiques - Exercices 1 à 5</h4>
+<p class="font-label-sm text-label-sm text-error mt-xs flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">event</span>
+                                Pour Demain
+                            </p>
+</div>
+</div>
+<!-- Homework 2 -->
+<div class="flex items-start gap-md p-sm bg-surface-container-lowest border border-outline-variant rounded-lg">
+<div class="bg-surface-variant p-sm rounded text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="science">science</span>
+</div>
+<div class="flex-1">
+<h4 class="font-label-md text-label-md text-on-surface">Physique - Rapport de labo</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-xs flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">event</span>
+                                Pour Vendredi
+                            </p>
+</div>
+</div>
+</div>
+<button class="mt-md w-full h-12 border border-primary text-primary font-label-md text-label-md rounded-lg flex justify-center items-center hover:bg-surface-container-low transition-colors">
+                    Voir tout l'agenda
+                </button>
+</section>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center bg-surface dark:bg-inverse-surface border-t border-outline-variant dark:border-outline px-sm py-xs">
+<!-- Home (Active) -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 hover:bg-surface-container-highest opacity-80 touch-none" href="#">
+<span class="material-symbols-outlined" data-icon="home" data-weight="fill" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</a>
+<!-- Grades -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="grade">grade</span>
+<span class="font-label-sm text-label-sm mt-1">Grades</span>
+</a>
+<!-- Homework -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="font-label-sm text-label-sm mt-1">Homework</span>
+</a>
+<!-- Payments -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-sm text-label-sm mt-1">Payments</span>
+</a>
+</nav>
+</body></html>

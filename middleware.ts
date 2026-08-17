@@ -1,0 +1,102 @@
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
+
+export async function middleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
+  })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { pathname } = request.nextUrl
+
+  // Allow auth routes to be accessed by non-authenticated users
+  if (!user && (pathname.startsWith('/connexion') || pathname.startsWith('/inscription-ecole'))) {
+    return supabaseResponse
+  }
+
+  // Redirect to login if unauthenticated and not on auth pages
+  if (!user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/connexion'
+    return NextResponse.redirect(url)
+  }
+
+  // If user is authenticated, find their role
+  const { data: roles } = await supabase
+    .from('user_school_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .limit(1)
+
+  const userRole = roles && roles.length > 0 ? roles[0].role : null
+
+  if (!userRole) {
+    // Authenticated but no role assigned
+    if (pathname !== '/connexion') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/connexion'
+      return NextResponse.redirect(url)
+    }
+    return supabaseResponse
+  }
+
+  // Define route mapping
+  const routePrefix = `/${userRole}` // e.g. /admin, /enseignant, /comptable, /parent
+  
+  // If user is going to the root or an auth page, redirect them to their dashboard
+  if (pathname === '/' || pathname.startsWith('/connexion') || pathname.startsWith('/inscription-ecole')) {
+    const url = request.nextUrl.clone()
+    url.pathname = routePrefix
+    return NextResponse.redirect(url)
+  }
+
+  // Enforce role-based access control for protected routes
+  const protectedGroups = ['/admin', '/enseignant', '/comptable', '/parent', '/super_admin']
+  const attemptingToAccess = protectedGroups.find(group => pathname.startsWith(group))
+
+  if (attemptingToAccess && attemptingToAccess !== routePrefix) {
+    // User is trying to access another role's route
+    const url = request.nextUrl.clone()
+    url.pathname = routePrefix
+    return NextResponse.redirect(url)
+  }
+
+  return supabaseResponse
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * Feel free to modify this pattern to include more paths.
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+}

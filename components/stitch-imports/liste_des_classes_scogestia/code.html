@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scogestia - Classes</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=Work+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#8bd6b7",
+                        "on-secondary-container": "#586377",
+                        "on-surface": "#0b1c30",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "on-tertiary-container": "#c5c8ca",
+                        "on-background": "#0b1c30",
+                        "background": "#f8f9ff",
+                        "tertiary-fixed": "#e0e3e5",
+                        "inverse-on-surface": "#eaf1ff",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#a6f2d1",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-secondary-fixed": "#111c2d",
+                        "primary-fixed-dim": "#8bd6b6",
+                        "outline": "#6f7973",
+                        "surface-bright": "#f8f9ff",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#8bd6b6",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#00513b",
+                        "surface-variant": "#d3e4fe",
+                        "secondary-container": "#d5e0f8",
+                        "primary": "#004532",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#191c1e",
+                        "tertiary": "#393d3f",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "secondary": "#545f73",
+                        "on-surface-variant": "#3f4944",
+                        "inverse-surface": "#213145",
+                        "surface-dim": "#cbdbf5",
+                        "surface": "#f8f9ff",
+                        "surface-container-low": "#eff4ff",
+                        "surface-tint": "#1b6b51",
+                        "surface-container-high": "#dce9ff",
+                        "on-error": "#ffffff",
+                        "surface-container": "#e5eeff",
+                        "on-primary-fixed": "#002116",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#505456",
+                        "primary-container": "#065f46",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "outline-variant": "#bec9c2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "touch-target": "3rem",
+                        "xs": "0.25rem",
+                        "gutter": "1rem",
+                        "xl": "2rem",
+                        "xxl": "3rem",
+                        "md": "1rem",
+                        "container-max": "1280px",
+                        "lg": "1.5rem",
+                        "sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "headline-sm": ["Work Sans"],
+                        "headline-lg": ["Work Sans"],
+                        "display-lg": ["Work Sans"],
+                        "headline-lg-mobile": ["Work Sans"],
+                        "label-md": ["Public Sans"],
+                        "headline-md": ["Work Sans"],
+                        "label-sm": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased overflow-hidden">
+<!-- SideNavBar -->
+<nav class="h-screen w-64 fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant z-20 flex flex-col py-xl px-md">
+<!-- Brand/Header -->
+<div class="mb-10 px-4 flex flex-col">
+<span class="font-headline-md text-headline-md font-bold text-primary">Scogestia</span>
+<span class="text-sm text-on-surface-variant font-medium mt-1">School Management</span>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container font-semibold rounded-lg transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">school</span>
+<span>Classes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">group</span>
+<span>Students</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">badge</span>
+<span>Staff</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span>Settings</span>
+</a>
+</div>
+<!-- Bottom profile mock -->
+<div class="mt-auto px-4 py-3 flex items-center gap-3 border-t border-outline-variant/50 pt-6">
+<img alt="Admin User Profile" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A professional headshot of a school administrator in their mid-40s. They are wearing a sharp navy blue blazer over a crisp white shirt, smiling warmly yet projecting authority. The background is a brightly lit, modern office environment with blurred bookshelves, creating a light-mode, trustworthy corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTisOeJLjSaq_xkOnhVvAROpFCA4vtJQd5V0EO6ujYZ3iHwXw-rBNuSB68zXrhfE0AwRr6itK689ZCNhw4aGgou1t7dwJngrmVQizxsjRrvnbXjvaYleDe1dRqHhGY3dfvLDtSPyfMS0KpbiAqIO_wyiK7ZnCzTdwp6fco2bCNe4Mlr4maUrODFRCwJOIRxLU6yQxuV8CbWdrMeX22T1VJ_S4WPJ7fpkaAGzAbukPd_xvQ892xiouxjA"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Admin User</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Direction</span>
+</div>
+</div>
+</nav>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-64 h-16 bg-surface-bright border-b border-outline-variant z-10 flex justify-between items-center px-xl w-[calc(100%-16rem)]">
+<div class="flex items-center gap-4 w-1/3">
+<div class="relative w-full max-w-md hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-full font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Rechercher..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70 p-2 rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70 p-2 rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold font-label-md">
+                 A
+             </div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-64 pt-16 h-screen overflow-y-auto custom-scrollbar bg-surface flex flex-col relative">
+<div class="p-xl max-w-container-max mx-auto w-full flex-1">
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Classes</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Gérez les classes, les niveaux et les affectations des enseignants.</p>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-on-primary px-6 py-3 rounded-lg font-label-md text-label-md flex items-center gap-2 transition-all shadow-sm h-touch-target md:h-auto" onclick="document.getElementById('add-class-modal').classList.remove('hidden')">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                    Ajouter une classe
+                </button>
+</div>
+<!-- Data Table Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<!-- Table Controls -->
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
+<div class="flex gap-2">
+<select class="bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-1.5 font-label-md text-label-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+<option>Tous les niveaux</option>
+<option>Maternelle</option>
+<option>Primaire</option>
+<option>Secondaire</option>
+</select>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">12 Classes au total</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Nom de la classe</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Niveau</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Enseignant titulaire</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap text-right">Élèves</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Salle</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low/50 transition-colors bg-surface-container-lowest">
+<td class="py-3 px-6 font-semibold text-on-surface">6ème A</td>
+<td class="py-3 px-6 text-on-surface-variant">Secondaire (Collège)</td>
+<td class="py-3 px-6 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md">MD</div>
+<span>Marie Dubois</span>
+</td>
+<td class="py-3 px-6 text-right text-on-surface-variant">28</td>
+<td class="py-3 px-6 text-on-surface-variant">Bâtiment A - 101</td>
+<td class="py-3 px-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low/50 transition-colors bg-surface-bright">
+<td class="py-3 px-6 font-semibold text-on-surface">6ème B</td>
+<td class="py-3 px-6 text-on-surface-variant">Secondaire (Collège)</td>
+<td class="py-3 px-6 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md">PL</div>
+<span>Pierre Leroy</span>
+</td>
+<td class="py-3 px-6 text-right text-on-surface-variant">30</td>
+<td class="py-3 px-6 text-on-surface-variant">Bâtiment A - 102</td>
+<td class="py-3 px-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low/50 transition-colors bg-surface-container-lowest">
+<td class="py-3 px-6 font-semibold text-on-surface">CM2 A</td>
+<td class="py-3 px-6 text-on-surface-variant">Primaire</td>
+<td class="py-3 px-6 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md">SM</div>
+<span>Sophie Martin</span>
+</td>
+<td class="py-3 px-6 text-right text-on-surface-variant">25</td>
+<td class="py-3 px-6 text-on-surface-variant">Bâtiment B - 201</td>
+<td class="py-3 px-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low/50 transition-colors bg-surface-bright">
+<td class="py-3 px-6 font-semibold text-on-surface">CM2 B</td>
+<td class="py-3 px-6 text-on-surface-variant">Primaire</td>
+<td class="py-3 px-6 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md">LB</div>
+<span>Luc Bernard</span>
+</td>
+<td class="py-3 px-6 text-right text-on-surface-variant">26</td>
+<td class="py-3 px-6 text-on-surface-variant">Bâtiment B - 202</td>
+<td class="py-3 px-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors bg-surface-container-lowest">
+<td class="py-3 px-6 font-semibold text-on-surface">Maternelle GS</td>
+<td class="py-3 px-6 text-on-surface-variant">Maternelle</td>
+<td class="py-3 px-6 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md">CD</div>
+<span>Céline Dupont</span>
+</td>
+<td class="py-3 px-6 text-right text-on-surface-variant">20</td>
+<td class="py-3 px-6 text-on-surface-variant">Bâtiment C - 001</td>
+<td class="py-3 px-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="p-4 border-t border-outline-variant flex justify-between items-center bg-surface-bright">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Affichage de 1 à 5 sur 12 classes</span>
+<div class="flex gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-on-surface-variant hover:bg-surface-container-low disabled:opacity-50" disabled=""><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-primary bg-primary text-on-primary font-label-md">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-on-surface-variant hover:bg-surface-container-low font-label-md">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-on-surface-variant hover:bg-surface-container-low font-label-md">3</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-on-surface-variant hover:bg-surface-container-low"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Modal Overlay: Ajouter une classe -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 backdrop-blur-sm transition-opacity" id="add-class-modal">
+<div class="bg-surface-container-lowest w-full max-w-lg rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-outline-variant flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+<!-- Modal Header -->
+<div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Ajouter une nouvelle classe</h2>
+<button class="text-on-surface-variant hover:text-on-surface p-1 rounded-full hover:bg-surface-container-high transition-colors" onclick="document.getElementById('add-class-modal').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Body (Form) -->
+<div class="p-6 overflow-y-auto max-h-[716px] custom-scrollbar">
+<form class="space-y-6">
+<!-- Input: Nom de la classe -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="className">Nom de la classe <span class="text-error">*</span></label>
+<input class="w-full px-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md focus:outline-none focus:border-primary focus:border-2 transition-all h-touch-target md:h-12" id="className" placeholder="ex: 6ème C" required="" type="text"/>
+</div>
+<!-- Input: Niveau -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="classLevel">Niveau <span class="text-error">*</span></label>
+<select class="w-full px-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md focus:outline-none focus:border-primary focus:border-2 transition-all h-touch-target md:h-12 appearance-none" id="classLevel" required="">
+<option disabled="" selected="" value="">Sélectionner un niveau</option>
+<optgroup label="Maternelle">
+<option value="ps">Petite Section</option>
+<option value="ms">Moyenne Section</option>
+<option value="gs">Grande Section</option>
+</optgroup>
+<optgroup label="Primaire">
+<option value="cp">CP</option>
+<option value="ce1">CE1</option>
+<option value="ce2">CE2</option>
+<option value="cm1">CM1</option>
+<option value="cm2">CM2</option>
+</optgroup>
+<optgroup label="Secondaire">
+<option value="6eme">6ème</option>
+<option value="5eme">5ème</option>
+<option value="4eme">4ème</option>
+<option value="3eme">3ème</option>
+</optgroup>
+</select>
+</div>
+<!-- Input: Enseignant titulaire -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="headTeacher">Enseignant titulaire</label>
+<select class="w-full px-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md focus:outline-none focus:border-primary focus:border-2 transition-all h-touch-target md:h-12 appearance-none" id="headTeacher">
+<option selected="" value="">Aucun enseignant assigné</option>
+<option value="1">Marie Dubois</option>
+<option value="2">Pierre Leroy</option>
+<option value="3">Sophie Martin</option>
+<option value="4">Luc Bernard</option>
+<option value="5">Céline Dupont</option>
+<option value="6">Nouvel Enseignant...</option>
+</select>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Vous pourrez assigner ou modifier l'enseignant plus tard.</p>
+</div>
+</form>
+</div>
+<!-- Modal Footer (Actions) -->
+<div class="px-6 py-4 border-t border-outline-variant bg-surface-bright flex justify-end gap-3">
+<button class="px-5 py-2.5 rounded-lg border border-outline text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors h-touch-target md:h-auto" onclick="document.getElementById('add-class-modal').classList.add('hidden')" type="button">
+                    Annuler
+                </button>
+<button class="px-5 py-2.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary/90 transition-colors shadow-sm h-touch-target md:h-auto" type="button">
+                    Créer la classe
+                </button>
+</div>
+</div>
+</div>
+<style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+    </style>
+</body></html>

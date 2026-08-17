@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scogestia - Génération d'échéances</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&amp;family=Work+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary": "#545f73",
+                    "tertiary": "#393d3f",
+                    "tertiary-fixed-dim": "#c4c7c9",
+                    "primary-fixed": "#a6f2d1",
+                    "surface-container-highest": "#d3e4fe",
+                    "primary": "#004532",
+                    "on-error": "#ffffff",
+                    "on-secondary-fixed-variant": "#3c475a",
+                    "surface-tint": "#1b6b51",
+                    "surface-container": "#e5eeff",
+                    "outline": "#6f7973",
+                    "inverse-surface": "#213145",
+                    "on-background": "#0b1c30",
+                    "surface-container-high": "#dce9ff",
+                    "primary-fixed-dim": "#8bd6b6",
+                    "on-primary-fixed": "#002116",
+                    "tertiary-container": "#505456",
+                    "on-surface-variant": "#3f4944",
+                    "tertiary-fixed": "#e0e3e5",
+                    "on-tertiary-fixed-variant": "#444749",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed": "#191c1e",
+                    "surface": "#f8f9ff",
+                    "on-secondary-fixed": "#111c2d",
+                    "surface-variant": "#d3e4fe",
+                    "error-container": "#ffdad6",
+                    "inverse-primary": "#8bd6b6",
+                    "surface-dim": "#cbdbf5",
+                    "error": "#ba1a1a",
+                    "on-primary-container": "#8bd6b7",
+                    "inverse-on-surface": "#eaf1ff",
+                    "outline-variant": "#bec9c2",
+                    "secondary-fixed": "#d8e3fb",
+                    "surface-container-low": "#eff4ff",
+                    "on-secondary-container": "#586377",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed-variant": "#00513b",
+                    "on-primary": "#ffffff",
+                    "secondary-container": "#d5e0f8",
+                    "secondary-fixed-dim": "#bcc7de",
+                    "on-tertiary-container": "#c5c8ca",
+                    "on-error-container": "#93000a",
+                    "on-surface": "#0b1c30",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-container": "#065f46",
+                    "surface-bright": "#f8f9ff",
+                    "background": "#f8f9ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gutter": "1rem",
+                    "touch-target": "3rem",
+                    "container-max": "1280px",
+                    "xxl": "3rem",
+                    "xs": "0.25rem",
+                    "md": "1rem",
+                    "lg": "1.5rem",
+                    "xl": "2rem",
+                    "sm": "0.5rem"
+            },
+            "fontFamily": {
+                    "headline-sm": ["Work Sans"],
+                    "label-md": ["Public Sans"],
+                    "display-lg": ["Work Sans"],
+                    "body-md": ["Public Sans"],
+                    "body-lg": ["Public Sans"],
+                    "label-sm": ["Public Sans"],
+                    "headline-md": ["Work Sans"],
+                    "headline-lg-mobile": ["Work Sans"],
+                    "headline-lg": ["Work Sans"]
+            },
+            "fontSize": {
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}]
+            }
+          },
+        }
+      }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md text-body-md antialiased flex min-h-screen">
+<!-- SideNavBar -->
+<nav class="bg-surface-container-lowest h-screen w-64 fixed left-0 top-0 border-r border-outline-variant flex flex-col h-full py-xl px-md z-20">
+<div class="mb-8 px-4 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-lg">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">school</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Scogestia</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">School Management</p>
+</div>
+</div>
+<ul class="flex flex-col gap-2">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">school</span>
+<span class="font-label-md text-label-md">Classes</span>
+</a>
+</li>
+<li>
+<!-- Active State -->
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container font-semibold rounded-lg transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-label-md text-label-md">Students</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-label-md text-label-md">Staff</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- Main Content Area Wrapper -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-surface-bright fixed top-0 right-0 left-64 h-16 border-b border-outline-variant flex justify-between items-center px-xl h-full w-full z-10" style="width: calc(100% - 256px);">
+<div class="flex items-center gap-4">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">Scogestia</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70 p-2 rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70 p-2 rounded-full">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden border border-outline-variant">
+<img alt="Administrator Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a school administrator in a bright, modern office setting. Light mode aesthetic, sharp focus, corporate professionalism." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbyoIfAZI7J86qgLsnhhINua-nkFzFS8pGrm4tiJGmSv-SOySpb9j632IQFYkWXMlVvUpp0kD5_-aMEcAqLZekNvxuc-F46vrlDyi2yMMAsYTewC-qnjJO7Jezhyf9wvo2IQwQjj1q2F26NT7Obf8jnfC9J0_8BtdjFPg51zq37sZGRYYG3L-YL0T8mHuN_vGMo1J7DHm6LeItGa8D4qzKoqGbjqy2O8RSje7s1L_i6KZKHAWEJDBEOw"/>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 mt-16 p-xl max-w-[container-max] mx-auto w-full">
+<!-- Page Header -->
+<div class="mb-8">
+<h2 class="font-headline-lg text-headline-lg text-on-background">Génération des échéances</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2 max-w-2xl">Planifiez et générez les appels de fonds pour la scolarité. Choisissez de cibler une classe entière ou un élève spécifique.</p>
+</div>
+<!-- Form Container (Card) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-sm">
+<form action="#" class="space-y-6" method="POST">
+<!-- Selection Type Toggle -->
+<div class="mb-6 border-b border-outline-variant pb-6">
+<label class="font-label-md text-label-md text-on-background block mb-3">Cible de facturation</label>
+<div class="flex items-center gap-6">
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" class="form-radio text-primary border-outline-variant focus:ring-primary w-5 h-5" name="target_type" type="radio" value="class"/>
+<span class="font-body-md text-body-md text-on-surface">Classe entière</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="form-radio text-primary border-outline-variant focus:ring-primary w-5 h-5" name="target_type" type="radio" value="student"/>
+<span class="font-body-md text-body-md text-on-surface">Élève individuel</span>
+</label>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Target Selection (Dynamic based on radio, shown as Class for example) -->
+<div>
+<label class="font-label-md text-label-md text-on-background block mb-2" for="target_select">Sélectionner la classe</label>
+<div class="relative">
+<select class="w-full border border-outline-variant rounded-lg p-3 bg-surface text-on-surface appearance-none focus:border-primary focus:ring-2 focus:ring-primary-container focus:outline-none transition-colors h-[48px]" id="target_select" name="target_select">
+<option disabled="" selected="" value="">Choisir une classe...</option>
+<option value="6a">6ème A</option>
+<option value="6b">6ème B</option>
+<option value="5a">5ème A</option>
+<option value="3a">3ème A (Terminale)</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-on-surface-variant">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Label Input -->
+<div>
+<label class="font-label-md text-label-md text-on-background block mb-2" for="payment_label">Libellé de l'échéance</label>
+<input class="w-full border border-outline-variant rounded-lg p-3 bg-surface text-on-surface focus:border-primary focus:ring-2 focus:ring-primary-container focus:outline-none transition-colors h-[48px]" id="payment_label" name="payment_label" placeholder="ex: Scolarité Trimestre 2" type="text"/>
+</div>
+<!-- Amount Input -->
+<div>
+<label class="font-label-md text-label-md text-on-background block mb-2" for="amount">Montant (FCFA)</label>
+<div class="relative">
+<input class="w-full border border-outline-variant rounded-lg p-3 pr-16 bg-surface text-on-surface focus:border-primary focus:ring-2 focus:ring-primary-container focus:outline-none transition-colors h-[48px]" id="amount" name="amount" placeholder="0" type="number"/>
+<div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+<span class="font-label-md text-label-md text-on-surface-variant">FCFA</span>
+</div>
+</div>
+</div>
+<!-- Due Date Input -->
+<div>
+<label class="font-label-md text-label-md text-on-background block mb-2" for="due_date">Date d'échéance maximale</label>
+<input class="w-full border border-outline-variant rounded-lg p-3 bg-surface text-on-surface focus:border-primary focus:ring-2 focus:ring-primary-container focus:outline-none transition-colors h-[48px]" id="due_date" name="due_date" type="date"/>
+</div>
+</div>
+<!-- Additional Options / Summary -->
+<div class="bg-surface-container p-4 rounded-lg mt-6 border border-outline-variant border-opacity-50">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-0.5">info</span>
+<div>
+<h4 class="font-label-md text-label-md text-on-background">Note d'information</h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mt-1">La génération s'appliquera aux statuts actifs uniquement. Les notifications seront envoyées automatiquement aux parents liés si la configuration de l'établissement le permet.</p>
+</div>
+</div>
+</div>
+<!-- Form Actions -->
+<div class="pt-6 border-t border-outline-variant flex justify-end gap-4 mt-8">
+<button class="px-6 py-3 border border-outline text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-high transition-colors h-[48px] min-w-[120px]" type="button">
+                            Annuler
+                        </button>
+<button class="px-6 py-3 bg-primary text-on-primary font-label-md text-label-md rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity h-[48px] shadow-sm" type="submit">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+                            Générer les échéances
+                        </button>
+</div>
+</form>
+</div>
+</main>
+</div>
+</body></html>

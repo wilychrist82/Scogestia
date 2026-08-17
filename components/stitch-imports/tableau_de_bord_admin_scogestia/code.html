@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scogestia - Dashboard</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=Work+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-primary-container": "#8bd6b7",
+                    "on-secondary-container": "#586377",
+                    "on-surface": "#0b1c30",
+                    "tertiary-fixed-dim": "#c4c7c9",
+                    "on-tertiary-container": "#c5c8ca",
+                    "on-background": "#0b1c30",
+                    "background": "#f8f9ff",
+                    "tertiary-fixed": "#e0e3e5",
+                    "inverse-on-surface": "#eaf1ff",
+                    "error": "#ba1a1a",
+                    "primary-fixed": "#a6f2d1",
+                    "secondary-fixed": "#d8e3fb",
+                    "on-secondary-fixed": "#111c2d",
+                    "primary-fixed-dim": "#8bd6b6",
+                    "outline": "#6f7973",
+                    "surface-bright": "#f8f9ff",
+                    "on-secondary-fixed-variant": "#3c475a",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#8bd6b6",
+                    "on-error-container": "#93000a",
+                    "on-primary-fixed-variant": "#00513b",
+                    "surface-variant": "#d3e4fe",
+                    "secondary-container": "#d5e0f8",
+                    "primary": "#004532",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed": "#191c1e",
+                    "tertiary": "#393d3f",
+                    "on-tertiary-fixed-variant": "#444749",
+                    "secondary": "#545f73",
+                    "on-surface-variant": "#3f4944",
+                    "inverse-surface": "#213145",
+                    "surface-dim": "#cbdbf5",
+                    "surface": "#f8f9ff",
+                    "surface-container-low": "#eff4ff",
+                    "surface-tint": "#1b6b51",
+                    "surface-container-high": "#dce9ff",
+                    "on-error": "#ffffff",
+                    "surface-container": "#e5eeff",
+                    "on-primary-fixed": "#002116",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-container": "#505456",
+                    "primary-container": "#065f46",
+                    "secondary-fixed-dim": "#bcc7de",
+                    "outline-variant": "#bec9c2"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "touch-target": "3rem",
+                    "xs": "0.25rem",
+                    "gutter": "1rem",
+                    "xl": "2rem",
+                    "xxl": "3rem",
+                    "md": "1rem",
+                    "container-max": "1280px",
+                    "lg": "1.5rem",
+                    "sm": "0.5rem"
+            },
+            "fontFamily": {
+                    "body-lg": [
+                            "Public Sans"
+                    ],
+                    "body-md": [
+                            "Public Sans"
+                    ],
+                    "headline-sm": [
+                            "Work Sans"
+                    ],
+                    "headline-lg": [
+                            "Work Sans"
+                    ],
+                    "display-lg": [
+                            "Work Sans"
+                    ],
+                    "headline-lg-mobile": [
+                            "Work Sans"
+                    ],
+                    "label-md": [
+                            "Public Sans"
+                    ],
+                    "headline-md": [
+                            "Work Sans"
+                    ],
+                    "label-sm": [
+                            "Public Sans"
+                    ]
+            },
+            "fontSize": {
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-sm": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-lg": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-lg": [
+                            "48px",
+                            {
+                                    "lineHeight": "56px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "28px",
+                            {
+                                    "lineHeight": "36px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "label-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "letterSpacing": "0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "label-sm": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "fontWeight": "500"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex font-body-md text-body-md">
+<!-- SideNavBar -->
+<aside class="bg-surface-container-lowest h-screen w-64 fixed left-0 top-0 border-r border-outline-variant hidden md:flex flex-col py-xl px-md z-20">
+<div class="mb-xl flex items-center gap-3">
+<img alt="Scogestia Logo" class="w-10 h-10 object-contain" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Scogestia</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">School Management</p>
+</div>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container font-semibold rounded-lg transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+<span>Classes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Students</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="badge">badge</span>
+<span>Staff</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="mt-auto flex items-center gap-3 px-4 py-3 border-t border-outline-variant pt-4">
+<img alt="Admin User Profile" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A small, circular avatar portrait of a professional school administrator, slightly smiling, wearing smart-casual attire. The lighting is soft and even, highlighting their features against a neutral, light-mode background. The overall aesthetic is clean, modern, and professional, aligning with a corporate or educational institutional style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqRaeaYSykZgHtSFcaSWAtrq1nqRMk858e_pcPc8qTMMUUGFN6uselXZk2PFn2O0W4qFDzcRB35WzZ1SowsO1ELI3-XXWprNnZqwGYSmgWWGNHBjr401Yl6K7NFujK6g1TtjqiB9zuE1YKev00kWLZS8cNhOsbrv2gOYjnnexF072SKU53G_7ceFmmKx8njAyihDqd7reeSbEM1bPY74rPz4sYviQTuNQ_R-eCZETe9Sf31gB-mme-sA"/>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface">Admin User</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Administrator</p>
+</div>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="bg-surface-bright fixed top-0 right-0 left-0 md:left-64 h-16 border-b border-outline-variant z-10 hidden md:block">
+<div class="flex justify-between items-center px-xl h-full w-full">
+<div class="flex-1">
+<!-- Search could go here if needed based on JSON, but keeping it clean for this view -->
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<img alt="Administrator Profile" class="w-8 h-8 rounded-full object-cover border border-outline-variant md:hidden" data-alt="A small, circular avatar portrait of a professional school administrator, slightly smiling, wearing smart-casual attire. The lighting is soft and even, highlighting their features against a neutral, light-mode background. The overall aesthetic is clean, modern, and professional, aligning with a corporate or educational institutional style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoUTy7DooZwz81jWGwTmVxUo5F07f4ra0B0_M-nucdqY232_B9fUn1Jrc6pwwbAiE4n29tNZXK2XIq1ZBsu80BIXxoYq9xlHb0dszU9agDIYzE8PDQc6pXK_gy7jckKDBhcBg-8McG9-nzyBE2JK54TAc7et4TAon4BKsK0VIW1QAyaQ9yv_CSPKjC8_R0sUDa2_a3RTxxGAy1UEvlhDEUT1PM4SdJzW2xiLkOoGTxM7vk7dvFlJ9gQw"/>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 ml-0 md:ml-64 pt-16 p-md md:p-xl min-h-screen max-w-container-max mx-auto w-full">
+<div class="mb-xl">
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-on-surface">Tableau de bord</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Vue d'ensemble de l'établissement</p>
+</div>
+<!-- Summary Cards (Bento style grid) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md md:gap-gutter mb-xl">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col justify-between h-32 hover:border-primary transition-colors shadow-sm">
+<div class="flex justify-between items-start">
+<span class="font-label-md text-label-md text-on-surface-variant">Nombre d'élèves</span>
+<div class="p-2 bg-surface-container-low rounded-lg text-primary">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+</div>
+</div>
+<div>
+<span class="font-headline-lg text-headline-lg text-on-surface">450</span>
+<span class="font-label-sm text-label-sm text-primary ml-2">+12 cette année</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col justify-between h-32 hover:border-primary transition-colors shadow-sm">
+<div class="flex justify-between items-start">
+<span class="font-label-md text-label-md text-on-surface-variant">Nombre de classes</span>
+<div class="p-2 bg-surface-container-low rounded-lg text-primary">
+<span class="material-symbols-outlined" data-icon="meeting_room">meeting_room</span>
+</div>
+</div>
+<div>
+<span class="font-headline-lg text-headline-lg text-on-surface">18</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col justify-between h-32 hover:border-primary transition-colors shadow-sm">
+<div class="flex justify-between items-start">
+<span class="font-label-md text-label-md text-on-surface-variant">Taux de recouvrement</span>
+<div class="p-2 bg-surface-container-low rounded-lg text-primary">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+</div>
+</div>
+<div>
+<span class="font-headline-lg text-headline-lg text-on-surface">85%</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant ml-2">Mois en cours</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col justify-between h-32 hover:border-primary transition-colors shadow-sm">
+<div class="flex justify-between items-start">
+<span class="font-label-md text-label-md text-on-surface-variant">Absences du jour</span>
+<div class="p-2 bg-error-container rounded-lg text-error">
+<span class="material-symbols-outlined" data-icon="person_off">person_off</span>
+</div>
+</div>
+<div>
+<span class="font-headline-lg text-headline-lg text-on-surface">12</span>
+<span class="font-label-sm text-label-sm text-error ml-2">À justifier</span>
+</div>
+</div>
+</div>
+<!-- Charts and Activity Area -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-md md:gap-gutter">
+<!-- Payment Trends Chart (Placeholder) -->
+<div class="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-xl p-md md:p-lg flex flex-col shadow-sm">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Tendances de paiement</h3>
+<button class="font-label-sm text-label-sm text-primary hover:underline">Voir détails</button>
+</div>
+<div class="flex-1 min-h-[250px] flex items-center justify-center bg-surface-container-low rounded-lg border border-dashed border-outline-variant relative overflow-hidden">
+<!-- Decorative background pattern to simulate chart area without heavy assets -->
+<div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle at 2px 2px, theme('colors.primary') 1px, transparent 0); background-size: 20px 20px;"></div>
+<span class="font-body-md text-body-md text-on-surface-variant z-10 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">bar_chart</span>
+                       Graphique des paiements (Visualisation des données)
+                   </span>
+</div>
+</div>
+<!-- Recent Activity List -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md md:p-lg flex flex-col shadow-sm">
+<div class="mb-md">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Activité récente</h3>
+</div>
+<div class="space-y-4 flex-1 overflow-y-auto">
+<div class="flex items-start gap-3 pb-3 border-b border-outline-variant last:border-0">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-sm" data-icon="receipt_long">receipt_long</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Paiement reçu : Classe 3A</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Jean Dupont - Frais de scolarité</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Il y a 10 min</p>
+</div>
+</div>
+<div class="flex items-start gap-3 pb-3 border-b border-outline-variant last:border-0">
+<div class="w-8 h-8 rounded-full bg-error-container flex items-center justify-center text-error shrink-0">
+<span class="material-symbols-outlined text-sm" data-icon="warning">warning</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Absence signalée</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Marie Curie - Classe 4B</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Il y a 45 min</p>
+</div>
+</div>
+<div class="flex items-start gap-3 pb-3 border-b border-outline-variant last:border-0">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-sm" data-icon="person_add">person_add</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Nouvel élève inscrit</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Dossier #450 validé</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Il y a 2 heures</p>
+</div>
+</div>
+<div class="flex items-start gap-3 pb-3 border-b border-outline-variant last:border-0">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-sm" data-icon="mail">mail</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Communication parents</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Bulletin trimestriel envoyé</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Hier</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-4 py-2 border border-outline-variant rounded-lg font-label-md text-label-md text-primary hover:bg-surface-container-low transition-colors">Voir toute l'activité</button>
+</div>
+</div>
+</main>
+</body></html>

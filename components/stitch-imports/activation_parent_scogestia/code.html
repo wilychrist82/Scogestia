@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Activer mon compte - Scogestia</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&amp;family=Public+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#065f46",
+                        "secondary-container": "#d5e0f8",
+                        "inverse-primary": "#8bd6b6",
+                        "surface-container-high": "#dce9ff",
+                        "on-primary": "#ffffff",
+                        "surface": "#f8f9ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#8bd6b7",
+                        "surface-container": "#e5eeff",
+                        "tertiary-container": "#505456",
+                        "on-tertiary-container": "#c5c8ca",
+                        "on-primary-fixed": "#002116",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "tertiary": "#393d3f",
+                        "on-surface": "#0b1c30",
+                        "primary-fixed": "#a6f2d1",
+                        "on-tertiary-fixed": "#191c1e",
+                        "background": "#f8f9ff",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-background": "#0b1c30",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "primary": "#004532",
+                        "on-surface-variant": "#3f4944",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-secondary-fixed": "#111c2d",
+                        "tertiary-fixed": "#e0e3e5",
+                        "surface-dim": "#cbdbf5",
+                        "outline-variant": "#bec9c2",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#00513b",
+                        "outline": "#6f7973",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "primary-fixed-dim": "#8bd6b6",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#586377",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "inverse-surface": "#213145",
+                        "surface-variant": "#d3e4fe",
+                        "surface-container-low": "#eff4ff",
+                        "surface-tint": "#1b6b51",
+                        "surface-bright": "#f8f9ff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#545f73"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xl": "2rem",
+                        "touch-target": "3rem",
+                        "md": "1rem",
+                        "xs": "0.25rem",
+                        "sm": "0.5rem",
+                        "lg": "1.5rem",
+                        "container-max": "1280px",
+                        "gutter": "1rem",
+                        "xxl": "3rem"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Work Sans"],
+                        "headline-lg-mobile": ["Work Sans"],
+                        "label-md": ["Public Sans"],
+                        "display-lg": ["Work Sans"],
+                        "body-lg": ["Public Sans"],
+                        "label-sm": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "headline-sm": ["Work Sans"],
+                        "headline-lg": ["Work Sans"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .otp-input:focus-within {
+            border-color: #065f46;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col items-center justify-center p-md md:p-xl font-body-md">
+<!-- Top Navigation Placeholder (Hidden for Transactional) -->
+<!-- Nav is suppressed as this is a linear transactional onboarding screen -->
+<main class="w-full max-w-md bg-surface-container-lowest border border-outline-variant rounded-xl p-md md:p-xl shadow-sm flex flex-col gap-lg">
+<!-- Header & Logo -->
+<div class="flex flex-col items-center text-center gap-sm">
+<img alt="Scogestia Logo" class="w-24 h-24 object-contain mb-sm" src="https://lh3.googleusercontent.com/aida/AP1WRLsGJdlhJZk6xl6Gs1-6uxfmQeCH1iT8PRJDDt5irpiztj4t2qD19IZwqqPuBdScBypSW0facDw17RxGhjuX6g8QsSTVkqjHhJfeBrsp3BOoVzUiOBCO4sLS5e4DxqEp0ufXVujgQK-FlNPUfNXLWqkmF_R8FdxnMqt2iUtZa_wDtoemXe2Cn_zO3csLDBtDhaCEMt09SpgL613-Z3InLYjFv4Rd1hHsMGhmo8IWT7SOao9yDsSxkcRd48kP"/>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Activer mon compte</h1>
+<p class="text-on-surface-variant font-body-md text-body-md">Saisissez votre code d'activation pour accéder à votre espace parent.</p>
+</div>
+<!-- Activation Method Tabs -->
+<div class="w-full flex rounded-lg p-1 bg-surface-container border border-outline-variant" role="tablist">
+<button aria-selected="true" class="flex-1 py-2 font-label-md text-label-md rounded-md bg-surface-container-lowest text-primary shadow-sm ring-1 ring-outline-variant flex items-center justify-center gap-2" id="tab-phone" role="tab">
+<span class="material-symbols-outlined text-[18px]">smartphone</span>
+                Téléphone
+            </button>
+<button aria-selected="false" class="flex-1 py-2 font-label-md text-label-md rounded-md text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center gap-2" id="tab-email" role="tab">
+<span class="material-symbols-outlined text-[18px]">mail</span>
+                Email
+            </button>
+</div>
+<!-- Form Area -->
+<form class="flex flex-col gap-lg">
+<!-- Contextual Input based on Tab (Defaulting to Phone view structurally) -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface" for="contact-input">Numéro de téléphone</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-sm text-on-surface-variant">call</span>
+<input class="w-full h-touch-target pl-10 pr-sm rounded-lg border-outline-variant bg-surface-container-lowest text-on-surface focus:ring-2 focus:ring-primary-container focus:border-primary-container font-body-md text-body-md placeholder-on-surface-variant/50" id="contact-input" placeholder="+225 00 00 00 00 00" required="" type="tel"/>
+</div>
+</div>
+<!-- OTP Input -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface">Code d'activation (6 caractères)</label>
+<div class="flex justify-between gap-2 otp-input-group">
+<input class="w-full h-touch-target text-center font-headline-md text-headline-md rounded-lg border-outline-variant bg-surface-container-lowest text-on-surface focus:ring-2 focus:ring-primary-container focus:border-primary-container uppercase" maxlength="1" required="" type="text"/>
+<input class="w-full h-touch-target text-center font-headline-md text-headline-md rounded-lg border-outline-variant bg-surface-container-lowest text-on-surface focus:ring-2 focus:ring-primary-container focus:border-primary-container uppercase" maxlength="1" required="" type="text"/>
+<input class="w-full h-touch-target text-center font-headline-md text-headline-md rounded-lg border-outline-variant bg-surface-container-lowest text-on-surface focus:ring-2 focus:ring-primary-container focus:border-primary-container uppercase" maxlength="1" required="" type="text"/>
+<input class="w-full h-touch-target text-center font-headline-md text-headline-md rounded-lg border-outline-variant bg-surface-container-lowest text-on-surface focus:ring-2 focus:ring-primary-container focus:border-primary-container uppercase" maxlength="1" required="" type="text"/>
+<input class="w-full h-touch-target text-center font-headline-md text-headline-md rounded-lg border-outline-variant bg-surface-container-lowest text-on-surface focus:ring-2 focus:ring-primary-container focus:border-primary-container uppercase" maxlength="1" required="" type="text"/>
+<input class="w-full h-touch-target text-center font-headline-md text-headline-md rounded-lg border-outline-variant bg-surface-container-lowest text-on-surface focus:ring-2 focus:ring-primary-container focus:border-primary-container uppercase" maxlength="1" required="" type="text"/>
+</div>
+<div class="flex justify-between items-center mt-2">
+<span class="font-label-sm text-label-sm text-error hidden" id="otp-error">Code invalide</span>
+<button class="font-label-sm text-label-sm text-primary underline hover:text-primary-container ml-auto" type="button">Renvoyer le code</button>
+</div>
+</div>
+<!-- Action Button -->
+<button class="w-full h-touch-target bg-primary-container text-on-primary font-label-md text-label-md rounded-lg hover:bg-primary focus:ring-2 focus:ring-offset-2 focus:ring-primary-container transition-colors flex items-center justify-center gap-2 mt-sm" type="submit">
+                Activer mon accès
+                <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</form>
+<div class="text-center mt-sm">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center gap-1" href="#">
+<span class="material-symbols-outlined text-[16px]">help</span>
+                Besoin d'aide ?
+            </a>
+</div>
+</main>
+<script>
+        // Simple OTP auto-advance logic
+        const otpInputs = document.querySelectorAll('.otp-input-group input');
+        
+        otpInputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if(e.target.value.length === 1) {
+                    if(index < otpInputs.length - 1) {
+                        otpInputs[index + 1].focus();
+                    }
+                }
+            });
+            
+            input.addEventListener('keydown', (e) => {
+                if(e.key === 'Backspace' && e.target.value.length === 0) {
+                    if(index > 0) {
+                        otpInputs[index - 1].focus();
+                        otpInputs[index - 1].value = '';
+                    }
+                }
+            });
+        });
+
+        // Tab Switching Logic (Visual only for demo)
+        const tabPhone = document.getElementById('tab-phone');
+        const tabEmail = document.getElementById('tab-email');
+        const contactInput = document.getElementById('contact-input');
+        const contactLabel = contactInput.previousElementSibling.previousElementSibling; // The label element
+        const contactIcon = contactInput.previousElementSibling;
+
+        function setActiveTab(activeBtn, inactiveBtn, labelText, inputType, placeholderText, iconName) {
+            activeBtn.classList.add('bg-surface-container-lowest', 'text-primary', 'shadow-sm', 'ring-1', 'ring-outline-variant');
+            activeBtn.classList.remove('text-on-surface-variant', 'hover:text-primary');
+            activeBtn.setAttribute('aria-selected', 'true');
+            
+            inactiveBtn.classList.remove('bg-surface-container-lowest', 'text-primary', 'shadow-sm', 'ring-1', 'ring-outline-variant');
+            inactiveBtn.classList.add('text-on-surface-variant', 'hover:text-primary');
+            inactiveBtn.setAttribute('aria-selected', 'false');
+
+            contactLabel.textContent = labelText;
+            contactInput.type = inputType;
+            contactInput.placeholder = placeholderText;
+            contactIcon.textContent = iconName;
+            contactInput.value = ''; // Clear value on switch
+        }
+
+        tabPhone.addEventListener('click', () => {
+            setActiveTab(tabPhone, tabEmail, 'Numéro de téléphone', 'tel', '+225 00 00 00 00 00', 'call');
+        });
+
+        tabEmail.addEventListener('click', () => {
+            setActiveTab(tabEmail, tabPhone, 'Adresse Email', 'email', 'parent@exemple.com', 'mail');
+        });
+
+    </script>
+</body></html>
