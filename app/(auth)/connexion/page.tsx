@@ -156,9 +156,9 @@ export default function LoginPage() {
           <div className="pt-6 mt-6 border-t border-gray-100 text-center">
             <p className="text-sm text-gray-600">
               Vous n'avez pas encore d'école sur la plateforme ?{' '}
-              <Link className="font-semibold text-emerald-600 hover:text-emerald-500 transition-colors" href="/inscription-ecole">
+              <a className="font-semibold text-emerald-600 hover:text-emerald-500 transition-colors" href="/inscription-ecole">
                 Inscrivez votre établissement
-              </Link>
+              </a>
             </p>
           </div>
         </div>
