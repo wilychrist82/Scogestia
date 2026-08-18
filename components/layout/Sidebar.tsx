@@ -26,7 +26,7 @@ export function Sidebar({ navItems, userFullName, userRoleLabel }: SidebarProps)
         </div>
         <div>
           <h1 className="text-2xl font-bold text-[var(--color-primary)]">Scogestia</h1>
-          <p className="text-xs text-[var(--color-on-surface-variant)]">School Management</p>
+          <p className="text-xs text-[var(--color-on-surface-variant)]">Gestion Scolaire</p>
         </div>
       </div>
       
