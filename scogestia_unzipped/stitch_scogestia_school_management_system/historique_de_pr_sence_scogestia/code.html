@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Historique de Présence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&amp;family=Work+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#dce9ff",
+                        "error": "#ba1a1a",
+                        "inverse-surface": "#213145",
+                        "on-primary-fixed-variant": "#00513b",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#d3e4fe",
+                        "primary": "#004532",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-secondary-fixed": "#111c2d",
+                        "secondary": "#545f73",
+                        "surface-container-low": "#eff4ff",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#002116",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "surface-container": "#e5eeff",
+                        "primary-container": "#065f46",
+                        "on-surface": "#0b1c30",
+                        "on-tertiary-container": "#c5c8ca",
+                        "primary-fixed": "#a6f2d1",
+                        "surface-dim": "#cbdbf5",
+                        "surface": "#f8f9ff",
+                        "on-background": "#0b1c30",
+                        "tertiary-fixed": "#e0e3e5",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-primary-container": "#8bd6b7",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#586377",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "outline": "#6f7973",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#f8f9ff",
+                        "tertiary": "#393d3f",
+                        "on-tertiary-fixed": "#191c1e",
+                        "background": "#f8f9ff",
+                        "surface-tint": "#1b6b51",
+                        "inverse-primary": "#8bd6b6",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "secondary-container": "#d5e0f8",
+                        "on-surface-variant": "#3f4944",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "tertiary-container": "#505456",
+                        "primary-fixed-dim": "#8bd6b6",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#bec9c2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xl": "2rem",
+                        "lg": "1.5rem",
+                        "xxl": "3rem",
+                        "sm": "0.5rem",
+                        "gutter": "1rem",
+                        "md": "1rem",
+                        "xs": "0.25rem",
+                        "touch-target": "3rem",
+                        "container-max": "1280px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Work Sans"],
+                        "headline-sm": ["Work Sans"],
+                        "label-md": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "label-sm": ["Public Sans"],
+                        "headline-lg": ["Work Sans"],
+                        "display-lg": ["Work Sans"],
+                        "headline-md": ["Work Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        h1, h2, h3, h4, h5, h6, .font-headline-sm, .font-headline-lg-mobile { font-family: 'Work Sans', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-inverse-surface docked full-width top-0 border-b border-outline-variant dark:border-outline flex justify-between items-center px-md h-touch-target w-full z-10 sticky">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-icon="school_logo" data-weight="fill" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">EduParent Togo</span>
+</div>
+<div>
+<span class="font-label-md text-label-md text-primary dark:text-primary-fixed">Child: Koffi</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow w-full max-w-container-max mx-auto px-md py-lg pb-[80px] md:pb-xl flex flex-col gap-lg">
+<!-- Header / Summary -->
+<section class="flex flex-col gap-sm">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Historique de Présence</h1>
+<div class="bg-surface-container-low rounded-xl border border-outline-variant p-md flex items-center justify-between shadow-sm">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-secondary">Total Absences</span>
+<span class="font-headline-sm text-headline-sm text-error">2 Jours</span>
+</div>
+<div class="flex flex-col text-right">
+<span class="font-label-md text-label-md text-secondary">Total Retards</span>
+<span class="font-headline-sm text-headline-sm text-tertiary">3 Fois</span>
+</div>
+</div>
+</section>
+<!-- Chronological List -->
+<section class="flex flex-col gap-md">
+<!-- Item 1: Absence -->
+<article class="bg-white rounded-lg border border-outline-variant p-md flex flex-col gap-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-error"></div>
+<div class="flex justify-between items-start pl-sm">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">12 Octobre 2023</span>
+<span class="font-body-sm text-secondary">Mathématiques, Français</span>
+</div>
+<span class="inline-flex items-center gap-xs px-2 py-1 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]">cancel</span>
+                        Absent
+                    </span>
+</div>
+<div class="pl-sm">
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[20px]">info</span>
+                        Justifié : Maladie
+                    </p>
+</div>
+</article>
+<!-- Item 2: Retard -->
+<article class="bg-white rounded-lg border border-outline-variant p-md flex flex-col gap-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary"></div>
+<div class="flex justify-between items-start pl-sm">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">05 Octobre 2023</span>
+<span class="font-body-sm text-secondary">Histoire-Géo</span>
+</div>
+<span class="inline-flex items-center gap-xs px-2 py-1 rounded-full bg-surface-variant text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                        Retard
+                    </span>
+</div>
+<div class="pl-sm">
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-sm">
+<span class="material-symbols-outlined text-tertiary text-[20px]">timer</span>
+                        15 minutes
+                    </p>
+</div>
+</article>
+<!-- Item 3: Retard -->
+<article class="bg-white rounded-lg border border-outline-variant p-md flex flex-col gap-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary"></div>
+<div class="flex justify-between items-start pl-sm">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">28 Septembre 2023</span>
+<span class="font-body-sm text-secondary">Anglais</span>
+</div>
+<span class="inline-flex items-center gap-xs px-2 py-1 rounded-full bg-surface-variant text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                        Retard
+                    </span>
+</div>
+<div class="pl-sm">
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-sm">
+<span class="material-symbols-outlined text-tertiary text-[20px]">timer</span>
+                        10 minutes
+                    </p>
+</div>
+</article>
+<!-- Item 4: Absence -->
+<article class="bg-white rounded-lg border border-outline-variant p-md flex flex-col gap-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-error"></div>
+<div class="flex justify-between items-start pl-sm">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">15 Septembre 2023</span>
+<span class="font-body-sm text-secondary">Physique-Chimie</span>
+</div>
+<span class="inline-flex items-center gap-xs px-2 py-1 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]">cancel</span>
+                        Absent
+                    </span>
+</div>
+<div class="pl-sm">
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-sm">
+<span class="material-symbols-outlined text-error text-[20px]">warning</span>
+                        Non Justifié
+                    </p>
+</div>
+</article>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center bg-surface dark:bg-inverse-surface border-t border-outline-variant dark:border-outline px-sm py-xs h-[72px]">
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-highest transition-colors rounded-lg w-16">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 hover:bg-surface-container-highest transition-colors opacity-80 touch-none">
+<span class="material-symbols-outlined" data-icon="grade" data-weight="fill" style="font-variation-settings: 'FILL' 1;">grade</span>
+<span class="font-label-sm text-label-sm mt-1">Grades</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-highest transition-colors rounded-lg w-16">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="font-label-sm text-label-sm mt-1">Homework</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-highest transition-colors rounded-lg w-16">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-sm text-label-sm mt-1">Payments</span>
+</button>
+</nav>
+</body></html>

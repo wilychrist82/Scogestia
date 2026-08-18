@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scogestia - Students</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=Work+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#8bd6b7",
+                        "on-secondary-container": "#586377",
+                        "on-surface": "#0b1c30",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "on-tertiary-container": "#c5c8ca",
+                        "on-background": "#0b1c30",
+                        "background": "#f8f9ff",
+                        "tertiary-fixed": "#e0e3e5",
+                        "inverse-on-surface": "#eaf1ff",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#a6f2d1",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-secondary-fixed": "#111c2d",
+                        "primary-fixed-dim": "#8bd6b6",
+                        "outline": "#6f7973",
+                        "surface-bright": "#f8f9ff",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#8bd6b6",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#00513b",
+                        "surface-variant": "#d3e4fe",
+                        "secondary-container": "#d5e0f8",
+                        "primary": "#065F46", /* overridden by user prompt #065F46 */
+                        "surface-container-highest": "#d3e4fe",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#191c1e",
+                        "tertiary": "#393d3f",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "secondary": "#545f73",
+                        "on-surface-variant": "#3f4944",
+                        "inverse-surface": "#213145",
+                        "surface-dim": "#cbdbf5",
+                        "surface": "#f8f9ff",
+                        "surface-container-low": "#eff4ff",
+                        "surface-tint": "#1b6b51",
+                        "surface-container-high": "#dce9ff",
+                        "on-error": "#ffffff",
+                        "surface-container": "#e5eeff",
+                        "on-primary-fixed": "#002116",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#505456",
+                        "primary-container": "#065f46",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "outline-variant": "#bec9c2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "touch-target": "3rem",
+                        "xs": "0.25rem",
+                        "gutter": "1rem",
+                        "xl": "2rem",
+                        "xxl": "3rem",
+                        "md": "1rem",
+                        "container-max": "1280px",
+                        "lg": "1.5rem",
+                        "sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "headline-sm": ["Work Sans"],
+                        "headline-lg": ["Work Sans"],
+                        "display-lg": ["Work Sans"],
+                        "headline-lg-mobile": ["Work Sans"],
+                        "label-md": ["Public Sans"],
+                        "headline-md": ["Work Sans"],
+                        "label-sm": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface antialiased flex">
+<!-- SideNavBar -->
+<nav class="bg-surface-container-lowest h-screen w-64 fixed left-0 top-0 border-r border-outline-variant flex flex-col h-full py-xl px-md z-20 hidden md:flex">
+<div class="mb-8 px-4 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">school</span>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary leading-tight">Scogestia</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">School Management</p>
+</div>
+</div>
+<ul class="flex-1 space-y-2">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">school</span>
+<span class="font-label-md text-label-md">Classes</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container font-semibold rounded-lg transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span class="font-label-md text-label-md">Students</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-label-md text-label-md">Staff</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto px-4 py-4 border-t border-outline-variant flex items-center gap-3">
+<img alt="Admin User Profile" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A small, professional headshot photo of an administrator in a modern office setting. Clear lighting, high resolution, corporate style. 80 words maximum description." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbrfEkxiBFMiUnA5WkQONZkb-VSFmUyFTQMZxkj330rzVCH7xiLOfqtJx__8lJpvG3pM5H-QlO1DwEIEdexcgYJKPTnHrBcoZ3D2v-X8AQ9tG1gzVsQPDM_V23o5BpD_VPd0cIQI22Kn5nCLeYg667_7mGy2ff2AGy47WprgOETJLrZgq8U9yrmIWpe0PLO7dVb7EPbLyfnX3QncXWtdNsPDsuBkX70R1nysKLK5AvD4fP8oDObNNKrQ"/>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Admin User</p>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 ml-0 md:ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-surface-bright fixed top-0 right-0 left-0 md:left-64 h-16 border-b border-outline-variant flex justify-between items-center px-4 md:px-xl z-10">
+<div class="flex items-center gap-4">
+<button class="md:hidden p-2 text-on-surface-variant">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-2 border border-outline-variant rounded-lg bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md w-64 lg:w-96" placeholder="Rechercher un élève..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70">
+<span class="material-symbols-outlined">help</span>
+</button>
+<img alt="Administrator Profile" class="w-8 h-8 rounded-full object-cover md:hidden border border-outline-variant" data-alt="A small, professional headshot photo of an administrator in a modern office setting. Clear lighting, high resolution, corporate style. 80 words maximum description." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVWDHmsU4eQofQYXIbv8qJvkxNwaDfj5AuklF5xExmfpje7fl8e6Rcp2n8PV-29qz-2NNRxDv1mAvLIiBYNRP02IwMm77c4l-KM3k_mv5w6nBHZkgmEEQJMlu9yKHWbV2U90ZXvd_n3Wfj4VPX0Wo6rAd-e9MNe0h_M0G9sLAJdAWuW8-SxTtUoO3Mg20L76cmE5dJl-ORz330siGjJZBSSJMlY_eXKxOrWrBPC7h7S_qbAlaHHau9ow"/>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 mt-16 p-4 md:p-xl bg-surface">
+<!-- Header Section -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-1">Élèves</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Gérez la liste de tous les élèves inscrits.</p>
+</div>
+<div class="flex items-center gap-3 w-full sm:w-auto">
+<!-- Filter -->
+<div class="relative w-full sm:w-auto">
+<select class="appearance-none w-full sm:w-40 border border-outline-variant rounded-lg px-4 py-3 h-12 bg-surface text-on-surface font-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none pr-10 cursor-pointer">
+<option value="">Toutes les classes</option>
+<option value="6e">6ème A</option>
+<option value="5e">5ème B</option>
+<option value="4e">4ème A</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+<!-- Primary Button -->
+<button class="bg-primary text-white font-label-md px-6 py-3 h-12 rounded-lg hover:bg-primary-container transition-colors flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[20px]">person_add</span>
+                        Inscrire un élève
+                    </button>
+</div>
+</div>
+<!-- Mobile Search (Visible only on small screens) -->
+<div class="relative sm:hidden mb-6">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-3 h-12 border border-outline-variant rounded-lg bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md text-body-md" placeholder="Rechercher un élève..." type="text"/>
+</div>
+<!-- Data Table Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[800px]">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Matricule</th>
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Nom &amp; Prénom</th>
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Classe</th>
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Statut Paiement</th>
+<th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+<!-- Row 1 -->
+<tr class="border-b border-outline-variant hover:bg-surface-container-lowest/50 transition-colors bg-surface-container-lowest">
+<td class="py-3 px-6 font-mono text-sm text-on-surface-variant">MAT-2023-001</td>
+<td class="py-3 px-6 font-medium">Diallo Amadou</td>
+<td class="py-3 px-6">Terminale S1</td>
+<td class="py-3 px-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                                        Payé
+                                    </span>
+</td>
+<td class="py-3 px-6 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="border-b border-outline-variant hover:bg-surface-container-lowest/50 transition-colors bg-surface">
+<td class="py-3 px-6 font-mono text-sm text-on-surface-variant">MAT-2023-042</td>
+<td class="py-3 px-6 font-medium">Sow Fatoumata</td>
+<td class="py-3 px-6">3ème B</td>
+<td class="py-3 px-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-700 border border-amber-500/20">
+                                        En retard
+                                    </span>
+</td>
+<td class="py-3 px-6 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="border-b border-outline-variant hover:bg-surface-container-lowest/50 transition-colors bg-surface-container-lowest">
+<td class="py-3 px-6 font-mono text-sm text-on-surface-variant">MAT-2023-105</td>
+<td class="py-3 px-6 font-medium">Keita Oumar</td>
+<td class="py-3 px-6">6ème A</td>
+<td class="py-3 px-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-700 border border-slate-500/20">
+                                        En attente
+                                    </span>
+</td>
+<td class="py-3 px-6 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="border-b border-outline-variant hover:bg-surface-container-lowest/50 transition-colors bg-surface">
+<td class="py-3 px-6 font-mono text-sm text-on-surface-variant">MAT-2023-088</td>
+<td class="py-3 px-6 font-medium">Barry Aissatou</td>
+<td class="py-3 px-6">1ère L2</td>
+<td class="py-3 px-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                                        Payé
+                                    </span>
+</td>
+<td class="py-3 px-6 text-right">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 flex items-center justify-between border-t border-outline-variant bg-surface-container-lowest">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Affichage 1 à 4 sur 120 élèves</span>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-container-low disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="p-2 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

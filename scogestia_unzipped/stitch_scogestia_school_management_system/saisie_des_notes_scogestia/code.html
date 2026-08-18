@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scogestia - Saisie des Notes</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&amp;family=Work+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Forms & Container Queries plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#213145",
+                        "inverse-primary": "#8bd6b6",
+                        "surface-container": "#e5eeff",
+                        "surface-container-highest": "#d3e4fe",
+                        "surface": "#f8f9ff",
+                        "outline-variant": "#bec9c2",
+                        "error-container": "#ffdad6",
+                        "primary": "#004532",
+                        "on-tertiary-container": "#c5c8ca",
+                        "background": "#f8f9ff",
+                        "on-secondary-fixed": "#111c2d",
+                        "on-primary-fixed-variant": "#00513b",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#d3e4fe",
+                        "primary-fixed": "#a6f2d1",
+                        "on-background": "#0b1c30",
+                        "secondary": "#545f73",
+                        "surface-bright": "#f8f9ff",
+                        "tertiary": "#393d3f",
+                        "tertiary-container": "#505456",
+                        "primary-fixed-dim": "#8bd6b6",
+                        "on-surface": "#0b1c30",
+                        "on-surface-variant": "#3f4944",
+                        "outline": "#6f7973",
+                        "surface-container-low": "#eff4ff",
+                        "tertiary-fixed": "#e0e3e5",
+                        "surface-tint": "#1b6b51",
+                        "on-secondary-container": "#586377",
+                        "primary-container": "#065f46",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "inverse-on-surface": "#eaf1ff",
+                        "surface-dim": "#cbdbf5",
+                        "on-tertiary-fixed": "#191c1e",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#8bd6b7",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "secondary-container": "#d5e0f8",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed": "#002116",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "surface-container-high": "#dce9ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "1rem",
+                        "lg": "1.5rem",
+                        "md": "1rem",
+                        "sm": "0.5rem",
+                        "xxl": "3rem",
+                        "xl": "2rem",
+                        "container-max": "1280px",
+                        "touch-target": "3rem",
+                        "xs": "0.25rem"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "headline-sm": ["Work Sans"],
+                        "headline-lg-mobile": ["Work Sans"],
+                        "label-md": ["Public Sans"],
+                        "headline-lg": ["Work Sans"],
+                        "body-lg": ["Public Sans"],
+                        "display-lg": ["Work Sans"],
+                        "headline-md": ["Work Sans"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom overrides for numeric inputs to hide arrows for a cleaner spreadsheet look */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md min-h-screen flex overflow-hidden">
+<!-- SideNavBar (JSON Component) -->
+<nav class="bg-surface-container-lowest dark:bg-surface-dim h-screen w-64 fixed left-0 top-0 border-r border-outline-variant dark:border-outline z-20 flex flex-col py-xl px-md transition-all duration-200 ease-in-out">
+<div class="mb-8 px-4 flex items-center gap-3 cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" data-weight="fill">school</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-on-primary-container leading-tight">Scogestia</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">School Management</p>
+</div>
+</div>
+<ul class="flex flex-col gap-2 flex-1">
+<!-- Dashboard -->
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+</li>
+<!-- Classes (ACTIVE) -->
+<li>
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container dark:bg-primary-container text-on-secondary-container dark:text-on-primary-container font-semibold rounded-lg" href="#">
+<span class="material-symbols-outlined" data-weight="fill">school</span>
+<span class="font-label-md text-label-md">Classes</span>
+</a>
+</li>
+<!-- Students -->
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Students</span>
+</a>
+</li>
+<!-- Staff -->
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="font-label-md text-label-md">Staff</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface hover:bg-surface-container-high dark:hover:bg-surface-variant transition-colors rounded-lg border-t border-outline-variant pt-4 mt-4" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<div class="mt-4 px-4 flex items-center gap-3">
+<img alt="Administrator Profile" class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="Professional headshot of a school administrator in soft natural lighting, facing forward with a warm approachable expression, high resolution, modern corporate portrait style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVlxPK5-MGGOgxF1aE6C6tvOUw04txHOIDrbCP384n17A01iqNK5wq-7NjXAMil-jufC1r3VNuNwEkcaDut-G8gC0_9jKzQoO1vcw7UeyH1xCQ6zX9HG8bPy_SMpHHfPdy6owUpnhcrZiMgo_3SK5o07qRNTpR4Tm-PorpZmAsG6Tg7SCUzdZGcd7jo0uLGXmFUS6a78DqrmODxApjf2gmdI_tDlFJQtLSjOGsq4gTVtALnuZ4E5ZODA"/>
+<div>
+<p class="font-label-md text-label-md font-bold">Admin User</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Direction</p>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Area Wrapper -->
+<div class="flex-1 ml-64 flex flex-col h-screen">
+<!-- TopAppBar (JSON Component) -->
+<header class="bg-surface-bright dark:bg-surface-dim h-16 border-b border-outline-variant dark:border-outline flex justify-between items-center px-xl w-full z-10 shrink-0">
+<div class="flex items-center gap-4 w-1/3">
+<div class="relative w-full max-w-xs">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 rounded-full font-body-md text-body-md text-on-surface placeholder-on-surface-variant transition-colors" placeholder="Rechercher..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="w-10 h-10 rounded-full hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 rounded-full hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+</header>
+<!-- Canvas Area -->
+<main class="flex-1 overflow-y-auto bg-background p-xl">
+<div class="max-w-[1400px] mx-auto">
+<!-- Page Header & Context -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+<div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md mb-2">
+<a class="hover:text-primary transition-colors" href="#">Classes</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span>3ème A</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-background">Saisie des Notes</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Matière: <strong class="text-primary">Mathématiques</strong> | Trimestre 1</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="h-[48px] px-6 rounded-DEFAULT border border-outline hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined">download</span>
+                            Exporter
+                        </button>
+<button class="h-[48px] px-6 rounded-DEFAULT bg-primary text-on-primary font-label-md text-label-md flex items-center gap-2 hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined">add</span>
+                            Ajouter une évaluation
+                        </button>
+</div>
+</div>
+<!-- Spreadsheet Data Table Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-max">
+<thead class="bg-surface-container-low border-b 2 border-outline-variant">
+<tr>
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface sticky left-0 bg-surface-container-low z-10 w-64 border-r border-outline-variant">
+                                        Nom de l'élève
+                                    </th>
+<!-- Dynamic Columns -->
+<th class="py-3 px-4 min-w-[140px] group border-r border-outline-variant relative">
+<div class="flex items-center justify-between">
+<div>
+<div class="font-label-md text-label-md text-on-surface">Devoir 1</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant font-normal">Coeff 1 • /20</div>
+</div>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</div>
+</th>
+<th class="py-3 px-4 min-w-[140px] group border-r border-outline-variant relative">
+<div class="flex items-center justify-between">
+<div>
+<div class="font-label-md text-label-md text-on-surface">Interrogation</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant font-normal">Coeff 0.5 • /10</div>
+</div>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</div>
+</th>
+<th class="py-3 px-4 min-w-[140px] group border-r border-outline-variant relative">
+<div class="flex items-center justify-between">
+<div>
+<div class="font-label-md text-label-md text-on-surface">Examen Blanc</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant font-normal">Coeff 2 • /20</div>
+</div>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</div>
+</th>
+<th class="py-3 px-4 min-w-[100px] text-right font-label-md text-label-md text-on-surface bg-surface-container-lowest">
+                                        Moyenne
+                                    </th>
+</tr>
+</thead>
+<!-- High density rows with subtle zebra striping -->
+<tbody class="font-body-md text-body-md text-on-surface">
+<!-- Row 1: Saved state -->
+<tr class="border-b border-outline-variant bg-surface hover:bg-surface-container-high transition-colors group">
+<td class="py-2 px-4 sticky left-0 bg-inherit border-r border-outline-variant flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md text-label-md">AB</div>
+<span class="font-semibold">Abdoulaye, Bamba</span>
+</td>
+<td class="py-2 px-4 border-r border-outline-variant">
+<div class="relative flex items-center">
+<input class="w-full h-10 px-3 pr-8 rounded bg-surface-container-lowest border border-outline-variant focus:border-2 focus:border-primary text-right font-body-md" type="number" value="14.5"/>
+<!-- Saved Indicator -->
+<span class="absolute right-2 material-symbols-outlined text-[18px] text-primary" title="Sauvegardé">check_circle</span>
+</div>
+</td>
+<td class="py-2 px-4 border-r border-outline-variant">
+<div class="relative flex items-center">
+<input class="w-full h-10 px-3 pr-8 rounded bg-surface-container-lowest border border-outline-variant focus:border-2 focus:border-primary text-right font-body-md" type="number" value="8"/>
+<span class="absolute right-2 material-symbols-outlined text-[18px] text-primary" title="Sauvegardé">check_circle</span>
+</div>
+</td>
+<td class="py-2 px-4 border-r border-outline-variant">
+<div class="relative flex items-center">
+<input class="w-full h-10 px-3 pr-8 rounded bg-surface-container-lowest border border-outline-variant focus:border-2 focus:border-primary text-right font-body-md" type="number" value="16"/>
+<span class="absolute right-2 material-symbols-outlined text-[18px] text-primary" title="Sauvegardé">check_circle</span>
+</div>
+</td>
+<td class="py-2 px-4 text-right font-semibold bg-surface-container-lowest text-primary">
+                                        14.43
+                                    </td>
+</tr>
+<!-- Row 2: Saving / Spinner state -->
+<tr class="border-b border-outline-variant bg-surface-bright hover:bg-surface-container-high transition-colors group">
+<td class="py-2 px-4 sticky left-0 bg-inherit border-r border-outline-variant flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md text-label-md">CD</div>
+<span class="font-semibold">Cissé, Diallo</span>
+</td>
+<td class="py-2 px-4 border-r border-outline-variant">
+<div class="relative flex items-center">
+<input class="w-full h-10 px-3 pr-8 rounded bg-surface-container-lowest border border-outline-variant focus:border-2 focus:border-primary text-right font-body-md" type="number" value="12"/>
+<span class="absolute right-2 material-symbols-outlined text-[18px] text-primary" title="Sauvegardé">check_circle</span>
+</div>
+</td>
+<td class="py-2 px-4 border-r border-outline-variant bg-surface-container-high"> <!-- subtle highlight for active cell -->
+<div class="relative flex items-center">
+<input class="w-full h-10 px-3 pr-8 rounded bg-surface-container-lowest border border-primary focus:border-2 focus:border-primary text-right font-body-md" type="number" value="6.5"/>
+<!-- Saving Indicator -->
+<span class="absolute right-2 material-symbols-outlined text-[18px] text-on-surface-variant animate-spin" title="Enregistrement...">progress_activity</span>
+</div>
+</td>
+<td class="py-2 px-4 border-r border-outline-variant">
+<div class="relative flex items-center">
+<input class="w-full h-10 px-3 pr-8 rounded bg-surface-container-lowest border border-outline-variant focus:border-2 focus:border-primary text-right font-body-md" placeholder="-" type="number"/>
+</div>
+</td>
+<td class="py-2 px-4 text-right font-semibold bg-surface-container-lowest text-on-surface-variant">
+                                        --
+                                    </td>
+</tr>
+<!-- Row 3: Error state -->
+<tr class="border-b border-outline-variant bg-surface hover:bg-surface-container-high transition-colors group">
+<td class="py-2 px-4 sticky left-0 bg-inherit border-r border-outline-variant flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md text-label-md">KF</div>
+<span class="font-semibold">Kone, Fatoumata</span>
+</td>
+<td class="py-2 px-4 border-r border-outline-variant">
+<div class="relative flex items-center">
+<input class="w-full h-10 px-3 pr-8 rounded bg-surface-container-lowest border border-outline-variant focus:border-2 focus:border-primary text-right font-body-md" type="number" value="18"/>
+<span class="absolute right-2 material-symbols-outlined text-[18px] text-primary" title="Sauvegardé">check_circle</span>
+</div>
+</td>
+<td class="py-2 px-4 border-r border-outline-variant">
+<div class="relative flex items-center">
+<input class="w-full h-10 px-3 pr-8 rounded bg-surface-container-lowest border border-outline-variant focus:border-2 focus:border-primary text-right font-body-md" type="number" value="9"/>
+<span class="absolute right-2 material-symbols-outlined text-[18px] text-primary" title="Sauvegardé">check_circle</span>
+</div>
+</td>
+<td class="py-2 px-4 border-r border-outline-variant">
+<div class="relative flex items-center">
+<!-- Error input styling -->
+<input class="w-full h-10 px-3 pr-8 rounded bg-error-container border border-error text-on-error-container focus:border-2 focus:border-error text-right font-body-md" title="Note invalide (max 20)" type="number" value="25"/>
+<!-- Error Indicator -->
+<span class="absolute right-2 material-symbols-outlined text-[18px] text-error" title="Erreur de validation">error</span>
+</div>
+</td>
+<td class="py-2 px-4 text-right font-semibold bg-surface-container-lowest text-on-surface-variant">
+                                        Erreur
+                                    </td>
+</tr>
+<!-- Row 4: Empty state -->
+<tr class="border-b border-outline-variant bg-surface-bright hover:bg-surface-container-high transition-colors group">
+<td class="py-2 px-4 sticky left-0 bg-inherit border-r border-outline-variant flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md text-label-md">TO</div>
+<span class="font-semibold">Traoré, Ousmane</span>
+</td>
+<td class="py-2 px-4 border-r border-outline-variant">
+<div class="relative flex items-center">
+<input class="w-full h-10 px-3 pr-8 rounded bg-surface-container-lowest border border-outline-variant focus:border-2 focus:border-primary text-right font-body-md" placeholder="-" type="number"/>
+</div>
+</td>
+<td class="py-2 px-4 border-r border-outline-variant">
+<div class="relative flex items-center">
+<input class="w-full h-10 px-3 pr-8 rounded bg-surface-container-lowest border border-outline-variant focus:border-2 focus:border-primary text-right font-body-md" placeholder="-" type="number"/>
+</div>
+</td>
+<td class="py-2 px-4 border-r border-outline-variant">
+<div class="relative flex items-center">
+<input class="w-full h-10 px-3 pr-8 rounded bg-surface-container-lowest border border-outline-variant focus:border-2 focus:border-primary text-right font-body-md" placeholder="-" type="number"/>
+</div>
+</td>
+<td class="py-2 px-4 text-right font-semibold bg-surface-container-lowest text-on-surface-variant">
+                                        --
+                                    </td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer / Summary -->
+<div class="bg-surface-container p-4 border-t border-outline-variant flex justify-between items-center text-label-sm font-label-sm text-on-surface-variant">
+<span>4 Élèves inscrits</span>
+<div class="flex items-center gap-4">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-primary">check_circle</span> Sauvegardé</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] animate-spin">progress_activity</span> En cours</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-error">error</span> Erreur</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

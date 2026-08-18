@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bulletins Trimestriels - EduParent Togo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&amp;family=Work+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#dce9ff",
+                        "error": "#ba1a1a",
+                        "inverse-surface": "#213145",
+                        "on-primary-fixed-variant": "#00513b",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#d3e4fe",
+                        "primary": "#004532",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-secondary-fixed": "#111c2d",
+                        "secondary": "#545f73",
+                        "surface-container-low": "#eff4ff",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#002116",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "surface-container": "#e5eeff",
+                        "primary-container": "#065f46",
+                        "on-surface": "#0b1c30",
+                        "on-tertiary-container": "#c5c8ca",
+                        "primary-fixed": "#a6f2d1",
+                        "surface-dim": "#cbdbf5",
+                        "surface": "#f8f9ff",
+                        "on-background": "#0b1c30",
+                        "tertiary-fixed": "#e0e3e5",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-primary-container": "#8bd6b7",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#586377",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "outline": "#6f7973",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#f8f9ff",
+                        "tertiary": "#393d3f",
+                        "on-tertiary-fixed": "#191c1e",
+                        "background": "#f8f9ff",
+                        "surface-tint": "#1b6b51",
+                        "inverse-primary": "#8bd6b6",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "secondary-container": "#d5e0f8",
+                        "on-surface-variant": "#3f4944",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "tertiary-container": "#505456",
+                        "primary-fixed-dim": "#8bd6b6",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#bec9c2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xl": "2rem",
+                        "lg": "1.5rem",
+                        "xxl": "3rem",
+                        "sm": "0.5rem",
+                        "gutter": "1rem",
+                        "md": "1rem",
+                        "xs": "0.25rem",
+                        "touch-target": "3rem",
+                        "container-max": "1280px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Work Sans"],
+                        "headline-sm": ["Work Sans"],
+                        "label-md": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "label-sm": ["Public Sans"],
+                        "headline-lg": ["Work Sans"],
+                        "display-lg": ["Work Sans"],
+                        "headline-md": ["Work Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .fill-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            background-color: #f8f9ff;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col pb-touch-target">
+<!-- TopAppBar (from JSON) -->
+<header class="bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline docked full-width top-0 sticky z-40">
+<div class="flex justify-between items-center px-md h-touch-target w-full">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-icon="school" data-weight="fill" style="font-variation-settings: 'FILL' 1;">school</span>
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">EduParent Togo</h1>
+</div>
+<div class="flex items-center">
+<span class="font-label-md text-label-md text-on-surface-variant">Child: Koffi</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col px-md py-lg gap-lg">
+<section>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-sm">Bulletins Trimestriels</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md">Année Scolaire 2023/2024</p>
+<div class="flex flex-col gap-sm">
+<!-- Bulletin Item 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Bulletin Trimestre 1</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Publié le 15 Déc 2023</span>
+</div>
+<button class="h-touch-target px-md bg-primary text-on-primary rounded-DEFAULT font-label-md text-label-md flex items-center justify-center gap-xs hover:bg-surface-tint transition-colors">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                        PDF
+                    </button>
+</div>
+<!-- Bulletin Item 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Bulletin Trimestre 2</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Publié le 28 Mar 2024</span>
+</div>
+<button class="h-touch-target px-md bg-primary text-on-primary rounded-DEFAULT font-label-md text-label-md flex items-center justify-center gap-xs hover:bg-surface-tint transition-colors">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                        PDF
+                    </button>
+</div>
+<!-- Bulletin Item 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex items-center justify-between opacity-70">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Bulletin Trimestre 3</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Bientôt disponible</span>
+</div>
+<button class="h-touch-target px-md border border-outline text-outline rounded-DEFAULT font-label-md text-label-md flex items-center justify-center gap-xs" disabled="">
+<span class="material-symbols-outlined" data-icon="lock">lock</span>
+                        PDF
+                    </button>
+</div>
+</div>
+</section>
+<section class="mt-md">
+<h3 class="font-label-md text-label-md text-on-surface-variant mb-sm uppercase tracking-wider">Archives (2022/2023)</h3>
+<div class="flex flex-col gap-sm">
+<!-- Archive Item -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Bulletin Annuel</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Année complète</span>
+</div>
+<button class="h-touch-target px-md border border-primary text-primary rounded-DEFAULT font-label-md text-label-md flex items-center justify-center gap-xs hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                        PDF
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (from JSON) -->
+<!-- Active state applied to "Grades" based on context (Bulletins) -->
+<nav class="bg-surface dark:bg-inverse-surface border-t border-outline-variant dark:border-outline docked full-width bottom-0 fixed bottom-0 w-full z-50 flex justify-around items-center px-sm py-xs md:hidden">
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-highest rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm mt-xs">Home</span>
+</a>
+<!-- Active ("Grades" maps best to "Bulletins") -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 opacity-80 touch-none" href="#">
+<span class="material-symbols-outlined fill-icon" data-icon="grade" data-weight="fill">grade</span>
+<span class="font-label-sm text-label-sm mt-xs">Grades</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-highest rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="font-label-sm text-label-sm mt-xs">Homework</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-highest rounded-xl transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-sm text-label-sm mt-xs">Payments</span>
+</a>
+</nav>
+</body></html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scogestia - Inscription Élève</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&amp;family=Work+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#8bd6b7",
+                        "on-secondary-container": "#586377",
+                        "on-surface": "#0b1c30",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "on-tertiary-container": "#c5c8ca",
+                        "on-background": "#0b1c30",
+                        "background": "#f8f9ff",
+                        "tertiary-fixed": "#e0e3e5",
+                        "inverse-on-surface": "#eaf1ff",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#a6f2d1",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-secondary-fixed": "#111c2d",
+                        "primary-fixed-dim": "#8bd6b6",
+                        "outline": "#6f7973",
+                        "surface-bright": "#f8f9ff",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#8bd6b6",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#00513b",
+                        "surface-variant": "#d3e4fe",
+                        "secondary-container": "#d5e0f8",
+                        "primary": "#004532",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#191c1e",
+                        "tertiary": "#393d3f",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "secondary": "#545f73",
+                        "on-surface-variant": "#3f4944",
+                        "inverse-surface": "#213145",
+                        "surface-dim": "#cbdbf5",
+                        "surface": "#f8f9ff",
+                        "surface-container-low": "#eff4ff",
+                        "surface-tint": "#1b6b51",
+                        "surface-container-high": "#dce9ff",
+                        "on-error": "#ffffff",
+                        "surface-container": "#e5eeff",
+                        "on-primary-fixed": "#002116",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#505456",
+                        "primary-container": "#065f46",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "outline-variant": "#bec9c2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "touch-target": "3rem",
+                        "xs": "0.25rem",
+                        "gutter": "1rem",
+                        "xl": "2rem",
+                        "xxl": "3rem",
+                        "md": "1rem",
+                        "container-max": "1280px",
+                        "lg": "1.5rem",
+                        "sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Public Sans", "sans-serif"],
+                        "body-md": ["Public Sans", "sans-serif"],
+                        "headline-sm": ["Work Sans", "sans-serif"],
+                        "headline-lg": ["Work Sans", "sans-serif"],
+                        "display-lg": ["Work Sans", "sans-serif"],
+                        "headline-lg-mobile": ["Work Sans", "sans-serif"],
+                        "label-md": ["Public Sans", "sans-serif"],
+                        "headline-md": ["Work Sans", "sans-serif"],
+                        "label-sm": ["Public Sans", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom input focus ring to match brand */
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #004532 !important; /* primary */
+            box-shadow: 0 0 0 1px #004532 !important;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased h-screen overflow-hidden flex">
+<!-- SideNavBar (JSON Component) -->
+<nav class="bg-surface-container-lowest dark:bg-surface-dim font-body-md text-body-md h-screen w-64 fixed left-0 top-0 border-r border-outline-variant dark:border-outline z-20 flex flex-col hidden md:flex">
+<div class="flex flex-col h-full py-xl px-md">
+<!-- Header/Logo Area -->
+<div class="mb-xl px-4">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-on-primary-container">
+                    Scogestia
+                </h1>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mt-1">School Management</p>
+</div>
+<!-- Navigation Links -->
+<ul class="flex-1 space-y-2">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface hover:bg-surface-container-high dark:hover:bg-surface-variant transition-all duration-200 ease-in-out rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface hover:bg-surface-container-high dark:hover:bg-surface-variant transition-all duration-200 ease-in-out rounded-lg" href="#">
+<span class="material-symbols-outlined">school</span>
+<span>Classes</span>
+</a>
+</li>
+<!-- ACTIVE TAB: Students -->
+<li>
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container dark:bg-primary-container text-on-secondary-container dark:text-on-primary-container font-semibold rounded-lg transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+<span>Students</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface hover:bg-surface-container-high dark:hover:bg-surface-variant transition-all duration-200 ease-in-out rounded-lg" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span>Staff</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-on-surface hover:bg-surface-container-high dark:hover:bg-surface-variant transition-all duration-200 ease-in-out rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</li>
+</ul>
+<!-- Bottom Profile Area Placeholder -->
+<div class="mt-auto pt-4 border-t border-outline-variant dark:border-outline px-4 flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A professional headshot of a male school administrator wearing glasses and a neat button-down shirt, captured in a bright office environment, warm and approachable lighting, modern corporate style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD20qT2icK2_yWZnjeuKydP3qK-eH2V97rxgIKfnIo7Rz8MEBsiqMK0d1mJzqkySCdMT3Z_ycSp_GOneU85ZlrkApv4Wsv6spgZ7GAULy_KS86Uk12Nwqh0TypVUMY0x9Zazv95vu1-TdJjHA0sQqPO_2HJjM1vs2yEZkfl_k7byIzd13U-wFtAD2pA4l6R0vMgXHbbP8X059nwzR5Cu-VP0w1rUn29opFG4WrQ2EjNnzcc4hiF0s77BQ"/>
+<div class="flex-1 min-w-0">
+<p class="font-label-md text-label-md truncate text-on-surface">Admin User</p>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Layout Wrapper -->
+<div class="flex-1 flex flex-col md:ml-64 relative min-w-0 h-screen">
+<!-- TopAppBar (JSON Component) -->
+<header class="bg-surface-bright dark:bg-surface-dim font-label-md text-label-md fixed top-0 right-0 left-0 md:left-64 h-16 border-b border-outline-variant dark:border-outline z-10">
+<div class="flex justify-between items-center px-xl h-full w-full">
+<!-- Left: Search (on_left) -->
+<div class="flex-1 flex items-center">
+<div class="relative w-full max-w-md hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full h-10 pl-10 pr-4 bg-surface-container-lowest border border-outline-variant rounded-full font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-1 focus:ring-primary transition-colors" placeholder="Rechercher un élève, une classe..." type="text"/>
+</div>
+<!-- Mobile Hamburger -->
+<button class="md:hidden text-on-surface-variant p-2 mr-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<!-- Mobile Brand (Visible only on small screens) -->
+<h2 class="md:hidden font-headline-sm text-headline-sm font-bold text-primary">Scogestia</h2>
+</div>
+<!-- Right: Actions -->
+<div class="flex items-center gap-2">
+<button aria-label="Notifications" class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70 p-2 rounded-full hover:bg-surface-container-lowest">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button aria-label="Help" class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-70 p-2 rounded-full hover:bg-surface-container-lowest">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto bg-background pt-16 px-md md:px-xl py-xl">
+<div class="max-w-4xl mx-auto">
+<!-- Page Header -->
+<div class="mb-8">
+<div class="flex items-center gap-2 text-on-surface-variant mb-2">
+<a class="hover:text-primary transition-colors text-sm font-label-md" href="#">Students</a>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-sm font-label-md text-on-surface">Nouvelle Inscription</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Inscription d'un Élève</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Veuillez remplir les informations requises pour ajouter un nouvel élève au système.</p>
+</div>
+<!-- Form Card -->
+<form action="#" class="bg-surface-container-lowest border border-[#E2E8F0] rounded-xl overflow-hidden shadow-sm" method="POST">
+<div class="p-6 md:p-8 border-b border-outline-variant/30 bg-surface-bright/50">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">person_add</span>
+                            Informations Générales
+                        </h2>
+</div>
+<div class="p-6 md:p-8 space-y-6">
+<!-- Row 1: Matricule (Read-only) -->
+<div class="w-full md:w-1/2">
+<label class="block font-label-md text-label-md text-on-surface mb-2" for="matricule">Matricule</label>
+<div class="relative">
+<input class="w-full h-12 bg-surface-container-low border border-outline-variant rounded-lg px-4 font-body-md text-body-md text-on-surface-variant cursor-not-allowed" disabled="" id="matricule" name="matricule" readonly="" type="text" value="STU-24-0891"/>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-label-sm text-on-surface-variant bg-surface-container-low px-2 py-1 rounded">Généré automatiquement</span>
+</div>
+</div>
+<!-- Row 2: Nom & Prénom -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2" for="nom">Nom <span class="text-error">*</span></label>
+<input class="w-full h-12 bg-surface-container-lowest border border-outline-variant rounded-lg px-4 font-body-md text-body-md text-on-surface placeholder:text-outline transition-all" id="nom" name="nom" placeholder="Ex: Dupont" required="" type="text"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2" for="prenom">Prénom <span class="text-error">*</span></label>
+<input class="w-full h-12 bg-surface-container-lowest border border-outline-variant rounded-lg px-4 font-body-md text-body-md text-on-surface placeholder:text-outline transition-all" id="prenom" name="prenom" placeholder="Ex: Jean" required="" type="text"/>
+</div>
+</div>
+<!-- Row 3: Date de naissance & Classe -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2" for="date_naissance">Date de naissance <span class="text-error">*</span></label>
+<div class="relative">
+<input class="w-full h-12 bg-surface-container-lowest border border-outline-variant rounded-lg pl-4 pr-10 font-body-md text-body-md text-on-surface transition-all appearance-none" id="date_naissance" name="date_naissance" required="" type="date"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">calendar_today</span>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-2" for="classe">Classe d'affectation <span class="text-error">*</span></label>
+<div class="relative">
+<select class="w-full h-12 bg-surface-container-lowest border border-outline-variant rounded-lg pl-4 pr-10 font-body-md text-body-md text-on-surface transition-all appearance-none" id="classe" name="classe" required="">
+<option disabled="" selected="" value="">Sélectionner une classe</option>
+<option value="6A">6ème A</option>
+<option value="6B">6ème B</option>
+<option value="5A">5ème A</option>
+<option value="4A">4ème A</option>
+<option value="3A">3ème A</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="p-6 md:p-8 bg-surface-bright/30 border-t border-outline-variant/30 flex flex-col sm:flex-row items-center justify-end gap-4">
+<button class="w-full sm:w-auto h-[48px] px-6 rounded-lg border border-primary text-primary font-label-md text-label-md hover:bg-primary/5 transition-colors flex items-center justify-center gap-2" type="button">
+                            Annuler
+                        </button>
+<button class="w-full sm:w-auto h-[48px] px-6 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm flex items-center justify-center gap-2" type="submit">
+<span class="material-symbols-outlined text-sm">save</span>
+                            Enregistrer l'élève
+                        </button>
+</div>
+</form>
+</div>
+</main>
+</div>
+</body></html>

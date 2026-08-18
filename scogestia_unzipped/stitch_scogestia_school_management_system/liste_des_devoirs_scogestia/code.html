@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Devoirs - EduParent Togo</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&amp;family=Public+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#dce9ff",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#213145",
+                    "on-primary-fixed-variant": "#00513b",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-secondary": "#ffffff",
+                    "surface-variant": "#d3e4fe",
+                    "primary": "#004532",
+                    "secondary-fixed": "#d8e3fb",
+                    "on-secondary-fixed": "#111c2d",
+                    "secondary": "#545f73",
+                    "surface-container-low": "#eff4ff",
+                    "on-error-container": "#93000a",
+                    "on-primary": "#ffffff",
+                    "on-primary-fixed": "#002116",
+                    "secondary-fixed-dim": "#bcc7de",
+                    "surface-container": "#e5eeff",
+                    "primary-container": "#065f46",
+                    "on-surface": "#0b1c30",
+                    "on-tertiary-container": "#c5c8ca",
+                    "primary-fixed": "#a6f2d1",
+                    "surface-dim": "#cbdbf5",
+                    "surface": "#f8f9ff",
+                    "on-background": "#0b1c30",
+                    "tertiary-fixed": "#e0e3e5",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-primary-container": "#8bd6b7",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-container": "#586377",
+                    "on-tertiary-fixed-variant": "#444749",
+                    "outline": "#6f7973",
+                    "error-container": "#ffdad6",
+                    "surface-bright": "#f8f9ff",
+                    "tertiary": "#393d3f",
+                    "on-tertiary-fixed": "#191c1e",
+                    "background": "#f8f9ff",
+                    "surface-tint": "#1b6b51",
+                    "inverse-primary": "#8bd6b6",
+                    "on-secondary-fixed-variant": "#3c475a",
+                    "secondary-container": "#d5e0f8",
+                    "on-surface-variant": "#3f4944",
+                    "tertiary-fixed-dim": "#c4c7c9",
+                    "tertiary-container": "#505456",
+                    "primary-fixed-dim": "#8bd6b6",
+                    "on-error": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "outline-variant": "#bec9c2"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xl": "2rem",
+                    "lg": "1.5rem",
+                    "xxl": "3rem",
+                    "sm": "0.5rem",
+                    "gutter": "1rem",
+                    "md": "1rem",
+                    "xs": "0.25rem",
+                    "touch-target": "3rem",
+                    "container-max": "1280px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Work Sans"],
+                    "headline-sm": ["Work Sans"],
+                    "label-md": ["Public Sans"],
+                    "body-lg": ["Public Sans"],
+                    "body-md": ["Public Sans"],
+                    "label-sm": ["Public Sans"],
+                    "headline-lg": ["Work Sans"],
+                    "display-lg": ["Work Sans"],
+                    "headline-md": ["Work Sans"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="fixed docked full-width top-0 w-full z-40 bg-surface border-b border-outline-variant flex justify-between items-center px-md h-touch-target">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary font-headline-sm text-headline-sm" data-icon="school">school</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary">EduParent Togo</span>
+</div>
+<div class="flex items-center">
+<span class="font-label-md text-label-md text-on-surface-variant mr-xs">Child: Koffi</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-secondary" data-icon="person">person</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-20 px-md pb-md max-w-container-max mx-auto">
+<div class="mb-lg">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-xs">Devoirs</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Suivez le travail à la maison de Koffi.</p>
+</div>
+<!-- Filter / Tabs -->
+<div class="flex gap-sm mb-lg overflow-x-auto pb-sm hide-scrollbar">
+<button class="bg-primary text-on-primary font-label-md text-label-md px-4 py-2 rounded-full min-h-[48px] whitespace-nowrap">À venir</button>
+<button class="bg-surface border border-outline-variant text-on-surface-variant font-label-md text-label-md px-4 py-2 rounded-full min-h-[48px] whitespace-nowrap hover:bg-surface-container-low transition-colors">Terminés</button>
+<button class="bg-surface border border-outline-variant text-on-surface-variant font-label-md text-label-md px-4 py-2 rounded-full min-h-[48px] whitespace-nowrap hover:bg-surface-container-low transition-colors">En retard</button>
+</div>
+<!-- Homework List -->
+<div class="flex flex-col gap-md">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm">
+<div class="flex justify-between items-start mb-sm">
+<div>
+<span class="inline-block bg-secondary-container text-on-secondary-container font-label-sm text-label-sm px-2 py-1 rounded mb-xs">Mathématiques</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Exercices d'algèbre</h2>
+</div>
+<div class="bg-error-container/20 text-error font-label-sm text-label-sm px-2 py-1 rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="schedule">schedule</span>
+<span>Aujourd'hui, 23h59</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md">Chapitre 4: Résolution d'équations du second degré. Faire les exercices 12 à 20 de la page 45.</p>
+<div class="flex items-center gap-sm mt-auto">
+<button class="flex-1 flex items-center justify-center gap-xs bg-surface border border-primary text-primary font-label-md text-label-md h-touch-target rounded-lg hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined" data-icon="picture_as_pdf">picture_as_pdf</span>
+                        Télécharger le sujet
+                    </button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm">
+<div class="flex justify-between items-start mb-sm">
+<div>
+<span class="inline-block bg-tertiary-container text-on-tertiary-container font-label-sm text-label-sm px-2 py-1 rounded mb-xs">Histoire-Géo</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Carte de l'Afrique de l'Ouest</h2>
+</div>
+<div class="text-on-surface-variant font-label-sm text-label-sm px-2 py-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="event">event</span>
+<span>24 Nov</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md">Compléter la carte muette distribuée en classe avec les capitales et les fleuves principaux.</p>
+<div class="flex items-center gap-sm mt-auto">
+<button class="flex-1 flex items-center justify-center gap-xs bg-surface border border-primary text-primary font-label-md text-label-md h-touch-target rounded-lg hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined" data-icon="picture_as_pdf">picture_as_pdf</span>
+                        Carte Vierge (PDF)
+                    </button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm">
+<div class="flex justify-between items-start mb-sm">
+<div>
+<span class="inline-block bg-primary-container text-on-primary-container font-label-sm text-label-sm px-2 py-1 rounded mb-xs">Français</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Lecture : Le Pagne Noir</h2>
+</div>
+<div class="text-on-surface-variant font-label-sm text-label-sm px-2 py-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="event">event</span>
+<span>26 Nov</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-md">Lire les chapitres 1 à 3 et préparer un résumé d'une page sur le personnage principal.</p>
+<div class="flex items-center gap-sm mt-auto">
+<button class="flex-1 flex items-center justify-center gap-xs bg-surface border border-outline-variant text-on-surface-variant font-label-md text-label-md h-touch-target rounded-lg opacity-50 cursor-not-allowed">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+                        Aucune pièce jointe
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center bg-surface px-sm py-xs border-t border-outline-variant md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="grade">grade</span>
+<span class="font-label-sm text-label-sm mt-1">Grades</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 opacity-80 touch-none" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book" data-weight="fill">menu_book</span>
+<span class="font-label-sm text-label-sm mt-1 font-bold">Homework</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-highest transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-sm text-label-sm mt-1">Payments</span>
+</a>
+</nav>
+<style>
+        /* Custom styles for horizontal scrollbar hiding */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>
