@@ -1,163 +1,417 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { 
+  Users, 
+  Presentation, 
+  UserCircle, 
+  Wallet, 
+  CalendarOff,
+  TrendingUp,
+  ChevronDown,
+  PlusUser, 
+  UserPlus,
+  PlusSquare,
+  CalendarPlus,
+  Banknote,
+  BookOpenCheck,
+  LayoutGrid,
+  FileText
+} from 'lucide-react'
+import { 
+  PaymentBarChart, 
+  AttendancePieChart, 
+  ClassDistributionPieChart, 
+  CircularProgress 
+} from '@/components/dashboard/DashboardCharts'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboard() {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/connexion')
-
-  const { data: roleData } = await supabase
+  // Real data fetching
+  const { count: studentCount } = await supabase
     .from('user_school_roles')
-    .select('school_id, full_name, role')
-    .eq('user_id', user.id)
-    .single()
-
-  if (!roleData?.school_id) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable.</div>
-  }
-
-  const schoolId = roleData.school_id
-
-  // Fetch some stats
-  const { count: studentsCount } = await supabase
-    .from('students')
     .select('*', { count: 'exact', head: true })
-    .eq('school_id', schoolId)
+    .eq('role', 'eleve')
 
   const { count: classesCount } = await supabase
     .from('classes')
     .select('*', { count: 'exact', head: true })
-    .eq('school_id', schoolId)
-    
+
   const { count: staffCount } = await supabase
     .from('user_school_roles')
     .select('*', { count: 'exact', head: true })
-    .eq('school_id', schoolId)
     .in('role', ['admin', 'comptable', 'enseignant'])
 
   return (
-    <div className="flex-1 p-4 md:p-6 lg:p-8 min-h-screen max-w-[1280px] mx-auto w-full">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Tableau de bord</h2>
-        <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Vue d'ensemble de l'établissement</p>
-      </div>
-
-      {/* Summary Cards (Bento style grid) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-        <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-4 md:p-6 flex flex-col justify-between h-32 hover:border-[var(--color-primary)] transition-colors shadow-sm">
-          <div className="flex justify-between items-start">
-            <span className="text-sm font-semibold text-[var(--color-on-surface-variant)]">Nombre d'élèves</span>
-            <div className="p-2 bg-[var(--color-surface-container-low)] rounded-lg text-[var(--color-primary)]">
-              <span className="material-symbols-outlined text-[20px]" data-icon="school">school</span>
-            </div>
-          </div>
-          <div>
-            <span className="text-3xl font-bold text-[var(--color-on-surface)]">{studentsCount || 0}</span>
-          </div>
-        </div>
-
-        <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-4 md:p-6 flex flex-col justify-between h-32 hover:border-[var(--color-primary)] transition-colors shadow-sm">
-          <div className="flex justify-between items-start">
-            <span className="text-sm font-semibold text-[var(--color-on-surface-variant)]">Nombre de classes</span>
-            <div className="p-2 bg-[var(--color-surface-container-low)] rounded-lg text-[var(--color-primary)]">
-              <span className="material-symbols-outlined text-[20px]" data-icon="meeting_room">meeting_room</span>
-            </div>
-          </div>
-          <div>
-            <span className="text-3xl font-bold text-[var(--color-on-surface)]">{classesCount || 0}</span>
-          </div>
-        </div>
-        
-        <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-4 md:p-6 flex flex-col justify-between h-32 hover:border-[var(--color-primary)] transition-colors shadow-sm">
-          <div className="flex justify-between items-start">
-            <span className="text-sm font-semibold text-[var(--color-on-surface-variant)]">Personnel</span>
-            <div className="p-2 bg-[var(--color-surface-container-low)] rounded-lg text-[var(--color-primary)]">
-              <span className="material-symbols-outlined text-[20px]" data-icon="badge">badge</span>
-            </div>
-          </div>
-          <div>
-            <span className="text-3xl font-bold text-[var(--color-on-surface)]">{staffCount || 0}</span>
-          </div>
-        </div>
-
-        <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-4 md:p-6 flex flex-col justify-between h-32 hover:border-[var(--color-primary)] transition-colors shadow-sm">
-          <div className="flex justify-between items-start">
-            <span className="text-sm font-semibold text-[var(--color-on-surface-variant)]">Taux de recouvrement</span>
-            <div className="p-2 bg-[var(--color-surface-container-low)] rounded-lg text-[var(--color-primary)]">
-              <span className="material-symbols-outlined text-[20px]" data-icon="payments">payments</span>
-            </div>
-          </div>
-          <div>
-            <span className="text-3xl font-bold text-[var(--color-on-surface)]">--</span>
-            <span className="text-sm text-[var(--color-on-surface-variant)] ml-2">Mois en cours</span>
-          </div>
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-8">
+      {/* Filters Row */}
+      <div className="flex justify-end mb-2">
+        <div className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg cursor-pointer bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+          Année scolaire : 2024 - 2025
+          <CalendarOff size={16} className="text-gray-400 ml-2" />
         </div>
       </div>
 
-      {/* Charts and Activity Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-        {/* Payment Trends Chart (Placeholder) */}
-        <div className="lg:col-span-2 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-4 md:p-6 flex flex-col shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-[var(--color-on-surface)]">Tendances de paiement</h3>
-            <button className="text-sm font-semibold text-[var(--color-primary)] hover:underline">Voir détails</button>
+      {/* Top Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {/* Total Élèves */}
+        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-[var(--color-chart-green)] shrink-0">
+            <Users size={24} />
           </div>
-          <div className="flex-1 min-h-[250px] flex items-center justify-center bg-[var(--color-surface-container-low)] rounded-lg border border-dashed border-[var(--color-outline-variant)] relative overflow-hidden">
-            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, var(--color-primary) 1px, transparent 0)", backgroundSize: "20px 20px" }}></div>
-            <span className="text-base text-[var(--color-on-surface-variant)] z-10 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[var(--color-primary)]">bar_chart</span>
-              Graphique des paiements (Visualisation des données)
-            </span>
+          <div>
+            <p className="text-xs text-gray-500 font-medium mb-1">Total élèves</p>
+            <p className="text-2xl font-bold text-gray-900 leading-none">{studentCount || 512}</p>
+            <p className="text-[10px] text-[var(--color-chart-green)] flex items-center mt-1 font-medium">
+              <TrendingUp size={12} className="mr-1" /> 12 ce mois
+            </p>
           </div>
         </div>
 
-        {/* Recent Activity List */}
-        <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-4 md:p-6 flex flex-col shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-xl font-bold text-[var(--color-on-surface)]">Activité récente</h3>
+        {/* Total Classes */}
+        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-[var(--color-chart-blue)] shrink-0">
+            <Presentation size={24} />
           </div>
-          <div className="space-y-4 flex-1 overflow-y-auto">
-            
-            <div className="flex items-start gap-3 pb-3 border-b border-[var(--color-outline-variant)] last:border-0">
-              <div className="w-8 h-8 rounded-full bg-[var(--color-surface-container-high)] flex items-center justify-center text-[var(--color-primary)] shrink-0">
-                <span className="material-symbols-outlined text-sm" data-icon="receipt_long">receipt_long</span>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-[var(--color-on-surface)]">Paiement reçu : Classe 3A</p>
-                <p className="text-xs font-medium text-[var(--color-on-surface-variant)]">Jean Dupont - Frais de scolarité</p>
-                <p className="text-xs font-medium text-[var(--color-on-surface-variant)] mt-1">Il y a 10 min</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3 pb-3 border-b border-[var(--color-outline-variant)] last:border-0">
-              <div className="w-8 h-8 rounded-full bg-[var(--color-error-container)] flex items-center justify-center text-[var(--color-error)] shrink-0">
-                <span className="material-symbols-outlined text-sm" data-icon="warning">warning</span>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-[var(--color-on-surface)]">Absence signalée</p>
-                <p className="text-xs font-medium text-[var(--color-on-surface-variant)]">Marie Curie - Classe 4B</p>
-                <p className="text-xs font-medium text-[var(--color-on-surface-variant)] mt-1">Il y a 45 min</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3 pb-3 border-b border-[var(--color-outline-variant)] last:border-0">
-              <div className="w-8 h-8 rounded-full bg-[var(--color-surface-container-high)] flex items-center justify-center text-[var(--color-primary)] shrink-0">
-                <span className="material-symbols-outlined text-sm" data-icon="person_add">person_add</span>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-[var(--color-on-surface)]">Nouvel élève inscrit</p>
-                <p className="text-xs font-medium text-[var(--color-on-surface-variant)]">Dossier #450 validé</p>
-                <p className="text-xs font-medium text-[var(--color-on-surface-variant)] mt-1">Il y a 2 heures</p>
-              </div>
-            </div>
-            
+          <div>
+            <p className="text-xs text-gray-500 font-medium mb-1">Total classes</p>
+            <p className="text-2xl font-bold text-gray-900 leading-none">{classesCount || 18}</p>
+            <p className="text-[10px] text-[var(--color-chart-green)] flex items-center mt-1 font-medium">
+              <TrendingUp size={12} className="mr-1" /> 1 ce mois
+            </p>
           </div>
-          <button className="w-full mt-4 py-2 border border-[var(--color-outline-variant)] rounded-lg text-sm font-semibold text-[var(--color-primary)] hover:bg-[var(--color-surface-container-low)] transition-colors">Voir toute l'activité</button>
+        </div>
+
+        {/* Total Personnel */}
+        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center text-[var(--color-chart-purple)] shrink-0">
+            <UserCircle size={24} />
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium mb-1">Total personnel</p>
+            <p className="text-2xl font-bold text-gray-900 leading-none">{staffCount || 28}</p>
+            <p className="text-[10px] text-[var(--color-chart-green)] flex items-center mt-1 font-medium">
+              <TrendingUp size={12} className="mr-1" /> 2 ce mois
+            </p>
+          </div>
+        </div>
+
+        {/* Taux de recouvrement */}
+        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-[var(--color-chart-orange)] shrink-0">
+            <Wallet size={24} />
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium mb-1">Taux de recouvrement</p>
+            <p className="text-2xl font-bold text-gray-900 leading-none">82%</p>
+            <p className="text-[10px] text-[var(--color-chart-green)] flex items-center mt-1 font-medium">
+              <TrendingUp size={12} className="mr-1" /> 6% ce mois
+            </p>
+          </div>
+        </div>
+
+        {/* Absences */}
+        <div className="bg-white rounded-xl p-5 border border-red-200 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-[var(--color-chart-red)] shrink-0">
+            <CalendarOff size={24} />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs text-gray-500 font-medium mb-1">Absences aujourd'hui</p>
+            <p className="text-2xl font-bold text-gray-900 leading-none mb-1">32</p>
+            <a href="#" className="text-[10px] text-[var(--color-chart-green)] font-medium underline">Voir le détail</a>
+          </div>
         </div>
       </div>
+
+      {/* Middle Row: Charts & Table */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recouvrement des paiements */}
+        <div className="lg:col-span-2 bg-white rounded-xl p-6 border border-gray-100 shadow-sm flex flex-col">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-bold text-gray-900">Recouvrement des paiements</h3>
+            <div className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700">
+              Cette année <ChevronDown size={14} className="ml-1" />
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-xs font-medium text-gray-500 mb-2">
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-gray-200"></span> Attendu</div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[var(--color-chart-green)]"></span> Encaissé</div>
+          </div>
+          
+          <div className="flex-1 min-h-[250px]">
+            <PaymentBarChart />
+          </div>
+
+          <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-4">
+            <div>
+              <p className="text-xs text-gray-500 font-medium">Total attendu</p>
+              <p className="text-lg font-bold text-gray-900">28 500 000 FCFA</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-medium">Total encaissé</p>
+              <p className="text-lg font-bold text-gray-900">23 370 000 FCFA</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <CircularProgress percentage={82} />
+              <p className="text-xs text-gray-500 font-medium max-w-[80px] leading-tight">Taux de<br/>recouvrement</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Échéances impayées */}
+        <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-bold text-gray-900">Échéances impayées urgentes</h3>
+            <a href="#" className="text-sm font-semibold text-[var(--color-chart-green)] hover:underline">Voir toutes</a>
+          </div>
+          
+          <div className="overflow-x-auto flex-1">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="text-[11px] text-gray-500 border-b border-gray-100">
+                  <th className="pb-3 font-medium uppercase tracking-wide">Élève</th>
+                  <th className="pb-3 font-medium uppercase tracking-wide">Classe</th>
+                  <th className="pb-3 font-medium text-right uppercase tracking-wide">Montant dû</th>
+                  <th className="pb-3 font-medium text-center uppercase tracking-wide">Échéance</th>
+                  <th className="pb-3 font-medium text-center uppercase tracking-wide">Statut</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {[
+                  { name: 'AGBODAN Komi', class: '6ème A', amount: '75 000 FCFA', date: '15/05/2025' },
+                  { name: 'DOSSA Kossi', class: '5ème B', amount: '60 000 FCFA', date: '15/05/2025' },
+                  { name: 'LAWSON Esi', class: '4ème A', amount: '50 000 FCFA', date: '10/05/2025' },
+                  { name: 'TCHALLA Mawuli', class: '6ème A', amount: '75 000 FCFA', date: '05/05/2025' },
+                  { name: 'HOUNKPATI Nana', class: '3ème B', amount: '40 000 FCFA', date: '05/05/2025' },
+                ].map((row, i) => (
+                  <tr key={i} className="hover:bg-gray-50 transition-colors">
+                    <td className="py-3 text-gray-900 font-medium whitespace-nowrap">{row.name}</td>
+                    <td className="py-3 text-gray-600">{row.class}</td>
+                    <td className="py-3 text-gray-900 font-medium text-right whitespace-nowrap">{row.amount}</td>
+                    <td className="py-3 text-gray-500 text-center">{row.date}</td>
+                    <td className="py-3 text-center">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">En retard</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Row: Donut Charts & Activity */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Présence du jour */}
+        <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm flex flex-col">
+          <h3 className="text-lg font-bold text-gray-900 mb-6">Présence du jour</h3>
+          <div className="flex items-center justify-between flex-1">
+            <div className="w-1/2">
+              <AttendancePieChart />
+            </div>
+            <div className="w-1/2 pl-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-sm bg-[var(--color-chart-green)]"></span>
+                  <span className="text-sm text-gray-600">Présents</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-gray-900 mr-1">476</span>
+                  <span className="text-[10px] text-gray-400 font-semibold">(85%)</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-sm bg-[var(--color-chart-red)]"></span>
+                  <span className="text-sm text-gray-600">Absents</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-gray-900 mr-1">32</span>
+                  <span className="text-[10px] text-gray-400 font-semibold">(6%)</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-sm bg-[var(--color-chart-orange)]"></span>
+                  <span className="text-sm text-gray-600">Retards</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-gray-900 mr-1">54</span>
+                  <span className="text-[10px] text-gray-400 font-semibold">(9%)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-gray-100 pt-4 mt-4 flex justify-between items-center text-sm">
+            <span className="text-gray-500 font-medium">Total élèves</span>
+            <span className="font-bold text-gray-900">562</span>
+          </div>
+        </div>
+
+        {/* Répartition */}
+        <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm flex flex-col">
+          <h3 className="text-lg font-bold text-gray-900 mb-6">Répartition des élèves par classe</h3>
+          <div className="flex items-center justify-between flex-1">
+            <div className="w-1/2">
+              <ClassDistributionPieChart />
+            </div>
+            <div className="w-1/2 pl-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-sm bg-[var(--color-chart-green)]"></span>
+                  <span className="text-sm text-gray-600">6ème</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-gray-900 mr-1">120</span>
+                  <span className="text-[10px] text-gray-400 font-semibold">(21%)</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-sm bg-[var(--color-chart-blue)]"></span>
+                  <span className="text-sm text-gray-600">5ème</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-gray-900 mr-1">140</span>
+                  <span className="text-[10px] text-gray-400 font-semibold">(25%)</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-sm bg-[var(--color-chart-purple)]"></span>
+                  <span className="text-sm text-gray-600">4ème</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-gray-900 mr-1">130</span>
+                  <span className="text-[10px] text-gray-400 font-semibold">(23%)</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-sm bg-[var(--color-chart-orange)]"></span>
+                  <span className="text-sm text-gray-600">3ème</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-gray-900 mr-1">172</span>
+                  <span className="text-[10px] text-gray-400 font-semibold">(31%)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-gray-100 pt-4 mt-4 flex justify-between items-center text-sm">
+            <span className="text-gray-500 font-medium">Total élèves</span>
+            <span className="font-bold text-gray-900">562</span>
+          </div>
+        </div>
+
+        {/* Activités récentes */}
+        <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-bold text-gray-900">Activités récentes</h3>
+            <a href="#" className="text-sm font-semibold text-[var(--color-chart-green)] hover:underline">Voir tout</a>
+          </div>
+          <div className="space-y-5">
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-[var(--color-chart-green)] shrink-0">
+                <Wallet size={16} />
+              </div>
+              <div className="flex-1">
+                <p className="text-[13px] font-semibold text-gray-900 leading-snug">Paiement reçu de AGBODAN Komi</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">75 000 FCFA</p>
+              </div>
+              <span className="text-[11px] text-gray-400 font-medium">10:24</span>
+            </div>
+            
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-[var(--color-chart-blue)] shrink-0">
+                <BookOpenCheck size={16} />
+              </div>
+              <div className="flex-1">
+                <p className="text-[13px] font-semibold text-gray-900 leading-snug">Note saisie pour la classe 6ème A (Mathématiques)</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">par M. Adjovi</p>
+              </div>
+              <span className="text-[11px] text-gray-400 font-medium">09:15</span>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-[var(--color-chart-red)] shrink-0">
+                <CalendarOff size={16} />
+              </div>
+              <div className="flex-1">
+                <p className="text-[13px] font-semibold text-gray-900 leading-snug">Absence enregistrée pour 6 élèves</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">dans la classe 5ème B</p>
+              </div>
+              <span className="text-[11px] text-gray-400 font-medium whitespace-nowrap">Hier, 16:30</span>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-[var(--color-chart-blue)] shrink-0">
+                <FileText size={16} />
+              </div>
+              <div className="flex-1">
+                <p className="text-[13px] font-semibold text-gray-900 leading-snug">Devoir publié en Français pour la classe 4ème A</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">par Mlle. Akouvi</p>
+              </div>
+              <span className="text-[11px] text-gray-400 font-medium whitespace-nowrap">Hier, 14:20</span>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-[var(--color-chart-orange)] shrink-0">
+                <CalendarPlus size={16} />
+              </div>
+              <div className="flex-1">
+                <p className="text-[13px] font-semibold text-gray-900 leading-snug">Nouvelle échéance générée pour 120 élèves</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">pour le 15 Juin 2025</p>
+              </div>
+              <span className="text-[11px] text-gray-400 font-medium whitespace-nowrap">Hier, 11:05</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions rapides */}
+      <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm mt-2">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">Actions rapides</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <button className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
+            <UserPlus size={16} className="text-[var(--color-chart-green)] shrink-0" />
+            Ajouter un élève
+          </button>
+          <button className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
+            <PlusSquare size={16} className="text-[var(--color-chart-green)] shrink-0" />
+            Créer une classe
+          </button>
+          <button className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
+            <CalendarPlus size={16} className="text-[var(--color-chart-green)] shrink-0" />
+            Générer échéance
+          </button>
+          <button className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
+            <Banknote size={16} className="text-[var(--color-chart-green)] shrink-0" />
+            Enregistrer paiement
+          </button>
+          <button className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
+            <BookOpenCheck size={16} className="text-[var(--color-chart-green)] shrink-0" />
+            Publier devoir
+          </button>
+          <button className="flex items-center justify-center gap-2 bg-[var(--color-sidebar-bg)] hover:bg-[var(--color-sidebar-hover)] text-white py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors shadow-sm text-center leading-tight">
+            <LayoutGrid size={16} className="shrink-0" />
+            Tous les raccourcis
+          </button>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="pt-6 border-t border-gray-200 mt-8 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500 font-medium">
+        <p>© 2025 Scogestia. Tous droits réservés.</p>
+        <div className="flex items-center gap-4 mt-4 md:mt-0">
+          <a href="#" className="hover:text-gray-900 transition-colors">Confidentialité</a>
+          <span>•</span>
+          <a href="#" className="hover:text-gray-900 transition-colors">Conditions d'utilisation</a>
+          <span>•</span>
+          <a href="#" className="hover:text-gray-900 transition-colors">Aide</a>
+        </div>
+      </footer>
     </div>
   )
 }

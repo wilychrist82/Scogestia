@@ -61,6 +61,19 @@
   --color-status-partiel-bg: #FFEDD5;
   --color-status-partiel-text: #9A3412;
 
+  --color-sidebar-bg: #0C4A3E;
+  --color-sidebar-active: #166555;
+  --color-sidebar-hover: #11594A;
+  --color-sidebar-text: #FFFFFF;
+  --color-sidebar-muted: #8BA9A3;
+  --color-dashboard-bg: #F4F7F6;
+  --color-chart-green: #059669;
+  --color-chart-orange: #F59E0B;
+  --color-chart-red: #EF4444;
+  --color-chart-blue: #3B82F6;
+  --color-chart-purple: #8B5CF6;
+  --color-chart-light-gray: #E5E7EB;
+
   --font-sans: "Work Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-body-lg: "Public Sans";
   --font-body-md: "Public Sans";

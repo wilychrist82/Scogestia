@@ -1,4 +1,5 @@
 import { Sidebar } from '@/components/layout/Sidebar'
+import { TopHeader } from '@/components/layout/TopHeader'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
@@ -20,24 +21,18 @@ export default async function AdminLayout({
     .eq('user_id', user.id)
     .single()
 
-  const navItems = [
-    { label: 'Tableau de bord', href: '/admin', icon: 'dashboard' },
-    { label: 'Classes', href: '/admin/classes', icon: 'school' },
-    { label: 'Élèves', href: '/admin/eleves', icon: 'group' },
-    { label: 'Personnel', href: '/admin/personnel', icon: 'badge' },
-    { label: 'Paramètres', href: '/admin/parametres', icon: 'settings' },
-  ]
+  const userFullName = roleData?.full_name || 'Admin User'
+  const userRoleLabel = 'Administrateur'
 
   return (
-    <div className="flex min-h-screen bg-[var(--color-surface)]">
+    <div className="flex h-screen bg-[var(--color-dashboard-bg)] overflow-hidden">
       <Sidebar 
-        navItems={navItems} 
-        userFullName={roleData?.full_name || 'Admin User'} 
-        userRoleLabel="Administrateur" 
+        userFullName={userFullName} 
+        userRoleLabel={userRoleLabel} 
       />
-      {/* Main Content wrapper */}
-      <div className="flex-1 md:ml-64 flex flex-col">
-        <main className="flex-1 p-4 md:p-8">
+      <div className="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden">
+        <TopHeader userFullName={userFullName} userRoleLabel={userRoleLabel} />
+        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto custom-scrollbar">
           {children}
         </main>
       </div>

@@ -2,61 +2,121 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { 
+  LayoutDashboard, 
+  Users, 
+  Presentation, 
+  UserCircle, 
+  CircleDollarSign, 
+  BookOpen, 
+  MessageSquare, 
+  FileText, 
+  Settings,
+  Calculator,
+  GraduationCap,
+  Headset,
+  ChevronDown,
+  ShieldCheck
+} from 'lucide-react'
 
 export type NavItem = {
   label: string
   href: string
-  icon: string
+  icon: any
+  hasDropdown?: boolean
 }
 
 export type SidebarProps = {
-  navItems: NavItem[]
-  userFullName: string
-  userRoleLabel: string
+  userFullName?: string
+  userRoleLabel?: string
 }
 
-export function Sidebar({ navItems, userFullName, userRoleLabel }: SidebarProps) {
+const mainNavItems: NavItem[] = [
+  { label: 'Tableau de bord', href: '/admin', icon: LayoutDashboard },
+  { label: 'Élèves', href: '/admin/eleves', icon: Users, hasDropdown: true },
+  { label: 'Classes', href: '/admin/classes', icon: Presentation },
+  { label: 'Personnel', href: '/admin/personnel', icon: UserCircle },
+  { label: 'Finance', href: '/admin/finance', icon: CircleDollarSign, hasDropdown: true },
+  { label: 'Académique', href: '/admin/academique', icon: BookOpen, hasDropdown: true },
+  { label: 'Communication', href: '/admin/communication', icon: MessageSquare },
+  { label: 'Rapports', href: '/admin/rapports', icon: FileText, hasDropdown: true },
+  { label: 'Paramètres', href: '/admin/parametres', icon: Settings, hasDropdown: true },
+]
+
+const roleNavItems: NavItem[] = [
+  { label: 'Espace Comptable', href: '/comptable', icon: Calculator },
+  { label: 'Espace Enseignant', href: '/enseignant', icon: GraduationCap },
+  { label: 'Espace Parent', href: '/parent', icon: Users },
+]
+
+export function Sidebar({ userFullName, userRoleLabel }: SidebarProps) {
   const pathname = usePathname()
 
-  return (
-    <aside className="bg-[var(--color-surface-container-lowest)] h-screen w-64 fixed left-0 top-0 border-r border-[var(--color-outline-variant)] hidden md:flex flex-col py-8 px-4 z-20">
-      <div className="mb-8 flex items-center gap-3">
-        <div className="w-10 h-10 bg-[var(--color-surface-container)] rounded flex items-center justify-center font-bold text-[var(--color-primary)]">
-          S
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--color-primary)]">Scogestia</h1>
-          <p className="text-xs text-[var(--color-on-surface-variant)]">Gestion Scolaire</p>
-        </div>
-      </div>
-      
-      <nav className="flex-1 space-y-2">
-        {navItems.map((item) => {
+  const NavGroup = ({ title, items }: { title: string, items: NavItem[] }) => (
+    <div className="mb-6">
+      <h3 className="px-4 text-xs font-semibold text-[var(--color-sidebar-muted)] mb-3 uppercase tracking-wider">
+        {title}
+      </h3>
+      <nav className="space-y-1">
+        {items.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+          const Icon = item.icon
           return (
             <Link 
               key={item.href} 
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ease-in-out ${
+              className={`flex items-center justify-between px-4 py-2.5 rounded-lg transition-colors duration-200 mx-2 ${
                 isActive 
-                  ? 'bg-[#d5e0f8] text-[#0b1c30] font-semibold' // secondary-container and on-secondary-container
-                  : 'text-[var(--color-on-surface-variant)] hover:bg-[#dce9ff]' // hover: surface-container-high
+                  ? 'bg-[var(--color-sidebar-active)] text-white font-semibold' 
+                  : 'text-[var(--color-sidebar-text)] hover:bg-[var(--color-sidebar-hover)]'
               }`}
             >
-              <span className="material-symbols-outlined">{item.icon}</span>
-              <span>{item.label}</span>
+              <div className="flex items-center gap-3">
+                <Icon size={20} className={isActive ? 'text-white' : 'text-[var(--color-sidebar-muted)]'} />
+                <span className="text-sm">{item.label}</span>
+              </div>
+              {item.hasDropdown && (
+                <ChevronDown size={16} className={isActive ? 'text-white' : 'text-[var(--color-sidebar-muted)]'} />
+              )}
             </Link>
           )
         })}
       </nav>
+    </div>
+  )
 
-      <div className="mt-auto flex items-center gap-3 px-4 py-3 border-t border-[var(--color-outline-variant)] pt-4">
-        <div className="w-10 h-10 rounded-full bg-[var(--color-surface-variant)] flex items-center justify-center text-[var(--color-on-surface)] font-bold border border-[var(--color-outline-variant)]">
-          {userFullName.charAt(0).toUpperCase()}
+  return (
+    <aside className="bg-[var(--color-sidebar-bg)] h-screen w-64 fixed left-0 top-0 hidden md:flex flex-col py-6 z-20 shadow-lg overflow-y-auto custom-scrollbar">
+      {/* Logo */}
+      <div className="mb-8 px-6 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full flex items-center justify-center border-2 border-white text-white">
+          <ShieldCheck size={24} />
         </div>
         <div>
-          <p className="text-sm font-bold text-[var(--color-on-surface)] truncate w-32">{userFullName}</p>
-          <p className="text-xs text-[var(--color-on-surface-variant)]">{userRoleLabel}</p>
+          <h1 className="text-xl font-bold text-white tracking-wide">Scogestia</h1>
+          <p className="text-[9px] text-[var(--color-sidebar-muted)] font-semibold tracking-widest uppercase">La gestion scolaire simplifiée</p>
+        </div>
+      </div>
+      
+      {/* Navigation */}
+      <div className="flex-1">
+        <NavGroup title="Menu Principal" items={mainNavItems} />
+        <NavGroup title="Espaces par rôle" items={roleNavItems} />
+      </div>
+
+      {/* Help Block */}
+      <div className="px-4 mt-auto pb-4">
+        <div className="bg-[var(--color-sidebar-hover)] rounded-xl p-4 text-center">
+          <div className="flex justify-center mb-2">
+            <Headset size={24} className="text-white" />
+          </div>
+          <h4 className="text-white font-semibold text-sm mb-1">Besoin d'aide ?</h4>
+          <p className="text-[var(--color-sidebar-muted)] text-xs mb-4 leading-tight">
+            Consultez notre centre d'aide ou contactez le support.
+          </p>
+          <button className="w-full bg-white text-[var(--color-sidebar-bg)] font-semibold text-sm py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors">
+            Centre d'aide
+          </button>
         </div>
       </div>
     </aside>
