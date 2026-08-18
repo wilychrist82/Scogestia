@@ -1,8 +1,41 @@
-export default function ParametresPage() {
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { ParametresManager } from '@/components/admin/parametres/ParametresManager'
+
+export const dynamic = 'force-dynamic'
+
+export default async function ParametresPage() {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/connexion')
+
+  const { data: roleData } = await supabase
+    .from('user_school_roles')
+    .select('school_id, role')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!roleData?.school_id) {
+    return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable.</div>
+  }
+
+  // Seul l'admin a accès
+  if (roleData.role !== 'admin') {
+    return <div className="p-8 text-[var(--color-status-retard-text)]">Accès refusé. Vous devez être administrateur.</div>
+  }
+
+  const { data: school } = await supabase
+    .from('schools')
+    .select('id, name, address, phone, email, current_academic_year')
+    .eq('id', roleData.school_id)
+    .single()
+
+  if (!school) {
+    return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable.</div>
+  }
+
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-[var(--color-on-surface)] mb-4">Paramètres</h1>
-      <p className="text-[var(--color-on-surface-variant)]">Les paramètres de l'établissement seront disponibles prochainement.</p>
-    </div>
+    <ParametresManager school={school as any} />
   )
 }
