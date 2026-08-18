@@ -1,4 +1,3 @@
-create type payment_status as enum ('en_attente', 'paye', 'en_retard', 'partiel');
 
 create table public.dues (
   id uuid default gen_random_uuid() primary key,

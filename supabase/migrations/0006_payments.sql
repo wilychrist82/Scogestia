@@ -1,5 +1,6 @@
 create type transaction_status as enum ('pending', 'success', 'failed');
 
+drop table if exists public.payments cascade;
 create table public.payments (
   id uuid default gen_random_uuid() primary key,
   due_id uuid not null references public.dues(id) on delete cascade,

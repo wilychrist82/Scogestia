@@ -1,5 +1,6 @@
 create type reminder_type as enum ('j-3', 'overdue');
 
+drop table if exists public.payment_reminders cascade;
 create table public.payment_reminders (
   id uuid default gen_random_uuid() primary key,
   due_id uuid not null references public.dues(id) on delete cascade,
