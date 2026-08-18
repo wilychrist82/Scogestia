@@ -21,7 +21,7 @@ export default async function AdminLayout({
     .single()
 
   const navItems = [
-    { label: 'Tableau de bord', href: '/admin/classes', icon: 'dashboard' },
+    { label: 'Tableau de bord', href: '/admin', icon: 'dashboard' },
     { label: 'Classes', href: '/admin/classes', icon: 'school' },
     { label: 'Élèves', href: '/admin/eleves', icon: 'group' },
     { label: 'Personnel', href: '/admin/personnel', icon: 'badge' },
