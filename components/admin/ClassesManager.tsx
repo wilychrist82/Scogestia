@@ -200,12 +200,12 @@ export function ClassesManager({ classes }: Props) {
                   >
                     <option disabled value="">Sélectionner un niveau</option>
                     <optgroup label="Maternelle">
-                      <option value="ps">Petite Section</option>
-                      <option value="ms">Moyenne Section</option>
-                      <option value="gs">Grande Section</option>
+                      <option value="section1">Section 1</option>
+                      <option value="section2">Section 2</option>
                     </optgroup>
                     <optgroup label="Primaire">
-                      <option value="cp">CP</option>
+                      <option value="cp1">CP1</option>
+                      <option value="cp2">CP2</option>
                       <option value="ce1">CE1</option>
                       <option value="ce2">CE2</option>
                       <option value="cm1">CM1</option>
