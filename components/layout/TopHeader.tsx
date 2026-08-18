@@ -7,9 +7,14 @@ export function TopHeader({ userFullName, userRoleLabel }: { userFullName: strin
   const pathname = usePathname()
   
   const getPageInfo = () => {
+    if (pathname.includes('/parametres')) return { title: 'Paramètres', subtitle: 'Gérez la configuration de votre établissement.' }
     if (pathname.includes('/personnel')) return { title: 'Personnel', subtitle: 'Gérez le personnel administratif et enseignant.' }
     if (pathname.includes('/eleves')) return { title: 'Élèves', subtitle: 'Gérez les élèves de votre établissement.' }
     if (pathname.includes('/classes')) return { title: 'Classes', subtitle: 'Gérez les classes de votre établissement.' }
+    if (pathname.includes('/finance')) return { title: 'Finance', subtitle: 'Gérez les paiements et les finances.' }
+    if (pathname.includes('/academique')) return { title: 'Académique', subtitle: 'Gérez les notes et bulletins.' }
+    if (pathname.includes('/communication')) return { title: 'Communication', subtitle: 'Gérez la communication avec les parents.' }
+    if (pathname.includes('/rapports')) return { title: 'Rapports', subtitle: 'Consultez les rapports et statistiques.' }
     return { title: 'Tableau de bord', subtitle: `Bienvenue, ${userFullName.split(' ')[0]} ! Voici un aperçu de votre école aujourd'hui.` }
   }
 

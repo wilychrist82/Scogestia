@@ -59,7 +59,7 @@ export function Sidebar({ userFullName, userRoleLabel }: SidebarProps) {
       </h3>
       <nav className="space-y-1">
         {items.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+          const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(`${item.href}/`))
           const Icon = item.icon
           return (
             <Link 
@@ -89,8 +89,8 @@ export function Sidebar({ userFullName, userRoleLabel }: SidebarProps) {
     <aside className="bg-[var(--color-sidebar-bg)] h-screen w-64 fixed left-0 top-0 hidden md:flex flex-col py-6 z-20 shadow-lg overflow-y-auto custom-scrollbar">
       {/* Logo */}
       <div className="mb-8 px-6 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full flex items-center justify-center border-2 border-white text-white">
-          <ShieldCheck size={24} />
+        <div className="w-10 h-10 flex items-center justify-center overflow-hidden bg-white rounded-md p-1">
+          <img src="/logo.png" alt="Scogestia Logo" className="w-full h-full object-contain" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-white tracking-wide">Scogestia</h1>
