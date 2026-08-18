@@ -23,8 +23,8 @@ export default async function ComptableLayout({
   const navItems = [
     { label: 'Tableau de bord', href: '/comptable', icon: 'dashboard' },
     { label: 'Paiements', href: '/comptable/paiements', icon: 'payments' },
-    { label: 'Échéanciers', href: '/comptable/echeanciers', icon: 'calendar_month' },
-    { label: 'Relances', href: '/comptable/relances', icon: 'notifications_active' },
+    { label: 'Frais scolaires', href: '/comptable/echeances', icon: 'calendar_month' },
+    { label: 'Impayés', href: '/comptable/impayes', icon: 'notifications_active' },
   ]
 
   return (

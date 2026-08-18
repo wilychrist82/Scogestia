@@ -1,6 +1,6 @@
-import { Sidebar } from '@/components/layout/Sidebar'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { BottomNav } from '@/components/parent/BottomNav'
 
 export default async function ParentLayout({
   children,
@@ -18,26 +18,29 @@ export default async function ParentLayout({
     .from('user_school_roles')
     .select('full_name, role')
     .eq('user_id', user.id)
+    .eq('role', 'parent')
     .single()
 
-  const navItems = [
-    { label: 'Tableau de bord', href: '/parent', icon: 'dashboard' },
-    { label: 'Mes Enfants', href: '/parent/enfants', icon: 'child_care' },
-    { label: 'Paiements', href: '/parent/paiements', icon: 'payments' },
-    { label: 'Résultats', href: '/parent/resultats', icon: 'school' },
-  ]
+  if (!roleData) redirect('/')
 
   return (
-    <div className="flex min-h-screen bg-[var(--color-surface)]">
-      <Sidebar 
-        navItems={navItems} 
-        userFullName={roleData?.full_name || 'Parent'} 
-        userRoleLabel="Parent d'élève" 
-      />
-      <div className="flex-1 md:ml-64 flex flex-col">
-        <main className="flex-1 p-4 md:p-8">
+    <div className="min-h-screen bg-[#f8f9fa] flex justify-center">
+      <div className="w-full max-w-[390px] bg-white min-h-screen relative shadow-2xl flex flex-col">
+        {/* Header App-Like */}
+        <header className="h-14 bg-[var(--color-primary)] text-white flex items-center px-4 sticky top-0 z-10 shadow-md">
+          <span className="material-symbols-outlined text-white mr-3">account_circle</span>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold truncate max-w-[200px]">{roleData.full_name}</span>
+            <span className="text-[10px] text-[var(--color-primary-container)]">Espace Parent</span>
+          </div>
+        </header>
+
+        {/* Contenu de la page avec padding bottom pour le nav */}
+        <main className="flex-1 pb-20 bg-[#f4f7f6] overflow-y-auto">
           {children}
         </main>
+
+        <BottomNav />
       </div>
     </div>
   )

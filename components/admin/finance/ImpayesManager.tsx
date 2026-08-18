@@ -23,7 +23,7 @@ type Props = {
   impayes: ImpayeItem[]
 }
 
-export function ImpayesManager({ impayes }: Props) {
+export function ImpayesManager({ impayes, basePath = "/admin/finance" }: Props & { basePath?: string }) {
   
   const formatCFA = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount).replace('XOF', 'FCFA')
@@ -44,7 +44,7 @@ export function ImpayesManager({ impayes }: Props) {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#fff0f0] p-6 rounded-xl border border-[#ffd6d6]">
           <div>
             <div className="flex items-center gap-2 text-[var(--color-status-retard-text)]/70 mb-2">
-              <Link href="/admin/finance" className="hover:text-[var(--color-status-retard-text)] transition-colors text-sm font-semibold">
+              <Link href={basePath} className="hover:text-[var(--color-status-retard-text)] transition-colors text-sm font-semibold">
                 Finance
               </Link>
               <span className="material-symbols-outlined text-sm">chevron_right</span>

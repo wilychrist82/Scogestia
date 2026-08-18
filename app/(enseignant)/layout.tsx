@@ -21,10 +21,10 @@ export default async function EnseignantLayout({
     .single()
 
   const navItems = [
-    { label: 'Emploi du temps', href: '/enseignant', icon: 'event' },
-    { label: 'Mes Classes', href: '/enseignant/classes', icon: 'school' },
+    { label: 'Tableau de bord', href: '/enseignant', icon: 'dashboard' },
     { label: 'Notes', href: '/enseignant/notes', icon: 'grading' },
     { label: 'Présences', href: '/enseignant/presences', icon: 'fact_check' },
+    { label: 'Devoirs', href: '/enseignant/devoirs', icon: 'assignment' },
   ]
 
   return (

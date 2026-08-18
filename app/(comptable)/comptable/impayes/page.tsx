@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { EcheancesManager } from '@/components/admin/finance/EcheancesManager'
+import { ImpayesManager } from '@/components/admin/finance/ImpayesManager'
 
 export const dynamic = 'force-dynamic'
 
-export default async function ComptableEcheancesPage() {
+export default async function ComptableImpayesPage() {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -21,7 +21,7 @@ export default async function ComptableEcheancesPage() {
 
   const schoolId = roleData.school_id
 
-  const { data: schedules } = await supabase
+  const { data: unpaidSchedules } = await supabase
     .from('payment_schedules')
     .select(`
       id,
@@ -32,29 +32,16 @@ export default async function ComptableEcheancesPage() {
       students (
         first_name,
         last_name,
-        class_id,
         classes (name)
       )
     `)
     .eq('school_id', schoolId)
+    .eq('status', 'en_retard')
     .order('due_date', { ascending: true })
 
-  const { data: classes } = await supabase
-    .from('classes')
-    .select('id, name')
-    .eq('school_id', schoolId)
-
-  const { data: students } = await supabase
-    .from('students')
-    .select('id, first_name, last_name, class_id')
-    .eq('school_id', schoolId)
-    .eq('status', 'actif')
-
   return (
-    <EcheancesManager 
-      schedules={schedules as any || []}
-      classes={classes as any || []}
-      students={students as any || []}
+    <ImpayesManager 
+      unpaidSchedules={unpaidSchedules as any || []} 
       basePath="/comptable"
     />
   )

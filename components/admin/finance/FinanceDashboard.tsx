@@ -28,7 +28,7 @@ type Props = {
   payments: Payment[]
 }
 
-export function FinanceDashboard({ schedules, payments }: Props) {
+export function FinanceDashboard({ schedules, payments, basePath = "/admin/finance" }: Props & { basePath?: string }) {
   const { totalAttendu, totalEncaisse, resteARecouvrer, tauxRecouvrement, paiementsDuJour, impayes } = useMemo(() => {
     const attendu = schedules.reduce((acc, curr) => acc + Number(curr.amount_due), 0)
     const encaisse = payments.reduce((acc, curr) => acc + Number(curr.amount), 0)
@@ -80,7 +80,7 @@ export function FinanceDashboard({ schedules, payments }: Props) {
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Supervisez les encaissements, les échéances et les impayés de l'établissement.</p>
           </div>
           <div className="flex gap-2">
-            <Link href="/admin/finance/paiements" className="flex items-center justify-center gap-2 bg-[var(--color-primary)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:opacity-90 transition-colors shadow-sm">
+            <Link href={`${basePath}/paiements`} className="flex items-center justify-center gap-2 bg-[var(--color-primary)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:opacity-90 transition-colors shadow-sm">
               <span className="material-symbols-outlined text-[20px]">add_circle</span>
               Encaisser
             </Link>
@@ -171,7 +171,7 @@ export function FinanceDashboard({ schedules, payments }: Props) {
                 <span className="text-[var(--color-on-surface-variant)] text-sm font-medium">Encaissé ce jour</span>
                 <span className="text-xl font-bold text-[var(--color-on-surface)]">{formatCFA(paiementsDuJour)}</span>
               </div>
-              <Link href="/admin/finance/paiements" className="text-[var(--color-primary)] text-sm font-semibold flex items-center justify-center gap-1 hover:underline">
+              <Link href={`${basePath}/paiements`} className="text-[var(--color-primary)] text-sm font-semibold flex items-center justify-center gap-1 hover:underline">
                 Voir les paiements du jour
                 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
               </Link>
@@ -183,13 +183,13 @@ export function FinanceDashboard({ schedules, payments }: Props) {
                 Actions Rapides
               </h3>
               <div className="flex flex-col gap-3">
-                <Link href="/admin/finance/echeances" className="flex items-center gap-3 p-3 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-colors group">
+                <Link href={`${basePath}/echeances`} className="flex items-center gap-3 p-3 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-colors group">
                   <div className="h-10 w-10 rounded-full bg-[var(--color-surface-bright)] flex items-center justify-center group-hover:bg-white group-hover:text-[var(--color-primary)] text-[var(--color-on-surface-variant)]">
                     <span className="material-symbols-outlined">receipt_long</span>
                   </div>
                   <span className="font-medium text-sm text-[var(--color-on-surface)] group-hover:text-[var(--color-primary)]">Générer des échéances</span>
                 </Link>
-                <Link href="/admin/finance/impayes" className="flex items-center gap-3 p-3 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-status-retard-text)] hover:bg-[#fff0f0] transition-colors group">
+                <Link href={`${basePath}/impayes`} className="flex items-center gap-3 p-3 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-status-retard-text)] hover:bg-[#fff0f0] transition-colors group">
                   <div className="h-10 w-10 rounded-full bg-[var(--color-surface-bright)] flex items-center justify-center group-hover:bg-white group-hover:text-[var(--color-status-retard-text)] text-[var(--color-on-surface-variant)]">
                     <span className="material-symbols-outlined">notification_important</span>
                   </div>

@@ -21,7 +21,7 @@ type Props = {
   students: StudentItem[]
 }
 
-export function EcheancesManager({ schedules, classes, students }: Props) {
+export function EcheancesManager({ schedules, classes, students, basePath = "/admin/finance" }: Props & { basePath?: string }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [scheduleType, setScheduleType] = useState<'class' | 'individual'>('class')
   const [isPending, startTransition] = useTransition()
@@ -70,7 +70,7 @@ export function EcheancesManager({ schedules, classes, students }: Props) {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)]">
           <div>
             <div className="flex items-center gap-2 text-[var(--color-on-surface-variant)] mb-2">
-              <Link href="/admin/finance" className="hover:text-[var(--color-primary)] transition-colors text-sm font-semibold">
+              <Link href={basePath} className="hover:text-[var(--color-primary)] transition-colors text-sm font-semibold">
                 Finance
               </Link>
               <span className="material-symbols-outlined text-sm">chevron_right</span>

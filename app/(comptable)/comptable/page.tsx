@@ -1,15 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { AccountingDashboard } from '@/components/comptable/AccountingDashboard'
+import { FinanceDashboard } from '@/components/admin/finance/FinanceDashboard'
+
+export const dynamic = 'force-dynamic'
 
 export default async function ComptableDashboardPage() {
   const supabase = await createClient()
 
-  // 1. Authentification
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/connexion')
 
-  // 2. Vérification du rôle et récupération de l'école
   const { data: roleData } = await supabase
     .from('user_school_roles')
     .select('school_id, role')
@@ -21,48 +21,48 @@ export default async function ComptableDashboardPage() {
 
   const schoolId = roleData.school_id
 
-  // 3. Récupération des statistiques
-  // Total Attendu (Somme de toutes les échéances pour cette école)
-  const { data: dues, error: duesError } = await supabase
-    .from('dues')
-    .select('amount, status')
-    .eq('school_id', schoolId)
-
-  let totalExpected = 0
-  let totalCollected = 0
-
-  if (dues && !duesError) {
-    for (const due of dues) {
-      totalExpected += due.amount
-      if (due.status === 'paye') {
-        totalCollected += due.amount
-      }
-    }
-  }
-
-  // 4. Liste des impayés urgents
-  const { data: unpaidDues, error: unpaidError } = await supabase
-    .from('dues')
+  const { data: schedules } = await supabase
+    .from('payment_schedules')
     .select(`
       id,
-      label,
-      amount,
+      amount_due,
+      status,
       due_date,
-      student:students (
+      student_id,
+      students (
         first_name,
         last_name,
-        class:classes (name)
+        class_id,
+        classes (name)
       )
     `)
     .eq('school_id', schoolId)
-    .eq('status', 'en_retard')
-    .order('due_date', { ascending: true })
+
+  const { data: payments } = await supabase
+    .from('payments')
+    .select(`
+      id,
+      amount,
+      payment_date,
+      payment_method,
+      schedule_id,
+      payment_schedules (
+        student_id,
+        students (
+          first_name,
+          last_name,
+          classes (name)
+        )
+      )
+    `)
+    .eq('school_id', schoolId)
+    .order('payment_date', { ascending: false })
 
   return (
-    <AccountingDashboard 
-      totalExpected={totalExpected}
-      totalCollected={totalCollected}
-      unpaidDues={unpaidDues || []}
+    <FinanceDashboard 
+      schedules={schedules as any || []} 
+      payments={payments as any || []} 
+      basePath="/comptable"
     />
   )
 }

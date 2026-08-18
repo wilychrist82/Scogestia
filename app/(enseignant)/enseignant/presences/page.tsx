@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { DevoirsManager } from '@/components/admin/academique/DevoirsManager'
+import { PresencesManager } from '@/components/admin/academique/PresencesManager'
 
 export const dynamic = 'force-dynamic'
 
-export default async function EnseignantDevoirsPage() {
+export default async function EnseignantPresencesPage() {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -24,7 +24,7 @@ export default async function EnseignantDevoirsPage() {
   // 1. Classes assignées
   const { data: assignments } = await supabase
     .from('teacher_class_subjects')
-    .select(`class_id, subject_name, classes (name)`)
+    .select(`class_id, classes (name)`)
     .eq('teacher_id', user.id)
 
   if (!assignments || assignments.length === 0) {
@@ -32,35 +32,37 @@ export default async function EnseignantDevoirsPage() {
   }
 
   const classesMap = new Map()
-  const subjectsMap = new Map()
-
   assignments.forEach((a: any) => {
     if (!classesMap.has(a.class_id)) {
       classesMap.set(a.class_id, { id: a.class_id, name: a.classes.name })
     }
-    const subjId = `${a.class_id}-${a.subject_name}`
-    if (!subjectsMap.has(subjId)) {
-      subjectsMap.set(subjId, { id: subjId, subject_name: a.subject_name, class_id: a.class_id })
-    }
   })
-
   const classes = Array.from(classesMap.values())
-  const subjects = Array.from(subjectsMap.values())
   const classIds = classes.map(c => c.id)
 
-  // 2. Devoirs existants
-  const { data: homeworks } = await supabase
-    .from('homework')
-    .select('*')
+  // 2. Élèves
+  const { data: students } = await supabase
+    .from('students')
+    .select('id, last_name, first_name, matricule, class_id')
     .eq('school_id', schoolId)
     .in('class_id', classIds)
-    .order('due_date', { ascending: false })
+    .eq('status', 'actif')
+    .order('last_name', { ascending: true })
+
+  // 3. Présences du jour
+  const today = new Date().toISOString().split('T')[0]
+  const { data: attendances } = await supabase
+    .from('attendance')
+    .select('student_id, class_id, status, justification')
+    .eq('school_id', schoolId)
+    .eq('date', today)
+    .in('class_id', classIds)
 
   return (
-    <DevoirsManager 
+    <PresencesManager 
       classes={classes}
-      subjects={subjects}
-      homeworks={homeworks as any || []}
+      students={students as any || []}
+      todayAttendances={attendances as any || []}
     />
   )
 }
