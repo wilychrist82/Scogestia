@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { authRateLimit, checkRateLimit } from '@/lib/ratelimit'
@@ -37,8 +38,13 @@ export async function loginStaff(prevState: AuthState, formData: FormData): Prom
     return { error: 'Identifiants invalides.' };
   }
 
-  // Vérifier que l'utilisateur a bien un rôle dans une école (il fait partie du staff)
-  const { data: roles, error: rolesError } = await supabase
+  // Utiliser un client admin (service_role) pour vérifier le rôle car le cookie n'est pas encore dispo dans cette requête serveur
+  const supabaseAdmin = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { data: roles, error: rolesError } = await supabaseAdmin
     .from('user_school_roles')
     .select('role')
     .eq('user_id', data.user.id)
