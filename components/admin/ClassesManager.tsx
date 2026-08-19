@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useTransition, FormEvent } from 'react'
+import Link from 'next/link'
 import { createClass, updateClass, deleteClass } from '@/app/actions/classes'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Presentation } from 'lucide-react'
 
 export type ClassItem = {
   id: string
@@ -119,11 +122,13 @@ export function ClassesManager({ classes }: Props) {
         </div>
 
         {classes.length === 0 ? (
-          <div className="p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)]">
-             <span className="material-symbols-outlined text-4xl mb-2 opacity-50">school</span>
-             <p className="text-lg font-medium">Aucune classe trouvée</p>
-             <p className="text-sm">Cliquez sur "Ajouter une classe" pour commencer.</p>
-          </div>
+          <EmptyState 
+            title="Aucune classe trouvée"
+            description="Cliquez sur 'Ajouter une classe' pour commencer à structurer votre école."
+            icon={Presentation}
+            actionLabel="+ Ajouter une classe"
+            onAction={openAddModal}
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -142,6 +147,9 @@ export function ClassesManager({ classes }: Props) {
                     <td className="py-3 px-6 text-[var(--color-on-surface-variant)]">{cls.level}</td>
                     <td className="py-3 px-6 text-right text-[var(--color-on-surface-variant)]">{cls.capacity}</td>
                     <td className="py-3 px-6 text-right flex justify-end gap-2">
+                      <Link href={`/admin/classes/${cls.id}`} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors p-1" title="Voir la classe">
+                        <span className="material-symbols-outlined text-[20px]">visibility</span>
+                      </Link>
                       <button onClick={() => openEditModal(cls)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors p-1" title="Modifier">
                         <span className="material-symbols-outlined text-[20px]">edit</span>
                       </button>

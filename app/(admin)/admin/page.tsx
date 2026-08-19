@@ -15,6 +15,7 @@ import {
   LayoutGrid,
   FileText
 } from 'lucide-react'
+import Link from 'next/link'
 import { 
   PaymentBarChart, 
   AttendancePieChart, 
@@ -373,30 +374,30 @@ export default async function AdminDashboard() {
       <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm mt-2">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Actions rapides</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <button className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
+          <Link href="/admin/eleves/nouveau" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
             <UserPlus size={16} className="text-[var(--color-chart-green)] shrink-0" />
             Ajouter un élève
-          </button>
-          <button className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
+          </Link>
+          <Link href="/admin/classes" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
             <PlusSquare size={16} className="text-[var(--color-chart-green)] shrink-0" />
             Créer une classe
-          </button>
-          <button className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
+          </Link>
+          <Link href="/admin/finance/echeances" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
             <CalendarPlus size={16} className="text-[var(--color-chart-green)] shrink-0" />
             Générer échéance
-          </button>
-          <button className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
+          </Link>
+          <Link href="/admin/finance/paiements" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
             <Banknote size={16} className="text-[var(--color-chart-green)] shrink-0" />
             Enregistrer paiement
-          </button>
-          <button className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
+          </Link>
+          <Link href="/admin/academique/devoirs" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors border border-gray-100 text-center leading-tight">
             <BookOpenCheck size={16} className="text-[var(--color-chart-green)] shrink-0" />
             Publier devoir
-          </button>
-          <button className="flex items-center justify-center gap-2 bg-[var(--color-sidebar-bg)] hover:bg-[var(--color-sidebar-hover)] text-white py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors shadow-sm text-center leading-tight">
+          </Link>
+          <Link href="/admin" className="flex items-center justify-center gap-2 bg-[var(--color-sidebar-bg)] hover:bg-[var(--color-sidebar-hover)] text-white py-3 px-2 rounded-lg font-semibold text-[13px] transition-colors shadow-sm text-center leading-tight">
             <LayoutGrid size={16} className="shrink-0" />
             Tous les raccourcis
-          </button>
+          </Link>
         </div>
       </div>
 

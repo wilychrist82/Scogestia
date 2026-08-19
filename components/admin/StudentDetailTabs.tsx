@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { generateParentCode } from '@/app/actions/invitations'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { FileEdit, CalendarDays, Banknote } from 'lucide-react'
 
 type Student = {
   id: string
@@ -182,23 +184,32 @@ export function StudentDetailTabs({ student }: Props) {
       )}
 
       {activeTab === 'notes' && (
-        <div className="p-8 text-center text-[var(--color-on-surface-variant)]">
-          <span className="material-symbols-outlined text-4xl opacity-50 mb-2">grading</span>
-          <p>Le module de notes sera développé lors des prochaines phases.</p>
+        <div className="pt-4">
+          <EmptyState 
+            title="Module Notes (Bientôt disponible)"
+            description="L'affichage détaillé des notes par matière, ainsi que les moyennes trimestrielles, seront intégrés lors de la prochaine phase."
+            icon={FileEdit}
+          />
         </div>
       )}
 
       {activeTab === 'presences' && (
-        <div className="p-8 text-center text-[var(--color-on-surface-variant)]">
-          <span className="material-symbols-outlined text-4xl opacity-50 mb-2">fact_check</span>
-          <p>Le module de présences sera développé lors des prochaines phases.</p>
+        <div className="pt-4">
+          <EmptyState 
+            title="Module Présences (Bientôt disponible)"
+            description="Le suivi journalier des présences, retards et justifications sera ajouté très prochainement."
+            icon={CalendarDays}
+          />
         </div>
       )}
 
       {activeTab === 'paiements' && (
-        <div className="p-8 text-center text-[var(--color-on-surface-variant)]">
-          <span className="material-symbols-outlined text-4xl opacity-50 mb-2">payments</span>
-          <p>Le module de paiements sera développé lors des prochaines phases.</p>
+        <div className="pt-4">
+          <EmptyState 
+            title="Module Paiements (Bientôt disponible)"
+            description="L'historique des transactions, les reçus et les échéanciers pour cet élève apparaîtront ici."
+            icon={Banknote}
+          />
         </div>
       )}
 

@@ -16,7 +16,8 @@ import {
   GraduationCap,
   Headset,
   ChevronDown,
-  ShieldCheck
+  ShieldCheck,
+  X
 } from 'lucide-react'
 
 export type NavItem = {
@@ -31,6 +32,8 @@ export type SidebarProps = {
   userFullName?: string
   userRoleLabel?: string
   navItems?: NavItem[]
+  isOpen?: boolean
+  onClose?: () => void
 }
 
 const mainNavItems: NavItem[] = [
@@ -77,7 +80,7 @@ const roleNavItems: NavItem[] = [
   { label: 'Espace Parent', href: '/parent', icon: Users },
 ]
 
-export function Sidebar({ userFullName, userRoleLabel }: SidebarProps) {
+export function Sidebar({ userFullName, userRoleLabel, isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
 
   const NavGroup = ({ title, items }: { title: string, items: NavItem[] }) => (
@@ -139,17 +142,29 @@ export function Sidebar({ userFullName, userRoleLabel }: SidebarProps) {
   )
 
   return (
-    <aside className="bg-[var(--color-sidebar-bg)] h-screen w-64 fixed left-0 top-0 hidden md:flex flex-col py-6 z-20 shadow-lg overflow-y-auto custom-scrollbar">
-      {/* Logo */}
-      <div className="mb-8 px-6 flex items-center gap-3">
-        <div className="w-10 h-10 flex items-center justify-center overflow-hidden bg-white rounded-md p-1">
-          <img src="/logo.png" alt="Scogestia Logo" className="w-full h-full object-contain" />
+    <>
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={onClose}
+        />
+      )}
+      <aside className={`bg-[var(--color-sidebar-bg)] h-screen w-64 fixed left-0 top-0 flex flex-col py-6 z-50 shadow-lg overflow-y-auto custom-scrollbar transition-transform duration-300 md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        {/* Logo */}
+        <div className="mb-8 px-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 flex items-center justify-center overflow-hidden bg-white rounded-md p-1">
+              <img src="/logo.png" alt="Scogestia Logo" className="w-full h-full object-contain" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white tracking-wide">Scogestia</h1>
+              <p className="text-[9px] text-[var(--color-sidebar-muted)] font-semibold tracking-widest uppercase">La gestion scolaire simplifiée</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="md:hidden text-white/70 hover:text-white">
+            <X size={24} />
+          </button>
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-white tracking-wide">Scogestia</h1>
-          <p className="text-[9px] text-[var(--color-sidebar-muted)] font-semibold tracking-widest uppercase">La gestion scolaire simplifiée</p>
-        </div>
-      </div>
       
       {/* Navigation */}
       <div className="flex-1">
@@ -173,5 +188,6 @@ export function Sidebar({ userFullName, userRoleLabel }: SidebarProps) {
         </div>
       </div>
     </aside>
+    </>
   )
 }

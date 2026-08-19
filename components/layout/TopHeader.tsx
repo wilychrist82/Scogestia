@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { Menu, Bell, ChevronDown, Calendar } from 'lucide-react'
 
-export function TopHeader({ userFullName, userRoleLabel }: { userFullName: string, userRoleLabel: string }) {
+export function TopHeader({ userFullName, userRoleLabel, onMenuClick }: { userFullName: string, userRoleLabel: string, onMenuClick?: () => void }) {
   const pathname = usePathname()
   
   const getPageInfo = () => {
@@ -23,7 +23,7 @@ export function TopHeader({ userFullName, userRoleLabel }: { userFullName: strin
   return (
     <header className="bg-white h-[72px] border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-10 w-full shadow-sm">
       <div className="flex items-center gap-4">
-        <button className="text-gray-400 hover:text-gray-700 transition-colors md:hidden">
+        <button onClick={onMenuClick} className="text-gray-400 hover:text-gray-700 transition-colors md:hidden">
           <Menu size={24} />
         </button>
         <div className="hidden md:flex items-start gap-4">

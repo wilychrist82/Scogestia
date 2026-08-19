@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useCallback } from 'react'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Users } from 'lucide-react'
 
 export type StudentItem = {
   id: string
@@ -106,11 +108,13 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
       {/* Data Table Card */}
       <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl overflow-hidden shadow-sm flex-1 flex flex-col">
         {students.length === 0 ? (
-           <div className="p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] m-auto">
-             <span className="material-symbols-outlined text-4xl mb-2 opacity-50">group</span>
-             <p className="text-lg font-medium">Aucun élève trouvé</p>
-             <p className="text-sm">Modifiez vos filtres ou inscrivez un nouvel élève.</p>
-          </div>
+          <EmptyState 
+            title="Aucun élève trouvé"
+            description="Modifiez vos filtres ou inscrivez un nouvel élève."
+            icon={Users}
+            actionLabel="+ Ajouter un élève"
+            onAction={() => router.push('/admin/eleves/nouveau')}
+          />
         ) : (
           <>
             <div className="overflow-x-auto">

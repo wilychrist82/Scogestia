@@ -1,4 +1,4 @@
-import { Sidebar } from '@/components/layout/Sidebar'
+import { AdminLayoutWrapper } from '@/components/layout/AdminLayoutWrapper'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
@@ -28,17 +28,12 @@ export default async function EnseignantLayout({
   ]
 
   return (
-    <div className="flex min-h-screen bg-[var(--color-surface)]">
-      <Sidebar 
-        navItems={navItems} 
-        userFullName={roleData?.full_name || 'Enseignant'} 
-        userRoleLabel="Enseignant" 
-      />
-      <div className="flex-1 md:ml-64 flex flex-col">
-        <main className="flex-1 p-4 md:p-8">
-          {children}
-        </main>
-      </div>
-    </div>
+    <AdminLayoutWrapper 
+      userFullName={roleData?.full_name || 'Enseignant'} 
+      userRoleLabel="Enseignant"
+      navItems={navItems}
+    >
+      {children}
+    </AdminLayoutWrapper>
   )
 }
