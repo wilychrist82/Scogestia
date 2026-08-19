@@ -136,9 +136,10 @@ export async function POST(req: Request) {
       .eq('transaction_id', cpm_trans_id)
       .single()
 
-    if (paymentInfo && paymentInfo.created_by?.phone) {
-      const phone = paymentInfo.created_by.phone
-      const dueLabel = paymentInfo.dues?.label || 'Scolarité'
+    const createdBy: any = paymentInfo?.created_by;
+    const phone = createdBy?.phone || (Array.isArray(createdBy) && createdBy[0]?.phone);
+    if (paymentInfo && phone) {
+      const dueLabel = (paymentInfo.dues as any)?.label || 'Scolarité'
       const message = `Paiement Scogestia confirmé. Reçu de ${amount} FCFA pour "${dueLabel}". Merci.`
       
       sendSms(phone, message).catch(err => {

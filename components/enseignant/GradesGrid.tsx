@@ -277,7 +277,7 @@ export function GradesGrid({ classId, subjectName, term, students, initialGrades
                         <td key={col.key} className="py-2 px-4 border-r border-[var(--color-outline-variant)]">
                           <div className="relative flex items-center group">
                             <input
-                              ref={el => inputRefs.current[rIdx][cIdx] = el}
+                              ref={el => { inputRefs.current[rIdx][cIdx] = el }}
                               type="number"
                               min="0"
                               max="20"

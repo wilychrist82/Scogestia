@@ -147,11 +147,11 @@ export function FinanceDashboard({ schedules, payments, basePath = "/admin/finan
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} tickFormatter={(val) => \`\${val / 1000000}M\`} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} tickFormatter={(val) => `${val / 1000000}M`} />
                   <Tooltip 
                     cursor={{fill: '#f1f5f9'}}
                     contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                    formatter={(value: number) => [formatCFA(value), undefined]}
+                    formatter={(value: any) => [formatCFA(value), undefined]}
                   />
                   <Bar dataKey="attendu" name="Attendu" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={20} />
                   <Bar dataKey="encaisse" name="Encaissé" fill="var(--color-primary)" radius={[4, 4, 0, 0]} barSize={20} />

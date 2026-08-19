@@ -16,6 +16,4 @@ export default process.env.NODE_ENV === 'production' ? withSentryConfig(nextConf
   project: "scogestia-web",
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  hideSourceMaps: true,
-  disableLogger: true,
 }) : nextConfig;

@@ -192,7 +192,7 @@ export function BulletinsManager({ classes, students, subjects, grades }: Props)
             <div className="flex justify-end mb-8">
               <div className="bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] p-4 rounded-lg flex items-center gap-4">
                 <span className="text-sm font-semibold uppercase tracking-wider text-[var(--color-on-surface-variant)]">Moyenne Générale</span>
-                <span className={\`text-3xl font-black \${bulletin.generalAverage && bulletin.generalAverage >= 10 ? 'text-[#1e8e3e]' : 'text-[#d93025]'}\`}>
+                <span className={`text-3xl font-black ${bulletin.generalAverage && bulletin.generalAverage >= 10 ? 'text-[#1e8e3e]' : 'text-[#d93025]'}`}>
                   {bulletin.generalAverage !== null ? bulletin.generalAverage.toFixed(2) : '-'} <span className="text-lg text-gray-500 font-medium">/ 20</span>
                 </span>
               </div>

@@ -190,7 +190,7 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
                           step="0.25" 
                           min="0" 
                           max="20"
-                          name={\`grade_\${student.id}\`}
+                          name={`grade_${student.id}`}
                           defaultValue={getStudentScore(student.id)}
                           className="w-full h-10 px-3 text-center font-semibold border border-[var(--color-outline-variant)] rounded text-base focus:border-[var(--color-primary)] outline-none bg-white transition-all"
                           placeholder="-"

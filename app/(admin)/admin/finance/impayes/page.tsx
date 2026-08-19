@@ -26,7 +26,7 @@ export default async function ImpayesPage() {
   // Impayés : schedule status 'en_retard' OR due_date < today AND status != 'paye'
   const { data: impayes, error } = await supabase
     .from('payment_schedules')
-    .select(\`
+    .select(`
       id,
       label,
       amount_due,
@@ -41,7 +41,7 @@ export default async function ImpayesPage() {
         )
       ),
       payments(amount)
-    \`)
+    `)
     .eq('school_id', schoolId)
     .neq('status', 'paye')
     .lt('due_date', today)

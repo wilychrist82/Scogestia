@@ -41,7 +41,7 @@ export default async function ComptableImpayesPage() {
 
   return (
     <ImpayesManager 
-      unpaidSchedules={unpaidSchedules as any || []} 
+      impayes={unpaidSchedules as any || []} 
       basePath="/comptable"
     />
   )

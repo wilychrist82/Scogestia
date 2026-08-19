@@ -69,7 +69,7 @@ async function testSummary() {
   } else {
     console.log("Résultat de student_term_summary:")
     console.table(summary.map(s => ({
-      Elève: `${s.student.first_name} ${s.student.last_name}`,
+      Elève: `${(s.student as any).first_name} ${(s.student as any).last_name}`,
       Moyenne: s.term_average,
       Rang: s.class_rank,
       'Absences (non just.)': s.unjustified_absences

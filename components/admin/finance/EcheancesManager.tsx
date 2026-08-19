@@ -182,14 +182,14 @@ export function EcheancesManager({ schedules, classes, students, basePath = "/ad
                   <button 
                     type="button" 
                     onClick={() => setScheduleType('class')}
-                    className={\`flex-1 py-2 text-sm font-semibold rounded-md transition-all \${scheduleType === 'class' ? 'bg-white shadow text-[var(--color-primary)]' : 'text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]'}\`}
+                    className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${scheduleType === 'class' ? 'bg-white shadow text-[var(--color-primary)]' : 'text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]'}`}
                   >
                     Pour une classe entière
                   </button>
                   <button 
                     type="button" 
                     onClick={() => setScheduleType('individual')}
-                    className={\`flex-1 py-2 text-sm font-semibold rounded-md transition-all \${scheduleType === 'individual' ? 'bg-white shadow text-[var(--color-primary)]' : 'text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]'}\`}
+                    className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${scheduleType === 'individual' ? 'bg-white shadow text-[var(--color-primary)]' : 'text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]'}`}
                   >
                     Pour un seul élève
                   </button>

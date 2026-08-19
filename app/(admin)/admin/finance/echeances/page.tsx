@@ -24,7 +24,7 @@ export default async function EcheancesPage() {
 
   const { data: schedules, error } = await supabase
     .from('payment_schedules')
-    .select(\`
+    .select(`
       id,
       label,
       amount_due,
@@ -35,7 +35,7 @@ export default async function EcheancesPage() {
         first_name,
         classes(name)
       )
-    \`)
+    `)
     .eq('school_id', schoolId)
     .order('created_at', { ascending: false })
 

@@ -30,6 +30,7 @@ export type NavItem = {
 export type SidebarProps = {
   userFullName?: string
   userRoleLabel?: string
+  navItems?: NavItem[]
 }
 
 const mainNavItems: NavItem[] = [

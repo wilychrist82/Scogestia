@@ -62,7 +62,7 @@ export default async function EnseignantPresencesPage() {
     <PresencesManager 
       classes={classes}
       students={students as any || []}
-      todayAttendances={attendances as any || []}
+      existingAttendance={attendances as any || []}
     />
   )
 }

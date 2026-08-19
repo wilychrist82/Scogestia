@@ -24,7 +24,7 @@ export default async function PaiementsPage() {
 
   const { data: payments, error } = await supabase
     .from('payments')
-    .select(\`
+    .select(`
       id,
       amount,
       payment_method,
@@ -37,20 +37,20 @@ export default async function PaiementsPage() {
         classes(name)
       ),
       recorded_by_user:auth.users(raw_user_meta_data)
-    \`)
+    `)
     .eq('school_id', schoolId)
     .order('paid_at', { ascending: false })
 
   // Fetch pending schedules for the modal
   const { data: pendingSchedules } = await supabase
     .from('payment_schedules')
-    .select(\`
+    .select(`
       id,
       label,
       amount_due,
       status,
       student:students(last_name, first_name, matricule)
-    \`)
+    `)
     .eq('school_id', schoolId)
     .in('status', ['en_attente', 'partiel', 'en_retard'])
     .order('due_date', { ascending: true })

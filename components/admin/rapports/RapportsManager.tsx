@@ -70,7 +70,7 @@ export function RapportsManager({ totalStudents, totalClasses, totalExpected, to
             </div>
             <p className="text-3xl font-black text-[var(--color-on-surface)]">{recoveryRate.toFixed(1)} %</p>
             <div className="w-full bg-gray-200 rounded-full h-1.5 mt-3">
-              <div className="bg-[var(--color-primary)] h-1.5 rounded-full" style={{ width: \`\${Math.min(recoveryRate, 100)}%\` }}></div>
+              <div className="bg-[var(--color-primary)] h-1.5 rounded-full" style={{ width: `${Math.min(recoveryRate, 100)}%` }}></div>
             </div>
           </div>
 
@@ -118,7 +118,7 @@ export function RapportsManager({ totalStudents, totalClasses, totalExpected, to
                     dataKey="count"
                   >
                     {studentsByClass.map((entry, index) => (
-                      <Cell key={\`cell-\${index}\`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />

@@ -24,7 +24,7 @@ export default async function DevoirsPage() {
 
   const { data: homeworks } = await supabase
     .from('homework')
-    .select(\`
+    .select(`
       id,
       title,
       subject_name,
@@ -32,7 +32,7 @@ export default async function DevoirsPage() {
       created_at,
       class:classes(name),
       creator:users!homework_created_by_fkey(full_name)
-    \`)
+    `)
     .eq('school_id', schoolId)
     .order('created_at', { ascending: false })
 
@@ -62,7 +62,7 @@ export default async function DevoirsPage() {
   // Actually let's fetch raw
   const { data: homeworksRaw, error } = await supabase
     .from('homework')
-    .select(\`
+    .select(`
       id,
       title,
       subject_name,
@@ -70,7 +70,7 @@ export default async function DevoirsPage() {
       created_at,
       created_by,
       class:classes(name)
-    \`)
+    `)
     .eq('school_id', schoolId)
     .order('created_at', { ascending: false })
 

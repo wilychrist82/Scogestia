@@ -7,7 +7,6 @@ import {
   CalendarOff,
   TrendingUp,
   ChevronDown,
-  PlusUser, 
   UserPlus,
   PlusSquare,
   CalendarPlus,

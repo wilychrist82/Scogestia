@@ -28,7 +28,7 @@ export function ParametresManager({ school }: Props) {
     const formData = new FormData(e.currentTarget)
     
     startTransition(async () => {
-      const result = await updateSchoolSettings(null, formData)
+      const result = await updateSchoolSettings({}, formData)
       if (result?.error) {
         setError(result.error)
       } else {

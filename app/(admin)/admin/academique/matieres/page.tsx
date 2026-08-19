@@ -24,14 +24,14 @@ export default async function MatieresPage() {
 
   const { data: subjectsRaw, error } = await supabase
     .from('teacher_class_subjects')
-    .select(\`
+    .select(`
       id,
       subject_name,
       coefficient,
       class_id,
       teacher_id,
       class:classes(name)
-    \`)
+    `)
     .eq('school_id', schoolId)
     .order('subject_name')
 

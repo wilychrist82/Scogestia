@@ -150,15 +150,15 @@ export function PresencesManager({ classes, students, existingAttendance }: Prop
                         <td className="py-3 px-6 text-center">
                           <div className="flex items-center justify-center gap-2">
                             <label className="flex items-center gap-1.5 cursor-pointer">
-                              <input type="radio" name={\`attendance_\${student.id}\`} value="present" defaultChecked={defaultStatus === 'present'} className="w-4 h-4 text-[#1e8e3e] border-gray-300 focus:ring-[#1e8e3e]" />
+                              <input type="radio" name={`attendance_${student.id}`} value="present" defaultChecked={defaultStatus === 'present'} className="w-4 h-4 text-[#1e8e3e] border-gray-300 focus:ring-[#1e8e3e]" />
                               <span className="text-sm font-medium text-[var(--color-on-surface)]">Présent</span>
                             </label>
                             <label className="flex items-center gap-1.5 cursor-pointer ml-4">
-                              <input type="radio" name={\`attendance_\${student.id}\`} value="absent" defaultChecked={defaultStatus === 'absent'} className="w-4 h-4 text-[#d93025] border-gray-300 focus:ring-[#d93025]" />
+                              <input type="radio" name={`attendance_${student.id}`} value="absent" defaultChecked={defaultStatus === 'absent'} className="w-4 h-4 text-[#d93025] border-gray-300 focus:ring-[#d93025]" />
                               <span className="text-sm font-medium text-[var(--color-on-surface)]">Absent</span>
                             </label>
                             <label className="flex items-center gap-1.5 cursor-pointer ml-4">
-                              <input type="radio" name={\`attendance_\${student.id}\`} value="retard" defaultChecked={defaultStatus === 'retard'} className="w-4 h-4 text-[#e37400] border-gray-300 focus:ring-[#e37400]" />
+                              <input type="radio" name={`attendance_${student.id}`} value="retard" defaultChecked={defaultStatus === 'retard'} className="w-4 h-4 text-[#e37400] border-gray-300 focus:ring-[#e37400]" />
                               <span className="text-sm font-medium text-[var(--color-on-surface)]">Retard</span>
                             </label>
                           </div>
