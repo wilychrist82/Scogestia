@@ -23,7 +23,8 @@ export default async function ImpayesPage() {
   const schoolId = roleData.school_id
   const today = new Date().toISOString().split('T')[0]
 
-  // Impayés : schedule status 'en_retard' OR due_date < today AND status != 'paye'
+  // Impayés: échéances dépassées et non payées
+  // Jointure via user_school_roles (pas auth.users qui est protégée)
   const { data: impayes, error } = await supabase
     .from('payment_schedules')
     .select(`
@@ -37,7 +38,7 @@ export default async function ImpayesPage() {
         matricule,
         classes(name),
         parent_links:parent_student_links(
-          parent_user:users(full_name, phone)
+          parent_user:user_school_roles(full_name, phone)
         )
       ),
       payments(amount)
@@ -48,7 +49,7 @@ export default async function ImpayesPage() {
     .order('due_date', { ascending: true })
 
   if (error) {
-    console.error("Erreur de récupération des impayés:", error)
+    console.error('Erreur récupération impayés:', error)
   }
 
   return (

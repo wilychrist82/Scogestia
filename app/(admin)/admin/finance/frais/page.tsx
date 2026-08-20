@@ -1,22 +1,11 @@
-'use client'
+import { FraisManager } from '@/components/admin/finance/FraisManager'
 
-import { EmptyState } from '@/components/ui/EmptyState'
-import { Banknote } from 'lucide-react'
+export const dynamic = 'force-dynamic'
 
-export default function FraisPage() {
+export default async function FraisPage() {
+  // Les types de frais sont gérés localement (côté client) dans FraisManager.
+  // Une future migration pourrait ajouter une table fee_types en DB.
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Frais scolaires</h1>
-          <p className="text-gray-500">Gérez les structures tarifaires et les catégories de frais.</p>
-        </div>
-      </div>
-      <EmptyState 
-        title="Aucun frais configuré"
-        description="Vous n'avez pas encore défini de structure de frais (ex: Scolarité, Cantine, Transport)."
-        icon={Banknote}
-      />
-    </div>
+    <FraisManager feeTypes={[]} />
   )
 }
