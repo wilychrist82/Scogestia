@@ -56,12 +56,12 @@ export default async function PaiementsPage() {
     .order('due_date', { ascending: true })
 
   if (error) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur de récupération des paiements.</div>
+    console.error("Erreur de récupération des paiements:", error)
   }
 
   return (
     <PaiementsManager 
-      payments={(payments as any) || []} 
+      payments={(error ? [] : payments as any) || []} 
       pendingSchedules={(pendingSchedules as any) || []} 
     />
   )

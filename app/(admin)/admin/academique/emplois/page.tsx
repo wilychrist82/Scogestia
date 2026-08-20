@@ -17,7 +17,7 @@ export default function EmploisDuTempsPage() {
         description="Vous n'avez pas encore généré ou importé d'emplois du temps pour cette année."
         icon={CalendarDays}
         actionLabel="+ Créer un emploi du temps"
-        onAction={() => alert('Ouverture du générateur...')}
+        onAction={() => { console.log("À implémenter") }}
       />
     </div>
   )

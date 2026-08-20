@@ -17,7 +17,7 @@ export default function FraisPage() {
         description="Vous n'avez pas encore défini de structure de frais (ex: Scolarité, Cantine, Transport)."
         icon={Banknote}
         actionLabel="+ Ajouter un type de frais"
-        onAction={() => alert('Ouverture du modal (à implémenter)')}
+        onAction={() => { console.log("À implémenter") }}
       />
     </div>
   )
