@@ -20,6 +20,7 @@ type Props = {
 }
 
 export function NotesManager({ classes, subjects, students, existingGrades }: Props) {
+  const [selectedLevel, setSelectedLevel] = useState<string>('')
   const [selectedClass, setSelectedClass] = useState<string>('')
   const [selectedStudent, setSelectedStudent] = useState<string>('')
   const [term, setTerm] = useState<string>('Trimestre 1')
@@ -97,28 +98,33 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
 
         {/* Filters */}
         <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] p-6 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="flex flex-col gap-1.5">
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[180px] flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-[var(--color-on-surface)]">Niveau</label>
+              <select 
+                value={selectedLevel} 
+                onChange={(e) => { setSelectedLevel(e.target.value); setSelectedClass(''); setSelectedStudent(''); }}
+                className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+              >
+                <option value="">Sélectionner...</option>
+                <option value="primaire">Primaire</option>
+                <option value="secondaire">Secondaire</option>
+              </select>
+            </div>
+            <div className="flex-1 min-w-[180px] flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-[var(--color-on-surface)]">Classe</label>
               <select 
                 value={selectedClass} 
                 onChange={(e) => { setSelectedClass(e.target.value); setSelectedStudent(''); }}
                 className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                disabled={!selectedLevel}
               >
                 <option value="">Sélectionner...</option>
-                {primaryClasses.length > 0 && (
-                  <optgroup label="Primaire">
-                    {primaryClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </optgroup>
-                )}
-                {secondaryClasses.length > 0 && (
-                  <optgroup label="Secondaire">
-                    {secondaryClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </optgroup>
-                )}
+                {selectedLevel === 'primaire' && primaryClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {selectedLevel === 'secondaire' && secondaryClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex-1 min-w-[180px] flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-[var(--color-on-surface)]">Élève</label>
               <select 
                 value={selectedStudent} 
@@ -127,10 +133,13 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
                 disabled={!selectedClass}
               >
                 <option value="">Sélectionner un élève...</option>
+                {filteredStudents.length === 0 && selectedClass && (
+                  <option value="" disabled>Aucun élève dans cette classe</option>
+                )}
                 {filteredStudents.map(s => <option key={s.id} value={s.id}>{s.last_name} {s.first_name}</option>)}
               </select>
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex-1 min-w-[180px] flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-[var(--color-on-surface)]">Trimestre / Période</label>
               <select 
                 value={term} 
@@ -142,7 +151,7 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
                 <option value="Trimestre 3">Trimestre 3</option>
               </select>
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex-1 min-w-[180px] flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-[var(--color-on-surface)]">Évaluation</label>
               <select 
                 value={evaluation} 

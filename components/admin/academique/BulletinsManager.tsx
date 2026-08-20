@@ -16,10 +16,12 @@ type Props = {
 }
 
 export function BulletinsManager({ classes, students, subjects, grades }: Props) {
+  const [selectedLevel, setSelectedLevel] = useState<string>('')
   const [selectedClass, setSelectedClass] = useState<string>('')
   const [selectedTerm, setSelectedTerm] = useState<string>('Trimestre 1')
   const [selectedStudent, setSelectedStudent] = useState<string>('')
 
+  const availableClasses = classes.filter(c => c.level === selectedLevel)
   const classStudents = selectedClass ? students.filter(s => s.class_id === selectedClass) : []
   const classSubjects = selectedClass ? subjects.filter(s => s.class_id === selectedClass) : []
   
@@ -97,8 +99,24 @@ export function BulletinsManager({ classes, students, subjects, grades }: Props)
 
         {/* Filters */}
         <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] p-6 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-1.5">
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[180px] flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-[var(--color-on-surface)]">Niveau</label>
+              <select 
+                value={selectedLevel} 
+                onChange={(e) => {
+                  setSelectedLevel(e.target.value)
+                  setSelectedClass('')
+                  setSelectedStudent('')
+                }}
+                className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+              >
+                <option value="">Sélectionner un niveau...</option>
+                <option value="primaire">Primaire</option>
+                <option value="secondaire">Secondaire</option>
+              </select>
+            </div>
+            <div className="flex-1 min-w-[180px] flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-[var(--color-on-surface)]">Classe</label>
               <select 
                 value={selectedClass} 
@@ -107,12 +125,13 @@ export function BulletinsManager({ classes, students, subjects, grades }: Props)
                   setSelectedStudent('')
                 }}
                 className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                disabled={!selectedLevel}
               >
                 <option value="">Sélectionner une classe...</option>
-                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {availableClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex-1 min-w-[180px] flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-[var(--color-on-surface)]">Trimestre</label>
               <select 
                 value={selectedTerm} 
@@ -124,7 +143,7 @@ export function BulletinsManager({ classes, students, subjects, grades }: Props)
                 <option value="Trimestre 3">Trimestre 3</option>
               </select>
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex-1 min-w-[180px] flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-[var(--color-on-surface)]">Élève</label>
               <select 
                 value={selectedStudent} 
@@ -133,6 +152,9 @@ export function BulletinsManager({ classes, students, subjects, grades }: Props)
                 disabled={!selectedClass}
               >
                 <option value="">Sélectionner un élève...</option>
+                {classStudents.length === 0 && selectedClass && (
+                  <option value="" disabled>Aucun élève dans cette classe</option>
+                )}
                 {classStudents.map(s => <option key={s.id} value={s.id}>{s.last_name} {s.first_name}</option>)}
               </select>
             </div>
@@ -200,17 +222,29 @@ export function BulletinsManager({ classes, students, subjects, grades }: Props)
               </div>
             </div>
 
-            <div className="flex gap-4 print:hidden justify-end">
+            <div className="flex flex-wrap gap-4 print:hidden justify-end">
               <button 
-                onClick={() => alert(`Le ${documentTitle.toLowerCase()} a été envoyé avec succès ! L'application parent a été mise à jour.`)} 
-                className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-green-700 transition-colors"
+                onClick={() => {
+                  const msg = encodeURIComponent(`Bonjour, voici le ${documentTitle.toLowerCase()} de ${student.first_name} ${student.last_name} pour le ${selectedTerm}.`);
+                  window.open(`https://wa.me/?text=${msg}`, '_blank');
+                }} 
+                className="bg-[#25D366] text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity"
               >
-                <span className="material-symbols-outlined text-[20px]">send</span>
-                Partager aux parents
+                <span className="material-symbols-outlined text-[20px]">chat</span>
+                WhatsApp
+              </button>
+              <button 
+                onClick={() => {
+                  alert(`Le ${documentTitle.toLowerCase()} a été publié sur l'espace parent avec succès !`);
+                }} 
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-700 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[20px]">campaign</span>
+                Publier (Espace Parent)
               </button>
               <button onClick={() => window.print()} className="bg-[var(--color-primary)] text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity">
                 <span className="material-symbols-outlined text-[20px]">print</span>
-                Imprimer
+                Imprimer / PDF
               </button>
             </div>
           </div>
