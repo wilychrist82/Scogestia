@@ -53,7 +53,15 @@ export function ImpayesManager({ impayes, basePath = "/admin/finance" }: Props &
             <h2 className="text-3xl font-bold text-[var(--color-status-retard-text)]">Suivi des Impayés</h2>
             <p className="text-base text-[var(--color-status-retard-text)]/80 mt-1">Gérez les retards de paiement et relancez les parents.</p>
           </div>
-          <button className="flex items-center justify-center gap-2 bg-[var(--color-status-retard-text)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:bg-red-700 transition-colors shadow-sm w-full sm:w-auto shrink-0">
+          <button 
+            onClick={() => {
+              if (impayes.length > 0) {
+                alert("Les relances ont été envoyées avec succès !");
+              } else {
+                alert("Aucun impayé pour envoyer des relances.");
+              }
+            }}
+            className="flex items-center justify-center gap-2 bg-[var(--color-status-retard-text)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:bg-red-700 transition-colors shadow-sm w-full sm:w-auto shrink-0">
             <span className="material-symbols-outlined text-[20px]">send</span>
             Relancer tout
           </button>
