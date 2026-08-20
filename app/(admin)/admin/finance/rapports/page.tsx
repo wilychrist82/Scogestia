@@ -16,8 +16,6 @@ export default function RapportsFinancePage() {
         title="Rapports non disponibles"
         description="Aucune donnée financière n'est encore suffisante pour générer un rapport complet."
         icon={FileBarChart}
-        actionLabel="Générer un rapport estimatif"
-        onAction={() => alert('Génération en cours...')}
       />
     </div>
   )

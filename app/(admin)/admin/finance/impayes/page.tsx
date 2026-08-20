@@ -48,10 +48,10 @@ export default async function ImpayesPage() {
     .order('due_date', { ascending: true })
 
   if (error) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur de récupération des impayés.</div>
+    console.error("Erreur de récupération des impayés:", error)
   }
 
   return (
-    <ImpayesManager impayes={(impayes as any) || []} />
+    <ImpayesManager impayes={(error ? [] : impayes as any) || []} />
   )
 }

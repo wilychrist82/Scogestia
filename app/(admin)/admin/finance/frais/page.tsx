@@ -16,8 +16,6 @@ export default function FraisPage() {
         title="Aucun frais configuré"
         description="Vous n'avez pas encore défini de structure de frais (ex: Scolarité, Cantine, Transport)."
         icon={Banknote}
-        actionLabel="+ Ajouter un type de frais"
-        onAction={() => { console.log("À implémenter") }}
       />
     </div>
   )
