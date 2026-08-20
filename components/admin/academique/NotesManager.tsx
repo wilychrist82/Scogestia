@@ -4,10 +4,13 @@ import { useState, useTransition, FormEvent } from 'react'
 import { saveGrades } from '@/app/actions/academique'
 import Link from 'next/link'
 
-type ClassItem = { id: string; name: string }
+type ClassItem = { id: string; name: string; level?: string }
 type SubjectItem = { id: string; subject_name: string; class_id: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string }
 type GradeItem = { student_id: string; score: number; subject_name: string; term: string; evaluation_type: string; class_id: string }
+
+const PRIMARY_SUBJECTS = ['Lecture', 'Écriture', 'Mathématiques', 'Éveil au milieu', 'Histoire-Géographie', 'ECM', 'Dessin', 'EPS'];
+const SECONDARY_SUBJECTS = ['Français', 'Anglais', 'Mathématiques', 'SVT', 'Sciences Physiques', 'Histoire-Géographie', 'ECM', 'EPS'];
 
 type Props = {
   classes: ClassItem[]
@@ -27,7 +30,15 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
   const [success, setSuccess] = useState<boolean>(false)
 
   const filteredStudents = selectedClass ? students.filter(s => s.class_id === selectedClass) : []
-  const availableSubjects = selectedClass ? subjects.filter(s => s.class_id === selectedClass) : []
+  
+  const primaryClasses = classes.filter(c => c.level === 'primaire')
+  const secondaryClasses = classes.filter(c => c.level === 'secondaire')
+  
+  const selectedClassObj = classes.find(c => c.id === selectedClass)
+  const isPrimary = selectedClassObj?.level === 'primaire'
+  const isSecondary = selectedClassObj?.level === 'secondaire'
+  
+  const availableSubjects = isPrimary ? PRIMARY_SUBJECTS : (isSecondary ? SECONDARY_SUBJECTS : [])
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -83,11 +94,20 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
               <label className="text-sm font-semibold text-[var(--color-on-surface)]">Classe</label>
               <select 
                 value={selectedClass} 
-                onChange={(e) => setSelectedClass(e.target.value)}
+                onChange={(e) => { setSelectedClass(e.target.value); setSelectedSubject(''); }}
                 className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
               >
                 <option value="">Sélectionner...</option>
-                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {primaryClasses.length > 0 && (
+                  <optgroup label="Primaire">
+                    {primaryClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </optgroup>
+                )}
+                {secondaryClasses.length > 0 && (
+                  <optgroup label="Secondaire">
+                    {secondaryClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </optgroup>
+                )}
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
@@ -99,7 +119,7 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
                 disabled={!selectedClass}
               >
                 <option value="">Sélectionner...</option>
-                {availableSubjects.map(s => <option key={s.id} value={s.subject_name}>{s.subject_name}</option>)}
+                {availableSubjects.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
@@ -121,7 +141,8 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
                 onChange={(e) => setEvaluation(e.target.value)}
                 className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
               >
-                <option value="devoir_mensuel">Devoir (Interrogation)</option>
+                <option value="devoir_mensuel">Interrogation</option>
+                <option value="devoir_maison">Devoir</option>
                 <option value="composition_trimestrielle">Composition</option>
               </select>
             </div>

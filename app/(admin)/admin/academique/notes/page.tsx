@@ -22,11 +22,35 @@ export default async function NotesPage() {
 
   const schoolId = roleData.school_id
 
-  const { data: classes } = await supabase
+  let { data: classes } = await supabase
     .from('classes')
-    .select('id, name')
+    .select('id, name, level')
     .eq('school_id', schoolId)
     .order('name')
+
+  // Auto-seed classes for the prototype if empty
+  if (!classes || classes.length === 0) {
+    const defaultClasses = [
+      { school_id: schoolId, name: 'CP1', level: 'primaire', academic_year: '2024-2025' },
+      { school_id: schoolId, name: 'CP2', level: 'primaire', academic_year: '2024-2025' },
+      { school_id: schoolId, name: 'CE1', level: 'primaire', academic_year: '2024-2025' },
+      { school_id: schoolId, name: 'CE2', level: 'primaire', academic_year: '2024-2025' },
+      { school_id: schoolId, name: 'CM1', level: 'primaire', academic_year: '2024-2025' },
+      { school_id: schoolId, name: 'CM2', level: 'primaire', academic_year: '2024-2025' },
+      { school_id: schoolId, name: '6ème', level: 'secondaire', academic_year: '2024-2025' },
+      { school_id: schoolId, name: '5ème', level: 'secondaire', academic_year: '2024-2025' },
+      { school_id: schoolId, name: '4ème', level: 'secondaire', academic_year: '2024-2025' },
+      { school_id: schoolId, name: '3ème', level: 'secondaire', academic_year: '2024-2025' },
+    ];
+    await supabase.from('classes').insert(defaultClasses);
+    
+    const { data: newClasses } = await supabase
+      .from('classes')
+      .select('id, name, level')
+      .eq('school_id', schoolId)
+      .order('name');
+    classes = newClasses;
+  }
 
   const { data: subjects } = await supabase
     .from('teacher_class_subjects')
