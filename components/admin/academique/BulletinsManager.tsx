@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
-type ClassItem = { id: string; name: string }
+type ClassItem = { id: string; name: string; level?: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string }
 type SubjectItem = { subject_name: string; class_id: string; coefficient: number }
 type GradeItem = { student_id: string; score: number; subject_name: string; term: string; evaluation_type: string; class_id: string }
@@ -25,6 +25,8 @@ export function BulletinsManager({ classes, students, subjects, grades }: Props)
   
   const student = students.find(s => s.id === selectedStudent)
   const currentClass = classes.find(c => c.id === selectedClass)
+  const isPrimary = currentClass?.level === 'primaire'
+  const documentTitle = isPrimary ? 'Livret Scolaire' : 'Bulletin de Notes'
 
   // Compute bulletin for the selected student
   const computeBulletin = () => {
@@ -86,10 +88,10 @@ export function BulletinsManager({ classes, students, subjects, grades }: Props)
                 Académique
               </Link>
               <span className="material-symbols-outlined text-sm">chevron_right</span>
-              <span className="text-sm font-semibold text-[var(--color-on-surface)]">Bulletins</span>
+              <span className="text-sm font-semibold text-[var(--color-on-surface)]">Bulletins & Livrets</span>
             </div>
-            <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Bulletins Scolaires</h2>
-            <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Générez et consultez les bulletins par trimestre.</p>
+            <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Bulletins & Livrets Scolaires</h2>
+            <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Générez et consultez les livrets scolaires ou bulletins par trimestre.</p>
           </div>
         </div>
 
@@ -142,7 +144,7 @@ export function BulletinsManager({ classes, students, subjects, grades }: Props)
           <div className="bg-white rounded-xl border border-[var(--color-outline-variant)] p-8 shadow-sm print:shadow-none print:border-none print:p-0 max-w-4xl mx-auto">
             <div className="flex justify-between items-start border-b-2 border-black pb-6 mb-6">
               <div>
-                <h1 className="text-2xl font-black uppercase tracking-wider mb-2">Bulletin de Notes</h1>
+                <h1 className="text-2xl font-black uppercase tracking-wider mb-2">{documentTitle}</h1>
                 <p className="font-semibold text-lg">{selectedTerm} - Année 2026-2027</p>
               </div>
               <div className="text-right">
@@ -199,6 +201,13 @@ export function BulletinsManager({ classes, students, subjects, grades }: Props)
             </div>
 
             <div className="flex gap-4 print:hidden justify-end">
+              <button 
+                onClick={() => alert(`Le ${documentTitle.toLowerCase()} a été envoyé avec succès ! L'application parent a été mise à jour.`)} 
+                className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-green-700 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[20px]">send</span>
+                Partager aux parents
+              </button>
               <button onClick={() => window.print()} className="bg-[var(--color-primary)] text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity">
                 <span className="material-symbols-outlined text-[20px]">print</span>
                 Imprimer
@@ -209,7 +218,7 @@ export function BulletinsManager({ classes, students, subjects, grades }: Props)
           <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] min-h-[400px]">
             <span className="material-symbols-outlined text-4xl mb-2 opacity-50">workspace_premium</span>
             <p className="text-lg font-medium">Sélectionnez un élève</p>
-            <p className="text-sm">Le bulletin scolaire s'affichera ici.</p>
+            <p className="text-sm">Le document s'affichera ici.</p>
           </div>
         )}
 

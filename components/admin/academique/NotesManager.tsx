@@ -21,7 +21,7 @@ type Props = {
 
 export function NotesManager({ classes, subjects, students, existingGrades }: Props) {
   const [selectedClass, setSelectedClass] = useState<string>('')
-  const [selectedSubject, setSelectedSubject] = useState<string>('')
+  const [selectedStudent, setSelectedStudent] = useState<string>('')
   const [term, setTerm] = useState<string>('Trimestre 1')
   const [evaluation, setEvaluation] = useState<string>('devoir_mensuel')
 
@@ -31,8 +31,16 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
 
   const filteredStudents = selectedClass ? students.filter(s => s.class_id === selectedClass) : []
   
-  const primaryClasses = classes.filter(c => c.level === 'primaire')
-  const secondaryClasses = classes.filter(c => c.level === 'secondaire')
+  const primaryClassesOrder = ['CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2']
+  const secondaryClassesOrder = ['6ème', '5ème', '4ème', '3ème']
+  
+  const primaryClasses = classes
+    .filter(c => c.level === 'primaire')
+    .sort((a, b) => primaryClassesOrder.indexOf(a.name) - primaryClassesOrder.indexOf(b.name))
+    
+  const secondaryClasses = classes
+    .filter(c => c.level === 'secondaire')
+    .sort((a, b) => secondaryClassesOrder.indexOf(a.name) - secondaryClassesOrder.indexOf(b.name))
   
   const selectedClassObj = classes.find(c => c.id === selectedClass)
   const isPrimary = selectedClassObj?.level === 'primaire'
@@ -57,11 +65,11 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
     })
   }
 
-  const getStudentScore = (studentId: string) => {
+  const getSubjectScore = (subjectName: string) => {
     const grade = existingGrades.find(g => 
-      g.student_id === studentId &&
+      g.student_id === selectedStudent &&
       g.class_id === selectedClass &&
-      g.subject_name === selectedSubject &&
+      g.subject_name === subjectName &&
       g.term === term &&
       g.evaluation_type === evaluation
     )
@@ -94,7 +102,7 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
               <label className="text-sm font-semibold text-[var(--color-on-surface)]">Classe</label>
               <select 
                 value={selectedClass} 
-                onChange={(e) => { setSelectedClass(e.target.value); setSelectedSubject(''); }}
+                onChange={(e) => { setSelectedClass(e.target.value); setSelectedStudent(''); }}
                 className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
               >
                 <option value="">Sélectionner...</option>
@@ -111,15 +119,15 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-[var(--color-on-surface)]">Matière</label>
+              <label className="text-sm font-semibold text-[var(--color-on-surface)]">Élève</label>
               <select 
-                value={selectedSubject} 
-                onChange={(e) => setSelectedSubject(e.target.value)}
+                value={selectedStudent} 
+                onChange={(e) => setSelectedStudent(e.target.value)}
                 className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
                 disabled={!selectedClass}
               >
-                <option value="">Sélectionner...</option>
-                {availableSubjects.map(s => <option key={s} value={s}>{s}</option>)}
+                <option value="">Sélectionner un élève...</option>
+                {filteredStudents.map(s => <option key={s.id} value={s.id}>{s.last_name} {s.first_name}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
@@ -163,16 +171,16 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
         )}
 
         {/* Data Table */}
-        {selectedClass && selectedSubject ? (
+        {selectedClass && selectedStudent ? (
           <form onSubmit={handleSubmit} className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] overflow-hidden shadow-sm flex flex-col">
             <input type="hidden" name="classId" value={selectedClass} />
-            <input type="hidden" name="subjectName" value={selectedSubject} />
+            <input type="hidden" name="studentId" value={selectedStudent} />
             <input type="hidden" name="term" value={term} />
             <input type="hidden" name="evaluationType" value={evaluation} />
 
             <div className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-between items-center">
               <h3 className="font-semibold text-[var(--color-on-surface)]">
-                Grille de saisie ({filteredStudents.length} élèves)
+                Grille de saisie par matière
               </h3>
               <button 
                 type="submit" 
@@ -188,22 +196,18 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
                 <thead className="sticky top-0 bg-[var(--color-surface-container-low)] z-10 shadow-sm">
                   <tr className="border-b border-[var(--color-outline-variant)] text-[var(--color-on-surface-variant)] text-sm">
                     <th className="py-3 px-6 font-semibold w-16 text-center">N°</th>
-                    <th className="py-3 px-6 font-semibold w-32">Matricule</th>
-                    <th className="py-3 px-6 font-semibold">Nom & Prénoms</th>
+                    <th className="py-3 px-6 font-semibold">Matière / Discipline</th>
                     <th className="py-3 px-6 font-semibold w-48 text-center">Note / 20</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--color-outline-variant)] text-base">
-                  {filteredStudents.map((student, index) => (
-                    <tr key={student.id} className="hover:bg-[var(--color-surface-container-lowest)]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
+                  {availableSubjects.map((subject, index) => (
+                    <tr key={subject} className="hover:bg-[var(--color-surface-container-lowest)]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
                       <td className="py-2 px-6 text-center text-[var(--color-on-surface-variant)] text-sm">
                         {index + 1}
                       </td>
-                      <td className="py-2 px-6 text-sm font-mono text-[var(--color-on-surface-variant)]">
-                        {student.matricule}
-                      </td>
                       <td className="py-2 px-6 font-medium text-[var(--color-on-surface)]">
-                        {student.last_name} {student.first_name}
+                        {subject}
                       </td>
                       <td className="py-2 px-6">
                         <input 
@@ -211,8 +215,8 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
                           step="0.25" 
                           min="0" 
                           max="20"
-                          name={`grade_${student.id}`}
-                          defaultValue={getStudentScore(student.id)}
+                          name={`grade_${subject}`}
+                          defaultValue={getSubjectScore(subject)}
                           className="w-full h-10 px-3 text-center font-semibold border border-[var(--color-outline-variant)] rounded text-base focus:border-[var(--color-primary)] outline-none bg-white transition-all"
                           placeholder="-"
                         />
@@ -226,7 +230,7 @@ export function NotesManager({ classes, subjects, students, existingGrades }: Pr
         ) : (
           <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] min-h-[400px]">
             <span className="material-symbols-outlined text-4xl mb-2 opacity-50">edit_document</span>
-            <p className="text-lg font-medium">Sélectionnez une classe et une matière</p>
+            <p className="text-lg font-medium">Sélectionnez une classe et un élève</p>
             <p className="text-sm">La grille de saisie s'affichera ici.</p>
           </div>
         )}

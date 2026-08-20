@@ -52,11 +52,11 @@ export async function addSubject(prevState: ActionState, formData: FormData): Pr
 
 export async function saveGrades(prevState: ActionState, formData: FormData): Promise<ActionState> {
   const classId = formData.get('classId') as string;
-  const subjectName = formData.get('subjectName') as string;
+  const studentId = formData.get('studentId') as string;
   const term = formData.get('term') as string;
   const evaluationType = formData.get('evaluationType') as string;
 
-  if (!classId || !subjectName || !term || !evaluationType) {
+  if (!classId || !studentId || !term || !evaluationType) {
     return { error: 'Paramètres manquants pour la sauvegarde.' };
   }
 
@@ -70,7 +70,7 @@ export async function saveGrades(prevState: ActionState, formData: FormData): Pr
     
     for (const [key, value] of formData.entries()) {
       if (key.startsWith('grade_') && value) {
-        const studentId = key.replace('grade_', '');
+        const subjectName = key.replace('grade_', '');
         const score = parseFloat(value as string);
         
         if (!isNaN(score)) {
@@ -91,19 +91,17 @@ export async function saveGrades(prevState: ActionState, formData: FormData): Pr
     }
 
     if (gradesToUpsert.length > 0) {
-      // Upsert based on unique constraint (which doesn't exist explicitly for student_id + eval_type + term, so we might want to delete first or use upsert if we add one)
-      // Since schema doesn't have a strict unique constraint on (student, subject, term, eval), we will delete existing ones for this context and reinsert.
-      const studentIds = gradesToUpsert.map(g => g.student_id);
+      const subjectNames = gradesToUpsert.map(g => g.subject_name);
       
       await supabase
         .from('grades')
         .delete()
         .eq('school_id', school_id)
         .eq('class_id', classId)
-        .eq('subject_name', subjectName)
+        .eq('student_id', studentId)
         .eq('term', term)
         .eq('evaluation_type', evaluationType)
-        .in('student_id', studentIds);
+        .in('subject_name', subjectNames);
 
       const { error } = await supabase.from('grades').insert(gradesToUpsert);
       if (error) throw error;
