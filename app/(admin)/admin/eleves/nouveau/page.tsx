@@ -23,7 +23,7 @@ export default async function NewStudentPage() {
   // Fetch classes for the school to populate the dropdown
   const { data: classes } = await supabase
     .from('classes')
-    .select('id, name')
+    .select('id, name, level')
     .eq('school_id', roleData.school_id)
     .order('name')
 

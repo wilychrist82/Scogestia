@@ -27,16 +27,16 @@ export function ClassesManager({ classes }: Props) {
   const [classToDelete, setClassToDelete] = useState<ClassItem | null>(null)
   const [openActionId, setOpenActionId] = useState<string | null>(null)
 
-  const [levelFilter, setLevelFilter] = useState('Tous les niveaux')
+  const [levelFilter, setLevelFilter] = useState('Primaire')
 
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
   const filteredClasses = classes.filter(cls => {
-    if (levelFilter === 'Tous les niveaux') return true;
-    if (levelFilter === 'Maternelle') return ['section1', 'section2'].includes(cls.level);
-    if (levelFilter === 'Primaire') return ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2'].includes(cls.level);
-    if (levelFilter === 'Secondaire') return ['6eme', '5eme', '4eme', '3eme'].includes(cls.level);
+    const l = cls.level.toLowerCase();
+    if (levelFilter === 'Maternelle') return ['section1', 'section2', 'maternelle'].includes(l);
+    if (levelFilter === 'Primaire') return ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].includes(l);
+    if (levelFilter === 'Secondaire') return ['6eme', '5eme', '4eme', '3eme', 'secondaire'].includes(l);
     return true;
   })
 
@@ -127,10 +127,9 @@ export function ClassesManager({ classes }: Props) {
               value={levelFilter}
               onChange={(e) => setLevelFilter(e.target.value)}
             >
-              <option>Tous les niveaux</option>
-              <option>Maternelle</option>
-              <option>Primaire</option>
-              <option>Secondaire</option>
+              <option value="Maternelle">Maternelle</option>
+              <option value="Primaire">Primaire</option>
+              <option value="Secondaire">Secondaire</option>
             </select>
           </div>
           <span className="text-sm text-[var(--color-on-surface-variant)]">{filteredClasses.length} Classes au total</span>
@@ -160,8 +159,9 @@ export function ClassesManager({ classes }: Props) {
                   <tr key={cls.id} className="border-b border-[var(--color-outline-variant)]/50 hover:bg-[#eff4ff]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
                     <td className="py-3 px-6 font-semibold text-[var(--color-on-surface)]">{cls.name}</td>
                     <td className="py-3 px-6 text-[var(--color-on-surface-variant)]">
-                      {cls.level === 'section1' ? 'Section 1' :
-                       cls.level === 'section2' ? 'Section 2' :
+                      {['section1', 'section2', 'maternelle'].includes(cls.level.toLowerCase()) ? 'MATERNELLE' :
+                       ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].includes(cls.level.toLowerCase()) ? 'PRIMAIRE' :
+                       ['6eme', '5eme', '4eme', '3eme', 'secondaire'].includes(cls.level.toLowerCase()) ? 'SECONDAIRE' :
                        cls.level.toUpperCase()}
                     </td>
                     <td className="py-3 px-6 text-right text-[var(--color-on-surface-variant)]">{cls.capacity || 'Illimitée'}</td>
@@ -288,7 +288,7 @@ export function ClassesManager({ classes }: Props) {
                     placeholder="ex: 80 (laisser vide si illimité)" 
                     type="number"
                     min="1"
-                    defaultValue={classToEdit?.capacity || ''}
+                    defaultValue={classToEdit?.capacity || 80}
                   />
                 </div>
               </div>

@@ -31,6 +31,7 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '')
+  const currentNiveau = searchParams.get('niveau') || 'Primaire'
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [openActionId, setOpenActionId] = useState<string | null>(null)
@@ -107,17 +108,37 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
         />
       </div>
 
-      {/* Desktop Search */}
-      <div className="hidden sm:block mb-6 w-96 relative">
-        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)]">search</span>
-        <input 
-          className="w-full pl-10 pr-4 py-3 border border-[var(--color-outline-variant)] rounded-lg bg-[var(--color-surface)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none text-base" 
-          placeholder="Rechercher un élève..." 
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleFilterChange('search', searchTerm)}
-          type="text"
-        />
+      {/* Desktop Search & Tabs */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 border-b border-[var(--color-outline-variant)]">
+        {/* Tabs */}
+        <div className="flex gap-6 overflow-x-auto w-full sm:w-auto hide-scrollbar">
+          {['Maternelle', 'Primaire', 'Secondaire'].map(niveau => (
+            <button
+              key={niveau}
+              onClick={() => handleFilterChange('niveau', niveau)}
+              className={`pb-3 px-2 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                currentNiveau === niveau 
+                  ? 'border-[var(--color-primary)] text-[var(--color-primary)]' 
+                  : 'border-transparent text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]'
+              }`}
+            >
+              {niveau}
+            </button>
+          ))}
+        </div>
+        
+        {/* Desktop Search */}
+        <div className="hidden sm:block w-72 relative pb-3">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)]">search</span>
+          <input 
+            className="w-full pl-10 pr-4 py-2 border border-[var(--color-outline-variant)] rounded-lg bg-[var(--color-surface)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none text-sm" 
+            placeholder="Rechercher un élève..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleFilterChange('search', searchTerm)}
+            type="text"
+          />
+        </div>
       </div>
 
       {/* Data Table Card */}

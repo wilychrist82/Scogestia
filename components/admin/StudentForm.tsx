@@ -6,7 +6,7 @@ import { createStudent } from '@/app/actions/students'
 import Link from 'next/link'
 
 type Props = {
-  classes: { id: string, name: string }[]
+  classes: { id: string, name: string, level?: string }[]
 }
 
 export function StudentForm({ classes }: Props) {
@@ -136,9 +136,26 @@ export function StudentForm({ classes }: Props) {
                   required
                 >
                   <option value="">Sélectionner une classe</option>
-                  {classes.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
+                  <optgroup label="Maternelle">
+                    {classes.filter(c => ['section1', 'section2', 'maternelle'].includes((c.level || '').toLowerCase())).map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Primaire">
+                    {classes.filter(c => ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].includes((c.level || '').toLowerCase())).map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Secondaire">
+                    {classes.filter(c => ['6eme', '5eme', '4eme', '3eme', 'secondaire'].includes((c.level || '').toLowerCase())).map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Autres">
+                    {classes.filter(c => !['section1', 'section2', 'maternelle', 'cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', '6eme', '5eme', '4eme', '3eme', 'secondaire'].includes((c.level || '').toLowerCase())).map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </optgroup>
                 </select>
                 <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none">expand_more</span>
               </div>
