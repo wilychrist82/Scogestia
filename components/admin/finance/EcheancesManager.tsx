@@ -12,7 +12,7 @@ type ScheduleItem = {
   amount_due: number
   due_date: string
   status: string
-  student: { last_name: string, first_name: string, classes: { name: string } | null } | null
+  student: { last_name: string, first_name: string, classes: { name: string } | null, parent_phone?: string | null } | null
 }
 
 type Props = {
@@ -147,9 +147,22 @@ export function EcheancesManager({ schedules, classes, students, basePath = "/ad
                         {getStatusBadge(schedule.status)}
                       </td>
                       <td className="py-3 px-6 text-right">
-                        <button className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface-container-high)] rounded-full transition-colors">
-                          <span className="material-symbols-outlined text-[20px]">more_vert</span>
-                        </button>
+                        <div className="flex justify-end gap-2 items-center">
+                          {schedule.status === 'en_retard' && schedule.student?.parent_phone && (
+                            <a 
+                              href={`https://wa.me/${schedule.student.parent_phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Bonjour, nous vous rappelons que le paiement de "${schedule.label}" pour votre enfant ${schedule.student.first_name} ${schedule.student.last_name} est en retard. Merci de régulariser la situation.`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-8 h-8 rounded-full bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white flex items-center justify-center transition-colors shadow-sm"
+                              title="Relancer par WhatsApp"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">chat</span>
+                            </a>
+                          )}
+                          <button className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface-container-high)] rounded-full transition-colors">
+                            <span className="material-symbols-outlined text-[20px]">more_vert</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

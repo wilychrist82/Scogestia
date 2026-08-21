@@ -50,9 +50,43 @@ export default async function ComptableEcheancesPage() {
     .eq('school_id', schoolId)
     .eq('status', 'actif')
 
+  // Fetch parent links and roles to get phone numbers
+  const { data: parentLinks } = await supabase
+    .from('parent_student_links')
+    .select('student_id, parent_user_id')
+    .eq('school_id', schoolId)
+
+  const { data: parentRoles } = await supabase
+    .from('user_school_roles')
+    .select('user_id, phone')
+    .eq('school_id', schoolId)
+    .eq('role', 'parent')
+
+  // Inject parent phone into schedules
+  const formattedSchedules = schedules?.map(s => {
+    const studentLinks = parentLinks?.filter(l => l.student_id === s.student_id) || []
+    // Get the first parent phone available
+    let parentPhone = null
+    for (const link of studentLinks) {
+      const pRole = parentRoles?.find(r => r.user_id === link.parent_user_id)
+      if (pRole?.phone) {
+        parentPhone = pRole.phone
+        break
+      }
+    }
+
+    return {
+      ...s,
+      student: {
+        ...(s.students as any),
+        parent_phone: parentPhone
+      }
+    }
+  }) || []
+
   return (
     <EcheancesManager 
-      schedules={schedules as any || []}
+      schedules={formattedSchedules as any}
       classes={classes as any || []}
       students={students as any || []}
       basePath="/comptable"

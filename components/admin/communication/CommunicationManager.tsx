@@ -2,6 +2,7 @@
 
 import { useState, useTransition, FormEvent } from 'react'
 import Link from 'next/link'
+import { sendCommunication } from '@/app/actions/communication'
 
 type ClassItem = { id: string; name: string }
 type ParentItem = { user_id: string; full_name: string }
@@ -19,15 +20,26 @@ export function CommunicationManager({ classes, parents }: Props) {
   const [isPending, startTransition] = useTransition()
   const [success, setSuccess] = useState(false)
 
+  const [error, setError] = useState<string | null>(null)
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSuccess(false)
+    setError(null)
+    const formData = new FormData(e.currentTarget)
+    formData.append('recipientType', recipientType)
+    if (recipientType === 'class') formData.append('selectedClass', selectedClass)
+    if (recipientType === 'parent') formData.append('selectedParent', selectedParent)
+    
     startTransition(async () => {
-      // Simulation d'envoi
-      await new Promise(resolve => setTimeout(resolve, 800))
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 3000)
-      e.currentTarget.reset()
+      const result = await sendCommunication(formData)
+      if (result.error) {
+        setError(result.error)
+      } else {
+        setSuccess(true)
+        setTimeout(() => setSuccess(false), 3000)
+        e.currentTarget.reset()
+      }
     })
   }
 
@@ -45,6 +57,13 @@ export function CommunicationManager({ classes, parents }: Props) {
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Envoyez des messages, SMS et notifications aux parents d'élèves.</p>
           </div>
         </div>
+
+        {error && (
+          <div className="bg-[var(--color-status-retard-bg)] text-[var(--color-status-retard-text)] p-4 rounded-xl border border-[var(--color-status-retard-text)] text-sm font-semibold flex items-center gap-2">
+            <span className="material-symbols-outlined text-[20px]">error</span>
+            {error}
+          </div>
+        )}
 
         {success && (
           <div className="bg-[#e6f4ea] text-[#1e8e3e] p-4 rounded-xl border border-[#ceead6] text-sm font-semibold flex items-center gap-2">
@@ -111,6 +130,7 @@ export function CommunicationManager({ classes, parents }: Props) {
                 <label className="text-sm font-semibold text-[var(--color-on-surface)]">Objet</label>
                 <input 
                   type="text" 
+                  name="subject"
                   placeholder="Objet du message..." 
                   className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
                   required
@@ -120,6 +140,7 @@ export function CommunicationManager({ classes, parents }: Props) {
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[var(--color-on-surface)]">Message</label>
                 <textarea 
+                  name="message"
                   placeholder="Rédigez votre message ici..." 
                   className="w-full p-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] min-h-[150px]"
                   required

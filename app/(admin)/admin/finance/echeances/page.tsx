@@ -47,10 +47,42 @@ export default async function EcheancesPage() {
 
   const { data: students } = await supabase
     .from('students')
-    .select('id, matricule, last_name, first_name')
+    .select('id, first_name, last_name, class_id')
     .eq('school_id', schoolId)
     .eq('status', 'actif')
-    .order('last_name')
+
+  // Fetch parent links and roles to get phone numbers
+  const { data: parentLinks } = await supabase
+    .from('parent_student_links')
+    .select('student_id, parent_user_id')
+    .eq('school_id', schoolId)
+
+  const { data: parentRoles } = await supabase
+    .from('user_school_roles')
+    .select('user_id, phone')
+    .eq('school_id', schoolId)
+    .eq('role', 'parent')
+
+  // Inject parent phone into schedules
+  const formattedSchedules = schedules?.map(s => {
+    const studentLinks = parentLinks?.filter(l => l.student_id === s.student_id) || []
+    let parentPhone = null
+    for (const link of studentLinks) {
+      const pRole = parentRoles?.find(r => r.user_id === link.parent_user_id)
+      if (pRole?.phone) {
+        parentPhone = pRole.phone
+        break
+      }
+    }
+
+    return {
+      ...s,
+      student: {
+        ...(s.students as any),
+        parent_phone: parentPhone
+      }
+    }
+  }) || []
 
   if (error) {
     return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur de récupération des échéances.</div>
@@ -58,9 +90,10 @@ export default async function EcheancesPage() {
 
   return (
     <EcheancesManager 
-      schedules={(schedules as any) || []} 
-      classes={classes || []} 
-      students={students || []} 
+      schedules={formattedSchedules as any}
+      classes={classes as any || []}
+      students={students as any || []}
+      basePath="/admin/finance"
     />
   )
 }
