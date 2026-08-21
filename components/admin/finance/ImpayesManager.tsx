@@ -122,9 +122,20 @@ export function ImpayesManager({ impayes, basePath = "/admin/finance" }: Props &
                           </span>
                         </td>
                         <td className="py-3 px-6 text-right flex justify-end gap-2">
-                          <button className="text-[var(--color-primary)] hover:text-white hover:bg-[var(--color-primary)] transition-colors p-1 flex items-center gap-1 text-sm font-semibold border border-[var(--color-primary)] rounded px-3 py-1.5" title="Relancer">
+                          {parentPhone !== 'Non renseigné' && (
+                            <a 
+                              href={`https://wa.me/${parentPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Bonjour, sauf erreur de notre part, le paiement de "${item.label}" (reste: ${formatCFA(remainder)}) pour votre enfant ${item.student?.first_name} ${item.student?.last_name} est en retard de ${daysLate} jours. Merci de régulariser la situation.`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-9 h-9 rounded-full bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white flex items-center justify-center transition-colors shadow-sm"
+                              title="Relancer par WhatsApp"
+                            >
+                              <span className="material-symbols-outlined text-[20px]">chat</span>
+                            </a>
+                          )}
+                          <button className="text-[var(--color-primary)] hover:text-white hover:bg-[var(--color-primary)] transition-colors p-1 flex items-center gap-1 text-sm font-semibold border border-[var(--color-primary)] rounded px-3 py-1.5" title="Relancer In-App">
                             <span className="material-symbols-outlined text-[18px]">notifications_active</span>
-                            Relancer
+                            In-App
                           </button>
                         </td>
                       </tr>
