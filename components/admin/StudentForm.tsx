@@ -137,7 +137,7 @@ export function StudentForm({ classes }: Props) {
                 >
                   <option value="">Sélectionner une classe</option>
                   <optgroup label="Maternelle">
-                    {classes.filter(c => ['section1', 'section2', 'maternelle'].includes((c.level || '').toLowerCase())).map(c => (
+                    {classes.filter(c => ['s1', 's2', 'section1', 'section2', 'maternelle'].includes((c.level || '').toLowerCase())).map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </optgroup>
@@ -152,7 +152,7 @@ export function StudentForm({ classes }: Props) {
                     ))}
                   </optgroup>
                   <optgroup label="Autres">
-                    {classes.filter(c => !['section1', 'section2', 'maternelle', 'cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', '6eme', '5eme', '4eme', '3eme', 'secondaire'].includes((c.level || '').toLowerCase())).map(c => (
+                    {classes.filter(c => !['s1', 's2', 'section1', 'section2', 'maternelle', 'cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', '6eme', '5eme', '4eme', '3eme', 'secondaire'].includes((c.level || '').toLowerCase())).map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </optgroup>

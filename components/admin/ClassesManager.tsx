@@ -34,7 +34,7 @@ export function ClassesManager({ classes }: Props) {
 
   const filteredClasses = classes.filter(cls => {
     const l = cls.level.toLowerCase();
-    if (levelFilter === 'Maternelle') return ['section1', 'section2', 'maternelle'].includes(l);
+    if (levelFilter === 'Maternelle') return ['s1', 's2', 'section1', 'section2', 'maternelle'].includes(l);
     if (levelFilter === 'Primaire') return ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].includes(l);
     if (levelFilter === 'Secondaire') return ['6eme', '5eme', '4eme', '3eme', 'secondaire'].includes(l);
     return true;
@@ -159,7 +159,7 @@ export function ClassesManager({ classes }: Props) {
                   <tr key={cls.id} className="border-b border-[var(--color-outline-variant)]/50 hover:bg-[#eff4ff]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
                     <td className="py-3 px-6 font-semibold text-[var(--color-on-surface)]">{cls.name}</td>
                     <td className="py-3 px-6 text-[var(--color-on-surface-variant)]">
-                      {['section1', 'section2', 'maternelle'].includes(cls.level.toLowerCase()) ? 'MATERNELLE' :
+                      {['s1', 's2', 'section1', 'section2', 'maternelle'].includes(cls.level.toLowerCase()) ? 'MATERNELLE' :
                        ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].includes(cls.level.toLowerCase()) ? 'PRIMAIRE' :
                        ['6eme', '5eme', '4eme', '3eme', 'secondaire'].includes(cls.level.toLowerCase()) ? 'SECONDAIRE' :
                        cls.level.toUpperCase()}
@@ -258,8 +258,8 @@ export function ClassesManager({ classes }: Props) {
                   >
                     <option disabled value="">Sélectionner un niveau</option>
                     <optgroup label="Maternelle">
-                      <option value="section1">Section 1</option>
-                      <option value="section2">Section 2</option>
+                      <option value="s1">S1</option>
+                      <option value="s2">S2</option>
                     </optgroup>
                     <optgroup label="Primaire">
                       <option value="cp1">CP1</option>

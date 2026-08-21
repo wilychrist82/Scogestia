@@ -49,7 +49,7 @@ export default async function StudentsPage({
 
   // Apply niveau filter
   let levels: string[] = []
-  if (niveau === 'Maternelle') levels = ['section1', 'section2', 'maternelle']
+  if (niveau === 'Maternelle') levels = ['s1', 's2', 'section1', 'section2', 'maternelle']
   else if (niveau === 'Primaire') levels = ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire']
   else if (niveau === 'Secondaire') levels = ['6eme', '5eme', '4eme', '3eme', 'secondaire']
   
