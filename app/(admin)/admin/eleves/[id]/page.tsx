@@ -35,6 +35,10 @@ export default async function StudentDetailPage({
       first_name,
       last_name,
       date_of_birth,
+      birth_place,
+      gender,
+      blood_group,
+      address,
       classes ( name )
     `)
     .eq('id', id)

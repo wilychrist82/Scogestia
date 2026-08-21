@@ -132,7 +132,7 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
           />
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto min-h-[300px] pb-32">
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
                   <tr className="bg-[#eff4ff] border-b border-[var(--color-outline-variant)]">

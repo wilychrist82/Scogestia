@@ -113,3 +113,36 @@ export async function deleteStudent(studentId: string): Promise<ActionState> {
     return { error: err.message };
   }
 }
+
+export async function updateStudent(prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const student_id = formData.get('student_id') as string;
+  const birth_place = formData.get('birth_place') as string;
+  const gender = formData.get('gender') as string;
+  const blood_group = formData.get('blood_group') as string;
+  const address = formData.get('address') as string;
+
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+    
+    const { error } = await supabase
+      .from('students')
+      .update({
+        birth_place: birth_place || null,
+        gender: gender || null,
+        blood_group: blood_group || null,
+        address: address || null
+      })
+      .eq('id', student_id)
+      .eq('school_id', school_id);
+
+    if (error) {
+      return { error: `Erreur lors de la modification : ${error.message}` };
+    }
+  } catch (err: any) {
+    return { error: err.message };
+  }
+
+  revalidatePath(`/admin/eleves/${student_id}`);
+  return { success: true };
+}

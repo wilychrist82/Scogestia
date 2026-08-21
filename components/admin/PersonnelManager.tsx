@@ -121,8 +121,8 @@ export function PersonnelManager({ staffList }: Props) {
 
         {/* Data Table Container */}
         <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto min-h-[300px] pb-32">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-[var(--color-surface-container-low)] border-b border-[var(--color-outline-variant)] text-[var(--color-on-surface-variant)] text-sm">
                   <th className="py-4 px-6 font-semibold">Nom</th>

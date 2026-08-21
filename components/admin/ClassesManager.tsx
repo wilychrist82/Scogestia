@@ -25,6 +25,7 @@ export function ClassesManager({ classes }: Props) {
   
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [classToDelete, setClassToDelete] = useState<ClassItem | null>(null)
+  const [openActionId, setOpenActionId] = useState<string | null>(null)
 
   const [levelFilter, setLevelFilter] = useState('Tous les niveaux')
 
@@ -144,7 +145,7 @@ export function ClassesManager({ classes }: Props) {
             onAction={openAddModal}
           />
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto min-h-[300px] pb-32">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#eff4ff] border-b border-[var(--color-outline-variant)]">
@@ -164,16 +165,47 @@ export function ClassesManager({ classes }: Props) {
                        cls.level.toUpperCase()}
                     </td>
                     <td className="py-3 px-6 text-right text-[var(--color-on-surface-variant)]">{cls.capacity || 'Illimitée'}</td>
-                    <td className="py-3 px-6 text-right flex justify-end gap-2">
-                      <Link href={`/admin/classes/${cls.id}`} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors p-1" title="Voir la classe">
-                        <span className="material-symbols-outlined text-[20px]">visibility</span>
-                      </Link>
-                      <button onClick={() => openEditModal(cls)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors p-1" title="Modifier">
-                        <span className="material-symbols-outlined text-[20px]">edit</span>
+                    <td className="py-3 px-6 text-right relative">
+                      <button 
+                        onClick={() => setOpenActionId(openActionId === cls.id ? null : cls.id)}
+                        className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[#eff4ff] rounded-full transition-colors inline-block"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">more_vert</span>
                       </button>
-                      <button onClick={() => openDeleteModal(cls)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-status-retard-text)] transition-colors p-1" title="Supprimer">
-                        <span className="material-symbols-outlined text-[20px]">delete</span>
-                      </button>
+
+                      {openActionId === cls.id && (
+                        <div className="absolute right-6 top-10 w-40 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg shadow-lg z-20 flex flex-col overflow-hidden text-left py-1 animate-[fadeIn_0.1s_ease-out]">
+                          <Link 
+                            href={`/admin/classes/${cls.id}`} 
+                            className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors w-full text-left"
+                            onClick={() => setOpenActionId(null)}
+                          >
+                            <span className="material-symbols-outlined text-[18px]">visibility</span>
+                            Voir
+                          </Link>
+                          <button 
+                            className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors w-full text-left"
+                            onClick={() => {
+                              setOpenActionId(null);
+                              openEditModal(cls);
+                            }}
+                          >
+                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                            Modifier
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setOpenActionId(null);
+                              openDeleteModal(cls);
+                            }}
+                            disabled={isPending}
+                            className="px-4 py-2 text-sm text-[var(--color-status-retard-text)] hover:bg-red-50 flex items-center gap-2 transition-colors w-full text-left disabled:opacity-50"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                            Supprimer
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
