@@ -33,6 +33,7 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '')
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [openActionId, setOpenActionId] = useState<string | null>(null)
 
   const handleDelete = (id: string, name: string) => {
     if (!window.confirm(`Êtes-vous sûr de vouloir supprimer l'élève ${name} ?`)) return
@@ -138,7 +139,6 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
                     <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider">Matricule</th>
                     <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider">Nom & Prénom</th>
                     <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider">Classe</th>
-                    <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider">Statut Paiement</th>
                     <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider text-right">Actions</th>
                   </tr>
                 </thead>
@@ -148,28 +148,45 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
                       <td className="py-3 px-6 font-mono text-sm text-[var(--color-on-surface-variant)]">{student.matricule}</td>
                       <td className="py-3 px-6 font-medium">{student.last_name} {student.first_name}</td>
                       <td className="py-3 px-6">{student.classes?.name || 'Non assigné'}</td>
-                      <td className="py-3 px-6">
-                        {/* Mock payment status since it's for next phases */}
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20">
-                            En attente
-                        </span>
-                      </td>
-                      <td className="py-3 px-6 text-right flex justify-end gap-2">
-                        <Link href={`/admin/eleves/${student.id}`} className="p-1 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors inline-block" title="Voir">
-                          <span className="material-symbols-outlined text-[20px]">visibility</span>
-                        </Link>
-                        {/* Placeholder for modifier, since there is no edit page right now we route to same as view or a hypothetical edit page */}
-                        <Link href={`/admin/eleves/${student.id}`} className="p-1 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors inline-block" title="Modifier">
-                          <span className="material-symbols-outlined text-[20px]">edit</span>
-                        </Link>
+                      <td className="py-3 px-6 text-right relative">
                         <button 
-                          onClick={() => handleDelete(student.id, `${student.first_name} ${student.last_name}`)}
-                          disabled={isPending}
-                          className="p-1 text-[var(--color-on-surface-variant)] hover:text-[var(--color-status-retard-text)] transition-colors inline-block disabled:opacity-50" 
-                          title="Supprimer"
+                          onClick={() => setOpenActionId(openActionId === student.id ? null : student.id)}
+                          className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[#eff4ff] rounded-full transition-colors inline-block"
                         >
-                          <span className="material-symbols-outlined text-[20px]">delete</span>
+                          <span className="material-symbols-outlined text-[20px]">more_vert</span>
                         </button>
+                        
+                        {openActionId === student.id && (
+                          <div className="absolute right-6 top-10 w-40 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg shadow-lg z-10 flex flex-col overflow-hidden text-left py-1 animate-[fadeIn_0.1s_ease-out]">
+                            <Link 
+                              href={`/admin/eleves/${student.id}`} 
+                              className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors"
+                              onClick={() => setOpenActionId(null)}
+                            >
+                              <span className="material-symbols-outlined text-[18px]">visibility</span>
+                              Voir
+                            </Link>
+                            <Link 
+                              href={`/admin/eleves/${student.id}`} 
+                              className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors"
+                              onClick={() => setOpenActionId(null)}
+                            >
+                              <span className="material-symbols-outlined text-[18px]">edit</span>
+                              Modifier
+                            </Link>
+                            <button 
+                              onClick={() => {
+                                setOpenActionId(null);
+                                handleDelete(student.id, `${student.first_name} ${student.last_name}`);
+                              }}
+                              disabled={isPending}
+                              className="px-4 py-2 text-sm text-[var(--color-status-retard-text)] hover:bg-red-50 flex items-center gap-2 transition-colors w-full text-left disabled:opacity-50"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">delete</span>
+                              Supprimer
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}

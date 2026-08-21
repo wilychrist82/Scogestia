@@ -18,6 +18,7 @@ type Props = {
 
 export function PersonnelManager({ staffList }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [openActionId, setOpenActionId] = useState<string | null>(null)
   
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -106,6 +107,8 @@ export function PersonnelManager({ staffList }: Props) {
               <option value="">Tous les rôles</option>
               <option value="enseignant">Enseignant</option>
               <option value="comptable">Comptable</option>
+              <option value="secretaire">Secrétaire</option>
+              <option value="conseiller">Conseiller</option>
               <option value="admin">Administrateur</option>
             </select>
             <select className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg px-4 py-3 text-base text-[var(--color-on-surface)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none min-w-[150px]">
@@ -155,21 +158,40 @@ export function PersonnelManager({ staffList }: Props) {
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-6 text-right flex justify-end gap-2">
+                    <td className="py-3 px-6 text-right relative">
                       <button 
-                        className="p-1 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface-container-high)] rounded transition-colors" 
-                        title="Modifier"
+                        onClick={() => setOpenActionId(openActionId === staff.id ? null : staff.id)}
+                        className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface-container-high)] rounded-full transition-colors inline-block"
                       >
-                        <span className="material-symbols-outlined text-[20px]" data-icon="edit">edit</span>
+                        <span className="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
                       </button>
-                      <button 
-                        onClick={() => handleDelete(staff.id, staff.full_name)}
-                        disabled={isPending}
-                        className="p-1 text-[var(--color-on-surface-variant)] hover:text-[var(--color-status-retard-text)] hover:bg-[var(--color-surface-container-high)] rounded transition-colors disabled:opacity-50" 
-                        title="Supprimer"
-                      >
-                        <span className="material-symbols-outlined text-[20px]" data-icon="delete">delete</span>
-                      </button>
+
+                      {openActionId === staff.id && (
+                        <div className="absolute right-6 top-10 w-40 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg shadow-lg z-10 flex flex-col overflow-hidden text-left py-1 animate-[fadeIn_0.1s_ease-out]">
+                          <button 
+                            className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors w-full text-left"
+                            onClick={() => {
+                              setOpenActionId(null);
+                              // TODO: Open edit modal when implemented
+                              alert("Fonctionnalité de modification à venir");
+                            }}
+                          >
+                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                            Modifier
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setOpenActionId(null);
+                              handleDelete(staff.id, staff.full_name);
+                            }}
+                            disabled={isPending}
+                            className="px-4 py-2 text-sm text-[var(--color-status-retard-text)] hover:bg-red-50 flex items-center gap-2 transition-colors w-full text-left disabled:opacity-50"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                            Supprimer
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -7,8 +7,9 @@ export const dynamic = 'force-dynamic'
 export default async function StudentsPage({
   searchParams,
 }: {
-  searchParams: { page?: string, classId?: string, search?: string }
+  searchParams: Promise<{ page?: string, classId?: string, search?: string }>
 }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -27,7 +28,7 @@ export default async function StudentsPage({
   const schoolId = roleData.school_id
   
   // Pagination & Filters
-  const page = parseInt(searchParams.page || '1')
+  const page = parseInt(resolvedSearchParams.page || '1')
   const itemsPerPage = 10
   const from = (page - 1) * itemsPerPage
   const to = from + itemsPerPage - 1
@@ -44,12 +45,12 @@ export default async function StudentsPage({
     `, { count: 'exact' })
     .eq('school_id', schoolId)
 
-  if (searchParams.classId) {
-    query = query.eq('class_id', searchParams.classId)
+  if (resolvedSearchParams.classId) {
+    query = query.eq('class_id', resolvedSearchParams.classId)
   }
 
-  if (searchParams.search) {
-    query = query.or(`first_name.ilike.%${searchParams.search}%,last_name.ilike.%${searchParams.search}%,matricule.ilike.%${searchParams.search}%`)
+  if (resolvedSearchParams.search) {
+    query = query.or(`first_name.ilike.%${resolvedSearchParams.search}%,last_name.ilike.%${resolvedSearchParams.search}%,matricule.ilike.%${resolvedSearchParams.search}%`)
   }
 
   query = query.order('created_at', { ascending: false }).range(from, to)

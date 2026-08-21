@@ -8,8 +8,9 @@ export const dynamic = 'force-dynamic'
 export default async function StudentDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params;
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -36,7 +37,7 @@ export default async function StudentDetailPage({
       date_of_birth,
       classes ( name )
     `)
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('school_id', roleData.school_id)
     .single()
 

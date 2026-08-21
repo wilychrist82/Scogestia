@@ -253,7 +253,7 @@ export function ClassesManager({ classes }: Props) {
                   <input 
                     className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
                     id="capacity" name="capacity" 
-                    placeholder="ex: 40 (laisser vide si illimité)" 
+                    placeholder="ex: 80 (laisser vide si illimité)" 
                     type="number"
                     min="1"
                     defaultValue={classToEdit?.capacity || ''}
