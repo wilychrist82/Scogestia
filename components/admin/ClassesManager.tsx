@@ -26,8 +26,18 @@ export function ClassesManager({ classes }: Props) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [classToDelete, setClassToDelete] = useState<ClassItem | null>(null)
 
+  const [levelFilter, setLevelFilter] = useState('Tous les niveaux')
+
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+
+  const filteredClasses = classes.filter(cls => {
+    if (levelFilter === 'Tous les niveaux') return true;
+    if (levelFilter === 'Maternelle') return ['section1', 'section2'].includes(cls.level);
+    if (levelFilter === 'Primaire') return ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2'].includes(cls.level);
+    if (levelFilter === 'Secondaire') return ['6eme', '5eme', '4eme', '3eme'].includes(cls.level);
+    return true;
+  })
 
   const openAddModal = () => {
     setClassToEdit(null)
@@ -111,17 +121,21 @@ export function ClassesManager({ classes }: Props) {
         {/* Table Controls */}
         <div className="p-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
           <div className="flex gap-2">
-            <select className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg px-3 py-1.5 text-sm text-[var(--color-on-surface)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none">
+            <select 
+              className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg px-3 py-1.5 text-sm text-[var(--color-on-surface)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none"
+              value={levelFilter}
+              onChange={(e) => setLevelFilter(e.target.value)}
+            >
               <option>Tous les niveaux</option>
               <option>Maternelle</option>
               <option>Primaire</option>
               <option>Secondaire</option>
             </select>
           </div>
-          <span className="text-sm text-[var(--color-on-surface-variant)]">{classes.length} Classes au total</span>
+          <span className="text-sm text-[var(--color-on-surface-variant)]">{filteredClasses.length} Classes au total</span>
         </div>
 
-        {classes.length === 0 ? (
+        {filteredClasses.length === 0 ? (
           <EmptyState 
             title="Aucune classe trouvée"
             description="Cliquez sur 'Ajouter une classe' pour commencer à structurer votre école."
@@ -141,11 +155,15 @@ export function ClassesManager({ classes }: Props) {
                 </tr>
               </thead>
               <tbody className="text-base">
-                {classes.map(cls => (
+                {filteredClasses.map(cls => (
                   <tr key={cls.id} className="border-b border-[var(--color-outline-variant)]/50 hover:bg-[#eff4ff]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
                     <td className="py-3 px-6 font-semibold text-[var(--color-on-surface)]">{cls.name}</td>
-                    <td className="py-3 px-6 text-[var(--color-on-surface-variant)]">{cls.level}</td>
-                    <td className="py-3 px-6 text-right text-[var(--color-on-surface-variant)]">{cls.capacity}</td>
+                    <td className="py-3 px-6 text-[var(--color-on-surface-variant)]">
+                      {cls.level === 'section1' ? 'Section 1' :
+                       cls.level === 'section2' ? 'Section 2' :
+                       cls.level.toUpperCase()}
+                    </td>
+                    <td className="py-3 px-6 text-right text-[var(--color-on-surface-variant)]">{cls.capacity || 'Illimitée'}</td>
                     <td className="py-3 px-6 text-right flex justify-end gap-2">
                       <Link href={`/admin/classes/${cls.id}`} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors p-1" title="Voir la classe">
                         <span className="material-symbols-outlined text-[20px]">visibility</span>
@@ -235,10 +253,10 @@ export function ClassesManager({ classes }: Props) {
                   <input 
                     className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
                     id="capacity" name="capacity" 
-                    placeholder="ex: 40" 
+                    placeholder="ex: 40 (laisser vide si illimité)" 
                     type="number"
                     min="1"
-                    defaultValue={classToEdit?.capacity || 40}
+                    defaultValue={classToEdit?.capacity || ''}
                   />
                 </div>
               </div>

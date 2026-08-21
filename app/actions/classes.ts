@@ -26,7 +26,8 @@ async function getActiveSchoolId() {
 export async function createClass(prevState: ActionState, formData: FormData): Promise<ActionState> {
   const name = formData.get('className') as string;
   const level = formData.get('classLevel') as string;
-  const capacity = parseInt(formData.get('capacity') as string) || 40;
+  const capacityStr = formData.get('capacity') as string;
+  const capacity = capacityStr ? parseInt(capacityStr) : null;
   // Note: academic_year can be handled centrally. We'll hardcode "2026-2027" for now or expect it in formData
   const academic_year = '2026-2027'; 
 
@@ -63,7 +64,8 @@ export async function updateClass(prevState: ActionState, formData: FormData): P
   const id = formData.get('classId') as string;
   const name = formData.get('className') as string;
   const level = formData.get('classLevel') as string;
-  const capacity = parseInt(formData.get('capacity') as string) || 40;
+  const capacityStr = formData.get('capacity') as string;
+  const capacity = capacityStr ? parseInt(capacityStr) : null;
 
   if (!id || !name || !level) {
     return { error: 'Veuillez remplir les champs obligatoires.' };

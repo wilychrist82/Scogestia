@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useTransition } from 'react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Users } from 'lucide-react'
+import { deleteStudent } from '@/app/actions/students'
 
 export type StudentItem = {
   id: string
@@ -30,6 +31,19 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '')
+  const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
+
+  const handleDelete = (id: string, name: string) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer l'élève ${name} ?`)) return
+    
+    startTransition(async () => {
+      const result = await deleteStudent(id)
+      if (result?.error) {
+        alert(result.error)
+      }
+    })
+  }
 
   const handleFilterChange = useCallback((key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -140,10 +154,22 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
                             En attente
                         </span>
                       </td>
-                      <td className="py-3 px-6 text-right">
-                        <Link href={`/admin/eleves/${student.id}`} className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors inline-block">
+                      <td className="py-3 px-6 text-right flex justify-end gap-2">
+                        <Link href={`/admin/eleves/${student.id}`} className="p-1 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors inline-block" title="Voir">
                           <span className="material-symbols-outlined text-[20px]">visibility</span>
                         </Link>
+                        {/* Placeholder for modifier, since there is no edit page right now we route to same as view or a hypothetical edit page */}
+                        <Link href={`/admin/eleves/${student.id}`} className="p-1 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors inline-block" title="Modifier">
+                          <span className="material-symbols-outlined text-[20px]">edit</span>
+                        </Link>
+                        <button 
+                          onClick={() => handleDelete(student.id, `${student.first_name} ${student.last_name}`)}
+                          disabled={isPending}
+                          className="p-1 text-[var(--color-on-surface-variant)] hover:text-[var(--color-status-retard-text)] transition-colors inline-block disabled:opacity-50" 
+                          title="Supprimer"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">delete</span>
+                        </button>
                       </td>
                     </tr>
                   ))}

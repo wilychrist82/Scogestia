@@ -91,3 +91,25 @@ export async function createStudent(prevState: ActionState, formData: FormData):
   revalidatePath('/admin/eleves');
   redirect('/admin/eleves');
 }
+
+export async function deleteStudent(studentId: string): Promise<ActionState> {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from('students')
+      .delete()
+      .eq('id', studentId)
+      .eq('school_id', school_id);
+
+    if (error) {
+      return { error: `Erreur lors de la suppression : ${error.message}` };
+    }
+
+    revalidatePath('/admin/eleves');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}

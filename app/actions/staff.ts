@@ -26,12 +26,16 @@ async function getActiveSchoolId() {
 
 export async function inviteStaff(prevState: ActionState, formData: FormData): Promise<ActionState> {
   const fullName = formData.get('fullName') as string;
-  const email = formData.get('email') as string;
+  let email = formData.get('email') as string;
   const phone = formData.get('phone') as string;
   const role = formData.get('role') as string;
 
-  if (!fullName || !email || !role) {
-    return { error: 'Veuillez remplir les champs obligatoires (nom, email, rôle).' };
+  if (!fullName || !role) {
+    return { error: 'Veuillez remplir les champs obligatoires (nom, rôle).' };
+  }
+  
+  if (!email) {
+    email = `no-email-${Date.now()}@ecole.com`;
   }
 
   try {
@@ -66,6 +70,28 @@ export async function inviteStaff(prevState: ActionState, formData: FormData): P
 
     if (dbError) {
       return { error: `Erreur base de données : ${dbError.message}` };
+    }
+
+    revalidatePath('/admin/personnel');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
+export async function deleteStaff(staffId: string): Promise<ActionState> {
+  try {
+    const school_id = await getActiveSchoolId();
+    const serviceClient = createServiceRoleClient();
+
+    const { error } = await serviceClient
+      .from('user_school_roles')
+      .delete()
+      .eq('id', staffId)
+      .eq('school_id', school_id);
+
+    if (error) {
+      return { error: `Erreur lors de la suppression : ${error.message}` };
     }
 
     revalidatePath('/admin/personnel');

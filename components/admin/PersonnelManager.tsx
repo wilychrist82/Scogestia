@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, FormEvent } from 'react'
-import { inviteStaff } from '@/app/actions/staff'
+import { inviteStaff, deleteStaff } from '@/app/actions/staff'
 
 export type StaffItem = {
   id: string
@@ -27,6 +27,17 @@ export function PersonnelManager({ staffList }: Props) {
     setIsModalOpen(true)
   }
 
+  const handleDelete = (id: string, name: string) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer ${name} ?`)) return
+    
+    startTransition(async () => {
+      const result = await deleteStaff(id)
+      if (result?.error) {
+        alert(result.error)
+      }
+    })
+  }
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
@@ -48,6 +59,8 @@ export function PersonnelManager({ staffList }: Props) {
       case 'admin': return 'Administrateur'
       case 'comptable': return 'Comptable'
       case 'enseignant': return 'Enseignant'
+      case 'secretaire': return 'Secrétaire'
+      case 'conseiller': return 'Conseiller'
       default: return role
     }
   }
@@ -142,9 +155,20 @@ export function PersonnelManager({ staffList }: Props) {
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-6 text-right">
-                      <button className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface-container-high)] rounded-full transition-colors">
-                        <span className="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
+                    <td className="py-3 px-6 text-right flex justify-end gap-2">
+                      <button 
+                        className="p-1 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface-container-high)] rounded transition-colors" 
+                        title="Modifier"
+                      >
+                        <span className="material-symbols-outlined text-[20px]" data-icon="edit">edit</span>
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(staff.id, staff.full_name)}
+                        disabled={isPending}
+                        className="p-1 text-[var(--color-on-surface-variant)] hover:text-[var(--color-status-retard-text)] hover:bg-[var(--color-surface-container-high)] rounded transition-colors disabled:opacity-50" 
+                        title="Supprimer"
+                      >
+                        <span className="material-symbols-outlined text-[20px]" data-icon="delete">delete</span>
                       </button>
                     </td>
                   </tr>
@@ -209,13 +233,12 @@ export function PersonnelManager({ staffList }: Props) {
                 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="email">
-                    Adresse email <span className="text-[var(--color-status-retard-text)]">*</span>
+                    Adresse email
                   </label>
                   <input 
                     className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
                     id="email" name="email" 
                     placeholder="ex: jean.dupont@ecole.com" 
-                    required 
                     type="email"
                   />
                 </div>
@@ -245,6 +268,8 @@ export function PersonnelManager({ staffList }: Props) {
                     <option disabled value="">Sélectionner un rôle</option>
                     <option value="enseignant">Enseignant</option>
                     <option value="comptable">Comptable</option>
+                    <option value="secretaire">Secrétaire</option>
+                    <option value="conseiller">Conseiller</option>
                     <option value="admin">Administrateur</option>
                   </select>
                 </div>
