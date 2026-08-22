@@ -50,13 +50,11 @@ export async function saveSchoolSubject(prevState: ActionState, formData: FormDa
   }
 }
 
-export async function saveGrades(prevState: ActionState, formData: FormData): Promise<ActionState> {
+export async function savePrimaryGrades(prevState: ActionState, formData: FormData): Promise<ActionState> {
   const classId = formData.get('classId') as string;
-  const studentId = formData.get('studentId') as string;
-  const term = formData.get('term') as string;
-  const evaluationType = formData.get('evaluationType') as string;
+  const subjectId = formData.get('subjectId') as string;
 
-  if (!classId || !studentId || !term || !evaluationType) {
+  if (!classId || !subjectId) {
     return { error: 'Paramètres manquants pour la sauvegarde.' };
   }
 
@@ -65,46 +63,87 @@ export async function saveGrades(prevState: ActionState, formData: FormData): Pr
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Iterate through formData to find grades
     const gradesToUpsert = [];
-    
     for (const [key, value] of formData.entries()) {
-      if (key.startsWith('grade_') && value) {
-        const subjectName = key.replace('grade_', '');
-        const score = parseFloat(value as string);
-        
-        if (!isNaN(score)) {
-          gradesToUpsert.push({
-            school_id,
-            student_id: studentId,
-            class_id: classId,
-            subject_name: subjectName,
-            term,
-            evaluation_type: evaluationType,
-            score,
-            max_score: 20, // default
-            entered_by: user?.id,
-            updated_at: new Date().toISOString()
-          });
+      if (key.startsWith('score_') && value) {
+        // key format: score_{monthNumber}_{studentId}
+        const parts = key.split('_');
+        if (parts.length === 3) {
+          const monthNumber = parseInt(parts[1], 10);
+          const studentId = parts[2];
+          const score = parseFloat(value as string);
+          if (!isNaN(score)) {
+            gradesToUpsert.push({
+              school_id,
+              student_id: studentId,
+              subject_id: subjectId,
+              month_number: monthNumber,
+              score,
+              max_score: 10,
+              academic_year: '2023/2024',
+              entered_by: user?.id,
+            });
+          }
         }
       }
     }
 
     if (gradesToUpsert.length > 0) {
-      const subjectNames = gradesToUpsert.map(g => g.subject_name);
-      
-      await supabase
-        .from('grades')
-        .delete()
-        .eq('school_id', school_id)
-        .eq('class_id', classId)
-        .eq('student_id', studentId)
-        .eq('term', term)
-        .eq('evaluation_type', evaluationType)
-        .in('subject_name', subjectNames);
+      await supabase.from('primary_grades').upsert(gradesToUpsert, { onConflict: 'student_id, subject_id, month_number, academic_year' });
+    }
 
-      const { error } = await supabase.from('grades').insert(gradesToUpsert);
-      if (error) throw error;
+    revalidatePath('/admin/academique/notes');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
+export async function saveSecondaryGrades(prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const classId = formData.get('classId') as string;
+  const term = formData.get('term') as string;
+  const subjectId = formData.get('subjectId') as string;
+
+  if (!classId || !term || !subjectId) {
+    return { error: 'Paramètres manquants pour la sauvegarde.' };
+  }
+
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const gradesToUpsert = [];
+    // We will extract studentId from the keys: class_score_{id} and comp_score_{id}
+    const studentIds = new Set<string>();
+    for (const key of formData.keys()) {
+      if (key.startsWith('class_score_')) studentIds.add(key.replace('class_score_', ''));
+      if (key.startsWith('comp_score_')) studentIds.add(key.replace('comp_score_', ''));
+    }
+
+    for (const studentId of studentIds) {
+      const classScoreStr = formData.get(`class_score_${studentId}`);
+      const compScoreStr = formData.get(`comp_score_${studentId}`);
+      const classScore = classScoreStr ? parseFloat(classScoreStr as string) : null;
+      const compScore = compScoreStr ? parseFloat(compScoreStr as string) : null;
+
+      if (classScore !== null || compScore !== null) {
+        gradesToUpsert.push({
+          school_id,
+          student_id: studentId,
+          subject_id: subjectId,
+          term,
+          class_score: classScore,
+          comp_score: compScore,
+          max_score: 20,
+          academic_year: '2023/2024', // TODO: dynamic
+          entered_by: user?.id,
+        });
+      }
+    }
+
+    if (gradesToUpsert.length > 0) {
+      await supabase.from('secondary_grades').upsert(gradesToUpsert, { onConflict: 'student_id, subject_id, term, academic_year' });
     }
 
     revalidatePath('/admin/academique/notes');
