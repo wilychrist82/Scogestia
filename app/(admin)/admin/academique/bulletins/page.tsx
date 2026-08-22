@@ -12,7 +12,7 @@ export default async function BulletinsPage() {
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('school_id')
+    .select('school_id, school:schools(name, logo_url, address, phone)')
     .eq('user_id', user.id)
     .single()
 
@@ -21,38 +21,25 @@ export default async function BulletinsPage() {
   }
 
   const schoolId = roleData.school_id
+  const schoolDetails = roleData.school
 
-  const { data: classes } = await supabase
-    .from('classes')
-    .select('id, name, level')
-    .eq('school_id', schoolId)
-    .order('name')
-
-  const { data: students } = await supabase
-    .from('students')
-    .select('id, matricule, last_name, first_name, class_id')
-    .eq('school_id', schoolId)
-    .eq('status', 'actif')
-    .order('last_name')
-    
-  const { data: subjects } = await supabase
-    .from('teacher_class_subjects')
-    .select('subject_name, class_id, coefficient')
-    .eq('school_id', schoolId)
-
-  // Fetch all grades for the school to compute averages client side.
-  // In a large app, we would fetch only for the selected student via an API route.
-  const { data: grades } = await supabase
-    .from('grades')
-    .select('student_id, score, subject_name, term, evaluation_type, class_id')
-    .eq('school_id', schoolId)
+  const { data: classes } = await supabase.from('classes').select('id, name, level').eq('school_id', schoolId).order('name')
+  const { data: students } = await supabase.from('students').select('id, matricule, last_name, first_name, class_id').eq('school_id', schoolId).eq('status', 'actif').order('last_name')
+  const { data: subjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId)
+  
+  // We fetch all grades for the school to compute client side. 
+  // In a huge real-world app, this would be behind a dedicated API route per student/class, but we keep it simple here.
+  const { data: primaryGrades } = await supabase.from('primary_grades').select('*').eq('school_id', schoolId)
+  const { data: secondaryGrades } = await supabase.from('secondary_grades').select('*').eq('school_id', schoolId)
 
   return (
     <BulletinsManager 
       classes={classes || []} 
       students={students || []} 
       subjects={subjects || []}
-      grades={grades || []}
+      primaryGrades={primaryGrades || []}
+      secondaryGrades={secondaryGrades || []}
+      schoolName={(schoolDetails as any)?.name || 'École'}
     />
   )
 }
