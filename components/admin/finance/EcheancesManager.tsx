@@ -117,7 +117,7 @@ export function EcheancesManager({ schedules, classes, students, basePath = "/ad
                <p className="text-sm">Générez des échéances pour vos classes ou élèves.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto min-h-[250px] custom-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[var(--color-surface-container-low)] border-b border-[var(--color-outline-variant)] text-[var(--color-on-surface-variant)] text-sm">
