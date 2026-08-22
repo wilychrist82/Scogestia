@@ -55,13 +55,26 @@ export async function middleware(request: NextRequest) {
   const userRole = roles && roles.length > 0 ? roles[0].role : null
 
   if (!userRole) {
-    // Authenticated but no role assigned
-    if (pathname !== '/connexion') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/connexion'
-      return NextResponse.redirect(url)
+    // Authenticated but no role assigned (Ghost session)
+    // We must sign them out so they aren't stuck in a redirect loop
+    await supabase.auth.signOut()
+    
+    // Once signed out, if they were trying to access a public page, let them in
+    if (pathname === '/' || pathname.startsWith('/connexion') || pathname.startsWith('/inscription-ecole') || pathname.startsWith('/activer-parent')) {
+      return supabaseResponse
     }
-    return supabaseResponse
+    
+    // Otherwise, redirect to connexion
+    const url = request.nextUrl.clone()
+    url.pathname = '/connexion'
+    const redirectResponse = NextResponse.redirect(url)
+    
+    // Copy the cleared cookies to the redirect response
+    supabaseResponse.cookies.getAll().forEach(cookie => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie as any)
+    })
+    
+    return redirectResponse
   }
 
   // Define route mapping
