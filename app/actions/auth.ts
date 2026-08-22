@@ -105,3 +105,10 @@ export async function registerSchool(prevState: AuthState, formData: FormData): 
 
   redirect('/connexion');
 }
+
+export async function logout() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect('/connexion');
+}
+
