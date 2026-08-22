@@ -9,9 +9,10 @@ export const metadata: Metadata = {
 export default async function ActiverParentPage({
   searchParams,
 }: {
-  searchParams: { code?: string }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const code = searchParams.code || ''
+  const resolvedSearchParams = await searchParams
+  const code = (typeof resolvedSearchParams?.code === 'string') ? resolvedSearchParams.code : ''
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--color-surface)] p-4 md:p-8">

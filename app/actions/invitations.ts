@@ -114,7 +114,10 @@ export async function activateParentAccount(prevState: any, formData: FormData):
   }
 
   // Force login pour s'assurer que le cookie de session est bien créé
-  await supabase.auth.signInWithPassword(signUpOptions)
+  const { error: signInError } = await supabase.auth.signInWithPassword(signUpOptions)
+  if (signInError) {
+    return { error: `Erreur de connexion automatique: ${signInError.message}` }
+  }
 
   const parentUserId = authData.user?.id
   if (!parentUserId) {
