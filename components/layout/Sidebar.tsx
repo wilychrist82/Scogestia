@@ -63,7 +63,8 @@ const mainNavItems: NavItem[] = [
     subItems: [
       { label: 'Présences', href: '/admin/academique/presences' },
       { label: 'Devoirs', href: '/admin/academique/devoirs' },
-      { label: 'Bulletins', href: '/admin/academique/bulletins' },
+      { label: 'Saisie des notes', href: '/admin/academique/notes' },
+      { label: 'Bulletins & Livrets', href: '/admin/academique/bulletins' },
       { label: 'Matières', href: '/admin/academique/matieres' },
       { label: 'Emplois du temps', href: '/admin/academique/emplois' },
     ]
