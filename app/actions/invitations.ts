@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { headers } from 'next/headers'
 import { authRateLimit, checkRateLimit } from '@/lib/ratelimit'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 // Fonction pour générer un code alphanumérique aléatoire
 function generateRandomCode(length: number = 6): string {
@@ -77,7 +78,7 @@ export async function generateParentCode(studentId: string): Promise<{ code?: st
 }
 
 export async function activateParentAccount(prevState: any, formData: FormData): Promise<{ error?: string, success?: boolean }> {
-  const identifier = formData.get('identifier') as string // phone or email
+  const identifier = formData.get('identifier') as string
   const code = formData.get('code') as string
   const password = formData.get('password') as string
 
@@ -98,44 +99,75 @@ export async function activateParentAccount(prevState: any, formData: FormData):
   }
 
   const supabase = await createClient()
+  const adminClient = createAdminClient()
 
   // 1. Inscrire l'utilisateur (Supabase)
-  // Selon que l'identifiant contient un '@', on utilise l'email ou le téléphone.
   const isEmail = identifier.includes('@')
-  
   const signUpOptions = isEmail 
     ? { email: identifier, password } 
     : { phone: identifier, password }
 
+  let parentUserId: string | undefined = undefined
+
+  // On tente l'inscription
   const { data: authData, error: authError } = await supabase.auth.signUp(signUpOptions)
 
-  if (authError) {
+  if (authError && !authError.message.includes('already registered')) {
     return { error: `Erreur d'inscription: ${authError.message}` }
   }
 
-  // Force login pour s'assurer que le cookie de session est bien créé
-  const { error: signInError } = await supabase.auth.signInWithPassword(signUpOptions)
+  // Qu'il soit nouveau ou déjà enregistré, on le connecte
+  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword(signUpOptions)
+  
   if (signInError) {
     return { error: `Erreur de connexion automatique: ${signInError.message}` }
   }
 
-  const parentUserId = authData.user?.id
+  parentUserId = signInData.user?.id
+
   if (!parentUserId) {
-    return { error: 'Erreur inattendue lors de la création du compte.' }
+    return { error: 'Erreur inattendue lors de la récupération du compte.' }
   }
 
-  // 2. Consommer le code via la fonction RPC `consume_parent_invitation`
-  const { error: consumeError } = await supabase.rpc('consume_parent_invitation', {
-    invitation_code: code.toUpperCase(),
-    parent_user_id: parentUserId
-  })
+  // 2. Consommer le code manuellement via l'Admin Client (contourne le bug RPC "ambiguous column")
+  
+  // A. Trouver l'invitation valide
+  const { data: inv, error: invError } = await adminClient
+    .from('parent_invitation_codes')
+    .select('*')
+    .eq('code', code.toUpperCase())
+    .is('used_at', null)
+    .gt('expires_at', new Date().toISOString())
+    .maybeSingle()
 
-  if (consumeError) {
-    // Note: Si la consommation échoue, le compte Auth est déjà créé.
-    // L'idéal serait de faire l'inverse (vérifier d'abord) ou de gérer l'erreur,
-    // mais consume_parent_invitation s'assure de l'intégrité en base.
-    return { error: consumeError.message || 'Le code d\'activation est invalide, expiré ou déjà utilisé.' }
+  if (invError || !inv) {
+    return { error: 'Le code d\'activation est invalide, expiré ou déjà utilisé.' }
   }
+
+  // B. Marquer comme utilisé
+  await adminClient
+    .from('parent_invitation_codes')
+    .update({ used_at: new Date().toISOString() })
+    .eq('id', inv.id)
+
+  // C. Lier le parent à l'étudiant
+  await adminClient
+    .from('parent_student_links')
+    .insert({
+      parent_user_id: parentUserId,
+      student_id: inv.student_id,
+      relationship: 'parent'
+    })
+
+  // D. S'assurer que le parent a le rôle 'parent'
+  await adminClient
+    .from('user_school_roles')
+    .insert({
+      user_id: parentUserId,
+      school_id: inv.school_id,
+      role: 'parent',
+      full_name: 'Parent'
+    })
 
   return { success: true }
 }
