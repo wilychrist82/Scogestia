@@ -149,12 +149,20 @@ export function EcheancesManager({ schedules, classes, students, basePath = "/ad
                       </td>
                       <td className="py-3 px-6 text-right">
                         <div className="flex justify-end gap-2 items-center">
-                          {schedule.status === 'en_retard' && schedule.student?.parent_phone && (
+                          {schedule.status !== 'paye' && schedule.student?.parent_phone && (
                             <a 
-                              href={`https://wa.me/${schedule.student.parent_phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Bonjour, nous vous rappelons que le paiement de "${schedule.label}" pour votre enfant ${schedule.student.first_name} ${schedule.student.last_name} est en retard. Merci de régulariser la situation.`)}`}
+                              href={`https://wa.me/${schedule.student.parent_phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                                schedule.status === 'en_retard' 
+                                ? `Bonjour, nous vous rappelons que le paiement de "${schedule.label}" pour votre enfant ${schedule.student.first_name} ${schedule.student.last_name} est en retard. Merci de régulariser la situation.`
+                                : `Bonjour, nous vous rappelons que le paiement de "${schedule.label}" pour votre enfant ${schedule.student.first_name} ${schedule.student.last_name} est attendu pour le ${new Date(schedule.due_date).toLocaleDateString('fr-FR')}.`
+                              )}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="w-8 h-8 rounded-full bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white flex items-center justify-center transition-colors shadow-sm"
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm ${
+                                schedule.status === 'en_retard' 
+                                ? 'bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white' 
+                                : 'bg-gray-100 text-gray-500 hover:bg-[#25D366] hover:text-white'
+                              }`}
                               title="Relancer par WhatsApp"
                             >
                               <span className="material-symbols-outlined text-[18px]">chat</span>
