@@ -113,6 +113,9 @@ export async function activateParentAccount(prevState: any, formData: FormData):
     return { error: `Erreur d'inscription: ${authError.message}` }
   }
 
+  // Force login pour s'assurer que le cookie de session est bien créé
+  await supabase.auth.signInWithPassword(signUpOptions)
+
   const parentUserId = authData.user?.id
   if (!parentUserId) {
     return { error: 'Erreur inattendue lors de la création du compte.' }
