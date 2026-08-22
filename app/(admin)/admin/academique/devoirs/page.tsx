@@ -38,26 +38,27 @@ export default async function DevoirsPage() {
 
   const { data: classes } = await supabase
     .from('classes')
-    .select('id, name')
+    .select('id, name, level')
     .eq('school_id', schoolId)
     .order('name')
 
   const { data: subjects } = await supabase
-    .from('teacher_class_subjects')
-    .select('subject_name, class_id')
+    .from('subjects')
+    .select('id, name, cycle')
     .eq('school_id', schoolId)
+    
+  const { data: students } = await supabase
+    .from('students')
+    .select('id, first_name, last_name, class_id')
+    .eq('school_id', schoolId)
+    .eq('status', 'actif')
+    .order('last_name')
 
   // Needs manual matching for full_name due to auth.users limitations (same as matieres)
   const { data: users } = await supabase
     .from('user_school_roles')
     .select('user_id, full_name')
     .eq('school_id', schoolId)
-
-  const homeworksMapped = homeworks?.map((hw: any) => {
-    // Assuming hw.creator wasn't fetched correctly due to missing full_name in auth.users
-    // But we actually only have created_by in the table homework, let's fetch created_by and map it
-    return hw; // Will fix the query in the next step
-  })
 
   // Actually let's fetch raw
   const { data: homeworksRaw, error } = await supabase
@@ -69,6 +70,8 @@ export default async function DevoirsPage() {
       due_date,
       created_at,
       created_by,
+      attachment_url,
+      target_students,
       class:classes(name)
     `)
     .eq('school_id', schoolId)
@@ -91,6 +94,7 @@ export default async function DevoirsPage() {
       homeworks={(homeworksFinal as any) || []} 
       classes={classes || []} 
       subjects={subjects || []}
+      students={students || []}
     />
   )
 }

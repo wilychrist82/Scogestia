@@ -4,14 +4,17 @@ import { useState, useTransition, FormEvent } from 'react'
 import { publishHomework } from '@/app/actions/academique'
 import Link from 'next/link'
 
-type ClassItem = { id: string; name: string }
-type SubjectItem = { subject_name: string; class_id: string }
+type ClassItem = { id: string; name: string; level: string }
+type SubjectItem = { id: string; name: string; cycle: string }
+type StudentItem = { id: string; first_name: string; last_name: string; class_id: string }
 type HomeworkItem = {
   id: string
   title: string
   subject_name: string
   due_date: string
   created_at: string
+  attachment_url?: string
+  target_students?: string[]
   class: { name: string } | null
   creator: { full_name: string } | null
 }
@@ -20,16 +23,26 @@ type Props = {
   homeworks: HomeworkItem[]
   classes: ClassItem[]
   subjects: SubjectItem[]
+  students?: StudentItem[]
 }
 
-export function DevoirsManager({ homeworks, classes, subjects }: Props) {
+export function DevoirsManager({ homeworks, classes, subjects, students = [] }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
   const [selectedClassId, setSelectedClassId] = useState<string>('')
+  const [assignmentMode, setAssignmentMode] = useState<'all' | 'selective'>('all')
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([])
   
-  const availableSubjects = selectedClassId ? subjects.filter(s => s.class_id === selectedClassId) : []
+  const selectedClass = classes.find(c => c.id === selectedClassId)
+  let classCycle = ''
+  if (selectedClass) {
+    if (selectedClass.level.toLowerCase().match(/cp|ce|cm/)) classCycle = 'primaire'
+    else classCycle = 'secondaire'
+  }
+  const availableSubjects = classCycle ? subjects.filter(s => s.cycle === classCycle) : subjects
+  const availableStudents = students.filter(s => s.class_id === selectedClassId)
 
   const openAddModal = () => {
     setError(null)
@@ -40,6 +53,14 @@ export function DevoirsManager({ homeworks, classes, subjects }: Props) {
     e.preventDefault()
     setError(null)
     const formData = new FormData(e.currentTarget)
+    
+    if (assignmentMode === 'selective') {
+      if (selectedStudents.length === 0) {
+        setError("Veuillez sélectionner au moins un élève.");
+        return;
+      }
+      formData.append('targetStudents', JSON.stringify(selectedStudents));
+    }
     
     startTransition(async () => {
       const result = await publishHomework(null, formData)
@@ -110,12 +131,17 @@ export function DevoirsManager({ homeworks, classes, subjects }: Props) {
                   </div>
                   <h3 className="font-bold text-[var(--color-on-surface)] text-lg mb-1 leading-tight">{hw.title}</h3>
                   <p className="text-sm text-[var(--color-on-surface-variant)] mb-4 flex-1">
-                    Classe : {hw.class?.name || '-'} <br/>
+                    Classe : {hw.class?.name || '-'} {hw.target_students ? <span className="text-xs bg-[#e0f7fa] text-[#006064] px-2 py-0.5 rounded-full ml-2">{hw.target_students.length} ciblés</span> : null}<br/>
                     Publié le : {new Date(hw.created_at).toLocaleDateString('fr-FR')} par {hw.creator?.full_name || 'Admin'}
                   </p>
                   <div className="flex gap-2 mt-auto">
+                    {hw.attachment_url && (
+                      <a href={hw.attachment_url.startsWith('http') ? hw.attachment_url : `https://mxttnddswkntrryshqzl.supabase.co/storage/v1/object/public/homework-attachments/${hw.attachment_url}`} target="_blank" rel="noreferrer" className="flex-1 bg-[#f0f4ff] text-[var(--color-primary)] border border-[#cce0ff] hover:bg-[#e0edff] py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1">
+                        <span className="material-symbols-outlined text-[18px]">attachment</span> Pièce jointe
+                      </a>
+                    )}
                     <button className="flex-1 bg-[var(--color-surface-bright)] text-[var(--color-on-surface)] border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] py-2 rounded-lg text-sm font-semibold transition-colors">
-                      Voir / Modifier
+                      Voir
                     </button>
                     <button className="px-3 bg-[var(--color-surface-bright)] text-[var(--color-status-retard-text)] border border-[var(--color-outline-variant)] hover:border-[var(--color-status-retard-text)] hover:bg-[#fff0f0] rounded-lg transition-colors flex items-center justify-center">
                       <span className="material-symbols-outlined text-[18px]">delete</span>
@@ -174,8 +200,15 @@ export function DevoirsManager({ homeworks, classes, subjects }: Props) {
                     disabled={!selectedClassId}
                   >
                     <option value="">Sélectionner une matière</option>
-                    {availableSubjects.map(s => <option key={s.subject_name} value={s.subject_name}>{s.subject_name}</option>)}
+                    {availableSubjects.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
                   </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="attachment">
+                    Pièce jointe (PDF, Word, Photo)
+                  </label>
+                  <input className="w-full px-4 py-2.5 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[var(--color-primary)] file:text-white hover:file:opacity-90" id="attachment" name="attachment" type="file" accept=".pdf,.doc,.docx,image/*" />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -198,6 +231,47 @@ export function DevoirsManager({ homeworks, classes, subjects }: Props) {
                   </label>
                   <input className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]" id="dueDate" name="dueDate" type="date" required />
                 </div>
+
+                {selectedClassId && (
+                  <div className="flex flex-col gap-3 mt-2 border-t pt-4 border-[var(--color-outline-variant)]">
+                    <label className="text-sm font-semibold text-[var(--color-on-surface)]">
+                      Destinataires
+                    </label>
+                    <div className="flex flex-col gap-2">
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="radio" name="assignmentMode" checked={assignmentMode === 'all'} onChange={() => setAssignmentMode('all')} className="w-4 h-4 text-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
+                        Toute la classe
+                      </label>
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="radio" name="assignmentMode" checked={assignmentMode === 'selective'} onChange={() => setAssignmentMode('selective')} className="w-4 h-4 text-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
+                        Élèves spécifiques
+                      </label>
+                    </div>
+
+                    {assignmentMode === 'selective' && (
+                      <div className="p-3 border border-[var(--color-outline-variant)] rounded-lg max-h-48 overflow-y-auto bg-[var(--color-surface-bright)]">
+                        {availableStudents.length === 0 ? (
+                          <p className="text-sm text-gray-500">Aucun élève trouvé dans cette classe.</p>
+                        ) : (
+                          availableStudents.map(student => (
+                            <label key={student.id} className="flex items-center gap-3 p-2 hover:bg-[#f0f4ff] rounded cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                checked={selectedStudents.includes(student.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) setSelectedStudents([...selectedStudents, student.id])
+                                  else setSelectedStudents(selectedStudents.filter(id => id !== student.id))
+                                }}
+                                className="rounded text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                              />
+                              <span className="text-sm">{student.last_name} {student.first_name}</span>
+                            </label>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
               </div>
               

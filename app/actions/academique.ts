@@ -213,6 +213,8 @@ export async function publishHomework(prevState: ActionState, formData: FormData
   const title = formData.get('title') as string;
   const description = formData.get('description') as string;
   const dueDate = formData.get('dueDate') as string;
+  const targetStudentsStr = formData.get('targetStudents') as string;
+  const attachment = formData.get('attachment') as File | null;
 
   if (!classId || !subjectName || !title || !dueDate) {
     return { error: 'Veuillez remplir les champs obligatoires (classe, matière, titre, date limite).' };
@@ -223,6 +225,44 @@ export async function publishHomework(prevState: ActionState, formData: FormData
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+    let attachmentUrl = null;
+
+    if (attachment && attachment.size > 0) {
+      const fileExt = attachment.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${school_id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('homework-attachments')
+        .upload(filePath, attachment, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Erreur upload:', uploadError);
+        return { error: "Erreur lors de l'upload du fichier." };
+      }
+      
+      const { data: publicUrlData } = supabase.storage
+        .from('homework-attachments')
+        .getPublicUrl(filePath);
+        
+      attachmentUrl = publicUrlData.publicUrl;
+    }
+
+    let target_students = null;
+    if (targetStudentsStr) {
+      try {
+        const parsed = JSON.parse(targetStudentsStr);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          target_students = parsed;
+        }
+      } catch(e) {
+        console.error("Erreur parsing targetStudents", e);
+      }
+    }
+
     const { error } = await supabase.from('homework').insert({
       school_id,
       class_id: classId,
@@ -230,6 +270,8 @@ export async function publishHomework(prevState: ActionState, formData: FormData
       title,
       description,
       due_date: dueDate,
+      attachment_url: attachmentUrl,
+      target_students,
       created_by: user?.id
     });
 
