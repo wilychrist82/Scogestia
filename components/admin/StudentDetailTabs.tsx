@@ -175,11 +175,24 @@ export function StudentDetailTabs({ student }: Props) {
                   <h4 className="text-sm font-semibold text-[var(--color-on-surface)] mb-2">Invitation Parent</h4>
                   {invitationCode ? (
                     <div className="bg-[#eff4ff] border border-[var(--color-outline-variant)] rounded-lg p-4">
-                      <p className="text-sm text-[var(--color-on-surface-variant)] mb-2">Code d'activation à transmettre au parent :</p>
+                      <p className="text-sm text-[var(--color-on-surface-variant)] mb-2">Lien magique à envoyer au parent :</p>
                       <div className="text-2xl font-mono font-bold text-[var(--color-primary)] tracking-widest bg-white p-3 rounded text-center shadow-sm">
                         {invitationCode}
                       </div>
-                      <p className="text-xs text-[var(--color-on-surface-variant)] mt-2 text-center">Ce code expirera dans 7 jours.</p>
+                      
+                      <button 
+                        onClick={() => {
+                          const message = `Bonjour, voici le lien pour activer votre accès parent afin de suivre mon enfant. Cliquez ici : https://scogestia.vercel.app/activer-parent?code=${invitationCode}`;
+                          navigator.clipboard.writeText(message);
+                          alert("Lien copié dans le presse-papier ! Vous pouvez le coller sur WhatsApp.");
+                        }}
+                        className="w-full mt-3 h-10 bg-white border border-[var(--color-primary)] text-[var(--color-primary)] rounded-lg font-semibold text-sm flex items-center justify-center gap-2 hover:bg-[#e6eeff] transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">content_copy</span>
+                        Copier le lien pour WhatsApp
+                      </button>
+
+                      <p className="text-xs text-[var(--color-on-surface-variant)] mt-3 text-center">Ce code expirera dans 7 jours.</p>
                     </div>
                   ) : (
                     <div>
