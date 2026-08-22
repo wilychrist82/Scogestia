@@ -27,12 +27,12 @@ begin
 
   -- Lier le parent à l'étudiant
   insert into parent_student_links (parent_user_id, student_id, relationship)
-  values (consume_parent_invitation.parent_user_id, v_invitation.student_id, 'parent')
+  values ($2, v_invitation.student_id, 'parent')
   on conflict (parent_user_id, student_id) do nothing;
   
   -- S'assurer que le parent a le rôle 'parent' dans user_school_roles pour cette école
   insert into user_school_roles (user_id, school_id, role, full_name)
-  values (consume_parent_invitation.parent_user_id, v_invitation.school_id, 'parent', 'Parent')
+  values ($2, v_invitation.school_id, 'parent', 'Parent')
   on conflict (user_id, school_id, role) do nothing;
 end;
 $$;
