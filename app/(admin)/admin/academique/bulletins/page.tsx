@@ -10,14 +10,14 @@ export default async function BulletinsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/connexion')
 
-  const { data: roleData } = await supabase
+  const { data: roleData, error: roleError } = await supabase
     .from('user_school_roles')
-    .select('school_id, school:schools(name, logo_url, address, phone)')
+    .select('school_id, school:schools(name, logo_url, city, phone)')
     .eq('user_id', user.id)
     .single()
 
   if (!roleData?.school_id) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable.</div>
+    return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable: {roleError?.message || 'Inconnu'}</div>
   }
 
   const schoolId = roleData.school_id
