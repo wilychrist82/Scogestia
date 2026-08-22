@@ -22,49 +22,17 @@ export default async function MatieresPage() {
 
   const schoolId = roleData.school_id
 
-  const { data: subjectsRaw, error } = await supabase
-    .from('teacher_class_subjects')
-    .select(`
-      id,
-      subject_name,
-      coefficient,
-      class_id,
-      teacher_id,
-      class:classes(name)
-    `)
-    .eq('school_id', schoolId)
-    .order('subject_name')
-
-  const { data: classes } = await supabase
-    .from('classes')
-    .select('id, name')
+  const { data: subjects, error } = await supabase
+    .from('subjects')
+    .select('*')
     .eq('school_id', schoolId)
     .order('name')
-
-  const { data: teachers } = await supabase
-    .from('user_school_roles')
-    .select('user_id, full_name')
-    .eq('school_id', schoolId)
-    .eq('role', 'enseignant')
-    .order('full_name')
-
-  const subjects = subjectsRaw?.map(sub => {
-    const teacher = teachers?.find(t => t.user_id === sub.teacher_id)
-    return {
-      ...sub,
-      teacher: teacher ? { full_name: teacher.full_name } : null
-    }
-  })
 
   if (error) {
     return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur de récupération des matières.</div>
   }
 
   return (
-    <MatieresManager 
-      subjects={(subjects as any) || []} 
-      classes={classes || []} 
-      teachers={teachers || []} 
-    />
+    <MatieresManager subjects={subjects || []} />
   )
 }

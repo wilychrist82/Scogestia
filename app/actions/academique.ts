@@ -19,26 +19,26 @@ async function getActiveSchoolId() {
   return roleData.school_id;
 }
 
-export async function addSubject(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const classId = formData.get('classId') as string;
-  const subjectName = formData.get('subjectName') as string;
+export async function saveSchoolSubject(prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const name = formData.get('name') as string;
+  const cycle = formData.get('cycle') as string;
+  const category = formData.get('category') as string;
   const coefficient = parseFloat(formData.get('coefficient') as string);
-  const teacherId = formData.get('teacherId') as string;
 
-  if (!classId || !subjectName || !coefficient || !teacherId) {
-    return { error: 'Veuillez remplir tous les champs.' };
+  if (!name || !cycle) {
+    return { error: 'Veuillez remplir le nom et le cycle.' };
   }
 
   try {
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
 
-    const { error } = await supabase.from('teacher_class_subjects').insert({
+    const { error } = await supabase.from('subjects').insert({
       school_id,
-      class_id: classId,
-      subject_name: subjectName,
-      coefficient,
-      teacher_id: teacherId
+      name,
+      cycle,
+      category: cycle === 'primaire' ? category : null,
+      coefficient: cycle === 'secondaire' ? coefficient || 1 : 1
     });
 
     if (error) throw error;
