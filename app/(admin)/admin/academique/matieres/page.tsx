@@ -29,7 +29,7 @@ export default async function MatieresPage() {
     .order('name')
 
   if (error) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur de récupération des matières.</div>
+    return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur de récupération des matières: {error.message || JSON.stringify(error)}</div>
   }
 
   return (
