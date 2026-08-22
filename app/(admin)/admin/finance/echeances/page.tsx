@@ -65,7 +65,7 @@ export default async function EcheancesPage() {
 
   // Inject parent phone into schedules
   const formattedSchedules = schedules?.map(s => {
-    const studentLinks = parentLinks?.filter(l => l.student_id === s.student_id) || []
+    const studentLinks = parentLinks?.filter(l => l.student_id === s.student?.id || l.student_id === (s as any).student_id) || []
     let parentPhone = null
     for (const link of studentLinks) {
       const pRole = parentRoles?.find(r => r.user_id === link.parent_user_id)
@@ -78,7 +78,7 @@ export default async function EcheancesPage() {
     return {
       ...s,
       student: {
-        ...(s.students as any),
+        ...((s as any).student || {}),
         parent_phone: parentPhone
       }
     }

@@ -26,6 +26,7 @@ export function EcheancesManager({ schedules, classes, students, basePath = "/ad
   const [scheduleType, setScheduleType] = useState<'class' | 'individual'>('class')
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
 
   const openAddModal = () => {
     setError(null)
@@ -159,9 +160,33 @@ export function EcheancesManager({ schedules, classes, students, basePath = "/ad
                               <span className="material-symbols-outlined text-[18px]">chat</span>
                             </a>
                           )}
-                          <button className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface-container-high)] rounded-full transition-colors">
-                            <span className="material-symbols-outlined text-[20px]">more_vert</span>
-                          </button>
+                          <div className="relative">
+                            <button 
+                              onClick={() => setOpenDropdownId(openDropdownId === schedule.id ? null : schedule.id)}
+                              className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface-container-high)] rounded-full transition-colors"
+                            >
+                              <span className="material-symbols-outlined text-[20px]">more_vert</span>
+                            </button>
+                            {openDropdownId === schedule.id && (
+                              <>
+                                <div className="fixed inset-0 z-10" onClick={() => setOpenDropdownId(null)}></div>
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-[var(--color-outline-variant)] py-1 z-20 overflow-hidden">
+                                  <button onClick={() => { setOpenDropdownId(null); alert("Afficher les détails (à implémenter)") }} className="w-full text-left px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#f8f9fa] flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[18px]">visibility</span>
+                                    Voir les détails
+                                  </button>
+                                  <button onClick={() => { setOpenDropdownId(null); alert("Modifier l'échéance (à implémenter)") }} className="w-full text-left px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#f8f9fa] flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[18px]">edit</span>
+                                    Modifier
+                                  </button>
+                                  <button onClick={() => { setOpenDropdownId(null); alert("Supprimer l'échéance (à implémenter)") }} className="w-full text-left px-4 py-2 text-sm text-[var(--color-status-retard-text)] hover:bg-[#fff0f0] flex items-center gap-2 border-t border-[var(--color-outline-variant)]">
+                                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                                    Supprimer
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </td>
                     </tr>

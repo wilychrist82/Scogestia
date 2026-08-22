@@ -25,11 +25,13 @@ export default async function ComptableEcheancesPage() {
     .from('payment_schedules')
     .select(`
       id,
+      label,
       amount_due,
       status,
       due_date,
       student_id,
       students (
+        id,
         first_name,
         last_name,
         class_id,
@@ -64,8 +66,7 @@ export default async function ComptableEcheancesPage() {
 
   // Inject parent phone into schedules
   const formattedSchedules = schedules?.map(s => {
-    const studentLinks = parentLinks?.filter(l => l.student_id === s.student_id) || []
-    // Get the first parent phone available
+    const studentLinks = parentLinks?.filter(l => l.student_id === s.student_id || l.student_id === (s as any).students?.id) || []
     let parentPhone = null
     for (const link of studentLinks) {
       const pRole = parentRoles?.find(r => r.user_id === link.parent_user_id)
@@ -78,7 +79,7 @@ export default async function ComptableEcheancesPage() {
     return {
       ...s,
       student: {
-        ...(s.students as any),
+        ...((s as any).students || {}),
         parent_phone: parentPhone
       }
     }
