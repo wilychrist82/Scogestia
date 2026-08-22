@@ -1,4 +1,4 @@
--- Fix ambiguous column reference in consume_parent_invitation
+-- Fix ambiguous column reference in consume_parent_invitation and add full_name
 create or replace function consume_parent_invitation(invitation_code text, parent_user_id uuid)
 returns void
 language plpgsql
@@ -25,14 +25,14 @@ begin
   set used_at = now()
   where id = v_invitation.id;
 
-  -- Lier le parent à l'étudiant (utilisation de consume_parent_invitation.parent_user_id pour lever l'ambiguïté)
+  -- Lier le parent à l'étudiant
   insert into parent_student_links (parent_user_id, student_id, relationship)
   values (consume_parent_invitation.parent_user_id, v_invitation.student_id, 'parent')
   on conflict (parent_user_id, student_id) do nothing;
   
   -- S'assurer que le parent a le rôle 'parent' dans user_school_roles pour cette école
-  insert into user_school_roles (user_id, school_id, role)
-  values (consume_parent_invitation.parent_user_id, v_invitation.school_id, 'parent')
-  on conflict (user_id, school_id) do nothing;
+  insert into user_school_roles (user_id, school_id, role, full_name)
+  values (consume_parent_invitation.parent_user_id, v_invitation.school_id, 'parent', 'Parent')
+  on conflict (user_id, school_id, role) do nothing;
 end;
 $$;
