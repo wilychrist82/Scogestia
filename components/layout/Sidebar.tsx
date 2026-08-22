@@ -61,7 +61,6 @@ const mainNavItems: NavItem[] = [
     icon: BookOpen, 
     hasDropdown: true,
     subItems: [
-      { label: 'Notes', href: '/admin/academique/notes' },
       { label: 'Présences', href: '/admin/academique/presences' },
       { label: 'Devoirs', href: '/admin/academique/devoirs' },
       { label: 'Bulletins', href: '/admin/academique/bulletins' },
