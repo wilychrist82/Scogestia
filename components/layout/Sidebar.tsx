@@ -17,8 +17,10 @@ import {
   Headset,
   ChevronDown,
   ShieldCheck,
-  X
+  X,
+  LogOut
 } from 'lucide-react'
+import { logout } from '@/app/actions/auth'
 
 export type NavItem = {
   label: string
@@ -174,7 +176,7 @@ export function Sidebar({ userFullName, userRoleLabel, isOpen, onClose }: Sideba
 
       {/* Help Block */}
       <div className="px-4 mt-auto pb-4">
-        <div className="bg-[var(--color-sidebar-hover)] rounded-xl p-4 text-center">
+        <div className="bg-[var(--color-sidebar-hover)] rounded-xl p-4 text-center mb-4">
           <div className="flex justify-center mb-2">
             <Headset size={24} className="text-white" />
           </div>
@@ -186,6 +188,17 @@ export function Sidebar({ userFullName, userRoleLabel, isOpen, onClose }: Sideba
             Centre d'aide
           </button>
         </div>
+
+        {/* Logout Button */}
+        <form action={logout}>
+          <button 
+            type="submit" 
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-red-400 hover:text-white hover:bg-red-500/20 transition-colors font-medium text-sm"
+          >
+            <LogOut size={20} />
+            Déconnexion
+          </button>
+        </form>
       </div>
     </aside>
     </>
