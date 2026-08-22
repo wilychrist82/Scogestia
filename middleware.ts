@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -34,7 +34,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Allow auth routes to be accessed by non-authenticated users
-  if (!user && (pathname.startsWith('/connexion') || pathname.startsWith('/inscription-ecole'))) {
+  if (!user && (pathname.startsWith('/connexion') || pathname.startsWith('/inscription-ecole') || pathname.startsWith('/activer-parent'))) {
     return supabaseResponse
   }
 
@@ -68,7 +68,7 @@ export async function proxy(request: NextRequest) {
   const routePrefix = `/${userRole}` // e.g. /admin, /enseignant, /comptable, /parent
   
   // If user is going to the root or an auth page, redirect them to their dashboard
-  if (pathname === '/' || pathname.startsWith('/connexion') || pathname.startsWith('/inscription-ecole')) {
+  if (pathname === '/' || pathname.startsWith('/connexion') || pathname.startsWith('/inscription-ecole') || pathname.startsWith('/activer-parent')) {
     const url = request.nextUrl.clone()
     url.pathname = routePrefix
     return NextResponse.redirect(url)
