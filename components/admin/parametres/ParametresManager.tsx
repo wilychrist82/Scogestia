@@ -131,7 +131,7 @@ export function ParametresManager({ school }: Props) {
               </label>
               <select 
                 name="currentAcademicYear"
-                defaultValue={school.current_academic_year}
+                defaultValue={school.current_academic_year || '2024-2025'}
                 className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] max-w-md"
                 required
               >

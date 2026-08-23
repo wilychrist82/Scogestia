@@ -28,7 +28,7 @@ export async function updateSchoolSettings(prevState: ActionState, formData: For
       .from('user_school_roles')
       .select('school_id, role')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (roleError || !roleData || roleData.role !== 'admin') {
       throw new Error('Permission refusée');

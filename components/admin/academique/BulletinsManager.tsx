@@ -43,7 +43,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
   // Initialize local state when student changes
   useEffect(() => {
     if (!student) return
-    if (selectedLevel === 'primaire') {
+    if (selectedLevel === 'primaire' || selectedLevel === 'maternelle') {
       const newPrim: Record<string, string> = {}
       primaryGrades.forEach(g => {
         if (g.student_id === student.id) {
@@ -76,7 +76,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
       const formData = new FormData()
       formData.append('classId', cls.id)
       
-      if (selectedLevel === 'primaire') {
+      if (selectedLevel === 'primaire' || selectedLevel === 'maternelle') {
         // primary: group by subject and month
         // Action savePrimaryGrades expects score_{month}_{studentId} and subjectId. 
         // Wait, savePrimaryGrades saves ONE subject for MULTIPLE students.
@@ -97,7 +97,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
   const renderPrimaryLivret = () => {
     if (!student || !cls) return null
 
-    const primarySubjects = subjects.filter(s => s.cycle === 'primaire')
+    const primarySubjects = subjects.filter(s => s.cycle === 'primaire' || s.cycle === 'maternelle')
     const groupedSubjects: Record<string, SubjectItem[]> = {}
     primarySubjects.forEach(s => {
       const cat = s.category || 'Général'
@@ -408,6 +408,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
                 className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
               >
                 <option value="">Sélectionner un niveau...</option>
+                <option value="maternelle">Maternelle</option>
                 <option value="primaire">Primaire</option>
                 <option value="secondaire">Secondaire</option>
               </select>
@@ -489,7 +490,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
             {/* Render appropriate bulletin */}
             <div className="print-container overflow-x-auto custom-scrollbar pb-4">
               <div className="min-w-[800px]">
-                {selectedLevel === 'primaire' ? renderPrimaryLivret() : renderSecondaryBulletin()}
+                {selectedLevel === 'primaire' || selectedLevel === 'maternelle' ? renderPrimaryLivret() : renderSecondaryBulletin()}
               </div>
             </div>
           </div>

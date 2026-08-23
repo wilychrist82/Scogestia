@@ -14,7 +14,7 @@ export default async function ParametresPage() {
     .from('user_school_roles')
     .select('school_id, role')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
   if (!roleData?.school_id) {
     return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable.</div>
@@ -29,7 +29,7 @@ export default async function ParametresPage() {
     .from('schools')
     .select('id, name, address, phone, email, current_academic_year')
     .eq('id', roleData.school_id)
-    .single()
+    .maybeSingle()
 
   if (!school) {
     return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable.</div>
