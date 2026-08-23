@@ -7,14 +7,15 @@ export const dynamic = 'force-dynamic'
 export default async function ParentPresencesPage({
   searchParams,
 }: {
-  searchParams: { child?: string }
+  searchParams: Promise<{ child?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/connexion')
 
-  const childId = searchParams.child
+  const resolvedSearchParams = await searchParams;
+  const childId = resolvedSearchParams.child
 
   if (!childId) {
     return (
