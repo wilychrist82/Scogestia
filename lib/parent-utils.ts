@@ -16,7 +16,7 @@ export async function resolveStudentId(
       student_id,
       student:students(id, first_name, last_name, class_id)
     `)
-    .eq('parent_id', userId)
+    .eq('parent_user_id', userId)
 
   if (!links || links.length === 0) {
     return { childrenList: [], selectedChild: null, selectedChildId: null }

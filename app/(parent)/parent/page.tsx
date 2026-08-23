@@ -32,7 +32,7 @@ export default async function ParentDashboardPage() {
         classes (name)
       )
     `)
-    .eq('parent_id', user.id)
+    .eq('parent_user_id', user.id)
 
   const children = links?.map(l => l.students).filter(Boolean) || []
 
