@@ -10,7 +10,7 @@ export type ActionState = {
 
 export async function updateSchoolSettings(prevState: ActionState, formData: FormData): Promise<ActionState> {
   const name = formData.get('name') as string
-  const address = formData.get('address') as string
+  const city = formData.get('city') as string
   const phone = formData.get('phone') as string
   const email = formData.get('email') as string
   const currentAcademicYear = formData.get('currentAcademicYear') as string
@@ -38,7 +38,7 @@ export async function updateSchoolSettings(prevState: ActionState, formData: For
       .from('schools')
       .update({
         name,
-        address,
+        city,
         phone,
         email,
         current_academic_year: currentAcademicYear

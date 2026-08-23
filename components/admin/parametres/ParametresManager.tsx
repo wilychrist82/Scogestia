@@ -6,7 +6,7 @@ import { updateSchoolSettings } from '@/app/actions/parametres'
 type School = {
   id: string
   name: string
-  address: string | null
+  city: string | null
   phone: string | null
   email: string | null
   current_academic_year: string
@@ -90,13 +90,13 @@ export function ParametresManager({ school }: Props) {
               </div>
 
               <div className="flex flex-col gap-1.5 md:col-span-2">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Adresse physique</label>
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Ville</label>
                 <input 
                   type="text" 
-                  name="address"
-                  defaultValue={school.address || ''}
+                  name="city"
+                  defaultValue={school.city || ''}
                   className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
-                  placeholder="Quartier, Ville, Pays"
+                  placeholder="Ville"
                 />
               </div>
 
