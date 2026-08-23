@@ -36,7 +36,7 @@ export function ClassesManager({ classes }: Props) {
     const l = cls.level.toLowerCase();
     if (levelFilter === 'Maternelle') return ['s1', 's2', 'section1', 'section2', 'maternelle'].includes(l);
     if (levelFilter === 'Primaire') return ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].includes(l);
-    if (levelFilter === 'Secondaire') return ['6eme', '5eme', '4eme', '3eme', 'secondaire'].includes(l);
+    if (levelFilter === 'Secondaire') return ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège'].includes(l);
     return true;
   })
 
@@ -161,7 +161,7 @@ export function ClassesManager({ classes }: Props) {
                     <td className="py-3 px-6 text-[var(--color-on-surface-variant)]">
                       {['s1', 's2', 'section1', 'section2', 'maternelle'].includes(cls.level.toLowerCase()) ? 'MATERNELLE' :
                        ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].includes(cls.level.toLowerCase()) ? 'PRIMAIRE' :
-                       ['6eme', '5eme', '4eme', '3eme', 'secondaire'].includes(cls.level.toLowerCase()) ? 'SECONDAIRE' :
+                       ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège'].includes(cls.level.toLowerCase()) ? 'SECONDAIRE' :
                        cls.level.toUpperCase()}
                     </td>
                     <td className="py-3 px-6 text-right text-[var(--color-on-surface-variant)]">{cls.capacity || 'Illimitée'}</td>

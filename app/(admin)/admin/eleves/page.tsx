@@ -49,9 +49,9 @@ export default async function StudentsPage({
 
   // Apply niveau filter
   let levels: string[] = []
-  if (niveau === 'Maternelle') levels = ['s1', 's2', 'section1', 'section2', 'maternelle']
-  else if (niveau === 'Primaire') levels = ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire']
-  else if (niveau === 'Secondaire') levels = ['6eme', '5eme', '4eme', '3eme', 'secondaire']
+  if (niveau === 'Maternelle') levels = ['s1', 's2', 'section1', 'section2', 'maternelle', 'Maternelle']
+  else if (niveau === 'Primaire') levels = ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', 'Primaire']
+  else if (niveau === 'Secondaire') levels = ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'Secondaire', 'Collège']
   
   if (levels.length > 0) {
     query = query.in('classes.level', levels)
