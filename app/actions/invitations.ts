@@ -151,13 +151,19 @@ export async function activateParentAccount(prevState: any, formData: FormData):
     .eq('id', inv.id)
 
   // C. Lier le parent à l'étudiant
-  await adminClient
+  const { error: linkError } = await adminClient
     .from('parent_student_links')
     .insert({
       parent_user_id: parentUserId,
       student_id: inv.student_id,
+      school_id: inv.school_id,
       relationship: 'parent'
     })
+
+  if (linkError) {
+    console.error("Erreur création parent_student_links:", linkError)
+    return { error: "Erreur lors de la liaison à l'élève. L'administrateur a été notifié." }
+  }
 
   // D. S'assurer que le parent a le rôle 'parent'
   await adminClient
