@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 
 const navItems = [
   { label: 'Accueil', href: '/parent', icon: 'home' },
@@ -13,6 +13,8 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const child = searchParams.get('child')
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--color-outline-variant)] pb-safe h-16 flex items-center justify-around z-50">
@@ -21,7 +23,7 @@ export function BottomNav() {
         return (
           <Link 
             key={item.href} 
-            href={item.href}
+            href={child ? `${item.href}?child=${child}` : item.href}
             className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${isActive ? 'text-[var(--color-primary)]' : 'text-[var(--color-on-surface-variant)]'}`}
           >
             <span className={`material-symbols-outlined ${isActive ? 'filled' : ''} text-[24px]`}>
