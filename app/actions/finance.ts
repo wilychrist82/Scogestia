@@ -162,6 +162,9 @@ export async function recordPayment(prevState: ActionState, formData: FormData):
     revalidatePath('/admin/finance/paiements');
     revalidatePath('/admin/finance/echeances');
     revalidatePath('/admin/finance');
+    revalidatePath('/comptable/paiements');
+    revalidatePath('/comptable/echeances');
+    revalidatePath('/comptable');
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
