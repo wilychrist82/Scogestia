@@ -98,7 +98,7 @@ export default async function ParentDashboardPage() {
           </div>
           <span className="material-symbols-outlined text-[32px]">payments</span>
         </div>
-        <Link href={`/parent/paiements${children.length > 0 ? `?child=${children[0].id}` : ''}`} className="w-full bg-white text-[var(--color-primary)] py-3 rounded-xl font-bold flex justify-center gap-2 items-center hover:opacity-90 active:scale-95 transition-transform shadow-sm">
+        <Link href={`/parent/paiements${children && children.length > 0 ? `?child=${(children[0] as any).id}` : ''}`} className="w-full bg-white text-[var(--color-primary)] py-3 rounded-xl font-bold flex justify-center gap-2 items-center hover:opacity-90 active:scale-95 transition-transform shadow-sm">
           Voir les paiements
           <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
         </Link>

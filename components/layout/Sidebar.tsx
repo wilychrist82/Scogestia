@@ -81,7 +81,7 @@ const roleNavItems: NavItem[] = [
   { label: 'Espace Parent', href: '/parent', icon: Users },
 ]
 
-export function Sidebar({ userFullName, userRoleLabel, isOpen, onClose }: SidebarProps) {
+export function Sidebar({ userFullName, userRoleLabel, navItems, isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
 
   const NavGroup = ({ title, items }: { title: string, items: NavItem[] }) => (

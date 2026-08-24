@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export default async function StudentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string, classId?: string, search?: string }>
+  searchParams: Promise<{ page?: string, classId?: string, search?: string, niveau?: string }>
 }) {
   const resolvedSearchParams = await searchParams;
   const supabase = await createClient()
