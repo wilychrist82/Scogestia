@@ -36,17 +36,24 @@ export async function loginStaff(prevState: AuthState, formData: FormData): Prom
 
   const { data, error } = await supabase.auth.signInWithPassword(credentials);
 
-  if (error) {
+  if (error || !data.session) {
     return { error: 'Identifiants invalides.' };
   }
 
-  // Utiliser un client admin (service_role) pour vérifier le rôle car le cookie n'est pas encore dispo dans cette requête serveur
-  const supabaseAdmin = createSupabaseClient(
+  // Utiliser le token de la session utilisateur pour vérifier son rôle
+  const userSupabase = createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${data.session.access_token}`
+        }
+      }
+    }
   );
 
-  const { data: roles, error: rolesError } = await supabaseAdmin
+  const { data: roles, error: rolesError } = await userSupabase
     .from('user_school_roles')
     .select('role')
     .eq('user_id', data.user.id)
