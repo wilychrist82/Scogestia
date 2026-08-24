@@ -24,23 +24,38 @@ export default async function EnseignantDevoirsPage() {
   // 1. Classes assignées
   const { data: assignments } = await supabase
     .from('teacher_class_subjects')
-    .select(`class_id, subject_name, classes (name)`)
+    .select(`class_id, subject_name, classes (name, level)`)
     .eq('teacher_id', user.id)
 
   if (!assignments || assignments.length === 0) {
     return <div className="p-8">Aucune classe assignée.</div>
   }
 
+  // Fetch actual subjects from DB to get their cycle
+  const { data: allSubjects } = await supabase
+    .from('subjects')
+    .select('id, name, cycle')
+    .eq('school_id', schoolId)
+
   const classesMap = new Map()
   const subjectsMap = new Map()
 
   assignments.forEach((a: any) => {
     if (!classesMap.has(a.class_id)) {
-      classesMap.set(a.class_id, { id: a.class_id, name: a.classes.name })
+      classesMap.set(a.class_id, { id: a.class_id, name: a.classes?.name, level: a.classes?.level })
     }
-    const subjId = `${a.class_id}-${a.subject_name}`
-    if (!subjectsMap.has(subjId)) {
-      subjectsMap.set(subjId, { id: subjId, subject_name: a.subject_name, class_id: a.class_id })
+    
+    const realSubject = allSubjects?.find(s => s.name === a.subject_name)
+    if (realSubject) {
+      if (!subjectsMap.has(realSubject.id)) {
+        subjectsMap.set(realSubject.id, { id: realSubject.id, name: realSubject.name, cycle: realSubject.cycle })
+      }
+    } else {
+      // Fallback if subject not found in subjects table (legacy)
+      const subjId = `${a.class_id}-${a.subject_name}`
+      if (!subjectsMap.has(subjId)) {
+        subjectsMap.set(subjId, { id: subjId, name: a.subject_name, cycle: 'secondaire' })
+      }
     }
   })
 

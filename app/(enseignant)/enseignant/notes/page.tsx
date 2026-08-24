@@ -27,7 +27,7 @@ export default async function EnseignantNotesPage() {
     .select(`
       class_id,
       subject_name,
-      classes ( name )
+      classes ( name, level )
     `)
     .eq('teacher_id', user.id)
 
@@ -35,17 +35,33 @@ export default async function EnseignantNotesPage() {
     return <div className="p-8">Aucune classe assignée.</div>
   }
 
-  // Dedupliquer les classes
+  // Fetch actual subjects from DB to get their cycle and ID
+  const { data: allSubjects } = await supabase
+    .from('subjects')
+    .select('id, name, cycle')
+    .eq('school_id', schoolId)
+
+  // Dedupliquer les classes et matières
   const classesMap = new Map()
   const subjectsMap = new Map()
 
   assignments.forEach((a: any) => {
     if (!classesMap.has(a.class_id)) {
-      classesMap.set(a.class_id, { id: a.class_id, name: a.classes.name })
+      classesMap.set(a.class_id, { id: a.class_id, name: a.classes?.name, level: a.classes?.level })
     }
-    const subjId = `${a.class_id}-${a.subject_name}`
-    if (!subjectsMap.has(subjId)) {
-      subjectsMap.set(subjId, { id: subjId, subject_name: a.subject_name, class_id: a.class_id })
+    
+    // Find the real subject from the subjects table
+    const realSubject = allSubjects?.find(s => s.name === a.subject_name)
+    if (realSubject) {
+      // Note: NotesManager currently uses subjectId. If the same subject name is taught in multiple classes,
+      // the real subject ID is what we want to pass. The admin space passes all subjects directly.
+      if (!subjectsMap.has(realSubject.id)) {
+        subjectsMap.set(realSubject.id, { 
+          id: realSubject.id, 
+          name: realSubject.name, 
+          cycle: realSubject.cycle 
+        })
+      }
     }
   })
 
@@ -64,18 +80,23 @@ export default async function EnseignantNotesPage() {
     .order('last_name', { ascending: true })
 
   // 3. Récupérer les notes existantes
-  const { data: existingGrades } = await supabase
-    .from('grades')
-    .select('student_id, score, subject_name, term, evaluation_type, class_id')
+  const { data: primaryGrades } = await supabase
+    .from('primary_grades')
+    .select('*')
     .eq('school_id', schoolId)
-    .in('class_id', classIds)
+
+  const { data: secondaryGrades } = await supabase
+    .from('secondary_grades')
+    .select('*')
+    .eq('school_id', schoolId)
 
   return (
     <NotesManager 
       classes={classes}
       subjects={subjects}
       students={students as any || []}
-      existingGrades={existingGrades as any || []}
+      primaryGrades={primaryGrades || []}
+      secondaryGrades={secondaryGrades || []}
     />
   )
 }

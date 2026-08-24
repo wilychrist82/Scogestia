@@ -169,8 +169,14 @@ export function Sidebar({ userFullName, userRoleLabel, isOpen, onClose }: Sideba
       
       {/* Navigation */}
       <div className="flex-1">
-        <NavGroup title="Menu Principal" items={mainNavItems} />
-        <NavGroup title="Espaces par rôle" items={roleNavItems} />
+        {navItems && navItems.length > 0 ? (
+          <NavGroup title="Menu Enseignant" items={navItems} />
+        ) : (
+          <>
+            <NavGroup title="Menu Principal" items={mainNavItems} />
+            <NavGroup title="Espaces par rôle" items={roleNavItems} />
+          </>
+        )}
       </div>
 
       {/* Help Block */}
