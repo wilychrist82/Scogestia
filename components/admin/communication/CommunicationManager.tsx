@@ -26,7 +26,8 @@ export function CommunicationManager({ classes, parents }: Props) {
     e.preventDefault()
     setSuccess(false)
     setError(null)
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    const formData = new FormData(form)
     formData.append('recipientType', recipientType)
     if (recipientType === 'class') formData.append('selectedClass', selectedClass)
     if (recipientType === 'parent') formData.append('selectedParent', selectedParent)
@@ -38,7 +39,7 @@ export function CommunicationManager({ classes, parents }: Props) {
       } else {
         setSuccess(true)
         setTimeout(() => setSuccess(false), 3000)
-        e.currentTarget.reset()
+        form.reset()
       }
     })
   }
