@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, FormEvent } from 'react'
-import { inviteStaff, deleteStaff } from '@/app/actions/staff'
+import { inviteStaff, deleteStaff, editStaff } from '@/app/actions/staff'
 
 export type StaffItem = {
   id: string
@@ -23,6 +23,9 @@ export function PersonnelManager({ staffList }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [generatedCode, setGeneratedCode] = useState<string | null>(null)
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [staffToEdit, setStaffToEdit] = useState<StaffItem | null>(null)
 
   const openAddModal = () => {
     setError(null)
@@ -54,6 +57,23 @@ export function PersonnelManager({ staffList }: Props) {
         setGeneratedCode(result.code)
       } else {
         setIsModalOpen(false)
+      }
+    })
+  }
+
+  const handleEditSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!staffToEdit) return
+    setError(null)
+    const formData = new FormData(e.currentTarget)
+
+    startTransition(async () => {
+      const result = await editStaff(staffToEdit.id, formData)
+      if (result?.error) {
+        setError(result.error)
+      } else {
+        setIsEditModalOpen(false)
+        setStaffToEdit(null)
       }
     })
   }
@@ -175,8 +195,9 @@ export function PersonnelManager({ staffList }: Props) {
                             className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors w-full text-left"
                             onClick={() => {
                               setOpenActionId(null);
-                              // TODO: Open edit modal when implemented
-                              alert("Fonctionnalité de modification à venir");
+                              setStaffToEdit(staff);
+                              setError(null);
+                              setIsEditModalOpen(true);
                             }}
                           >
                             <span className="material-symbols-outlined text-[18px]">edit</span>
@@ -363,6 +384,86 @@ export function PersonnelManager({ staffList }: Props) {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Overlay: Modifier un membre */}
+      {isEditModalOpen && staffToEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1c30]/40 backdrop-blur-sm transition-opacity">
+          <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-lg rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[var(--color-outline-variant)] flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+            <div className="px-6 py-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
+              <h2 className="text-xl font-semibold text-[var(--color-on-surface)]">
+                Modifier le membre
+              </h2>
+              <button onClick={() => { setIsEditModalOpen(false); setStaffToEdit(null); }} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="flex flex-col">
+              <div className="p-6 space-y-6">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="edit-fullName">
+                    Nom complet <span className="text-[var(--color-status-retard-text)]">*</span>
+                  </label>
+                  <input 
+                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
+                    id="edit-fullName" name="fullName" 
+                    defaultValue={staffToEdit.full_name}
+                    required 
+                    type="text"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="edit-phone">
+                    Téléphone
+                  </label>
+                  <input 
+                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
+                    id="edit-phone" name="phone" 
+                    defaultValue={staffToEdit.phone || ''}
+                    type="tel"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="edit-role">
+                    Rôle <span className="text-[var(--color-status-retard-text)]">*</span>
+                  </label>
+                  <select 
+                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12 appearance-none" 
+                    id="edit-role" name="role" 
+                    required
+                    defaultValue={staffToEdit.role}
+                  >
+                    <option value="enseignant">Enseignant</option>
+                    <option value="comptable">Comptable</option>
+                    <option value="secretaire">Secrétaire</option>
+                    <option value="conseiller">Conseiller</option>
+                    <option value="admin">Administrateur</option>
+                  </select>
+                </div>
+              </div>
+              <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end gap-3 mt-auto">
+                <button 
+                  onClick={() => { setIsEditModalOpen(false); setStaffToEdit(null); }} 
+                  className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors" 
+                  type="button"
+                  disabled={isPending}
+                >
+                  Annuler
+                </button>
+                <button 
+                  className="px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors shadow-sm disabled:opacity-50" 
+                  type="submit"
+                  disabled={isPending}
+                >
+                  {isPending ? 'Enregistrement...' : 'Enregistrer'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

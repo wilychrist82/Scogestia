@@ -201,3 +201,37 @@ export async function deleteStaff(staffId: string): Promise<ActionState> {
     return { error: err.message };
   }
 }
+
+export async function editStaff(staffRoleId: string, formData: FormData): Promise<ActionState> {
+  const fullName = formData.get('fullName') as string;
+  const role = formData.get('role') as string;
+  const phone = formData.get('phone') as string;
+
+  if (!fullName || !role) {
+    return { error: 'Nom et rôle sont obligatoires.' };
+  }
+
+  try {
+    const school_id = await getActiveSchoolId();
+    const serviceClient = createServiceRoleClient();
+
+    const { error } = await serviceClient
+      .from('user_school_roles')
+      .update({
+        full_name: fullName,
+        role,
+        phone: phone || null
+      })
+      .eq('id', staffRoleId)
+      .eq('school_id', school_id);
+
+    if (error) {
+      return { error: `Erreur de modification : ${error.message}` };
+    }
+
+    revalidatePath('/admin/personnel');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
