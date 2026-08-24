@@ -205,10 +205,64 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="attachment">
-                    Pièce jointe (PDF, Word, Photo)
+                  <label className="text-sm font-semibold text-[var(--color-on-surface)]">
+                    Pièce jointe (Optionnel)
                   </label>
-                  <input className="w-full px-4 py-2.5 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[var(--color-primary)] file:text-white hover:file:opacity-90" id="attachment" name="attachment" type="file" accept=".pdf,.doc,.docx,image/*" />
+                  <div className="flex flex-wrap gap-3 mt-1">
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const input = document.getElementById('attachment_input') as HTMLInputElement;
+                        if (input) {
+                          input.removeAttribute('capture');
+                          input.setAttribute('accept', 'image/*');
+                          input.setAttribute('capture', 'environment');
+                          input.click();
+                        }
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] border border-[var(--color-outline-variant)] py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-[#eff4ff] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-all"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">photo_camera</span>
+                      Prendre une photo
+                    </button>
+
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const input = document.getElementById('attachment_input') as HTMLInputElement;
+                        if (input) {
+                          input.removeAttribute('capture');
+                          input.setAttribute('accept', '.pdf,.doc,.docx,image/*');
+                          input.click();
+                        }
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] border border-[var(--color-outline-variant)] py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-[#eff4ff] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-all"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">attach_file</span>
+                      Joindre un document
+                    </button>
+                  </div>
+                  
+                  <input 
+                    id="attachment_input" 
+                    name="attachment" 
+                    type="file" 
+                    className="hidden" 
+                    onChange={(e) => {
+                      const fileLabel = document.getElementById('attachment_label');
+                      if (fileLabel && e.target.files && e.target.files.length > 0) {
+                        fileLabel.textContent = e.target.files[0].name;
+                        fileLabel.classList.remove('hidden');
+                      } else if (fileLabel) {
+                        fileLabel.textContent = '';
+                        fileLabel.classList.add('hidden');
+                      }
+                    }}
+                  />
+                  <div id="attachment_label" className="hidden mt-2 text-sm text-[var(--color-primary)] font-medium flex items-center gap-2 bg-[#eff4ff] p-2 rounded-lg border border-[var(--color-primary)]/20">
+                    <span className="material-symbols-outlined text-[18px]">draft</span>
+                    Fichier sélectionné
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
