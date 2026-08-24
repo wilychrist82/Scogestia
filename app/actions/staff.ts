@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 export type ActionState = {
   error?: string;
   success?: boolean;
+  code?: string;
 } | null;
 
 async function getActiveSchoolId() {
@@ -26,57 +27,157 @@ async function getActiveSchoolId() {
 
 export async function inviteStaff(prevState: ActionState, formData: FormData): Promise<ActionState> {
   const fullName = formData.get('fullName') as string;
-  let email = formData.get('email') as string;
+  const email = formData.get('email') as string;
   const phone = formData.get('phone') as string;
   const role = formData.get('role') as string;
+  const password = formData.get('password') as string;
 
   if (!fullName || !role) {
     return { error: 'Veuillez remplir les champs obligatoires (nom, rôle).' };
   }
-  
-  if (!email) {
-    email = `no-email-${Date.now()}@ecole.com`;
+
+  // Identifier for user
+  const identifier = email || phone;
+  if (!identifier && password) {
+    return { error: 'Veuillez fournir un email ou un téléphone pour créer un compte avec mot de passe.' };
   }
 
   try {
     const school_id = await getActiveSchoolId();
     const serviceClient = createServiceRoleClient();
-    
-    // 1. Check if user already exists in auth.users by email
-    // Invite user will send magic link and create user if not exists
-    const { data: inviteData, error: inviteError } = await serviceClient.auth.admin.inviteUserByEmail(email, {
-      data: {
-        full_name: fullName
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (password) {
+      // OPTION A: Création manuelle avec mot de passe
+      const isEmail = identifier.includes('@');
+      const createOptions = isEmail 
+        ? { email: identifier, password, email_confirm: true, user_metadata: { full_name: fullName } }
+        : { phone: identifier, password, phone_confirm: true, user_metadata: { full_name: fullName } };
+
+      const { data: newUser, error: createError } = await serviceClient.auth.admin.createUser(createOptions);
+
+      if (createError) {
+        return { error: `Erreur de création du compte : ${createError.message}` };
       }
-    });
 
-    if (inviteError) {
-      return { error: `Erreur d'invitation : ${inviteError.message}` };
+      // Add to user_school_roles
+      const { error: dbError } = await serviceClient
+        .from('user_school_roles')
+        .upsert({
+          user_id: newUser.user.id,
+          school_id,
+          role,
+          full_name: fullName,
+          phone: phone || null,
+          is_active: true
+        }, { onConflict: 'user_id, school_id, role' });
+
+      if (dbError) {
+        return { error: `Erreur lors de l'attribution du rôle : ${dbError.message}` };
+      }
+
+      revalidatePath('/admin/personnel');
+      return { success: true };
+
+    } else {
+      // OPTION B: Génération de lien d'invitation
+      // Générer un code alphanumérique unique de 6 caractères
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let code = '';
+      let isUnique = false;
+
+      while (!isUnique) {
+        code = '';
+        for (let i = 0; i < 6; i++) {
+          code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        const { count } = await serviceClient
+          .from('staff_invitation_codes')
+          .select('id', { count: 'exact', head: true })
+          .eq('code', code);
+        
+        if (count === 0) isUnique = true;
+      }
+
+      const { error: insertError } = await serviceClient
+        .from('staff_invitation_codes')
+        .insert({
+          school_id,
+          role,
+          full_name: fullName,
+          email: email || null,
+          phone: phone || null,
+          code: code,
+          created_by: user?.id
+        });
+
+      if (insertError) {
+        return { error: `Erreur de génération du code : ${insertError.message}` };
+      }
+
+      revalidatePath('/admin/personnel');
+      return { success: true, code: code };
     }
-
-    const invitedUserId = inviteData.user.id;
-
-    // 2. Add to user_school_roles
-    const { error: dbError } = await serviceClient
-      .from('user_school_roles')
-      .upsert({
-        user_id: invitedUserId,
-        school_id,
-        role,
-        full_name: fullName,
-        phone: phone || null,
-        is_active: true
-      }, { onConflict: 'user_id, school_id, role' });
-
-    if (dbError) {
-      return { error: `Erreur base de données : ${dbError.message}` };
-    }
-
-    revalidatePath('/admin/personnel');
-    return { success: true };
   } catch (err: any) {
     return { error: err.message };
   }
+}
+
+export async function activateStaffAccount(prevState: any, formData: FormData): Promise<{ error?: string, success?: boolean }> {
+  const identifier = formData.get('identifier') as string;
+  const code = formData.get('code') as string;
+  const password = formData.get('password') as string;
+
+  if (!identifier || !code || !password) {
+    return { error: 'Veuillez remplir tous les champs.' };
+  }
+
+  const supabase = await createClient();
+  const adminClient = createServiceRoleClient();
+
+  const isEmail = identifier.includes('@');
+  const signUpOptions = isEmail 
+    ? { email: identifier, password } 
+    : { phone: identifier, password };
+
+  const { data: authData, error: authError } = await supabase.auth.signUp(signUpOptions);
+
+  if (authError && !authError.message.includes('already registered')) {
+    return { error: `Erreur d'inscription: ${authError.message}` };
+  }
+
+  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword(signUpOptions);
+  
+  if (signInError) {
+    return { error: `Erreur de connexion: ${signInError.message}` };
+  }
+
+  const staffUserId = signInData.user?.id;
+  if (!staffUserId) return { error: 'Erreur inattendue.' };
+
+  const { data: inv, error: invError } = await adminClient
+    .from('staff_invitation_codes')
+    .select('*')
+    .eq('code', code.toUpperCase())
+    .is('used_at', null)
+    .gt('expires_at', new Date().toISOString())
+    .maybeSingle();
+
+  if (invError || !inv) {
+    return { error: 'Le code d\'activation est invalide, expiré ou déjà utilisé.' };
+  }
+
+  const { error: rpcError } = await adminClient.rpc('consume_staff_invitation', {
+    invitation_code: code.toUpperCase(),
+    staff_user_id: staffUserId
+  });
+
+  if (rpcError) {
+    return { error: `Erreur d'activation: ${rpcError.message}` };
+  }
+
+  return { success: true };
 }
 
 export async function deleteStaff(staffId: string): Promise<ActionState> {

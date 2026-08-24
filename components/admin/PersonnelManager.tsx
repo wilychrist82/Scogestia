@@ -22,6 +22,7 @@ export function PersonnelManager({ staffList }: Props) {
   
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null)
 
   const openAddModal = () => {
     setError(null)
@@ -49,6 +50,8 @@ export function PersonnelManager({ staffList }: Props) {
 
       if (result?.error) {
         setError(result.error)
+      } else if (result?.code) {
+        setGeneratedCode(result.code)
       } else {
         setIsModalOpen(false)
       }
@@ -232,90 +235,134 @@ export function PersonnelManager({ staffList }: Props) {
               <h2 className="text-xl font-semibold text-[var(--color-on-surface)]">
                 Inviter un membre du personnel
               </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
+              <button onClick={() => {setIsModalOpen(false); setGeneratedCode(null);}} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-            {/* Modal Body (Form) */}
-            <form onSubmit={handleSubmit} className="flex flex-col">
-              <div className="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar space-y-6">
-                
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="fullName">
-                    Nom complet <span className="text-[var(--color-status-retard-text)]">*</span>
-                  </label>
-                  <input 
-                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
-                    id="fullName" name="fullName" 
-                    placeholder="ex: Jean Dupont" 
-                    required 
-                    type="text"
-                  />
-                </div>
-                
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="email">
-                    Adresse email
-                  </label>
-                  <input 
-                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
-                    id="email" name="email" 
-                    placeholder="ex: jean.dupont@ecole.com" 
-                    type="email"
-                  />
-                </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="phone">
-                    Téléphone
-                  </label>
-                  <input 
-                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
-                    id="phone" name="phone" 
-                    placeholder="ex: +228 90 00 00 00" 
-                    type="tel"
-                  />
+            {generatedCode ? (
+              <div className="p-6 flex flex-col items-center text-center space-y-4">
+                <div className="w-16 h-16 bg-[#e8f0fe] rounded-full flex items-center justify-center mb-2">
+                  <span className="material-symbols-outlined text-[32px] text-[var(--color-primary)]">mark_email_read</span>
                 </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="role">
-                    Rôle <span className="text-[var(--color-status-retard-text)]">*</span>
-                  </label>
-                  <select 
-                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12 appearance-none" 
-                    id="role" name="role" 
-                    required
-                    defaultValue=""
+                <h3 className="text-lg font-bold text-[var(--color-on-surface)]">Invitation générée avec succès</h3>
+                <p className="text-sm text-[var(--color-on-surface-variant)]">Envoyez ce code au membre du personnel pour qu'il active son compte via WhatsApp ou SMS.</p>
+                
+                <div className="bg-[var(--color-surface-container-highest)] p-4 rounded-lg border border-[var(--color-outline-variant)] w-full flex items-center justify-between">
+                  <span className="font-mono text-2xl font-bold tracking-widest text-[var(--color-primary)]">{generatedCode}</span>
+                  <button 
+                    onClick={() => {
+                      const link = `${window.location.origin}/activer-personnel?code=${generatedCode}`;
+                      navigator.clipboard.writeText(`Bonjour ! Voici ton lien d'activation pour ton espace Scogestia : ${link}`);
+                      alert("Lien copié dans le presse-papier !");
+                    }}
+                    className="flex items-center gap-2 bg-white text-[var(--color-primary)] px-3 py-2 rounded-lg border border-[var(--color-primary)] text-sm font-bold hover:bg-[#eff4ff]"
                   >
-                    <option disabled value="">Sélectionner un rôle</option>
-                    <option value="enseignant">Enseignant</option>
-                    <option value="comptable">Comptable</option>
-                    <option value="secretaire">Secrétaire</option>
-                    <option value="conseiller">Conseiller</option>
-                    <option value="admin">Administrateur</option>
-                  </select>
+                    <span className="material-symbols-outlined text-[18px]">content_copy</span>
+                    Copier le lien
+                  </button>
                 </div>
-                
-              </div>
-              {/* Modal Footer (Actions) */}
-              <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end gap-3 mt-auto">
-                <button 
-                  onClick={() => setIsModalOpen(false)} 
-                  className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors" 
-                  type="button"
-                  disabled={isPending}
-                >
-                  Annuler
-                </button>
-                <button 
-                  className="px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors shadow-sm disabled:opacity-50" 
-                  type="submit"
-                  disabled={isPending}
-                >
-                  {isPending ? 'Envoi...' : 'Inviter'}
+
+                <button onClick={() => {setIsModalOpen(false); setGeneratedCode(null);}} className="mt-4 px-6 py-2.5 bg-[var(--color-primary)] text-white rounded-lg font-semibold text-sm hover:opacity-90">
+                  Terminer
                 </button>
               </div>
-            </form>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex flex-col">
+                <div className="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar space-y-6">
+                  
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="fullName">
+                      Nom complet <span className="text-[var(--color-status-retard-text)]">*</span>
+                    </label>
+                    <input 
+                      className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
+                      id="fullName" name="fullName" 
+                      placeholder="ex: Jean Dupont" 
+                      required 
+                      type="text"
+                    />
+                  </div>
+                  
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="email">
+                      Adresse email
+                    </label>
+                    <input 
+                      className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
+                      id="email" name="email" 
+                      placeholder="ex: jean.dupont@ecole.com" 
+                      type="email"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="phone">
+                      Téléphone
+                    </label>
+                    <input 
+                      className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
+                      id="phone" name="phone" 
+                      placeholder="ex: +228 90 00 00 00" 
+                      type="tel"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="role">
+                      Rôle <span className="text-[var(--color-status-retard-text)]">*</span>
+                    </label>
+                    <select 
+                      className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12 appearance-none" 
+                      id="role" name="role" 
+                      required
+                      defaultValue=""
+                    >
+                      <option disabled value="">Sélectionner un rôle</option>
+                      <option value="enseignant">Enseignant</option>
+                      <option value="comptable">Comptable</option>
+                      <option value="secretaire">Secrétaire</option>
+                      <option value="conseiller">Conseiller</option>
+                      <option value="admin">Administrateur</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 bg-[#f8f9fa] p-4 rounded-lg border border-[var(--color-outline-variant)]">
+                    <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="password">
+                      Mot de passe (Optionnel)
+                    </label>
+                    <input 
+                      className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
+                      id="password" name="password" 
+                      placeholder="ex: scogestia2026" 
+                      type="text"
+                    />
+                    <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">
+                      Si vous remplissez ce champ, le compte sera créé immédiatement avec ce mot de passe. Si vous le laissez vide, un code d'invitation sera généré pour WhatsApp.
+                    </p>
+                  </div>
+                  
+                </div>
+                {/* Modal Footer (Actions) */}
+                <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end gap-3 mt-auto">
+                  <button 
+                    onClick={() => {setIsModalOpen(false); setGeneratedCode(null);}} 
+                    className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors" 
+                    type="button"
+                    disabled={isPending}
+                  >
+                    Annuler
+                  </button>
+                  <button 
+                    className="px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors shadow-sm disabled:opacity-50" 
+                    type="submit"
+                    disabled={isPending}
+                  >
+                    {isPending ? 'Envoi...' : 'Inviter'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
