@@ -35,10 +35,18 @@ export default async function CommunicationPage() {
     .eq('role', 'parent')
     .order('full_name')
 
+  const { data: communications } = await supabase
+    .from('communications')
+    .select('*')
+    .eq('school_id', schoolId)
+    .order('created_at', { ascending: false })
+    .limit(10)
+
   return (
     <CommunicationManager 
       classes={classes || []} 
       parents={parents || []} 
+      recentCommunications={communications || []}
     />
   )
 }

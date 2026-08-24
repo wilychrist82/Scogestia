@@ -3,6 +3,8 @@
 import { useState, useTransition, FormEvent } from 'react'
 import Link from 'next/link'
 import { sendCommunication } from '@/app/actions/communication'
+import { formatDistanceToNow } from 'date-fns'
+import { fr } from 'date-fns/locale'
 
 type ClassItem = { id: string; name: string }
 type ParentItem = { user_id: string; full_name: string }
@@ -10,9 +12,10 @@ type ParentItem = { user_id: string; full_name: string }
 type Props = {
   classes: ClassItem[]
   parents: ParentItem[]
+  recentCommunications?: any[]
 }
 
-export function CommunicationManager({ classes, parents }: Props) {
+export function CommunicationManager({ classes, parents, recentCommunications = [] }: Props) {
   const [recipientType, setRecipientType] = useState('all') // all, class, parent
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedParent, setSelectedParent] = useState('')
@@ -170,39 +173,54 @@ export function CommunicationManager({ classes, parents }: Props) {
               </h3>
             </div>
             <div className="p-6 flex flex-col gap-4 flex-1">
-              <div className="flex gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#e8f0fe] text-[#1a73e8] flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[20px]">mark_email_read</span>
+              {recentCommunications.length === 0 ? (
+                <div className="text-center text-sm text-[var(--color-on-surface-variant)] py-8">
+                  Aucun message récent.
                 </div>
-                <div>
-                  <h4 className="font-semibold text-sm text-[var(--color-on-surface)]">Réunion Parents-Professeurs</h4>
-                  <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">Envoyé à Tous les parents • Il y a 2 jours</p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#fce8e6] text-[#d93025] flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[20px]">notification_important</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-sm text-[var(--color-on-surface)]">Fermeture de l'école (Férié)</h4>
-                  <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">Envoyé à Tous les parents • Il y a 1 semaine</p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#e6f4ea] text-[#1e8e3e] flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[20px]">payments</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-sm text-[var(--color-on-surface)]">Rappel de paiement</h4>
-                  <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">Envoyé à Classe 3ème A • Il y a 2 semaines</p>
-                </div>
-              </div>
+              ) : (
+                recentCommunications.slice(0, 5).map(comm => {
+                  let recipientText = ''
+                  if (comm.recipient_type === 'all') recipientText = 'Tous les parents'
+                  else if (comm.recipient_type === 'class') {
+                    const c = classes.find(cl => cl.id === comm.recipient_id)
+                    recipientText = c ? `Classe ${c.name}` : 'Classe inconnue'
+                  } else if (comm.recipient_type === 'parent') {
+                    const p = parents.find(pa => pa.user_id === comm.recipient_id)
+                    recipientText = p ? p.full_name : 'Parent inconnu'
+                  }
 
-              <div className="mt-auto pt-6 border-t border-[var(--color-outline-variant)]">
-                <button className="w-full text-center text-sm font-semibold text-[var(--color-primary)] hover:underline">
-                  Voir tout l'historique
-                </button>
-              </div>
+                  let icon = 'mark_email_read'
+                  let iconClass = 'bg-[#e8f0fe] text-[#1a73e8]'
+                  if (comm.recipient_type === 'all') {
+                    icon = 'campaign'
+                    iconClass = 'bg-[#fce8e6] text-[#d93025]'
+                  }
+
+                  return (
+                    <div key={comm.id} className="flex gap-3">
+                      <div className={`w-10 h-10 rounded-full ${iconClass} flex items-center justify-center shrink-0`}>
+                        <span className="material-symbols-outlined text-[20px]">{icon}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-sm text-[var(--color-on-surface)] truncate" title={comm.subject}>
+                          {comm.subject}
+                        </h4>
+                        <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5 truncate">
+                          Envoyé à {recipientText} • Il y a {formatDistanceToNow(new Date(comm.created_at), { locale: fr })}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+
+              {recentCommunications.length > 5 && (
+                <div className="mt-auto pt-6 border-t border-[var(--color-outline-variant)]">
+                  <button className="w-full text-center text-sm font-semibold text-[var(--color-primary)] hover:underline">
+                    Voir tout l'historique
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
