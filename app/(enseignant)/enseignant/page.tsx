@@ -80,6 +80,12 @@ export default async function EnseignantDashboardPage() {
                   >
                     Faire l'appel
                   </Link>
+                  <Link 
+                    href={`/enseignant/devoirs?classId=${assignment.class_id}`}
+                    className="flex-1 text-center bg-white text-[var(--color-on-surface)] py-2.5 px-4 rounded-lg font-semibold border border-[var(--color-outline-variant)] hover:bg-gray-50 transition-colors"
+                  >
+                    Cahier de texte
+                  </Link>
                 </div>
               </div>
             ))}
