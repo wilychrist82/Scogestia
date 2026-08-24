@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
+import { sendPaymentReminder, sendBulkPaymentReminders } from '@/app/actions/finance'
 
 type ImpayeItem = {
   id: string
@@ -13,6 +15,7 @@ type ImpayeItem = {
     matricule: string
     classes: { name: string } | null
     parent_links?: {
+      parent_user_id: string
       parent_user: { full_name: string, phone: string | null }
     }[]
   } | null
@@ -24,6 +27,8 @@ type Props = {
 }
 
 export function ImpayesManager({ impayes, basePath = "/admin/finance" }: Props & { basePath?: string }) {
+  const [isSendingBulk, setIsSendingBulk] = useState(false)
+  const [sendingId, setSendingId] = useState<string | null>(null)
   
   const formatCFA = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount).replace('XOF', 'FCFA')
@@ -54,15 +59,48 @@ export function ImpayesManager({ impayes, basePath = "/admin/finance" }: Props &
             <p className="text-base text-[var(--color-status-retard-text)]/80 mt-1">Gérez les retards de paiement et relancez les parents.</p>
           </div>
           <button 
-            onClick={() => {
-              if (impayes.length > 0) {
-                alert("Les relances ont été envoyées avec succès !");
-              } else {
+            disabled={isSendingBulk || impayes.length === 0}
+            onClick={async () => {
+              if (impayes.length === 0) {
                 alert("Aucun impayé pour envoyer des relances.");
+                return;
               }
+              setIsSendingBulk(true);
+              const reminders = impayes.map(item => {
+                const paid = item.payments?.reduce((acc, p) => acc + Number(p.amount), 0) || 0;
+                const remainder = item.amount_due - paid;
+                const daysLate = getDaysLate(item.due_date);
+                const parentUserId = item.student?.parent_links?.[0]?.parent_user_id;
+                
+                return {
+                  parentUserId: parentUserId || '',
+                  studentName: `${item.student?.first_name} ${item.student?.last_name}`,
+                  amountDue: remainder,
+                  daysLate,
+                  label: item.label
+                };
+              }).filter(r => r.parentUserId);
+
+              if (reminders.length === 0) {
+                alert("Aucun parent n'est associé à ces élèves.");
+                setIsSendingBulk(false);
+                return;
+              }
+
+              const result = await sendBulkPaymentReminders(reminders);
+              if (result.error) {
+                alert(result.error);
+              } else {
+                alert("Les relances ont été envoyées avec succès !");
+              }
+              setIsSendingBulk(false);
             }}
-            className="flex items-center justify-center gap-2 bg-[var(--color-status-retard-text)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:bg-red-700 transition-colors shadow-sm w-full sm:w-auto shrink-0">
-            <span className="material-symbols-outlined text-[20px]">send</span>
+            className="flex items-center justify-center gap-2 bg-[var(--color-status-retard-text)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:bg-red-700 transition-colors shadow-sm w-full sm:w-auto shrink-0 disabled:opacity-50 cursor-pointer">
+            {isSendingBulk ? (
+              <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+            ) : (
+              <span className="material-symbols-outlined text-[20px]">send</span>
+            )}
             Relancer tout
           </button>
         </div>
@@ -133,8 +171,35 @@ export function ImpayesManager({ impayes, basePath = "/admin/finance" }: Props &
                               <span className="material-symbols-outlined text-[20px]">chat</span>
                             </a>
                           )}
-                          <button className="text-[var(--color-primary)] hover:text-white hover:bg-[var(--color-primary)] transition-colors p-1 flex items-center gap-1 text-sm font-semibold border border-[var(--color-primary)] rounded px-3 py-1.5" title="Relancer In-App">
-                            <span className="material-symbols-outlined text-[18px]">notifications_active</span>
+                          <button 
+                            disabled={sendingId === item.id || !item.student?.parent_links?.[0]?.parent_user_id}
+                            onClick={async () => {
+                              const parentUserId = item.student?.parent_links?.[0]?.parent_user_id;
+                              if (!parentUserId) {
+                                alert("Aucun compte parent associé pour cet élève.");
+                                return;
+                              }
+                              setSendingId(item.id);
+                              const result = await sendPaymentReminder(
+                                parentUserId,
+                                `${item.student?.first_name} ${item.student?.last_name}`,
+                                remainder,
+                                daysLate,
+                                item.label
+                              );
+                              if (result.error) {
+                                alert(result.error);
+                              } else {
+                                alert("Relance envoyée avec succès !");
+                              }
+                              setSendingId(null);
+                            }}
+                            className="text-[var(--color-primary)] hover:text-white hover:bg-[var(--color-primary)] transition-colors p-1 flex items-center gap-1 text-sm font-semibold border border-[var(--color-primary)] rounded px-3 py-1.5 disabled:opacity-50 cursor-pointer" title="Relancer In-App">
+                            {sendingId === item.id ? (
+                              <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                            ) : (
+                              <span className="material-symbols-outlined text-[18px]">notifications_active</span>
+                            )}
                             In-App
                           </button>
                         </td>

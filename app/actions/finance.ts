@@ -162,12 +162,93 @@ export async function recordPayment(prevState: ActionState, formData: FormData):
     revalidatePath('/admin/finance/paiements');
     revalidatePath('/admin/finance/echeances');
     revalidatePath('/admin/finance');
-    revalidatePath('/comptable/paiements');
-    revalidatePath('/comptable/echeances');
-    revalidatePath('/comptable');
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
   }
 }
 
+export async function sendPaymentReminder(
+  parentUserId: string,
+  studentName: string,
+  amountDue: number,
+  daysLate: number,
+  label: string
+) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const schoolId = await getActiveSchoolId()
+
+  const formatCFA = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount).replace('XOF', 'FCFA')
+  }
+
+  const subject = `Relance : Retard de paiement pour ${studentName}`
+  const content = `Bonjour,\n\nSauf erreur de notre part, le paiement de "${label}" pour votre enfant ${studentName} est en retard de ${daysLate} jours.\n\nLe montant restant à payer est de ${formatCFA(amountDue)}.\n\nMerci de bien vouloir régulariser la situation dans les plus brefs délais.\n\nCordialement,\nLa Direction`
+
+  const { error } = await supabase
+    .from('communications')
+    .insert({
+      school_id: schoolId,
+      sender_id: user.id,
+      recipient_type: 'parent',
+      recipient_id: parentUserId,
+      subject,
+      content
+    })
+
+  if (error) {
+    console.error('Erreur lors de l\'envoi de la relance :', error)
+    return { error: 'Erreur lors de l\'envoi de la relance' }
+  }
+
+  return { success: true }
+}
+
+export async function sendBulkPaymentReminders(
+  reminders: {
+    parentUserId: string,
+    studentName: string,
+    amountDue: number,
+    daysLate: number,
+    label: string
+  }[]
+) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const schoolId = await getActiveSchoolId()
+
+  const formatCFA = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount).replace('XOF', 'FCFA')
+  }
+
+  const communications = reminders.map(reminder => ({
+    school_id: schoolId,
+    sender_id: user.id,
+    recipient_type: 'parent',
+    recipient_id: reminder.parentUserId,
+    subject: `Relance : Retard de paiement pour ${reminder.studentName}`,
+    content: `Bonjour,\n\nSauf erreur de notre part, le paiement de "${reminder.label}" pour votre enfant ${reminder.studentName} est en retard de ${reminder.daysLate} jours.\n\nLe montant restant à payer est de ${formatCFA(reminder.amountDue)}.\n\nMerci de bien vouloir régulariser la situation dans les plus brefs délais.\n\nCordialement,\nLa Direction`
+  }))
+
+  if (communications.length === 0) {
+    return { error: 'Aucune relance à envoyer' }
+  }
+
+  const { error } = await supabase
+    .from('communications')
+    .insert(communications)
+
+  if (error) {
+    console.error('Erreur lors de l\'envoi des relances massives :', error)
+    return { error: 'Erreur lors de l\'envoi des relances' }
+  }
+
+  return { success: true }
+}

@@ -77,7 +77,6 @@ const mainNavItems: NavItem[] = [
 ]
 
 const roleNavItems: NavItem[] = [
-  { label: 'Espace Comptable', href: '/comptable', icon: Calculator },
   { label: 'Espace Enseignant', href: '/enseignant', icon: GraduationCap },
   { label: 'Espace Parent', href: '/parent', icon: Users },
 ]

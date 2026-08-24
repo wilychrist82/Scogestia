@@ -38,6 +38,7 @@ export default async function ImpayesPage() {
         matricule,
         classes(name),
         parent_links:parent_student_links(
+          parent_user_id,
           parent_user:user_school_roles(full_name, phone)
         )
       ),
