@@ -83,8 +83,8 @@ export default function LoginPage() {
 
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700" htmlFor="email">
-                  Adresse Email
+                <label className="block text-sm font-medium text-gray-700" htmlFor="identifier">
+                  Email ou Téléphone
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -92,12 +92,12 @@ export default function LoginPage() {
                   </div>
                   <input 
                     className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-colors bg-gray-50 focus:bg-white" 
-                    id="email" 
-                    name="email" 
-                    placeholder="nom@etablissement.edu" 
+                    id="identifier" 
+                    name="identifier" 
+                    placeholder="nom@etablissement.edu ou numéro" 
                     required 
-                    type="email"
-                    autoComplete="email"
+                    type="text"
+                    autoComplete="username"
                   />
                 </div>
               </div>

@@ -12,11 +12,11 @@ export type AuthState = {
 } | null;
 
 export async function loginStaff(prevState: AuthState, formData: FormData): Promise<AuthState> {
-  const email = formData.get('email') as string;
+  const identifier = formData.get('identifier') as string;
   const password = formData.get('password') as string;
 
-  if (!email || !password) {
-    return { error: 'Veuillez renseigner votre email et votre mot de passe.' };
+  if (!identifier || !password) {
+    return { error: 'Veuillez renseigner votre identifiant et votre mot de passe.' };
   }
 
   const headerList = await headers()
@@ -29,10 +29,12 @@ export async function loginStaff(prevState: AuthState, formData: FormData): Prom
 
   const supabase = await createClient();
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  const isEmail = identifier.includes('@');
+  const credentials = isEmail 
+    ? { email: identifier, password }
+    : { phone: identifier, password };
+
+  const { data, error } = await supabase.auth.signInWithPassword(credentials);
 
   if (error) {
     return { error: 'Identifiants invalides.' };
