@@ -44,6 +44,8 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
   const [secAppr, setSecAppr] = useState<Record<string, string>>({})
   const [secTeachers, setSecTeachers] = useState<Record<string, string>>({})
   const [secFooterInfo, setSecFooterInfo] = useState<{ appreciation: string, decision: string }>({ appreciation: '', decision: '' })
+  const [secRank, setSecRank] = useState<string>('')
+  const [secStats, setSecStats] = useState<{ min: string, max: string, annual: string, t1: string, t2: string, annual_t3: string }>({ min: '', max: '', annual: '', t1: '', t2: '', annual_t3: '' })
 
   const printRef = useRef<HTMLDivElement>(null)
 
@@ -524,9 +526,55 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
           </div>
           <div className="w-1/2 p-6 bg-gray-50 border border-gray-200 rounded-xl flex flex-col justify-center items-center">
             <p className="text-gray-600 font-semibold mb-2">RANG</p>
-            <p className="text-4xl font-black text-black"> - <span className="text-sm font-medium text-gray-500">/ {availableStudents.length}</span></p>
+            <div className="text-4xl font-black text-black flex items-center justify-center">
+              <input 
+                type="text"
+                className="w-16 text-center bg-transparent outline-none border-b-2 border-transparent hover:border-gray-300 focus:border-[var(--color-primary)] print-input"
+                placeholder="-"
+                value={secRank}
+                onChange={e => setSecRank(e.target.value)}
+              />
+              <span className="text-sm font-medium text-gray-500 ml-1">/ {availableStudents.length}</span>
+            </div>
           </div>
         </div>
+
+        {/* Statistics Block */}
+        {selectedTerm === '3eme_trimestre' ? (
+          <div className="grid grid-cols-4 gap-4 mb-8">
+            <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Moy. 1er Trim.</p>
+              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.t1} onChange={e => setSecStats({...secStats, t1: e.target.value})} />
+            </div>
+            <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Moy. 2ème Trim.</p>
+              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.t2} onChange={e => setSecStats({...secStats, t2: e.target.value})} />
+            </div>
+            <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Moy. 3ème Trim.</p>
+              <div className="text-center font-bold mt-1">{termAvg}</div>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Moy. Annuelle</p>
+              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.annual_t3} onChange={e => setSecStats({...secStats, annual_t3: e.target.value})} />
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Moyenne la plus faible</p>
+              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.min} onChange={e => setSecStats({...secStats, min: e.target.value})} />
+            </div>
+            <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Moyenne la plus forte</p>
+              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.max} onChange={e => setSecStats({...secStats, max: e.target.value})} />
+            </div>
+            <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Moyenne Annuelle</p>
+              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.annual} onChange={e => setSecStats({...secStats, annual: e.target.value})} />
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="flex justify-between items-start mt-12 print:mt-4 px-8 print:px-2">
