@@ -17,10 +17,13 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
   const [subjects, setSubjects] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  const [selectedClassId, setSelectedClassId] = useState<string>('')
 
   useEffect(() => {
     if (isOpen && teacherId) {
       loadData()
+      setSelectedClassId('')
     }
   }, [isOpen, teacherId])
 
@@ -56,9 +59,14 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
         await loadData() // Refresh list
         const form = e.target as HTMLFormElement
         form.reset() // Clear form after success
+        setSelectedClassId('')
       }
     })
   }
+
+  const selectedClassObj = classes.find(c => c.id === selectedClassId)
+  const isPrimary = selectedClassObj ? ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', 'maternelle', 's1', 's2'].includes(selectedClassObj.level?.toLowerCase()) : false
+
 
   const handleRemove = (assignmentId: string) => {
     if (!window.confirm("Êtes-vous sûr de vouloir retirer cette classe à l'enseignant ?")) return
@@ -109,6 +117,8 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
                 <select 
                   name="classId"
                   required
+                  value={selectedClassId}
+                  onChange={(e) => setSelectedClassId(e.target.value)}
                   className="w-full px-3 py-2 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-10 appearance-none"
                 >
                   <option value="">Sélectionner une classe...</option>
@@ -119,17 +129,25 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
               </div>
               <div className="flex-1 w-full">
                 <label className="text-xs font-semibold text-[var(--color-on-surface-variant)] block mb-1">Matière</label>
-                <select 
-                  name="subjectName"
-                  required
-                  className="w-full px-3 py-2 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-10 appearance-none"
-                >
-                  <option value="">Sélectionner une matière...</option>
-                  <option value="Toutes les matières" className="font-bold text-[var(--color-primary)]">Toutes les matières (Primaire)</option>
-                  {subjects.map(s => (
-                    <option key={s.id} value={s.name}>{s.name}</option>
-                  ))}
-                </select>
+                {isPrimary ? (
+                  <>
+                    <input type="hidden" name="subjectName" value="Toutes les matières" />
+                    <div className="w-full px-3 py-2 bg-[var(--color-surface-container-high)] border border-[var(--color-outline-variant)] rounded-lg text-sm text-[var(--color-on-surface-variant)] h-10 flex items-center cursor-not-allowed">
+                      Toutes les matières (Primaire)
+                    </div>
+                  </>
+                ) : (
+                  <select 
+                    name="subjectName"
+                    required
+                    className="w-full px-3 py-2 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-10 appearance-none"
+                  >
+                    <option value="">Sélectionner une matière...</option>
+                    {subjects.map(s => (
+                      <option key={s.id} value={s.name}>{s.name}</option>
+                    ))}
+                  </select>
+                )}
               </div>
               <button 
                 type="submit" 

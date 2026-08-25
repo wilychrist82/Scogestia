@@ -29,7 +29,16 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<boolean>(false)
 
-  const filteredClasses = classes.filter(c => c.level === selectedCycle)
+  const filteredClasses = classes.filter(c => {
+    if (!c.level) return false;
+    const l = c.level.toLowerCase();
+    const isPrimary = ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', 'maternelle', 's1', 's2'].includes(l);
+    const isSecondary = ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège'].includes(l);
+    
+    if (selectedCycle === 'primaire') return isPrimary;
+    if (selectedCycle === 'secondaire') return isSecondary;
+    return false;
+  })
   const filteredSubjects = subjects.filter(s => s.cycle === selectedCycle)
   const filteredStudents = selectedClass ? students.filter(s => s.class_id === selectedClass) : []
 
