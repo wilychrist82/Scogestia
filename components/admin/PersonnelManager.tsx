@@ -486,6 +486,7 @@ export function PersonnelManager({ staffList }: Props) {
             </form>
           </div>
         </div>
+      )}
       {/* Modal Overlay: Affectations de l'enseignant */}
       <TeacherAssignmentModal 
         isOpen={isAssignmentModalOpen} 
