@@ -117,13 +117,10 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
     window.print()
   }
 
-  const handleSave = () => {
+  const handleSavePrimary = () => {
     if (!student || !cls) return
     setSaveSuccess(false)
     startTransition(async () => {
-      if (selectedLevel === 'primaire' || selectedLevel === 'maternelle') {
-        const res = await saveBulletinPrimaryGrades(student.id, localPrimGrades, localPrimRanks, localPrimInfo)
-        if (res?.success) {
       const res = await saveBulletinPrimaryGrades(student.id, localPrimGrades, localPrimRanks, localPrimInfo)
       if (res?.success) {
         setSaveSuccess(true)
@@ -135,6 +132,8 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
   }
 
   const handleSaveSecondary = () => {
+    if (!student || !cls) return
+    setSaveSuccess(false)
     startTransition(async () => {
       const res = await saveBulletinSecondaryGrades(student.id, selectedTerm, localSecGrades)
       if (res?.success) {
