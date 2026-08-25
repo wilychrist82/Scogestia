@@ -88,8 +88,8 @@ export default async function EnseignantNotesPage() {
   const { data: studentsData } = await supabase.from('students').select('id').eq('school_id', schoolId);
   const studentIds = studentsData ? studentsData.map(s => s.id) : [];
   
-  let primaryRanks = [];
-  let primaryInfo = [];
+  let primaryRanks: any[] = [];
+  let primaryInfo: any[] = [];
   if (studentIds.length > 0) {
     const { data: r } = await supabase.from('primary_monthly_ranks').select('*').in('student_id', studentIds);
     if (r) primaryRanks = r;
