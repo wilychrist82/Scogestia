@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { NotesManager } from '@/components/admin/academique/NotesManager'
+import { TeacherNotesWrapper } from '@/components/enseignant/TeacherNotesWrapper'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +12,7 @@ export default async function EnseignantNotesPage() {
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('school_id')
+    .select('school_id, school:schools(name)')
     .eq('user_id', user.id)
     .eq('role', 'enseignant')
     .limit(1).maybeSingle()
@@ -38,7 +38,7 @@ export default async function EnseignantNotesPage() {
   // Fetch actual subjects from DB to get their cycle and ID
   const { data: allSubjects } = await supabase
     .from('subjects')
-    .select('id, name, cycle')
+    .select('*')
     .eq('school_id', schoolId)
 
   // Dedupliquer les classes et matières
@@ -53,20 +53,14 @@ export default async function EnseignantNotesPage() {
     // Find the real subject from the subjects table
     const realSubject = allSubjects?.find(s => s.name === a.subject_name)
     if (realSubject) {
-      // Note: NotesManager currently uses subjectId. If the same subject name is taught in multiple classes,
-      // the real subject ID is what we want to pass. The admin space passes all subjects directly.
       if (!subjectsMap.has(realSubject.id)) {
-        subjectsMap.set(realSubject.id, { 
-          id: realSubject.id, 
-          name: realSubject.name, 
-          cycle: realSubject.cycle 
-        })
+        subjectsMap.set(realSubject.id, realSubject)
       }
     }
   })
 
   const classes = Array.from(classesMap.values())
-  const subjects = Array.from(subjectsMap.values())
+  const assignedSubjects = Array.from(subjectsMap.values())
 
   const classIds = classes.map(c => c.id)
 
@@ -91,12 +85,14 @@ export default async function EnseignantNotesPage() {
     .eq('school_id', schoolId)
 
   return (
-    <NotesManager 
+    <TeacherNotesWrapper 
       classes={classes}
-      subjects={subjects}
+      allSubjects={allSubjects || []}
+      assignedSubjects={assignedSubjects || []}
       students={students as any || []}
       primaryGrades={primaryGrades || []}
       secondaryGrades={secondaryGrades || []}
+      schoolName={(roleData as any)?.school?.name || 'École'}
     />
   )
 }

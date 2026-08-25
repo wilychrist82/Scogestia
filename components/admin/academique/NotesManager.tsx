@@ -84,8 +84,8 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)]">
           <div>
             <div className="flex items-center gap-2 text-[var(--color-on-surface-variant)] mb-2">
-              <Link href="/admin/academique" className="hover:text-[var(--color-primary)] transition-colors text-sm font-semibold">
-                Académique
+              <Link href="#" onClick={(e) => {e.preventDefault(); window.history.back()}} className="hover:text-[var(--color-primary)] transition-colors text-sm font-semibold">
+                Retour
               </Link>
               <span className="material-symbols-outlined text-sm">chevron_right</span>
               <span className="text-sm font-semibold text-[var(--color-on-surface)]">Saisie des Notes</span>
