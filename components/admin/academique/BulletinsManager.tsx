@@ -173,10 +173,10 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
     const months = Array.from({ length: 9 }, (_, i) => i + 1)
 
     return (
-      <div className="bg-white p-8 rounded-xl shadow-sm border border-[var(--color-outline-variant)] text-black relative" ref={printRef}>
+      <div className="bg-white p-8 print:p-4 rounded-xl shadow-sm border border-[var(--color-outline-variant)] print:border-none text-black relative bulletin-page" ref={printRef}>
         
         {/* Header */}
-        <div className="flex justify-between items-start border-b-2 border-black pb-6 mb-6">
+        <div className="flex justify-between items-start border-b-2 border-black pb-6 print:pb-2 mb-6 print:mb-4">
           <div className="w-1/3 text-center">
             <h2 className="font-bold text-lg uppercase">RÉPUBLIQUE TOGOLAISE</h2>
             <p className="text-sm italic">Travail - Liberté - Patrie</p>
@@ -191,7 +191,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
         </div>
 
         {/* Student Info */}
-        <div className="flex justify-between items-center mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <div className="flex justify-between items-center mb-8 print:mb-4 bg-gray-50 p-4 print:p-2 rounded-lg border border-gray-200">
           <div>
             <p className="text-sm text-gray-600">Nom et Prénom(s)</p>
             <p className="text-lg font-bold">{student.last_name} {student.first_name}</p>
@@ -207,7 +207,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
         </div>
 
         {/* Grades Table */}
-        <div className="overflow-x-auto mb-8">
+        <div className="overflow-x-auto mb-8 print:mb-4">
           <table className="w-full text-sm border-collapse border border-black bulletin-table">
             <thead>
               <tr className="bg-gray-100">
@@ -316,7 +316,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between items-start mt-12 px-8">
+        <div className="flex justify-between items-start mt-12 print:mt-4 px-8 print:px-2">
           <div className="text-center flex flex-col items-center w-1/3">
             <p className="font-bold underline mb-10">Le Titulaire</p>
             <input 
@@ -411,7 +411,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
     const termAvg = totalCoef > 0 ? (totalProduct / totalCoef).toFixed(2) : '0.00'
 
     return (
-      <div className="bg-white p-8 rounded-xl shadow-sm border border-[var(--color-outline-variant)] text-black relative" ref={printRef}>
+      <div className="bg-white p-8 print:p-4 rounded-xl shadow-sm border border-[var(--color-outline-variant)] print:border-none text-black relative bulletin-page" ref={printRef}>
         
         {/* Header */}
         <div className="flex justify-between items-start border-b-2 border-black pb-6 mb-6">
@@ -516,7 +516,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between items-start mt-12 px-8">
+        <div className="flex justify-between items-start mt-12 print:mt-4 px-8 print:px-2">
           <div className="text-center w-1/3 flex flex-col items-center">
             <p className="font-bold underline mb-10">Le Professeur Principal</p>
             <input 
