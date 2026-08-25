@@ -33,7 +33,7 @@ export type NavItem = {
 export type SidebarProps = {
   userFullName?: string
   userRoleLabel?: string
-  navItems?: NavItem[]
+  navVariant?: 'admin' | 'enseignant'
   isOpen?: boolean
   onClose?: () => void
 }
@@ -81,7 +81,15 @@ const roleNavItems: NavItem[] = [
   { label: 'Espace Parent', href: '/parent', icon: Users },
 ]
 
-export function Sidebar({ userFullName, userRoleLabel, navItems, isOpen, onClose }: SidebarProps) {
+const enseignantNavItems: NavItem[] = [
+  { label: 'Tableau de bord', href: '/enseignant', icon: LayoutDashboard },
+  { label: 'Emploi du temps', href: '/enseignant/planning', icon: Calendar },
+  { label: 'Notes', href: '/enseignant/notes', icon: GraduationCap },
+  { label: 'Présences', href: '/enseignant/presences', icon: ShieldCheck },
+  { label: 'Devoirs', href: '/enseignant/devoirs', icon: BookOpen },
+]
+
+export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
 
   const NavGroup = ({ title, items }: { title: string, items: NavItem[] }) => (
@@ -169,8 +177,8 @@ export function Sidebar({ userFullName, userRoleLabel, navItems, isOpen, onClose
       
       {/* Navigation */}
       <div className="flex-1">
-        {navItems && navItems.length > 0 ? (
-          <NavGroup title="Menu Enseignant" items={navItems} />
+        {navVariant === 'enseignant' ? (
+          <NavGroup title="Menu Enseignant" items={enseignantNavItems} />
         ) : (
           <>
             <NavGroup title="Menu Principal" items={mainNavItems} />

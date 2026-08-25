@@ -8,12 +8,12 @@ export function AdminLayoutWrapper({
   children, 
   userFullName, 
   userRoleLabel,
-  navItems
+  navVariant = 'admin'
 }: { 
   children: React.ReactNode, 
   userFullName: string, 
   userRoleLabel: string,
-  navItems?: any[]
+  navVariant?: 'admin' | 'enseignant'
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
@@ -22,7 +22,7 @@ export function AdminLayoutWrapper({
       <Sidebar 
         userFullName={userFullName} 
         userRoleLabel={userRoleLabel} 
-        navItems={navItems}
+        navVariant={navVariant}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
