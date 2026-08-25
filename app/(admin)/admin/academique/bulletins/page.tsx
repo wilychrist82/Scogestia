@@ -24,7 +24,7 @@ export default async function BulletinsPage() {
   const schoolDetails = roleData.school
 
   const { data: classes } = await supabase.from('classes').select('id, name, level').eq('school_id', schoolId).order('name')
-  const { data: students } = await supabase.from('students').select('id, matricule, last_name, first_name, class_id').eq('school_id', schoolId).eq('status', 'actif').order('last_name')
+  const { data: students } = await supabase.from('students').select('id, matricule, last_name, first_name, class_id').eq('school_id', schoolId).order('last_name')
   let { data: subjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId)
   
   if (!subjects || subjects.length === 0) {
