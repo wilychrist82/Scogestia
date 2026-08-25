@@ -14,7 +14,7 @@ export default async function RapportsFinancePage() {
     .from('user_school_roles')
     .select('school_id')
     .eq('user_id', user.id)
-    .single()
+    .limit(1).maybeSingle()
 
   if (!roleData?.school_id) {
     return <div className="p-8 text-red-600">École introuvable.</div>

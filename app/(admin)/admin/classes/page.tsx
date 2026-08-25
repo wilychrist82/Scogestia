@@ -18,7 +18,7 @@ export default async function ClassesPage() {
     .from('user_school_roles')
     .select('school_id')
     .eq('user_id', user.id)
-    .single()
+    .limit(1).maybeSingle()
 
   if (roleError || !roleData?.school_id) {
     return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur: École introuvable.</div>

@@ -13,7 +13,7 @@ export default async function NotesPage() {
     .from('user_school_roles')
     .select('school_id')
     .eq('user_id', user.id)
-    .single()
+    .limit(1).maybeSingle()
 
   if (!roleData?.school_id) return <div className="p-8">École introuvable.</div>
   const schoolId = roleData.school_id

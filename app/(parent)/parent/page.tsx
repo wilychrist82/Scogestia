@@ -15,7 +15,7 @@ export default async function ParentDashboardPage() {
     .select('school_id')
     .eq('user_id', user.id)
     .eq('role', 'parent')
-    .single()
+    .limit(1).maybeSingle()
 
   if (!roleData) redirect('/')
 

@@ -19,7 +19,7 @@ export default async function ParentLayout({
     .select('full_name, role')
     .eq('user_id', user.id)
     .eq('role', 'parent')
-    .single()
+    .limit(1).maybeSingle()
 
   if (!roleData) redirect('/')
 

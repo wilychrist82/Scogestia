@@ -20,7 +20,7 @@ export default async function StudentDetailPage({
     .from('user_school_roles')
     .select('school_id')
     .eq('user_id', user.id)
-    .single()
+    .limit(1).maybeSingle()
 
   if (!roleData?.school_id) {
     return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable.</div>
@@ -43,7 +43,7 @@ export default async function StudentDetailPage({
     `)
     .eq('id', id)
     .eq('school_id', roleData.school_id)
-    .single()
+    .limit(1).maybeSingle()
 
   if (error || !student) {
     return (

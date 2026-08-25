@@ -14,7 +14,7 @@ export default async function BulletinsPage() {
     .from('user_school_roles')
     .select('school_id, school:schools(name, logo_url, city, phone)')
     .eq('user_id', user.id)
-    .single()
+    .limit(1).maybeSingle()
 
   if (!roleData?.school_id) {
     return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable: {roleError?.message || 'Inconnu'}</div>

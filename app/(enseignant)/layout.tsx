@@ -2,7 +2,7 @@ import { AdminLayoutWrapper } from '@/components/layout/AdminLayoutWrapper'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
-import { LayoutDashboard, GraduationCap, ClipboardCheck, BookOpen } from 'lucide-react'
+import { LayoutDashboard, GraduationCap, ClipboardCheck, BookOpen, Calendar } from 'lucide-react'
 
 export default async function EnseignantLayout({
   children,
@@ -20,10 +20,11 @@ export default async function EnseignantLayout({
     .from('user_school_roles')
     .select('full_name, role')
     .eq('user_id', user.id)
-    .single()
+    .limit(1).maybeSingle()
 
   const navItems = [
     { label: 'Tableau de bord', href: '/enseignant', icon: LayoutDashboard },
+    { label: 'Emploi du temps', href: '/enseignant/planning', icon: Calendar },
     { label: 'Notes', href: '/enseignant/notes', icon: GraduationCap },
     { label: 'Présences', href: '/enseignant/presences', icon: ClipboardCheck },
     { label: 'Devoirs', href: '/enseignant/devoirs', icon: BookOpen },

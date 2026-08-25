@@ -15,7 +15,7 @@ export default async function EnseignantPresencesPage() {
     .select('school_id')
     .eq('user_id', user.id)
     .eq('role', 'enseignant')
-    .single()
+    .limit(1).maybeSingle()
 
   if (!roleData) redirect('/')
 

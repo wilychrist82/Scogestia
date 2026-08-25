@@ -18,7 +18,7 @@ export default async function AdminLayout({
     .from('user_school_roles')
     .select('full_name, role')
     .eq('user_id', user.id)
-    .single()
+    .limit(1).maybeSingle()
 
   const userFullName = roleData?.full_name || 'Admin User'
   const userRoleLabel = 'Administrateur'
