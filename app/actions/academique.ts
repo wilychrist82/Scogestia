@@ -454,7 +454,7 @@ export async function publishHomework(
   }
 }
 
-export async function publishBulletinPDF(studentId: string, termOrMonth: string, academicYear: string, fileData: string) {
+export async function publishBulletinPDF(studentId: string, termOrMonth: string, academicYear: string, fileUrl: string) {
   try {
     const supabase = await createClient()
     const schoolId = await getActiveSchoolId()
@@ -464,33 +464,7 @@ export async function publishBulletinPDF(studentId: string, termOrMonth: string,
     const { data: userData, error: userError } = await supabase.auth.getUser()
     if (userError || !userData.user) return { success: false, error: 'Non authentifié' }
     
-    // 2. Decode base64 to buffer
-    // fileData is expected to be a base64 string: "data:application/pdf;base64,JVBERi..."
-    const base64Data = fileData.split(';base64,').pop()
-    if (!base64Data) return { success: false, error: 'Format de fichier invalide' }
-    
-    const buffer = Buffer.from(base64Data, 'base64')
-    const fileName = `${schoolId}/${studentId}_${termOrMonth}_${academicYear}_${Date.now()}.pdf`
-    
-    // 3. Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase
-      .storage
-      .from('bulletins')
-      .upload(fileName, buffer, {
-        contentType: 'application/pdf',
-        upsert: true
-      })
-      
-    if (uploadError) {
-      console.error('Upload error:', uploadError)
-      return { success: false, error: "Erreur lors de l'upload du fichier: " + uploadError.message }
-    }
-    
-    // Get public URL
-    const { data: urlData } = supabase.storage.from('bulletins').getPublicUrl(fileName)
-    const fileUrl = urlData.publicUrl
-
-    // 4. Save to published_bulletins table
+    // 2. Save to published_bulletins table
     const { error: dbError } = await supabase
       .from('published_bulletins')
       .upsert({

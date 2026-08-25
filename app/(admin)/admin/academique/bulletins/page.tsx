@@ -91,6 +91,7 @@ export default async function BulletinsPage() {
       primaryRanks={primaryRanks}
       primaryInfo={primaryInfo}
       schoolName={(schoolDetails as any)?.name || 'École'}
+      schoolId={schoolId}
     />
   )
 }

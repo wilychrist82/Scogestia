@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useTransition } from 'react'
 import { saveBulletinPrimaryGrades, saveBulletinSecondaryGrades, publishBulletinPDF } from '@/app/actions/academique'
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
+import { createClient } from '@/lib/supabase/client'
 
 type ClassItem = { id: string; name: string; level?: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string }
@@ -21,9 +22,10 @@ type Props = {
   primaryRanks?: any[]
   primaryInfo?: any[]
   schoolName: string
+  schoolId: string
 }
 
-export function BulletinsManager({ classes, students, subjects, primaryGrades, secondaryGrades, primaryRanks, primaryInfo, schoolName }: Props) {
+export function BulletinsManager({ classes, students, subjects, primaryGrades, secondaryGrades, primaryRanks, primaryInfo, schoolName, schoolId }: Props) {
   const [selectedLevel, setSelectedLevel] = useState<string>('')
   const [selectedClass, setSelectedClass] = useState<string>('')
   const [selectedTerm, setSelectedTerm] = useState<string>('1er_trimestre')
@@ -146,7 +148,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
   }
 
   const handlePublishPDF = async () => {
-    if (!printRef.current || !selectedStudent) return;
+    if (!printRef.current || !selectedStudent || !schoolId) return;
     
     try {
       setPublishStatus('loading')
@@ -164,24 +166,42 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width
       
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight)
-      
-      // Get base64 data uri of PDF
-      const pdfDataUri = pdf.output('datauristring')
+      const pdfBlob = pdf.output('blob')
       
       const academicYear = "2026-2027"
-      const res = await publishBulletinPDF(selectedStudent, selectedTerm, academicYear, pdfDataUri)
+      const fileName = `${schoolId}/${selectedStudent}_${selectedTerm}_${academicYear}_${Date.now()}.pdf`
+      
+      const supabase = createClient()
+      const { error: uploadError } = await supabase.storage.from('bulletins').upload(fileName, pdfBlob, {
+        contentType: 'application/pdf',
+        upsert: true
+      })
+      
+      if (uploadError) {
+        console.error('Erreur Upload Supabase:', uploadError)
+        setPublishStatus('error')
+        alert('Erreur upload : ' + uploadError.message)
+        setTimeout(() => setPublishStatus('idle'), 3000)
+        return
+      }
+      
+      const { data: urlData } = supabase.storage.from('bulletins').getPublicUrl(fileName)
+      
+      const res = await publishBulletinPDF(selectedStudent, selectedTerm, academicYear, urlData.publicUrl)
       
       if (res.success) {
         setPublishStatus('success')
       } else {
         console.error(res.error)
         setPublishStatus('error')
+        alert(res.error)
       }
       
       setTimeout(() => setPublishStatus('idle'), 3000)
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
       setPublishStatus('error')
+      alert("Erreur inattendue : " + err.message)
       setTimeout(() => setPublishStatus('idle'), 3000)
     }
   }
