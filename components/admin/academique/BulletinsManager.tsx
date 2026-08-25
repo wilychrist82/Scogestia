@@ -91,19 +91,19 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
     startTransition(async () => {
       if (selectedLevel === 'primaire' || selectedLevel === 'maternelle') {
         const res = await saveBulletinPrimaryGrades(student.id, localPrimGrades)
-        if (res.success) {
+        if (res?.success) {
           setSaveSuccess(true)
           setTimeout(() => setSaveSuccess(false), 3000)
         } else {
-          alert(res.error || 'Erreur lors de la sauvegarde')
+          alert(res?.error || 'Erreur lors de la sauvegarde')
         }
       } else {
         const res = await saveBulletinSecondaryGrades(student.id, selectedTerm, localSecGrades)
-        if (res.success) {
+        if (res?.success) {
           setSaveSuccess(true)
           setTimeout(() => setSaveSuccess(false), 3000)
         } else {
-          alert(res.error || 'Erreur lors de la sauvegarde')
+          alert(res?.error || 'Erreur lors de la sauvegarde')
         }
       }
     })
