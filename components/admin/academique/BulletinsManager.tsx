@@ -42,6 +42,8 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
   
   const [localSecGrades, setLocalSecGrades] = useState<Record<string, { cScore: string, compScore: string }>>({})
   const [secAppr, setSecAppr] = useState<Record<string, string>>({})
+  const [secTeachers, setSecTeachers] = useState<Record<string, string>>({})
+  const [secFooterInfo, setSecFooterInfo] = useState<{ appreciation: string, decision: string }>({ appreciation: '', decision: '' })
 
   const printRef = useRef<HTMLDivElement>(null)
 
@@ -456,7 +458,9 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
                 <th className="border border-black p-2 text-center w-16 bg-gray-200">MOY. /20</th>
                 <th className="border border-black p-2 text-center w-12">COEF</th>
                 <th className="border border-black p-2 text-center w-20 bg-gray-200">PRODUIT</th>
+                <th className="border border-black p-2 text-left w-32">NOM DES PROFESSEURS</th>
                 <th className="border border-black p-2 text-left pl-4">APPRÉCIATION</th>
+                <th className="border border-black p-2 text-center w-24">SIGNATURE</th>
               </tr>
             </thead>
             <tbody>
@@ -485,11 +489,20 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
                   <td className="border border-black p-0 text-left">
                      <input 
                       type="text"
+                      className="w-full h-full p-2 outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 text-xs print-input text-left"
+                      value={secTeachers[row.id] || ''}
+                      onChange={e => setSecTeachers({...secTeachers, [row.id]: e.target.value})}
+                    />
+                  </td>
+                  <td className="border border-black p-0 text-left">
+                     <input 
+                      type="text"
                       className="w-full h-full p-2 pl-4 outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 italic print-input text-left"
                       value={row.appr}
                       onChange={e => setSecAppr({...secAppr, [row.id]: e.target.value})}
                     />
                   </td>
+                  <td className="border border-black p-2"></td>
                 </tr>
               ))}
               {/* Totals */}
@@ -497,7 +510,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
                 <td colSpan={4} className="border border-black p-2 text-right">TOTAL</td>
                 <td className="border border-black p-2 text-center">{totalCoef}</td>
                 <td className="border border-black p-2 text-center">{totalProduct.toFixed(2)}</td>
-                <td className="border border-black p-2"></td>
+                <td colSpan={3} className="border border-black p-2"></td>
               </tr>
             </tbody>
           </table>
@@ -522,8 +535,18 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
             <input 
               type="text" 
               placeholder="Saisir le nom..." 
-              className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-2 w-56 border-b border-transparent focus:border-gray-300"
+              className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-2 w-56 border-b border-transparent focus:border-gray-300 mb-4"
             />
+            <div className="w-full text-left flex flex-col items-center">
+              <p className="font-bold underline mb-2">Appréciation :</p>
+              <input 
+                type="text"
+                placeholder="Appréciation..."
+                className="print-input text-center text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-full border-b border-gray-300 focus:border-[var(--color-primary)]"
+                value={secFooterInfo.appreciation}
+                onChange={e => setSecFooterInfo({...secFooterInfo, appreciation: e.target.value})}
+              />
+            </div>
           </div>
           <div className="text-center w-1/3 flex flex-col items-center">
             <div className="border border-black p-4 rounded-lg inline-block text-left w-full mb-4">
@@ -540,8 +563,18 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
              <input 
               type="text" 
               placeholder="Saisir le nom..." 
-              className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-2 w-56 border-b border-transparent focus:border-gray-300"
+              className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-2 w-56 border-b border-transparent focus:border-gray-300 mb-4"
             />
+            <div className="w-full text-left flex flex-col items-center">
+              <p className="font-bold underline mb-2">Décision du chef d'établissement :</p>
+              <input 
+                type="text"
+                placeholder="Décision..."
+                className="print-input text-center text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-full border-b border-gray-300 focus:border-[var(--color-primary)]"
+                value={secFooterInfo.decision}
+                onChange={e => setSecFooterInfo({...secFooterInfo, decision: e.target.value})}
+              />
+            </div>
           </div>
         </div>
       </div>
