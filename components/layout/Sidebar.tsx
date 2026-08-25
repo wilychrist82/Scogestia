@@ -18,7 +18,8 @@ import {
   ChevronDown,
   ShieldCheck,
   X,
-  LogOut
+  LogOut,
+  Calendar
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 
