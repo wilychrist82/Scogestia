@@ -72,6 +72,13 @@ export default async function ParentBulletinsPage({
     .select('*')
     .eq('student_id', childId)
 
+  // Récupérer les bulletins officiels
+  const { data: publishedBulletins } = await supabase
+    .from('published_bulletins')
+    .select('*')
+    .eq('student_id', childId)
+    .order('created_at', { ascending: false })
+
   // Organiser et calculer les moyennes par trimestre
   const termData: Record<string, {
     subjects: Record<string, { totalScore: number, totalMax: number, coef: number }>,
@@ -135,13 +142,44 @@ export default async function ParentBulletinsPage({
         </div>
       </div>
 
+      {publishedBulletins && publishedBulletins.length > 0 && (
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-[var(--color-outline-variant)]">
+          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
+            <span className="material-symbols-outlined text-red-500">picture_as_pdf</span>
+            Bulletins Officiels
+          </h2>
+          <div className="grid gap-3">
+            {publishedBulletins.map(pb => (
+              <a 
+                key={pb.id}
+                href={pb.file_url} 
+                target="_blank" 
+                rel="noreferrer"
+                className="flex items-center justify-between p-3 border border-gray-100 bg-gray-50 rounded-lg hover:border-[var(--color-primary)] transition-colors group"
+              >
+                <div className="flex flex-col">
+                  <span className="font-bold text-gray-700 group-hover:text-[var(--color-primary)] transition-colors capitalize">
+                    {pb.term_or_month.replace(/_/g, ' ')}
+                  </span>
+                  <span className="text-xs text-gray-500">Année {pb.academic_year}</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm text-sm font-semibold text-gray-600 group-hover:text-[var(--color-primary)] transition-colors">
+                  <span className="material-symbols-outlined text-[18px]">download</span>
+                  Ouvrir / Télécharger
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {sortedTerms.length === 0 ? (
         <div className="bg-white p-8 rounded-xl shadow-sm border border-[var(--color-outline-variant)] text-center flex flex-col items-center">
           <div className="w-16 h-16 bg-[#e8f5e9] rounded-full flex items-center justify-center mb-4">
             <span className="material-symbols-outlined text-[32px] text-[#2e7d32]">workspace_premium</span>
           </div>
-          <h2 className="text-lg font-bold text-[var(--color-on-surface)] mb-1">Aucun bulletin</h2>
-          <p className="text-[var(--color-on-surface-variant)] text-sm">Les notes insuffisantes pour générer un bulletin.</p>
+          <h2 className="text-lg font-bold text-[var(--color-on-surface)] mb-1">Aucun détail de notes</h2>
+          <p className="text-[var(--color-on-surface-variant)] text-sm">Les notes par matière ne sont pas encore disponibles.</p>
         </div>
       ) : (
         <div className="space-y-6">

@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useTransition } from 'react'
-import { saveBulletinPrimaryGrades, saveBulletinSecondaryGrades } from '@/app/actions/academique'
+import { saveBulletinPrimaryGrades, saveBulletinSecondaryGrades, publishBulletinPDF } from '@/app/actions/academique'
+import html2canvas from 'html2canvas'
+import { jsPDF } from 'jspdf'
 
 type ClassItem = { id: string; name: string; level?: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string }
@@ -29,6 +31,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
 
   const [isPending, startTransition] = useTransition()
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [publishStatus, setPublishStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [stampText, setStampText] = useState(schoolName.toUpperCase())
 
   useEffect(() => {
@@ -121,21 +124,67 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
       if (selectedLevel === 'primaire' || selectedLevel === 'maternelle') {
         const res = await saveBulletinPrimaryGrades(student.id, localPrimGrades, localPrimRanks, localPrimInfo)
         if (res?.success) {
-          setSaveSuccess(true)
-          setTimeout(() => setSaveSuccess(false), 3000)
-        } else {
-          alert(res?.error || 'Erreur lors de la sauvegarde')
-        }
+      const res = await saveBulletinPrimaryGrades(student.id, localPrimGrades, localPrimRanks, localPrimInfo)
+      if (res?.success) {
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 3000)
       } else {
-        const res = await saveBulletinSecondaryGrades(student.id, selectedTerm, localSecGrades)
-        if (res?.success) {
-          setSaveSuccess(true)
-          setTimeout(() => setSaveSuccess(false), 3000)
-        } else {
-          alert(res?.error || 'Erreur lors de la sauvegarde')
-        }
+        alert(res?.error || 'Erreur lors de la sauvegarde')
       }
     })
+  }
+
+  const handleSaveSecondary = () => {
+    startTransition(async () => {
+      const res = await saveBulletinSecondaryGrades(student.id, selectedTerm, localSecGrades)
+      if (res?.success) {
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 3000)
+      } else {
+        alert(res?.error || 'Erreur lors de la sauvegarde')
+      }
+    })
+  }
+
+  const handlePublishPDF = async () => {
+    if (!printRef.current || !selectedStudent) return;
+    
+    try {
+      setPublishStatus('loading')
+      
+      const canvas = await html2canvas(printRef.current, { scale: 2 })
+      const imgData = canvas.toDataURL('image/jpeg', 1.0)
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: 'a4'
+      })
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+      
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight)
+      
+      // Get base64 data uri of PDF
+      const pdfDataUri = pdf.output('datauristring')
+      
+      const academicYear = "2026-2027"
+      const res = await publishBulletinPDF(selectedStudent, selectedTerm, academicYear, pdfDataUri)
+      
+      if (res.success) {
+        setPublishStatus('success')
+      } else {
+        console.error(res.error)
+        setPublishStatus('error')
+      }
+      
+      setTimeout(() => setPublishStatus('idle'), 3000)
+    } catch (err) {
+      console.error(err)
+      setPublishStatus('error')
+      setTimeout(() => setPublishStatus('idle'), 3000)
+    }
   }
 
   const renderStamp = () => {
@@ -713,21 +762,27 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
               <p className="text-sm text-[var(--color-on-surface-variant)]">
                 💡 Vous pouvez cliquer sur les cases du tableau ci-dessous pour saisir les notes directement.
               </p>
-              <div className="flex gap-3">
-                {saveSuccess && <span className="text-[var(--color-status-paye-text)] font-semibold flex items-center">✓ Sauvegardé</span>}
-                <button 
-                  onClick={handleSave}
-                  className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-highest)] transition-colors flex items-center gap-2"
+              <div className="flex gap-4">
+                <button
+                  onClick={handlePublishPDF}
+                  disabled={!selectedStudent || publishStatus === 'loading'}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[18px]">save</span>
-                  Enregistrer
+                  {publishStatus === 'loading' ? 'Génération...' : publishStatus === 'success' ? '✔ Publié' : publishStatus === 'error' ? '✖ Erreur' : 'Publier vers Espace Parent'}
                 </button>
                 <button 
                   onClick={handlePrint}
-                  className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-primary)] text-white hover:opacity-90 transition-colors flex items-center gap-2 shadow-sm"
+                  disabled={!selectedStudent}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[18px]">print</span>
                   Imprimer / PDF
+                </button>
+                <button 
+                  onClick={selectedLevel === 'primaire' || selectedLevel === 'maternelle' ? handleSavePrimary : handleSaveSecondary}
+                  disabled={isPending || !selectedStudent}
+                  className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-opacity-90 disabled:opacity-50 transition-colors flex items-center gap-2"
+                >
+                  {isPending ? 'Enregistrement...' : saveSuccess ? 'Enregistré ✔' : 'Enregistrer'}
                 </button>
               </div>
             </div>
