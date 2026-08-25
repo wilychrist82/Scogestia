@@ -151,8 +151,8 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
     try {
       setPublishStatus('loading')
       
-      const canvas = await html2canvas(printRef.current, { scale: 2 })
-      const imgData = canvas.toDataURL('image/jpeg', 1.0)
+      const canvas = await html2canvas(printRef.current, { scale: 1.5 })
+      const imgData = canvas.toDataURL('image/jpeg', 0.75)
       
       const pdf = new jsPDF({
         orientation: 'portrait',

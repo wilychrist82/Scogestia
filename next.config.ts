@@ -12,6 +12,11 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+  },
+  serverActions: {
+    bodySizeLimit: '15mb',
+  },
 };
 
 export default process.env.NODE_ENV === 'production' ? withSentryConfig(nextConfig, {
