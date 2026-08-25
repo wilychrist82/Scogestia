@@ -201,17 +201,68 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
                   })}
                 </React.Fragment>
               ))}
+              
+              {/* Totals & Averages for Primary */}
+              <tr className="bg-gray-100 font-bold border-t-2 border-black">
+                <td className="border border-black p-2 text-right uppercase">Total des points</td>
+                {months.map(m => {
+                  let monthTotal = 0;
+                  primarySubjects.forEach(subj => {
+                    const val = parseFloat(localPrimGrades[`${subj.id}_${m}`]);
+                    if (!isNaN(val)) monthTotal += val;
+                  });
+                  return (
+                    <td key={`total-${m}`} className="border border-black p-2 text-center">
+                      {monthTotal > 0 ? monthTotal : ''}
+                    </td>
+                  );
+                })}
+                <td className="border border-black p-2 bg-gray-200"></td>
+              </tr>
+              <tr className="bg-gray-100 font-bold">
+                <td className="border border-black p-2 text-right uppercase">Moyenne / 10</td>
+                {months.map(m => {
+                  let monthTotal = 0;
+                  let count = 0;
+                  primarySubjects.forEach(subj => {
+                    const val = parseFloat(localPrimGrades[`${subj.id}_${m}`]);
+                    if (!isNaN(val)) {
+                      monthTotal += val;
+                      count++;
+                    }
+                  });
+                  // Divide by total number of subjects to get the true average, or number of inputted grades?
+                  // Generally it's divided by total number of subjects tested. Let's use count.
+                  const avg = count > 0 ? (monthTotal / count).toFixed(2) : '';
+                  return (
+                    <td key={`avg-${m}`} className="border border-black p-2 text-center text-blue-800">
+                      {avg}
+                    </td>
+                  );
+                })}
+                <td className="border border-black p-2 bg-gray-200"></td>
+              </tr>
             </tbody>
           </table>
         </div>
 
         {/* Footer */}
         <div className="flex justify-between items-start mt-12 px-8">
-          <div className="text-center">
-            <p className="font-bold underline mb-16">Le Maître / La Maîtresse</p>
+          <div className="text-center flex flex-col items-center">
+            <p className="font-bold underline mb-10">Le Titulaire</p>
+            <input 
+              type="text" 
+              placeholder="Saisir le nom..." 
+              className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-2 w-56 border-b border-transparent focus:border-gray-300"
+            />
           </div>
-          <div className="text-center">
-            <p className="font-bold underline mb-16">Le Directeur / La Directrice</p>
+          <div className="text-center flex flex-col items-center">
+            <p className="font-bold underline mb-10">Le Directeur / La Directrice</p>
+            <input 
+              type="text" 
+              placeholder="Saisir le nom..." 
+              className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-2 w-56 border-b border-transparent focus:border-gray-300"
+            />
           </div>
         </div>
       </div>
@@ -374,8 +425,13 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
 
         {/* Footer */}
         <div className="flex justify-between items-start mt-12 px-8">
-          <div className="text-center w-1/3">
-            <p className="font-bold underline mb-16">Le Professeur Principal</p>
+          <div className="text-center w-1/3 flex flex-col items-center">
+            <p className="font-bold underline mb-10">Le Professeur Principal</p>
+            <input 
+              type="text" 
+              placeholder="Saisir le nom..." 
+              className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-2 w-56 border-b border-transparent focus:border-gray-300"
+            />
           </div>
           <div className="text-center w-1/3">
             <div className="border border-black p-4 rounded-lg inline-block text-left w-full">
@@ -386,8 +442,13 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
               <label className="flex items-center gap-2"><input type="checkbox" checked={Number(termAvg) > 0 && Number(termAvg) < 10} readOnly className="print-checkbox" /> Avertissement</label>
             </div>
           </div>
-          <div className="text-center w-1/3">
-            <p className="font-bold underline mb-16">Le Chef d'Établissement</p>
+          <div className="text-center w-1/3 flex flex-col items-center">
+            <p className="font-bold underline mb-10">Le Chef d'Établissement</p>
+             <input 
+              type="text" 
+              placeholder="Saisir le nom..." 
+              className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-2 w-56 border-b border-transparent focus:border-gray-300"
+            />
           </div>
         </div>
       </div>
