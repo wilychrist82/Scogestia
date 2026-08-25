@@ -42,7 +42,8 @@ export default async function BulletinsPage() {
       { school_id: schoolId, name: 'Education Sociale (ECM)', cycle: 'primaire', category: 'Sciences' },
       { school_id: schoolId, name: 'Sciences et Technologie (Edusivip)', cycle: 'primaire', category: 'Sciences' },
       { school_id: schoolId, name: 'Arts plastiques (Dessin)', cycle: 'primaire', category: 'Divers' },
-      { school_id: schoolId, name: 'Chant, Récitation', cycle: 'primaire', category: 'Divers' },
+      { school_id: schoolId, name: 'Chant', cycle: 'primaire', category: 'Divers' },
+      { school_id: schoolId, name: 'Récitation', cycle: 'primaire', category: 'Divers' },
       { school_id: schoolId, name: 'Anglais', cycle: 'primaire', category: 'Divers' },
       { school_id: schoolId, name: 'EPS', cycle: 'primaire', category: 'Divers' },
       

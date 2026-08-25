@@ -27,6 +27,11 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
 
   const [isPending, startTransition] = useTransition()
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [stampText, setStampText] = useState(schoolName.toUpperCase())
+
+  useEffect(() => {
+    setStampText(schoolName.toUpperCase())
+  }, [schoolName])
 
   // Local state for interactive editing
   const [localPrimGrades, setLocalPrimGrades] = useState<Record<string, string>>({})
@@ -102,6 +107,31 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
         }
       }
     })
+  }
+
+  const renderStamp = () => {
+    return (
+      <div className="flex flex-col items-center mt-2">
+        <input 
+          type="text" 
+          value={stampText} 
+          onChange={e => setStampText(e.target.value)} 
+          placeholder="Texte du cachet (vide = cacher)"
+          className="print-input print:hidden text-center text-xs border-b border-gray-300 focus:border-blue-500 outline-none mb-2 text-blue-800 bg-transparent w-48"
+        />
+        {stampText && (
+          <div className="relative w-28 h-28 text-blue-800 flex flex-col items-center justify-center opacity-90" style={{ border: '4px double #1e40af', borderRadius: '50%' }}>
+            <span className="text-[10px] font-black uppercase tracking-widest mt-1">Direction</span>
+            <div className="w-12 h-px bg-blue-800 my-1"></div>
+            <span className="material-symbols-outlined text-xl">verified</span>
+            <div className="w-12 h-px bg-blue-800 my-1"></div>
+            <span className="text-[8px] font-bold uppercase text-center px-2 leading-tight">
+              {stampText}
+            </span>
+          </div>
+        )}
+      </div>
+    )
   }
 
   const renderPrimaryLivret = () => {
@@ -248,7 +278,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
 
         {/* Footer */}
         <div className="flex justify-between items-start mt-12 px-8">
-          <div className="text-center flex flex-col items-center">
+          <div className="text-center flex flex-col items-center w-1/3">
             <p className="font-bold underline mb-10">Le Titulaire</p>
             <input 
               type="text" 
@@ -256,7 +286,10 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
               className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-2 w-56 border-b border-transparent focus:border-gray-300"
             />
           </div>
-          <div className="text-center flex flex-col items-center">
+          <div className="w-1/3 flex justify-center">
+            {renderStamp()}
+          </div>
+          <div className="text-center flex flex-col items-center w-1/3">
             <p className="font-bold underline mb-10">Le Directeur / La Directrice</p>
             <input 
               type="text" 
@@ -433,14 +466,15 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
               className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-2 w-56 border-b border-transparent focus:border-gray-300"
             />
           </div>
-          <div className="text-center w-1/3">
-            <div className="border border-black p-4 rounded-lg inline-block text-left w-full">
+          <div className="text-center w-1/3 flex flex-col items-center">
+            <div className="border border-black p-4 rounded-lg inline-block text-left w-full mb-4">
               <p className="font-bold mb-2 underline">Décision du conseil</p>
               <label className="flex items-center gap-2"><input type="checkbox" checked={Number(termAvg) >= 14} readOnly className="print-checkbox" /> Félicitations</label>
               <label className="flex items-center gap-2"><input type="checkbox" checked={Number(termAvg) >= 12 && Number(termAvg) < 14} readOnly className="print-checkbox" /> Encouragements</label>
               <label className="flex items-center gap-2"><input type="checkbox" checked={Number(termAvg) >= 10 && Number(termAvg) < 12} readOnly className="print-checkbox" /> Tableau d'honneur</label>
               <label className="flex items-center gap-2"><input type="checkbox" checked={Number(termAvg) > 0 && Number(termAvg) < 10} readOnly className="print-checkbox" /> Avertissement</label>
             </div>
+            {renderStamp()}
           </div>
           <div className="text-center w-1/3 flex flex-col items-center">
             <p className="font-bold underline mb-10">Le Chef d'Établissement</p>
