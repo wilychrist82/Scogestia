@@ -43,6 +43,6 @@ export default async function EnseignantPlanningPage() {
   const safeTimetables = error ? [] : (timetables || [])
 
   return (
-    <PlanningDashboard timetables={safeTimetables} />
+    <PlanningDashboard timetables={safeTimetables as any} />
   )
 }
