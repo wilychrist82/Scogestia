@@ -1,73 +1,83 @@
-'use server'
+"use server";
 
-import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
-import { ActionState } from './finance'
+import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import { ActionState } from "./finance";
 
 async function getActiveSchoolId() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Non authentifié');
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Non authentifié");
 
   const { data: roleData, error } = await supabase
-    .from('user_school_roles')
-    .select('school_id')
-    .eq('user_id', user.id)
+    .from("user_school_roles")
+    .select("school_id")
+    .eq("user_id", user.id)
     .single();
 
-  if (error || !roleData) throw new Error('École introuvable');
+  if (error || !roleData) throw new Error("École introuvable");
   return roleData.school_id;
 }
 
-export async function saveSchoolSubject(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const name = formData.get('name') as string;
-  const cycle = formData.get('cycle') as string;
-  const category = formData.get('category') as string;
-  const coefficient = parseFloat(formData.get('coefficient') as string);
+export async function saveSchoolSubject(
+  prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const name = formData.get("name") as string;
+  const cycle = formData.get("cycle") as string;
+  const category = formData.get("category") as string;
+  const coefficient = parseFloat(formData.get("coefficient") as string);
 
   if (!name || !cycle) {
-    return { error: 'Veuillez remplir le nom et le cycle.' };
+    return { error: "Veuillez remplir le nom et le cycle." };
   }
 
   try {
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
 
-    const { error } = await supabase.from('subjects').insert({
+    const { error } = await supabase.from("subjects").insert({
       school_id,
       name,
       cycle,
-      category: cycle === 'primaire' ? category : null,
-      coefficient: cycle === 'secondaire' ? coefficient || 1 : 1
+      category: cycle === "primaire" ? category : null,
+      coefficient: cycle === "secondaire" ? coefficient || 1 : 1,
     });
 
     if (error) throw error;
 
-    revalidatePath('/admin/academique/matieres');
+    revalidatePath("/admin/academique/matieres");
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
   }
 }
 
-export async function savePrimaryGrades(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const classId = formData.get('classId') as string;
-  const subjectId = formData.get('subjectId') as string;
+export async function savePrimaryGrades(
+  prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const classId = formData.get("classId") as string;
+  const subjectId = formData.get("subjectId") as string;
 
   if (!classId || !subjectId) {
-    return { error: 'Paramètres manquants pour la sauvegarde.' };
+    return { error: "Paramètres manquants pour la sauvegarde." };
   }
 
   try {
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     const gradesToUpsert = [];
     for (const [key, value] of formData.entries()) {
-      if (key.startsWith('score_') && value) {
+      if (key.startsWith("score_") && value) {
         // key format: score_{monthNumber}_{studentId}
-        const parts = key.split('_');
+        const parts = key.split("_");
         if (parts.length === 3) {
           const monthNumber = parseInt(parts[1], 10);
           const studentId = parts[2];
@@ -80,7 +90,7 @@ export async function savePrimaryGrades(prevState: ActionState, formData: FormDa
               month_number: monthNumber,
               score,
               max_score: 10,
-              academic_year: '2023/2024',
+              academic_year: "2023/2024",
               entered_by: user?.id,
             });
           }
@@ -89,43 +99,58 @@ export async function savePrimaryGrades(prevState: ActionState, formData: FormDa
     }
 
     if (gradesToUpsert.length > 0) {
-      await supabase.from('primary_grades').upsert(gradesToUpsert, { onConflict: 'student_id, subject_id, month_number, academic_year' });
+      await supabase
+        .from("primary_grades")
+        .upsert(gradesToUpsert, {
+          onConflict: "student_id, subject_id, month_number, academic_year",
+        });
     }
 
-    revalidatePath('/admin/academique/notes');
+    revalidatePath("/admin/academique/notes");
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
   }
 }
 
-export async function saveSecondaryGrades(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const classId = formData.get('classId') as string;
-  const term = formData.get('term') as string;
-  const subjectId = formData.get('subjectId') as string;
+export async function saveSecondaryGrades(
+  prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const classId = formData.get("classId") as string;
+  const term = formData.get("term") as string;
+  const subjectId = formData.get("subjectId") as string;
 
   if (!classId || !term || !subjectId) {
-    return { error: 'Paramètres manquants pour la sauvegarde.' };
+    return { error: "Paramètres manquants pour la sauvegarde." };
   }
 
   try {
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     const gradesToUpsert = [];
     // We will extract studentId from the keys: class_score_{id} and comp_score_{id}
     const studentIds = new Set<string>();
     for (const key of formData.keys()) {
-      if (key.startsWith('class_score_')) studentIds.add(key.replace('class_score_', ''));
-      if (key.startsWith('comp_score_')) studentIds.add(key.replace('comp_score_', ''));
+      if (key.startsWith("class_score_"))
+        studentIds.add(key.replace("class_score_", ""));
+      if (key.startsWith("comp_score_"))
+        studentIds.add(key.replace("comp_score_", ""));
     }
 
     for (const studentId of studentIds) {
       const classScoreStr = formData.get(`class_score_${studentId}`);
       const compScoreStr = formData.get(`comp_score_${studentId}`);
-      const classScore = classScoreStr ? parseFloat(classScoreStr as string) : null;
-      const compScore = compScoreStr ? parseFloat(compScoreStr as string) : null;
+      const classScore = classScoreStr
+        ? parseFloat(classScoreStr as string)
+        : null;
+      const compScore = compScoreStr
+        ? parseFloat(compScoreStr as string)
+        : null;
 
       if (classScore !== null || compScore !== null) {
         gradesToUpsert.push({
@@ -136,33 +161,47 @@ export async function saveSecondaryGrades(prevState: ActionState, formData: Form
           class_score: classScore,
           comp_score: compScore,
           max_score: 20,
-          academic_year: '2023/2024', // TODO: dynamic
+          academic_year: "2023/2024", // TODO: dynamic
           entered_by: user?.id,
         });
       }
     }
 
     if (gradesToUpsert.length > 0) {
-      await supabase.from('secondary_grades').upsert(gradesToUpsert, { onConflict: 'student_id, subject_id, term, academic_year' });
+      await supabase
+        .from("secondary_grades")
+        .upsert(gradesToUpsert, {
+          onConflict: "student_id, subject_id, term, academic_year",
+        });
     }
 
-    revalidatePath('/admin/academique/notes');
+    revalidatePath("/admin/academique/notes");
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
   }
 }
 
-export async function saveBulletinPrimaryGrades(studentId: string, grades: Record<string, string>): Promise<ActionState> {
+export async function saveBulletinPrimaryGrades(
+  studentId: string,
+  grades: Record<string, string>,
+  ranks: Record<number, string> = {},
+  info: { appreciation: string; decision: string } = {
+    appreciation: "",
+    decision: "",
+  },
+): Promise<ActionState> {
   try {
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     const gradesToUpsert = [];
     for (const [key, value] of Object.entries(grades)) {
       // key format: {subjectId}_{monthNumber}
-      const parts = key.split('_');
+      const parts = key.split("_");
       if (parts.length === 2 && value) {
         const subjectId = parts[0];
         const monthNumber = parseInt(parts[1], 10);
@@ -175,7 +214,7 @@ export async function saveBulletinPrimaryGrades(studentId: string, grades: Recor
             month_number: monthNumber,
             score,
             max_score: 10,
-            academic_year: '2023/2024',
+            academic_year: "2023/2024",
             entered_by: user?.id,
           });
         }
@@ -183,21 +222,56 @@ export async function saveBulletinPrimaryGrades(studentId: string, grades: Recor
     }
 
     if (gradesToUpsert.length > 0) {
-      await supabase.from('primary_grades').upsert(gradesToUpsert, { onConflict: 'student_id, subject_id, month_number, academic_year' });
+      await supabase
+        .from("primary_grades")
+        .upsert(gradesToUpsert, {
+          onConflict: "student_id, subject_id, month_number, academic_year",
+        });
     }
 
-    revalidatePath('/admin/academique/bulletins');
+    const ranksToUpsert = Object.entries(ranks)
+      .map(([month, rank_text]) => ({
+        student_id: studentId,
+        month_number: parseInt(month, 10),
+        rank_text,
+      }))
+      .filter((r) => r.rank_text.trim() !== "");
+
+    if (ranksToUpsert.length > 0) {
+      await supabase
+        .from("primary_monthly_ranks")
+        .upsert(ranksToUpsert, { onConflict: "student_id, month_number" });
+    }
+
+    if (info.appreciation || info.decision) {
+      await supabase.from("primary_bulletin_info").upsert(
+        {
+          student_id: studentId,
+          appreciation: info.appreciation,
+          director_decision: info.decision,
+        },
+        { onConflict: "student_id" },
+      );
+    }
+
+    revalidatePath("/admin/academique/bulletins");
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
   }
 }
 
-export async function saveBulletinSecondaryGrades(studentId: string, term: string, grades: Record<string, { cScore: string, compScore: string }>): Promise<ActionState> {
+export async function saveBulletinSecondaryGrades(
+  studentId: string,
+  term: string,
+  grades: Record<string, { cScore: string; compScore: string }>,
+): Promise<ActionState> {
   try {
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     const gradesToUpsert = [];
     for (const [subjectId, scores] of Object.entries(grades)) {
@@ -213,119 +287,137 @@ export async function saveBulletinSecondaryGrades(studentId: string, term: strin
           class_score: classScore,
           comp_score: compScore,
           max_score: 20,
-          academic_year: '2023/2024',
+          academic_year: "2023/2024",
           entered_by: user?.id,
         });
       }
     }
 
     if (gradesToUpsert.length > 0) {
-      await supabase.from('secondary_grades').upsert(gradesToUpsert, { onConflict: 'student_id, subject_id, term, academic_year' });
+      await supabase
+        .from("secondary_grades")
+        .upsert(gradesToUpsert, {
+          onConflict: "student_id, subject_id, term, academic_year",
+        });
     }
 
-    revalidatePath('/admin/academique/bulletins');
+    revalidatePath("/admin/academique/bulletins");
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
   }
 }
 
-
-export async function saveAttendance(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const classId = formData.get('classId') as string;
-  const date = formData.get('date') as string;
+export async function saveAttendance(
+  prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const classId = formData.get("classId") as string;
+  const date = formData.get("date") as string;
 
   if (!classId || !date) {
-    return { error: 'Paramètres manquants pour la sauvegarde.' };
+    return { error: "Paramètres manquants pour la sauvegarde." };
   }
 
   try {
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     const attendanceToUpsert = [];
-    
+
     for (const [key, value] of formData.entries()) {
-      if (key.startsWith('attendance_') && value) {
-        const studentId = key.replace('attendance_', '');
+      if (key.startsWith("attendance_") && value) {
+        const studentId = key.replace("attendance_", "");
         const status = value as string; // 'present', 'absent', 'retard', 'absent_justifie'
-        
+
         attendanceToUpsert.push({
           school_id,
           student_id: studentId,
           class_id: classId,
           date,
           status,
-          recorded_by: user?.id
+          recorded_by: user?.id,
         });
       }
     }
 
     if (attendanceToUpsert.length > 0) {
-      const studentIds = attendanceToUpsert.map(a => a.student_id);
-      
+      const studentIds = attendanceToUpsert.map((a) => a.student_id);
+
       // Delete existing for same day to prevent duplicates (as there's a unique constraint on student_id, date)
       await supabase
-        .from('attendance')
+        .from("attendance")
         .delete()
-        .eq('school_id', school_id)
-        .eq('class_id', classId)
-        .eq('date', date)
-        .in('student_id', studentIds);
+        .eq("school_id", school_id)
+        .eq("class_id", classId)
+        .eq("date", date)
+        .in("student_id", studentIds);
 
-      const { error } = await supabase.from('attendance').insert(attendanceToUpsert);
+      const { error } = await supabase
+        .from("attendance")
+        .insert(attendanceToUpsert);
       if (error) throw error;
     }
 
-    revalidatePath('/admin/academique/presences');
+    revalidatePath("/admin/academique/presences");
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
   }
 }
 
-export async function publishHomework(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const classId = formData.get('classId') as string;
-  const subjectName = formData.get('subjectName') as string;
-  const title = formData.get('title') as string;
-  const description = formData.get('description') as string;
-  const dueDate = formData.get('dueDate') as string;
-  const targetStudentsStr = formData.get('targetStudents') as string;
-  const attachment = formData.get('attachment') as File | null;
+export async function publishHomework(
+  prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const classId = formData.get("classId") as string;
+  const subjectName = formData.get("subjectName") as string;
+  const title = formData.get("title") as string;
+  const description = formData.get("description") as string;
+  const dueDate = formData.get("dueDate") as string;
+  const targetStudentsStr = formData.get("targetStudents") as string;
+  const attachment = formData.get("attachment") as File | null;
 
   if (!classId || !subjectName || !title || !dueDate) {
-    return { error: 'Veuillez remplir les champs obligatoires (classe, matière, titre, date limite).' };
+    return {
+      error:
+        "Veuillez remplir les champs obligatoires (classe, matière, titre, date limite).",
+    };
   }
 
   try {
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     let attachmentUrl = null;
 
     if (attachment && attachment.size > 0) {
-      const fileExt = attachment.name.split('.').pop();
+      const fileExt = attachment.name.split(".").pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `${school_id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('homework-attachments')
+        .from("homework-attachments")
         .upload(filePath, attachment, {
-          cacheControl: '3600',
-          upsert: false
+          cacheControl: "3600",
+          upsert: false,
         });
 
       if (uploadError) {
-        console.error('Erreur upload:', uploadError);
+        console.error("Erreur upload:", uploadError);
         return { error: "Erreur lors de l'upload du fichier." };
       }
-      
+
       const { data: publicUrlData } = supabase.storage
-        .from('homework-attachments')
+        .from("homework-attachments")
         .getPublicUrl(filePath);
-        
+
       attachmentUrl = publicUrlData.publicUrl;
     }
 
@@ -336,12 +428,12 @@ export async function publishHomework(prevState: ActionState, formData: FormData
         if (Array.isArray(parsed) && parsed.length > 0) {
           target_students = parsed;
         }
-      } catch(e) {
+      } catch (e) {
         console.error("Erreur parsing targetStudents", e);
       }
     }
 
-    const { error } = await supabase.from('homework').insert({
+    const { error } = await supabase.from("homework").insert({
       school_id,
       class_id: classId,
       subject_name: subjectName,
@@ -350,17 +442,14 @@ export async function publishHomework(prevState: ActionState, formData: FormData
       due_date: dueDate,
       attachment_url: attachmentUrl,
       target_students,
-      created_by: user?.id
+      created_by: user?.id,
     });
 
     if (error) throw error;
 
-    revalidatePath('/admin/academique/devoirs');
+    revalidatePath("/admin/academique/devoirs");
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
   }
 }
-
-
-

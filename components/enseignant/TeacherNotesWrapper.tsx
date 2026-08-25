@@ -34,16 +34,18 @@ export function TeacherNotesWrapper(props: any) {
       {mode === 'primary' ? (
         <BulletinsManager 
           classes={props.classes}
-          subjects={props.allSubjects} // Primary needs all subjects for the livret
+          subjects={props.allSubjects}
           students={props.students}
           primaryGrades={props.primaryGrades}
           secondaryGrades={props.secondaryGrades}
+          primaryRanks={props.primaryRanks}
+          primaryInfo={props.primaryInfo}
           schoolName={props.schoolName}
         />
       ) : (
         <NotesManager 
           classes={props.classes}
-          subjects={props.assignedSubjects} // Secondary only needs assigned subjects
+          subjects={props.assignedSubjects}
           students={props.students}
           primaryGrades={props.primaryGrades}
           secondaryGrades={props.secondaryGrades}

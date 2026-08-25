@@ -68,6 +68,19 @@ export default async function BulletinsPage() {
   const { data: primaryGrades } = await supabase.from('primary_grades').select('*').eq('school_id', schoolId)
   const { data: secondaryGrades } = await supabase.from('secondary_grades').select('*').eq('school_id', schoolId)
 
+  // Fetch new metadata fields for primary (we can just fetch all for the school's students, or just ignore errors if table missing)
+  const { data: studentsData } = await supabase.from('students').select('id').eq('school_id', schoolId);
+  const studentIds = studentsData ? studentsData.map(s => s.id) : [];
+  
+  let primaryRanks = [];
+  let primaryInfo = [];
+  if (studentIds.length > 0) {
+    const { data: r } = await supabase.from('primary_monthly_ranks').select('*').in('student_id', studentIds);
+    if (r) primaryRanks = r;
+    const { data: i } = await supabase.from('primary_bulletin_info').select('*').in('student_id', studentIds);
+    if (i) primaryInfo = i;
+  }
+
   return (
     <BulletinsManager 
       classes={classes || []} 
@@ -75,6 +88,8 @@ export default async function BulletinsPage() {
       subjects={subjects || []}
       primaryGrades={primaryGrades || []}
       secondaryGrades={secondaryGrades || []}
+      primaryRanks={primaryRanks}
+      primaryInfo={primaryInfo}
       schoolName={(schoolDetails as any)?.name || 'École'}
     />
   )

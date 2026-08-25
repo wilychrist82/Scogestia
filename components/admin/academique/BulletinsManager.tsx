@@ -16,10 +16,12 @@ type Props = {
   subjects: SubjectItem[]
   primaryGrades: PrimaryGradeItem[]
   secondaryGrades: SecondaryGradeItem[]
+  primaryRanks?: any[]
+  primaryInfo?: any[]
   schoolName: string
 }
 
-export function BulletinsManager({ classes, students, subjects, primaryGrades, secondaryGrades, schoolName }: Props) {
+export function BulletinsManager({ classes, students, subjects, primaryGrades, secondaryGrades, primaryRanks, primaryInfo, schoolName }: Props) {
   const [selectedLevel, setSelectedLevel] = useState<string>('')
   const [selectedClass, setSelectedClass] = useState<string>('')
   const [selectedTerm, setSelectedTerm] = useState<string>('1er_trimestre')
@@ -35,6 +37,9 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
 
   // Local state for interactive editing
   const [localPrimGrades, setLocalPrimGrades] = useState<Record<string, string>>({})
+  const [localPrimRanks, setLocalPrimRanks] = useState<Record<number, string>>({})
+  const [localPrimInfo, setLocalPrimInfo] = useState<{ appreciation: string, decision: string }>({ appreciation: '', decision: '' })
+  
   const [localSecGrades, setLocalSecGrades] = useState<Record<string, { cScore: string, compScore: string }>>({})
   const [secAppr, setSecAppr] = useState<Record<string, string>>({})
 
@@ -67,6 +72,26 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
         }
       })
       setLocalPrimGrades(newPrim)
+
+      const newRanks: Record<number, string> = {}
+      if (primaryRanks) {
+        primaryRanks.forEach(r => {
+          if (r.student_id === student.id) {
+            newRanks[r.month_number] = r.rank_text || ''
+          }
+        })
+      }
+      setLocalPrimRanks(newRanks)
+
+      if (primaryInfo) {
+        const info = primaryInfo.find(i => i.student_id === student.id)
+        setLocalPrimInfo({
+          appreciation: info?.appreciation || '',
+          decision: info?.director_decision || ''
+        })
+      } else {
+        setLocalPrimInfo({ appreciation: '', decision: '' })
+      }
     } else {
       const newSec: Record<string, { cScore: string, compScore: string }> = {}
       secondaryGrades.forEach(g => {
@@ -90,7 +115,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
     setSaveSuccess(false)
     startTransition(async () => {
       if (selectedLevel === 'primaire' || selectedLevel === 'maternelle') {
-        const res = await saveBulletinPrimaryGrades(student.id, localPrimGrades)
+        const res = await saveBulletinPrimaryGrades(student.id, localPrimGrades, localPrimRanks, localPrimInfo)
         if (res?.success) {
           setSaveSuccess(true)
           setTimeout(() => setSaveSuccess(false), 3000)
@@ -272,6 +297,20 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
                 })}
                 <td className="border border-black p-2 bg-gray-200"></td>
               </tr>
+              <tr className="bg-gray-100 font-bold">
+                <td className="border border-black p-2 text-right uppercase">Rang</td>
+                {months.map(m => (
+                  <td key={`rank-${m}`} className="border border-black p-0 text-center">
+                    <input 
+                      type="text"
+                      className="w-full h-full p-2 text-center outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 font-bold print-input"
+                      value={localPrimRanks[m] || ''}
+                      onChange={e => setLocalPrimRanks({...localPrimRanks, [m]: e.target.value})}
+                    />
+                  </td>
+                ))}
+                <td className="border border-black p-2 bg-gray-200"></td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -285,6 +324,16 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
               placeholder="Saisir le nom..." 
               className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-2 w-56 border-b border-transparent focus:border-gray-300"
             />
+            <div className="mt-4 flex flex-col items-center w-full">
+              <span className="text-sm font-semibold mb-1">Appréciation :</span>
+              <input 
+                type="text"
+                placeholder="Ex: Passable, Bien..."
+                className="print-input text-center text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-full border-b border-gray-300 focus:border-[var(--color-primary)]"
+                value={localPrimInfo.appreciation}
+                onChange={e => setLocalPrimInfo({...localPrimInfo, appreciation: e.target.value})}
+              />
+            </div>
           </div>
           <div className="w-1/3 flex justify-center">
             {renderStamp()}
@@ -296,6 +345,16 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
               placeholder="Saisir le nom..." 
               className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-2 w-56 border-b border-transparent focus:border-gray-300"
             />
+            <div className="mt-4 flex flex-col items-center w-full">
+              <span className="text-sm font-semibold mb-1">Décision du directeur :</span>
+              <input 
+                type="text"
+                placeholder="Décision finale..."
+                className="print-input text-center text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-full border-b border-gray-300 focus:border-[var(--color-primary)]"
+                value={localPrimInfo.decision}
+                onChange={e => setLocalPrimInfo({...localPrimInfo, decision: e.target.value})}
+              />
+            </div>
           </div>
         </div>
       </div>

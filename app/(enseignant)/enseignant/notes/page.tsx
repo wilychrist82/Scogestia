@@ -84,6 +84,19 @@ export default async function EnseignantNotesPage() {
     .select('*')
     .eq('school_id', schoolId)
 
+  // Fetch new metadata fields for primary
+  const { data: studentsData } = await supabase.from('students').select('id').eq('school_id', schoolId);
+  const studentIds = studentsData ? studentsData.map(s => s.id) : [];
+  
+  let primaryRanks = [];
+  let primaryInfo = [];
+  if (studentIds.length > 0) {
+    const { data: r } = await supabase.from('primary_monthly_ranks').select('*').in('student_id', studentIds);
+    if (r) primaryRanks = r;
+    const { data: i } = await supabase.from('primary_bulletin_info').select('*').in('student_id', studentIds);
+    if (i) primaryInfo = i;
+  }
+
   return (
     <TeacherNotesWrapper 
       classes={classes}
@@ -92,6 +105,8 @@ export default async function EnseignantNotesPage() {
       students={students as any || []}
       primaryGrades={primaryGrades || []}
       secondaryGrades={secondaryGrades || []}
+      primaryRanks={primaryRanks}
+      primaryInfo={primaryInfo}
       schoolName={(roleData as any)?.school?.name || 'École'}
     />
   )
