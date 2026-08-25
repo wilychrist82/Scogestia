@@ -235,3 +235,98 @@ export async function editStaff(staffRoleId: string, formData: FormData): Promis
     return { error: err.message };
   }
 }
+
+export async function getTeacherAssignments(teacherUserId: string) {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('teacher_class_subjects')
+      .select('id, class_id, subject_name, coefficient, classes(name, level)')
+      .eq('teacher_id', teacherUserId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return data || [];
+  } catch (err: any) {
+    console.error(err);
+    return [];
+  }
+}
+
+export async function assignTeacherToClass(prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const teacherUserId = formData.get('teacherUserId') as string;
+  const classId = formData.get('classId') as string;
+  const subjectName = formData.get('subjectName') as string;
+
+  if (!teacherUserId || !classId || !subjectName) {
+    return { error: 'Veuillez sélectionner une classe et une matière.' };
+  }
+
+  try {
+    const school_id = await getActiveSchoolId();
+    const serviceClient = createServiceRoleClient();
+
+    const { error } = await serviceClient
+      .from('teacher_class_subjects')
+      .insert({
+        school_id,
+        teacher_id: teacherUserId,
+        class_id: classId,
+        subject_name: subjectName,
+      });
+
+    if (error) {
+      if (error.code === '23505') { // Unique constraint violation (if any)
+        return { error: 'Cette affectation existe déjà.' };
+      }
+      return { error: `Erreur d'affectation : ${error.message}` };
+    }
+
+    revalidatePath('/admin/personnel');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
+export async function removeTeacherAssignment(assignmentId: string): Promise<ActionState> {
+  try {
+    const school_id = await getActiveSchoolId();
+    const serviceClient = createServiceRoleClient();
+
+    const { error } = await serviceClient
+      .from('teacher_class_subjects')
+      .delete()
+      .eq('id', assignmentId)
+      .eq('school_id', school_id);
+
+    if (error) {
+      return { error: `Erreur lors de la suppression : ${error.message}` };
+    }
+
+    revalidatePath('/admin/personnel');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
+export async function getSchoolClassesAndSubjects() {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+
+    const [classesRes, subjectsRes] = await Promise.all([
+      supabase.from('classes').select('id, name, level').eq('school_id', school_id).order('name'),
+      supabase.from('subjects').select('id, name').eq('school_id', school_id).order('name')
+    ]);
+
+    return {
+      classes: classesRes.data || [],
+      subjects: subjectsRes.data || []
+    };
+  } catch (err: any) {
+    console.error(err);
+    return { classes: [], subjects: [] };
+  }
+}

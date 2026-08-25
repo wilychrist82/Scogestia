@@ -2,6 +2,7 @@
 
 import { useState, useTransition, FormEvent } from 'react'
 import { inviteStaff, deleteStaff, editStaff } from '@/app/actions/staff'
+import { TeacherAssignmentModal } from '@/components/admin/TeacherAssignmentModal'
 
 export type StaffItem = {
   id: string
@@ -26,6 +27,10 @@ export function PersonnelManager({ staffList }: Props) {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [staffToEdit, setStaffToEdit] = useState<StaffItem | null>(null)
+
+  const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false)
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null)
+  const [selectedTeacherName, setSelectedTeacherName] = useState<string>('')
 
   const openAddModal = () => {
     setError(null)
@@ -203,6 +208,21 @@ export function PersonnelManager({ staffList }: Props) {
                             <span className="material-symbols-outlined text-[18px]">edit</span>
                             Modifier
                           </button>
+                          
+                          {staff.role === 'enseignant' && (
+                            <button 
+                              className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors w-full text-left"
+                              onClick={() => {
+                                setOpenActionId(null);
+                                setSelectedTeacherId(staff.user_id);
+                                setSelectedTeacherName(staff.full_name);
+                                setIsAssignmentModalOpen(true);
+                              }}
+                            >
+                              <span className="material-symbols-outlined text-[18px]">assignment</span>
+                              Affectations
+                            </button>
+                          )}
                           <button 
                             onClick={() => {
                               setOpenActionId(null);
@@ -466,7 +486,13 @@ export function PersonnelManager({ staffList }: Props) {
             </form>
           </div>
         </div>
-      )}
+      {/* Modal Overlay: Affectations de l'enseignant */}
+      <TeacherAssignmentModal 
+        isOpen={isAssignmentModalOpen} 
+        onClose={() => setIsAssignmentModalOpen(false)} 
+        teacherId={selectedTeacherId || ''} 
+        teacherName={selectedTeacherName} 
+      />
 
     </div>
   )
