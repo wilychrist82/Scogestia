@@ -153,6 +153,84 @@ export async function saveSecondaryGrades(prevState: ActionState, formData: Form
   }
 }
 
+export async function saveBulletinPrimaryGrades(studentId: string, grades: Record<string, string>): Promise<ActionState> {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const gradesToUpsert = [];
+    for (const [key, value] of Object.entries(grades)) {
+      // key format: {subjectId}_{monthNumber}
+      const parts = key.split('_');
+      if (parts.length === 2 && value) {
+        const subjectId = parts[0];
+        const monthNumber = parseInt(parts[1], 10);
+        const score = parseFloat(value);
+        if (!isNaN(score)) {
+          gradesToUpsert.push({
+            school_id,
+            student_id: studentId,
+            subject_id: subjectId,
+            month_number: monthNumber,
+            score,
+            max_score: 10,
+            academic_year: '2023/2024',
+            entered_by: user?.id,
+          });
+        }
+      }
+    }
+
+    if (gradesToUpsert.length > 0) {
+      await supabase.from('primary_grades').upsert(gradesToUpsert, { onConflict: 'student_id, subject_id, month_number, academic_year' });
+    }
+
+    revalidatePath('/admin/academique/bulletins');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
+export async function saveBulletinSecondaryGrades(studentId: string, term: string, grades: Record<string, { cScore: string, compScore: string }>): Promise<ActionState> {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const gradesToUpsert = [];
+    for (const [subjectId, scores] of Object.entries(grades)) {
+      const classScore = scores.cScore ? parseFloat(scores.cScore) : null;
+      const compScore = scores.compScore ? parseFloat(scores.compScore) : null;
+
+      if (classScore !== null || compScore !== null) {
+        gradesToUpsert.push({
+          school_id,
+          student_id: studentId,
+          subject_id: subjectId,
+          term,
+          class_score: classScore,
+          comp_score: compScore,
+          max_score: 20,
+          academic_year: '2023/2024',
+          entered_by: user?.id,
+        });
+      }
+    }
+
+    if (gradesToUpsert.length > 0) {
+      await supabase.from('secondary_grades').upsert(gradesToUpsert, { onConflict: 'student_id, subject_id, term, academic_year' });
+    }
+
+    revalidatePath('/admin/academique/bulletins');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
+
 export async function saveAttendance(prevState: ActionState, formData: FormData): Promise<ActionState> {
   const classId = formData.get('classId') as string;
   const date = formData.get('date') as string;

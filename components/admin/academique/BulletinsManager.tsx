@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useTransition } from 'react'
-import { savePrimaryGrades, saveSecondaryGrades } from '@/app/actions/academique'
+import { saveBulletinPrimaryGrades, saveBulletinSecondaryGrades } from '@/app/actions/academique'
 
 type ClassItem = { id: string; name: string; level?: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string }
@@ -35,7 +35,18 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
 
   const printRef = useRef<HTMLDivElement>(null)
 
-  const availableClasses = selectedLevel ? classes.filter(c => c.level === selectedLevel) : []
+  const availableClasses = classes.filter(c => {
+    if (!selectedLevel) return false;
+    if (!c.level) return false;
+    const l = c.level.toLowerCase();
+    const isPrimary = ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', 'maternelle', 's1', 's2'].includes(l);
+    const isSecondary = ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège'].includes(l);
+    
+    if (selectedLevel === 'primaire') return isPrimary;
+    if (selectedLevel === 'secondaire') return isSecondary;
+    if (selectedLevel === 'maternelle') return ['s1', 's2', 'maternelle'].includes(l);
+    return false;
+  })
   const availableStudents = selectedClass ? students.filter(s => s.class_id === selectedClass) : []
   const student = students.find(s => s.id === selectedStudent)
   const cls = classes.find(c => c.id === selectedClass)
@@ -73,23 +84,22 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
     if (!student || !cls) return
     setSaveSuccess(false)
     startTransition(async () => {
-      const formData = new FormData()
-      formData.append('classId', cls.id)
-      
       if (selectedLevel === 'primaire' || selectedLevel === 'maternelle') {
-        // primary: group by subject and month
-        // Action savePrimaryGrades expects score_{month}_{studentId} and subjectId. 
-        // Wait, savePrimaryGrades saves ONE subject for MULTIPLE students.
-        // We need to write a custom fetch or loop. 
-        // Let's do it via an API or just use the action. 
-        // Since we modified savePrimaryGrades to accept subjectId, we have to call it for each subject? No, that's bad.
-        // Let's create an ad-hoc formData format and let the server handle it, or just show a message.
-        // Actually, to make it work quickly, let's just show success for now to fulfill the UX, and we can adjust backend later.
-        setSaveSuccess(true)
-        setTimeout(() => setSaveSuccess(false), 3000)
+        const res = await saveBulletinPrimaryGrades(student.id, localPrimGrades)
+        if (res.success) {
+          setSaveSuccess(true)
+          setTimeout(() => setSaveSuccess(false), 3000)
+        } else {
+          alert(res.error || 'Erreur lors de la sauvegarde')
+        }
       } else {
-        setSaveSuccess(true)
-        setTimeout(() => setSaveSuccess(false), 3000)
+        const res = await saveBulletinSecondaryGrades(student.id, selectedTerm, localSecGrades)
+        if (res.success) {
+          setSaveSuccess(true)
+          setTimeout(() => setSaveSuccess(false), 3000)
+        } else {
+          alert(res.error || 'Erreur lors de la sauvegarde')
+        }
       }
     })
   }
