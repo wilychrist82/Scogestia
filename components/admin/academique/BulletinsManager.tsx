@@ -667,7 +667,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
         )}
       </div>
 
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           body * {
             visibility: hidden;
@@ -705,7 +705,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
             font-weight: bold;
           }
         }
-      `}</style>
+      `}} />
     </div>
   )
 }
