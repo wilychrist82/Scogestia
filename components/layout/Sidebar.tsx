@@ -52,6 +52,7 @@ const mainNavItems: NavItem[] = [
     hasDropdown: true,
     subItems: [
       { label: 'Tableau de bord', href: '/admin/finance' },
+      { label: 'Caisse (Encaissement)', href: '/admin/finance/caisse' },
       { label: 'Échéances', href: '/admin/finance/echeances' },
       { label: 'Paiements', href: '/admin/finance/paiements' },
       { label: 'Impayés', href: '/admin/finance/impayes' },
