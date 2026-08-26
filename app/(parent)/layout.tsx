@@ -25,7 +25,7 @@ export default async function ParentLayout({
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex justify-center">
-      <div className="w-full max-w-[390px] bg-white min-h-screen relative shadow-2xl flex flex-col">
+      <div className="w-full max-w-md bg-white min-h-screen relative shadow-2xl flex flex-col">
         {/* Header App-Like */}
         <header className="h-14 bg-[var(--color-primary)] text-white flex items-center px-4 sticky top-0 z-10 shadow-md">
           <span className="material-symbols-outlined text-white mr-3">account_circle</span>
