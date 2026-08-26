@@ -25,15 +25,15 @@ export function AbonnementManager({ plans }: Props) {
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
         {plans.map((plan) => (
-          <div key={plan.id} className="bg-[var(--color-surface-container-lowest)] rounded-2xl border-2 border-[var(--color-outline-variant)] p-8 shadow-sm hover:shadow-md transition-shadow flex flex-col relative overflow-hidden">
+          <div key={plan.id} className={`bg-[var(--color-surface-container-lowest)] rounded-2xl border-2 p-8 shadow-sm hover:shadow-md transition-shadow flex flex-col relative overflow-hidden ${plan.name && plan.name.toLowerCase().includes('pro') ? 'border-indigo-600' : 'border-[var(--color-outline-variant)]'}`}>
             {plan.name && plan.name.toLowerCase().includes('pro') && (
-              <div className="absolute top-0 right-0 bg-[var(--color-primary)] text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+              <div className="absolute top-0 right-0 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg shadow-sm">
                 RECOMMANDÉ
               </div>
             )}
             <h4 className="text-xl font-bold text-[var(--color-on-surface)] mb-2">{plan.name || 'Plan inconnu'}</h4>
             <div className="flex items-baseline gap-1 mb-6">
-              <span className="text-4xl font-black text-[var(--color-primary)]">
+              <span className={`text-4xl font-black ${plan.name && plan.name.toLowerCase().includes('pro') ? 'text-indigo-600' : 'text-[var(--color-primary)]'}`}>
                 {plan.price != null && plan.price > 0 
                   ? Number(plan.price).toLocaleString('fr-FR') 
                   : (plan.name?.toLowerCase().includes('pro') ? '9 900' : '7 000')}
@@ -43,25 +43,25 @@ export function AbonnementManager({ plans }: Props) {
             
             <ul className="space-y-3 mb-8 flex-1">
               <li className="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
-                <span className="material-symbols-outlined text-[var(--color-primary)] text-[20px]">check_circle</span>
+                <span className={`material-symbols-outlined text-[20px] ${plan.name && plan.name.toLowerCase().includes('pro') ? 'text-indigo-600' : 'text-[var(--color-primary)]'}`}>check_circle</span>
                 Gestion illimitée des élèves et classes
               </li>
               <li className="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
-                <span className="material-symbols-outlined text-[var(--color-primary)] text-[20px]">check_circle</span>
-                Suivi financier (frais scolaires, caisse)
+                <span className={`material-symbols-outlined text-[20px] ${plan.name && plan.name.toLowerCase().includes('pro') ? 'text-indigo-600' : 'text-[var(--color-primary)]'}`}>check_circle</span>
+                Gestion des Frais Scolaires et Caisse
               </li>
               {plan.name && plan.name.toLowerCase().includes('pro') && (
                 <>
                   <li className="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
-                    <span className="material-symbols-outlined text-[var(--color-primary)] text-[20px]">check_circle</span>
+                    <span className="material-symbols-outlined text-indigo-600 text-[20px]">check_circle</span>
                     Génération des bulletins et notes
                   </li>
                   <li className="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
-                    <span className="material-symbols-outlined text-[var(--color-primary)] text-[20px]">check_circle</span>
+                    <span className="material-symbols-outlined text-indigo-600 text-[20px]">check_circle</span>
                     Notifications SMS incluses
                   </li>
                   <li className="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
-                    <span className="material-symbols-outlined text-[var(--color-primary)] text-[20px]">check_circle</span>
+                    <span className="material-symbols-outlined text-indigo-600 text-[20px]">check_circle</span>
                     Support prioritaire 7j/7
                   </li>
                 </>
@@ -72,7 +72,7 @@ export function AbonnementManager({ plans }: Props) {
               onClick={() => setSelectedPlan(plan)}
               className={`w-full py-3 rounded-xl font-bold transition-colors ${
                 plan.name && plan.name.toLowerCase().includes('pro') 
-                  ? 'bg-[var(--color-primary)] text-white hover:opacity-90'
+                  ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md'
                   : 'bg-[var(--color-surface-bright)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white border border-[var(--color-primary)]'
               }`}
             >
