@@ -13,7 +13,7 @@ export function AdminLayoutWrapper({
   children: React.ReactNode, 
   userFullName: string, 
   userRoleLabel: string,
-  navVariant?: 'admin' | 'enseignant'
+  navVariant?: 'admin' | 'enseignant' | 'super_admin'
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 

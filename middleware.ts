@@ -45,14 +45,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // If user is authenticated, find their role
-  const { data: roles } = await supabase
-    .from('user_school_roles')
-    .select('role')
+  // Check if user is a super admin
+  const { data: superAdmins } = await supabase
+    .from('super_admins')
+    .select('id')
     .eq('user_id', user.id)
     .limit(1)
 
-  const userRole = roles && roles.length > 0 ? roles[0].role : null
+  const isSuperAdmin = superAdmins && superAdmins.length > 0
+
+  // If user is authenticated, find their role
+  const { data: roles } = await supabase
+    .from('user_school_roles')
+    .select('role, school_id')
+    .eq('user_id', user.id)
+    .limit(1)
+
+  let userRole = roles && roles.length > 0 ? roles[0].role : null
+  const schoolId = roles && roles.length > 0 ? roles[0].school_id : null
+
+  if (isSuperAdmin && !userRole) {
+    userRole = 'super_admin'
+  }
 
   if (!userRole) {
     // Authenticated but no role assigned (Ghost session)
@@ -91,11 +105,30 @@ export async function middleware(request: NextRequest) {
   const protectedGroups = ['/admin', '/enseignant', '/comptable', '/parent', '/super_admin']
   const attemptingToAccess = protectedGroups.find(group => pathname.startsWith(group))
 
-  if (attemptingToAccess && attemptingToAccess !== routePrefix) {
-    // User is trying to access another role's route
-    const url = request.nextUrl.clone()
-    url.pathname = routePrefix
-    return NextResponse.redirect(url)
+  if (attemptingToAccess) {
+    if (isSuperAdmin) {
+      // Super admins can access everything, no restriction
+    } else if (attemptingToAccess !== routePrefix) {
+      // User is trying to access another role's route
+      const url = request.nextUrl.clone()
+      url.pathname = routePrefix
+      return NextResponse.redirect(url)
+    }
+
+    // Check school suspension status for non-super admins
+    if (!isSuperAdmin && schoolId && pathname !== '/suspended') {
+      const { data: school } = await supabase
+        .from('schools')
+        .select('subscription_status')
+        .eq('id', schoolId)
+        .single()
+        
+      if (school && school.subscription_status === 'suspended') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/suspended'
+        return NextResponse.redirect(url)
+      }
+    }
   }
 
   return supabaseResponse
