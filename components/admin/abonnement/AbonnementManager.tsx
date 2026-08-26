@@ -33,7 +33,11 @@ export function AbonnementManager({ plans }: Props) {
             )}
             <h4 className="text-xl font-bold text-[var(--color-on-surface)] mb-2">{plan.name || 'Plan inconnu'}</h4>
             <div className="flex items-baseline gap-1 mb-6">
-              <span className="text-4xl font-black text-[var(--color-primary)]">{plan.price != null ? Number(plan.price).toLocaleString('fr-FR') : '0'}</span>
+              <span className="text-4xl font-black text-[var(--color-primary)]">
+                {plan.price != null && plan.price > 0 
+                  ? Number(plan.price).toLocaleString('fr-FR') 
+                  : (plan.name?.toLowerCase().includes('pro') ? '9 900' : '7 000')}
+              </span>
               <span className="text-sm font-semibold text-[var(--color-on-surface-variant)]">{plan.currency || 'FCFA'} / mois</span>
             </div>
             
@@ -44,14 +48,14 @@ export function AbonnementManager({ plans }: Props) {
               </li>
               <li className="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
                 <span className="material-symbols-outlined text-[var(--color-primary)] text-[20px]">check_circle</span>
-                Bulletins et notes centralisés
-              </li>
-              <li className="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
-                <span className="material-symbols-outlined text-[var(--color-primary)] text-[20px]">check_circle</span>
-                Suivi financier basique
+                Suivi financier (frais scolaires, caisse)
               </li>
               {plan.name && plan.name.toLowerCase().includes('pro') && (
                 <>
+                  <li className="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
+                    <span className="material-symbols-outlined text-[var(--color-primary)] text-[20px]">check_circle</span>
+                    Génération des bulletins et notes
+                  </li>
                   <li className="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
                     <span className="material-symbols-outlined text-[var(--color-primary)] text-[20px]">check_circle</span>
                     Notifications SMS incluses

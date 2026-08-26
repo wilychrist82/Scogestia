@@ -81,8 +81,12 @@ export function ChariowCheckout({ plan, onClose }: Props) {
         <div className="bg-[var(--color-primary)] text-white p-6 flex flex-col items-center justify-center">
           <span className="text-sm opacity-80 uppercase tracking-wider font-semibold mb-1">Montant à payer</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-4xl font-black">{plan.price.toLocaleString('fr-FR')}</span>
-            <span className="font-medium">{plan.currency}</span>
+            <span className="text-4xl font-black">
+              {plan.price != null && plan.price > 0 
+                ? Number(plan.price).toLocaleString('fr-FR') 
+                : (plan.name?.toLowerCase().includes('pro') ? '9 900' : '7 000')}
+            </span>
+            <span className="font-medium">{plan.currency || 'FCFA'}</span>
           </div>
         </div>
 
@@ -141,7 +145,7 @@ export function ChariowCheckout({ plan, onClose }: Props) {
             ) : (
               <>
                 <span className="material-symbols-outlined text-[20px]">lock</span>
-                Payer {plan.price.toLocaleString('fr-FR')} {plan.currency}
+                Payer {plan.price != null && plan.price > 0 ? Number(plan.price).toLocaleString('fr-FR') : (plan.name?.toLowerCase().includes('pro') ? '9 900' : '7 000')} {plan.currency || 'FCFA'}
               </>
             )}
           </button>
