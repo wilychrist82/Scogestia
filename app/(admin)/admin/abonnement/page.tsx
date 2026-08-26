@@ -32,7 +32,9 @@ export default async function AbonnementPage() {
   const chariowProducts = await getChariowProducts()
   
   // Filtrer uniquement les produits pertinents s'il y a d'autres choses dans la boutique
-  const plans = chariowProducts.filter(p => p.name.includes('SCOGESTIA') || p.name.includes('Plan'))
+  const plans = Array.isArray(chariowProducts) 
+    ? chariowProducts.filter(p => p?.name?.includes('SCOGESTIA') || p?.name?.includes('Plan'))
+    : []
 
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
