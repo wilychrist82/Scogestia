@@ -31,7 +31,7 @@ export default async function ParametresPage() {
 
   const { data: school, error: schoolError } = await supabase
     .from('schools')
-    .select('id, name, city, phone, email, current_academic_year')
+    .select('id, name, city, phone, email, current_academic_year, director_name, signature_url, stamp_url')
     .eq('id', roleData.school_id)
     .maybeSingle()
 

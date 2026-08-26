@@ -10,6 +10,9 @@ type School = {
   phone: string | null
   email: string | null
   current_academic_year: string
+  director_name?: string | null
+  signature_url?: string | null
+  stamp_url?: string | null
 }
 
 type Props = {
@@ -119,6 +122,42 @@ export function ParametresManager({ school }: Props) {
                   defaultValue={school.email || ''}
                   className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
                   placeholder="contact@ecole.com"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5 md:col-span-2 mt-4 pt-4 border-t border-[var(--color-outline-variant)]">
+                <h4 className="font-bold text-[var(--color-on-surface)] text-sm mb-2">Signatures & Cachets Officiels (Pour les bulletins et reçus)</h4>
+              </div>
+
+              <div className="flex flex-col gap-1.5 md:col-span-2">
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Nom complet du Directeur / Fondateur</label>
+                <input 
+                  type="text" 
+                  name="directorName"
+                  defaultValue={school.director_name || ''}
+                  className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                  placeholder="Ex: M. Jean DUPONT"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">URL de la Signature Numérique</label>
+                <input 
+                  type="url" 
+                  name="signatureUrl"
+                  defaultValue={school.signature_url || ''}
+                  className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">URL du Cachet de l'École</label>
+                <input 
+                  type="url" 
+                  name="stampUrl"
+                  defaultValue={school.stamp_url || ''}
+                  className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                  placeholder="https://..."
                 />
               </div>
             </div>

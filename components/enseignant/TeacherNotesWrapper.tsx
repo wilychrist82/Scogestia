@@ -41,6 +41,7 @@ export function TeacherNotesWrapper(props: any) {
           primaryRanks={props.primaryRanks}
           primaryInfo={props.primaryInfo}
           schoolName={props.schoolName}
+          schoolId={props.schoolId}
         />
       ) : (
         <NotesManager 

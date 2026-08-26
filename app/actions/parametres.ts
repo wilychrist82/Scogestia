@@ -34,6 +34,10 @@ export async function updateSchoolSettings(prevState: ActionState, formData: For
       throw new Error('Permission refusée');
     }
 
+    const directorName = formData.get('directorName') as string
+    const signatureUrl = formData.get('signatureUrl') as string
+    const stampUrl = formData.get('stampUrl') as string
+
     const { error } = await supabase
       .from('schools')
       .update({
@@ -41,7 +45,10 @@ export async function updateSchoolSettings(prevState: ActionState, formData: For
         city,
         phone,
         email,
-        current_academic_year: currentAcademicYear
+        current_academic_year: currentAcademicYear,
+        director_name: directorName || null,
+        signature_url: signatureUrl || null,
+        stamp_url: stampUrl || null
       })
       .eq('id', roleData.school_id);
 

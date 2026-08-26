@@ -73,7 +73,17 @@ const mainNavItems: NavItem[] = [
     ]
   },
   { label: 'Communication', href: '/admin/communication', icon: MessageSquare },
-  { label: 'Rapports', href: '/admin/rapports', icon: FileText, hasDropdown: true },
+  { 
+    label: 'Rapports', 
+    href: '/admin/rapports', 
+    icon: FileText, 
+    hasDropdown: true,
+    subItems: [
+      { label: 'Rapport global', href: '/admin/rapports' },
+      { label: 'Rapports académiques', href: '/admin/rapports/academique' },
+      { label: 'Bilans financiers', href: '/admin/rapports/finance' }
+    ]
+  },
   { label: 'Paramètres', href: '/admin/parametres', icon: Settings, hasDropdown: true },
 ]
 

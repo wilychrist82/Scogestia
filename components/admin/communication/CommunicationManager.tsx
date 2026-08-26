@@ -19,6 +19,7 @@ export function CommunicationManager({ classes, parents, recentCommunications = 
   const [recipientType, setRecipientType] = useState('all') // all, class, parent
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedParent, setSelectedParent] = useState('')
+  const [sendSmsOption, setSendSmsOption] = useState(false)
   
   const [isPending, startTransition] = useTransition()
   const [success, setSuccess] = useState(false)
@@ -34,6 +35,7 @@ export function CommunicationManager({ classes, parents, recentCommunications = 
     formData.append('recipientType', recipientType)
     if (recipientType === 'class') formData.append('selectedClass', selectedClass)
     if (recipientType === 'parent') formData.append('selectedParent', selectedParent)
+    if (sendSmsOption) formData.append('sendSms', 'true')
     
     startTransition(async () => {
       const result = await sendCommunication(formData)
@@ -151,6 +153,19 @@ export function CommunicationManager({ classes, parents, recentCommunications = 
                 ></textarea>
               </div>
 
+              <div className="flex items-center gap-2 mt-2">
+                <input 
+                  type="checkbox" 
+                  id="sendSms" 
+                  checked={sendSmsOption}
+                  onChange={(e) => setSendSmsOption(e.target.checked)}
+                  className="w-5 h-5 rounded border-[var(--color-outline-variant)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                />
+                <label htmlFor="sendSms" className="text-sm font-semibold text-[var(--color-on-surface)] cursor-pointer">
+                  Envoyer également une notification par SMS (coûts applicables)
+                </label>
+              </div>
+
               <div className="flex justify-end gap-3 mt-2">
                 <button 
                   type="submit" 
@@ -216,9 +231,9 @@ export function CommunicationManager({ classes, parents, recentCommunications = 
 
               {recentCommunications.length > 5 && (
                 <div className="mt-auto pt-6 border-t border-[var(--color-outline-variant)]">
-                  <button className="w-full text-center text-sm font-semibold text-[var(--color-primary)] hover:underline">
+                  <Link href="/admin/communication/historique" className="w-full inline-block text-center text-sm font-semibold text-[var(--color-primary)] hover:underline">
                     Voir tout l'historique
-                  </button>
+                  </Link>
                 </div>
               )}
             </div>

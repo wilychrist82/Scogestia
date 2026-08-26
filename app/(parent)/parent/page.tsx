@@ -36,6 +36,14 @@ export default async function ParentDashboardPage() {
 
   const children = links?.map(l => l.students).filter(Boolean) || []
 
+  // Récupérer les communications récentes (les policies RLS filtrent automatiquement ce que le parent a le droit de voir)
+  const { data: communications } = await supabase
+    .from('communications')
+    .select('*')
+    .eq('school_id', roleData.school_id)
+    .order('created_at', { ascending: false })
+    .limit(3)
+
   if (children.length === 0) {
     return (
       <div className="p-6 text-center text-[var(--color-on-surface-variant)] flex flex-col items-center justify-center h-full">
@@ -51,6 +59,25 @@ export default async function ParentDashboardPage() {
   return (
     <div className="p-4 space-y-6">
       
+      {/* Annonces Récentes */}
+      {communications && communications.length > 0 && (
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--color-outline-variant)]">
+          <h2 className="text-lg font-bold text-[var(--color-on-surface)] flex items-center gap-2 mb-4">
+            <span className="material-symbols-outlined text-[var(--color-primary)]">campaign</span>
+            Annonces Récentes
+          </h2>
+          <div className="space-y-4">
+            {communications.map(comm => (
+              <div key={comm.id} className="border-l-4 border-[var(--color-primary)] pl-4 py-1">
+                <h3 className="font-semibold text-[var(--color-on-surface)]">{comm.subject}</h3>
+                <p className="text-sm text-[var(--color-on-surface-variant)] line-clamp-2 mt-1">{comm.content}</p>
+                <Link href="/parent/messages" className="text-xs text-[var(--color-primary)] font-semibold mt-2 inline-block">Lire la suite</Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {children.map((child: any) => (
         <div key={child.id} className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--color-outline-variant)]">
           
