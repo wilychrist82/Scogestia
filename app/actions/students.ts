@@ -48,15 +48,21 @@ async function generateUniqueMatricule(supabase: any, school_id: string): Promis
   return matricule;
 }
 
-export async function createStudent(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const first_name = formData.get('prenom') as string;
-  const last_name = formData.get('nom') as string;
-  const date_of_birth = formData.get('date_naissance') as string;
-  const class_id = formData.get('classe') as string;
+import { studentSchema, updateStudentSchema } from '@/lib/validations';
 
-  if (!first_name || !last_name || !date_of_birth || !class_id) {
-    return { error: 'Veuillez remplir tous les champs obligatoires.' };
+export async function createStudent(prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const validatedFields = studentSchema.safeParse({
+    first_name: formData.get('prenom'),
+    last_name: formData.get('nom'),
+    date_of_birth: formData.get('date_naissance'),
+    class_id: formData.get('classe'),
+  });
+
+  if (!validatedFields.success) {
+    return { error: validatedFields.error.errors[0].message };
   }
+
+  const { first_name, last_name, date_of_birth, class_id } = validatedFields.data;
 
   try {
     const school_id = await getActiveSchoolId();
@@ -115,11 +121,19 @@ export async function deleteStudent(studentId: string): Promise<ActionState> {
 }
 
 export async function updateStudent(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const student_id = formData.get('student_id') as string;
-  const birth_place = formData.get('birth_place') as string;
-  const gender = formData.get('gender') as string;
-  const blood_group = formData.get('blood_group') as string;
-  const address = formData.get('address') as string;
+  const validatedFields = updateStudentSchema.safeParse({
+    student_id: formData.get('student_id'),
+    birth_place: formData.get('birth_place') || undefined,
+    gender: formData.get('gender') || undefined,
+    blood_group: formData.get('blood_group') || undefined,
+    address: formData.get('address') || undefined,
+  });
+
+  if (!validatedFields.success) {
+    return { error: validatedFields.error.errors[0].message };
+  }
+
+  const { student_id, birth_place, gender, blood_group, address } = validatedFields.data;
 
   try {
     const school_id = await getActiveSchoolId();

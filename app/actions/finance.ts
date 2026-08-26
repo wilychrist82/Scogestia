@@ -91,15 +91,21 @@ export async function generateSchedule(prevState: ActionState, formData: FormDat
   }
 }
 
-export async function recordPayment(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const scheduleId = formData.get('scheduleId') as string;
-  const amount = parseFloat(formData.get('amount') as string);
-  const paymentMethod = formData.get('paymentMethod') as string;
-  const transactionRef = formData.get('transactionRef') as string;
+import { feeTypeSchema, paymentSchema } from '@/lib/validations';
 
-  if (!scheduleId || !amount || !paymentMethod) {
-    return { error: 'Veuillez remplir les champs obligatoires.' };
+export async function recordPayment(prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const validatedFields = paymentSchema.safeParse({
+    schedule_id: formData.get('scheduleId'),
+    amount: parseFloat(formData.get('amount') as string),
+    payment_method: formData.get('paymentMethod'),
+    transaction_reference: formData.get('transactionRef') || undefined,
+  });
+
+  if (!validatedFields.success) {
+    return { error: validatedFields.error.errors[0].message };
   }
+
+  const { schedule_id: scheduleId, amount, payment_method: paymentMethod, transaction_reference: transactionRef } = validatedFields.data;
 
   try {
     const school_id = await getActiveSchoolId();
@@ -257,14 +263,18 @@ export async function sendBulkPaymentReminders(
 }
 
 export async function addFeeType(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const label = formData.get('label') as string;
-  const amount = parseFloat(formData.get('amount') as string);
-  const periodicity = formData.get('periodicity') as string;
-  const target = formData.get('target') as string;
+  const validatedFields = feeTypeSchema.safeParse({
+    label: formData.get('label'),
+    amount: parseFloat(formData.get('amount') as string),
+    periodicity: formData.get('periodicity'),
+    target: formData.get('target'),
+  });
 
-  if (!label || isNaN(amount) || !periodicity || !target) {
-    return { error: 'Veuillez remplir tous les champs obligatoires correctement.' };
+  if (!validatedFields.success) {
+    return { error: validatedFields.error.errors[0].message };
   }
+
+  const { label, amount, periodicity, target } = validatedFields.data;
 
   try {
     const school_id = await getActiveSchoolId();
