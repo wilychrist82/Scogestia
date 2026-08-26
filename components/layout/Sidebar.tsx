@@ -19,7 +19,8 @@ import {
   ShieldCheck,
   X,
   LogOut,
-  Calendar
+  Calendar,
+  CreditCard
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 
@@ -84,6 +85,7 @@ const mainNavItems: NavItem[] = [
       { label: 'Bilans financiers', href: '/admin/rapports/finance' }
     ]
   },
+  { label: 'Abonnement', href: '/admin/abonnement', icon: CreditCard },
   { label: 'Paramètres', href: '/admin/parametres', icon: Settings, hasDropdown: true },
 ]
 
