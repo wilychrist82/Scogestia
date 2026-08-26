@@ -1,6 +1,7 @@
 import { getSaaSDashboardMetrics } from '@/app/actions/super_admin'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Building2, CheckCircle2, XCircle, TrendingUp } from 'lucide-react'
+import { MRRChart } from '@/components/super_admin/MRRChart'
 
 export default async function SuperAdminDashboard() {
   const metrics = await getSaaSDashboardMetrics()
@@ -55,6 +56,10 @@ export default async function SuperAdminDashboard() {
             <p className="text-xs text-gray-500 mt-1">Revenu Mensuel Récurrent</p>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-4">
+        <MRRChart />
       </div>
     </div>
   )

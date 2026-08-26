@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendNotification } from './notifications'
 
 export type ActionState = {
   error?: string;
@@ -166,6 +167,24 @@ export async function recordPayment(prevState: ActionState, formData: FormData):
         .eq('id', schedule.id);
         
       if (updateError) throw updateError;
+    }
+
+    // Notifier les parents
+    const { data: parents } = await supabase
+      .from('parent_student_links')
+      .select('parent_user_id')
+      .eq('student_id', schedule.student_id)
+
+    if (parents) {
+      for (const parent of parents) {
+        await sendNotification({
+          schoolId: school_id,
+          userId: parent.parent_user_id,
+          title: 'Paiement reçu',
+          message: `Un paiement de ${amount} FCFA a été enregistré (Réf: ${receiptNumber}).`,
+          type: 'finance'
+        })
+      }
     }
 
     revalidatePath('/admin/finance/paiements');

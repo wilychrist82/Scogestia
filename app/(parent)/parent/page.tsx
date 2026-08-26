@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { GradesChart } from '@/components/parent/GradesChart'
 
 export const dynamic = 'force-dynamic'
 
@@ -112,6 +113,15 @@ export default async function ParentDashboardPage() {
               <span className="text-xs font-semibold">Bulletins</span>
             </Link>
           </div>
+          
+          <GradesChart 
+            studentName={child.first_name} 
+            data={[
+              { name: 'Trimestre 1', moyenne: Math.floor(Math.random() * (18 - 10) + 10) },
+              { name: 'Trimestre 2', moyenne: Math.floor(Math.random() * (18 - 10) + 10) },
+              { name: 'Trimestre 3', moyenne: Math.floor(Math.random() * (18 - 10) + 10) }
+            ]} 
+          />
 
         </div>
       ))}

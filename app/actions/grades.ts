@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendNotification } from './notifications'
 
 export type GradeSavePayload = {
   student_id: string
@@ -70,6 +71,24 @@ export async function saveGrade(payload: GradeSavePayload): Promise<{ error?: st
         })
       
       if (upsertError) return { error: upsertError.message }
+
+      // Notifier les parents de l'élève
+      const { data: parents } = await supabase
+        .from('parent_student_links')
+        .select('parent_user_id')
+        .eq('student_id', payload.student_id)
+
+      if (parents) {
+        for (const parent of parents) {
+          await sendNotification({
+            schoolId: roleData.school_id,
+            userId: parent.parent_user_id,
+            title: 'Nouvelle note disponible',
+            message: `Une nouvelle note a été enregistrée en ${payload.subject_name} pour votre enfant.`,
+            type: 'academique'
+          })
+        }
+      }
     }
 
     // On ne fait pas de revalidatePath systématique ici pour éviter de re-render 
