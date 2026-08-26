@@ -119,6 +119,8 @@ export async function recordPayment(prevState: ActionState, formData: FormData):
       return { error: 'Échéance introuvable ou non autorisée.' };
     }
 
+    const receiptNumber = `REC-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
+
     // Insert payment
     const { error: paymentError } = await supabase.from('payments').insert({
       school_id,
@@ -127,6 +129,7 @@ export async function recordPayment(prevState: ActionState, formData: FormData):
       amount,
       payment_method: paymentMethod,
       transaction_reference: transactionRef,
+      receipt_number: receiptNumber,
       recorded_by: user?.id
     });
 
@@ -251,4 +254,55 @@ export async function sendBulkPaymentReminders(
   }
 
   return { success: true }
+}
+
+export async function addFeeType(prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const label = formData.get('label') as string;
+  const amount = parseFloat(formData.get('amount') as string);
+  const periodicity = formData.get('periodicity') as string;
+  const target = formData.get('target') as string;
+
+  if (!label || isNaN(amount) || !periodicity || !target) {
+    return { error: 'Veuillez remplir tous les champs obligatoires correctement.' };
+  }
+
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+    
+    const { error } = await supabase.from('fee_types').insert({
+      school_id,
+      label,
+      amount,
+      periodicity,
+      target
+    });
+
+    if (error) throw error;
+
+    revalidatePath('/admin/finance/frais');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
+export async function deleteFeeType(id: string): Promise<ActionState> {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+    
+    const { error } = await supabase
+      .from('fee_types')
+      .delete()
+      .eq('id', id)
+      .eq('school_id', school_id);
+
+    if (error) throw error;
+
+    revalidatePath('/admin/finance/frais');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
 }
