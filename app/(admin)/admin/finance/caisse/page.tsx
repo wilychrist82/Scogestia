@@ -57,7 +57,7 @@ export default async function CaissePage() {
   // Assemblage des données
   const studentsMap = new Map<string, any>()
   
-  studentsData?.forEach(s => {
+  studentsData?.forEach((s: any) => {
     const className = Array.isArray(s.classes) ? s.classes[0]?.name : s.classes?.name
 
     studentsMap.set(s.id, {
