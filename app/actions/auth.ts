@@ -112,6 +112,24 @@ export async function registerSchool(prevState: AuthState, formData: FormData): 
     return { error: `Erreur lors de la création de l'école : ${rpcError.message}` };
   }
 
+  // 3. Création automatique d'un abonnement d'essai gratuit de 14 jours
+  if (schoolId) {
+    const adminSupabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const trialEndDate = new Date();
+    trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 jours
+    
+    await adminSupabase.from('saas_subscriptions').insert({
+      school_id: schoolId,
+      status: 'trial',
+      plan_name: 'Essai Gratuit',
+      current_period_end: trialEndDate.toISOString(),
+    });
+  }
+
   redirect('/connexion');
 }
 
