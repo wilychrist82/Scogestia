@@ -124,17 +124,16 @@ export default function Home() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                <div className="relative rounded-2xl p-2 shadow-2xl overflow-hidden border border-slate-200 bg-white/50 backdrop-blur-xl group">
-                   <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl z-10"></div>
+                <div className="relative overflow-visible group flex justify-center lg:justify-end">
                    <img 
                      src="/mockup-scogestia.png" 
                      alt="Interface de Scogestia sur ordinateur et mobile" 
-                     className="w-full h-auto rounded-xl shadow-inner border border-slate-100 object-cover bg-slate-100 min-h-[300px] relative z-0"
+                     className="w-full max-w-[120%] lg:max-w-[130%] h-auto object-contain relative z-10 drop-shadow-2xl"
                    />
                 </div>
                 {/* Decorative floating elements */}
                 <motion.div 
-                  className="absolute -top-6 -right-6 bg-white p-4 rounded-xl shadow-lg border border-slate-100 hidden md:flex items-center gap-3"
+                  className="absolute top-1/4 -right-10 bg-white p-4 rounded-xl shadow-xl border border-slate-100 hidden lg:flex items-center gap-3 z-20"
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 >
