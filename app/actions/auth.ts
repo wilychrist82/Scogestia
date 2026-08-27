@@ -133,9 +133,56 @@ export async function registerSchool(prevState: AuthState, formData: FormData): 
   redirect('/connexion');
 }
 
+export async function completeOnboarding(prevState: AuthState, formData: FormData): Promise<AuthState> {
+  const schoolName = formData.get('schoolName') as string;
+  const city = formData.get('city') as string;
+  const adminName = formData.get('adminName') as string;
+
+  if (!schoolName || !city || !adminName) {
+    return { error: 'Veuillez remplir tous les champs.' };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'Non authentifié. Veuillez vous reconnecter.' };
+  }
+
+  // Appel de la fonction RPC pour créer l'école et le rôle
+  const { data: schoolId, error: rpcError } = await supabase.rpc('register_new_school', {
+    p_school_name: schoolName,
+    p_city: city,
+    p_admin_name: adminName,
+  });
+
+  if (rpcError) {
+    return { error: `Erreur lors de la création de l'école : ${rpcError.message}` };
+  }
+
+  // Création automatique d'un abonnement d'essai gratuit de 14 jours
+  if (schoolId) {
+    const adminSupabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const trialEndDate = new Date();
+    trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 jours
+    
+    await adminSupabase.from('saas_subscriptions').insert({
+      school_id: schoolId,
+      status: 'trial',
+      plan_name: 'Essai Gratuit',
+      current_period_end: trialEndDate.toISOString(),
+    });
+  }
+
+  redirect('/admin');
+}
+
 export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect('/connexion');
 }
-

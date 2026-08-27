@@ -69,26 +69,16 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!userRole) {
-    // Authenticated but no role assigned (Ghost session)
-    // We must sign them out so they aren't stuck in a redirect loop
-    await supabase.auth.signOut()
-    
-    // Once signed out, if they were trying to access a public page, let them in
-    if (pathname === '/' || pathname.startsWith('/connexion') || pathname.startsWith('/inscription-ecole') || pathname.startsWith('/activer-parent')) {
+    // Authenticated but no role assigned
+    // This happens when a user signs up with Google (OAuth) but hasn't created their school yet.
+    if (pathname === '/onboarding' || pathname.startsWith('/api/')) {
       return supabaseResponse
     }
     
-    // Otherwise, redirect to connexion
+    // Redirect to onboarding so they can finish setting up their school
     const url = request.nextUrl.clone()
-    url.pathname = '/connexion'
-    const redirectResponse = NextResponse.redirect(url)
-    
-    // Copy the cleared cookies to the redirect response
-    supabaseResponse.cookies.getAll().forEach(cookie => {
-      redirectResponse.cookies.set(cookie.name, cookie.value, cookie as any)
-    })
-    
-    return redirectResponse
+    url.pathname = '/onboarding'
+    return NextResponse.redirect(url)
   }
 
   // Define route mapping
