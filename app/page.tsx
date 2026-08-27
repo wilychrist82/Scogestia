@@ -28,8 +28,7 @@ export default function Home() {
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link href="#accueil" className="flex items-center gap-2">
-              <img src="/logo.png" alt="Scogestia Logo" className="h-10 w-auto" />
-              <span className="text-xl font-bold text-slate-800 hidden sm:block tracking-tight">Scogestia</span>
+              <img src="/logo.png" alt="Scogestia Logo" className="h-14 w-auto object-contain drop-shadow-sm" />
             </Link>
           </div>
           
@@ -287,7 +286,7 @@ export default function Home() {
             </motion.div>
 
             <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto"
+              className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
@@ -313,21 +312,43 @@ export default function Home() {
                   </Link>
                </motion.div>
 
+               {/* Plan Standard */}
+               <motion.div variants={fadeIn} className="bg-white rounded-3xl shadow-xl border-2 border-[#006039] p-8 flex flex-col relative overflow-hidden transform md:-translate-y-4">
+                  <div className="absolute top-0 right-0 bg-emerald-100 text-[#006039] text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Recommandé</div>
+                  <div className="mb-8 relative z-10">
+                     <h3 className="text-2xl font-bold text-slate-900 mb-2">Plan Standard</h3>
+                     <p className="text-slate-600">Pour les petites écoles</p>
+                  </div>
+                  <div className="mb-8 relative z-10">
+                     <span className="text-4xl font-extrabold text-slate-900">7 000 FCFA</span>
+                     <span className="text-slate-500 font-medium"> / mois</span>
+                  </div>
+                  <ul className="space-y-4 mb-10 flex-1 relative z-10">
+                     <li className="flex items-center gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 text-[#006039]" /> Jusqu'à 500 élèves</li>
+                     <li className="flex items-center gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 text-[#006039]" /> Gestion de la comptabilité et notes</li>
+                     <li className="flex items-center gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 text-[#006039]" /> Portail Parents standard</li>
+                     <li className="flex items-center gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 text-[#006039]" /> Support par chat / email</li>
+                  </ul>
+                  <Link href="/inscription-ecole" className="w-full py-4 rounded-xl bg-[#006039] font-bold text-white hover:bg-[#004d2e] transition-colors text-center relative z-10 shadow-md block">
+                     S'abonner
+                  </Link>
+               </motion.div>
+
                {/* Plan Pro */}
-               <motion.div variants={fadeIn} className="bg-[#006039] rounded-3xl shadow-2xl p-8 flex flex-col relative overflow-hidden transform md:-translate-y-4">
+               <motion.div variants={fadeIn} className="bg-[#006039] rounded-3xl shadow-2xl p-8 flex flex-col relative overflow-hidden">
                   <div className="absolute top-0 right-0 bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Populaire</div>
                   <div className="mb-8 relative z-10">
                      <h3 className="text-2xl font-bold text-white mb-2">Plan Pro</h3>
-                     <p className="text-emerald-100/80">Pour les établissements en croissance</p>
+                     <p className="text-emerald-100/80">Pour les grands établissements</p>
                   </div>
                   <div className="mb-8 relative z-10">
-                     <span className="text-4xl font-extrabold text-white">Sur devis</span>
-                     <span className="text-emerald-200 font-medium"> / an</span>
+                     <span className="text-4xl font-extrabold text-white">9 900 FCFA</span>
+                     <span className="text-emerald-200 font-medium"> / mois</span>
                   </div>
                   <ul className="space-y-4 mb-10 flex-1 relative z-10">
                      <li className="flex items-center gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 text-amber-400" /> Élèves illimités</li>
-                     <li className="flex items-center gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 text-amber-400" /> Gestion avancée (Comptabilité, Notes)</li>
-                     <li className="flex items-center gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 text-amber-400" /> Accès portail Parents temps réel</li>
+                     <li className="flex items-center gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 text-amber-400" /> Toutes les fonctionnalités du Plan Standard</li>
+                     <li className="flex items-center gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 text-amber-400" /> Statistiques et tableaux de bord avancés</li>
                      <li className="flex items-center gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 text-amber-400" /> Support prioritaire WhatsApp / Téléphone</li>
                   </ul>
                   <Link href="#contact" className="w-full py-4 rounded-xl bg-white font-bold text-[#006039] hover:bg-slate-50 transition-colors text-center relative z-10 shadow-lg block">
@@ -477,8 +498,7 @@ export default function Home() {
             {/* Colonne 1: A propos */}
             <div className="space-y-6">
               <div className="flex items-center gap-2">
-                <img src="/logo.png" alt="Scogestia Logo" className="h-8 w-auto brightness-0 invert" />
-                <span className="text-white font-bold text-xl tracking-tight">Scogestia</span>
+                <img src="/logo.png" alt="Scogestia Logo" className="h-12 w-auto bg-white p-2 rounded-lg" />
               </div>
               <p className="text-slate-400 text-sm leading-relaxed">
                 Le système d'information de gestion de l'éducation (SIGE) moderne qui connecte les directeurs, les enseignants et les parents.
