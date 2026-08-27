@@ -104,11 +104,6 @@ export default function Home() {
                      src="/mockup-scogestia.png" 
                      alt="Interface de Scogestia sur ordinateur et mobile" 
                      className="w-full h-auto rounded-xl shadow-inner border border-slate-100 object-cover bg-slate-100 min-h-[300px]"
-                     onError={(e) => {
-                       // Image de secours temporaire si mockup-scogestia.png n'existe pas encore
-                       e.currentTarget.src = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2070";
-                       e.currentTarget.style.opacity = "0.5";
-                     }}
                    />
                 </div>
               </div>
