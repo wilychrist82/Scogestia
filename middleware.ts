@@ -33,8 +33,8 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Allow auth routes to be accessed by non-authenticated users
-  if (!user && (pathname.startsWith('/connexion') || pathname.startsWith('/inscription-ecole') || pathname.startsWith('/activer-parent'))) {
+  // Allow auth routes and public landing page to be accessed by non-authenticated users
+  if (!user && (pathname === '/' || pathname.startsWith('/connexion') || pathname.startsWith('/inscription-ecole') || pathname.startsWith('/activer-parent'))) {
     return supabaseResponse
   }
 
