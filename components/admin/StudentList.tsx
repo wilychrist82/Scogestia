@@ -21,7 +21,7 @@ export type StudentItem = {
 
 type Props = {
   students: StudentItem[]
-  classes: { id: string, name: string }[]
+  classes: { id: string, name: string, level?: string }[]
   totalCount: number
   currentPage: number
   itemsPerPage: number
@@ -74,6 +74,23 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
 
   const handleFilterChange = useCallback((key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
+    
+    // Auto-switch tab if class is selected
+    if (key === 'classId' && value) {
+      const selectedClass = classes.find(c => c.id === value)
+      if (selectedClass && selectedClass.level) {
+        const level = selectedClass.level.toLowerCase()
+        let newNiveau = currentNiveau
+        if (['s1', 's2', 'section1', 'section2', 'maternelle'].includes(level)) newNiveau = 'Maternelle'
+        else if (['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].includes(level)) newNiveau = 'Primaire'
+        else if (['6eme', '5eme', '4eme', '3eme', 'secondaire', 'collège'].includes(level)) newNiveau = 'Secondaire'
+        
+        if (newNiveau !== currentNiveau) {
+          params.set('niveau', newNiveau)
+        }
+      }
+    }
+
     if (value) {
       params.set(key, value)
     } else {
@@ -83,7 +100,7 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
     if (key !== 'page') params.set('page', '1')
     
     router.push(`/admin/eleves?${params.toString()}`)
-  }, [searchParams, router])
+  }, [searchParams, router, classes, currentNiveau])
 
   const totalPages = Math.ceil(totalCount / itemsPerPage)
   const startItem = (currentPage - 1) * itemsPerPage + 1

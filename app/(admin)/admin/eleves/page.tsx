@@ -72,7 +72,7 @@ export default async function StudentsPage({
   // Also fetch classes for the filter dropdown
   const { data: classes } = await supabase
     .from('classes')
-    .select('id, name')
+    .select('id, name, level')
     .eq('school_id', schoolId)
     .order('name')
 
