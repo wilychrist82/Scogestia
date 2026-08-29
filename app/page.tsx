@@ -122,9 +122,9 @@ export default function Home() {
               >
                 <div className="relative overflow-visible group flex justify-center lg:justify-end">
                    <img 
-                     src="/hero-image.png" 
-                     alt="La communauté Scogestia : enseignants, élèves et parents" 
-                     className="w-full lg:max-w-[110%] h-auto rounded-3xl shadow-2xl object-cover relative z-10 border-4 border-white"
+                     src="/hero-landing.png" 
+                     alt="Scogestia - Gestion scolaire intuitive" 
+                     className="w-full lg:max-w-[120%] h-auto object-contain relative z-10 drop-shadow-xl"
                    />
                 </div>
               </motion.div>
