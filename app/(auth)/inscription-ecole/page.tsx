@@ -29,12 +29,7 @@ export default function RegisterPage() {
         
         <div className="relative z-10 w-full max-w-md flex flex-col items-center">
           <Link href="/" className="inline-flex flex-col items-center mb-12">
-            <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mb-4 p-4 border border-white/20">
-               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-12 h-12 text-white">
-                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L3 7l9 5 9-5-9-5zM3 14l9 5 9-5M3 19l9 5 9-5" />
-               </svg>
-            </div>
-            <h1 className="text-4xl font-bold tracking-tight mb-2">Scogestia</h1>
+            <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="h-20 sm:h-24 w-auto object-contain mb-4" />
             <p className="text-emerald-300 font-medium tracking-widest text-xs uppercase text-center border-b border-emerald-500/30 pb-4">
               La gestion scolaire simplifiée
             </p>
