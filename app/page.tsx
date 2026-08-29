@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from 'react';
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { ShieldCheck, Cloud, Zap, CheckCircle2, LayoutDashboard, CreditCard, Users, ArrowRight, BarChart, Smartphone, Globe, Mail, Phone, MapPin, Star, PlayCircle, Lock } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ShieldCheck, Cloud, Zap, CheckCircle2, LayoutDashboard, CreditCard, Users, ArrowRight, BarChart, Smartphone, Globe, Mail, Phone, MapPin, Star, PlayCircle, Lock, X } from 'lucide-react'
 
 // Animation Variants
 const fadeIn = {
@@ -21,6 +22,8 @@ const staggerContainer = {
 };
 
 export default function Home() {
+  const [demoModalOpen, setDemoModalOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-[#006039]/20 selection:text-[#006039]">
       {/* Navigation Sticky */}
@@ -89,13 +92,13 @@ export default function Home() {
                   >
                     Essai gratuit de 14 jours
                   </Link>
-                  <Link 
-                    href="#fonctionnalites"
+                  <button 
+                    onClick={() => setDemoModalOpen(true)}
                     className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-base font-medium text-slate-700 bg-white border-2 border-slate-200 hover:border-emerald-200 hover:bg-emerald-50 rounded-full transition-all"
                   >
                     <PlayCircle className="w-5 h-5 mr-2 text-[#006039]" />
                     Voir la démo
-                  </Link>
+                  </button>
                 </motion.div>
                 
                 <motion.div variants={fadeIn} className="mt-10 flex flex-wrap justify-center lg:justify-start gap-6 text-sm text-slate-500 font-medium">
@@ -550,6 +553,38 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      {/* Modal de Démo Vidéo */}
+      {demoModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setDemoModalOpen(false)}></div>
+          <div className="relative w-full max-w-4xl bg-black rounded-2xl overflow-hidden shadow-2xl animate-[fadeIn_0.3s_ease-out]">
+            {/* Bouton Fermer */}
+            <button 
+              onClick={() => setDemoModalOpen(false)}
+              className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black text-white rounded-full transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            
+            {/* Conteneur Vidéo */}
+            <div className="relative pt-[56.25%] w-full bg-slate-800">
+              {/* Remplacer cette div par une vraie iframe YouTube/Vimeo plus tard */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center">
+                <div className="w-20 h-20 rounded-full bg-[#006039]/20 flex items-center justify-center mb-6">
+                  <Play className="w-10 h-10 text-[#006039] ml-1" />
+                </div>
+                <h3 className="text-2xl font-bold mb-2">Vidéo de présentation</h3>
+                <p className="text-slate-300 max-w-md">
+                  Ici, vous pourrez insérer votre vidéo de présentation (Youtube ou Loom) montrant les fonctionnalités principales de Scogestia.
+                </p>
+                <div className="mt-8 px-4 py-2 bg-slate-900 rounded-lg font-mono text-sm text-slate-400 border border-slate-700">
+                  {`<iframe src="https://www.youtube.com/embed/VOTRE_VIDEO" ...></iframe>`}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
