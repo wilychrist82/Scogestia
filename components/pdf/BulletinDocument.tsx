@@ -1,226 +1,311 @@
 import React from 'react'
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer'
-
-// Configuration minimale pour rester sous les 300Ko. On utilise les polices standard incluses dans pdfkit (Helvetica, Times).
-// Si besoin d'un look spécifique, on pourrait importer une police, mais ça augmente le poids.
-// Helvetica est le défaut.
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 
 const styles = StyleSheet.create({
-  page: {
-    padding: 30,
-    fontFamily: 'Helvetica',
-    fontSize: 10,
-    color: '#0b1c30', // on-surface
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 30,
-    borderBottomWidth: 1,
-    borderBottomColor: '#6f7973',
-    paddingBottom: 10,
-  },
-  headerLeft: {
-    flexDirection: 'column',
-  },
-  schoolName: {
-    fontSize: 18,
-    fontFamily: 'Helvetica-Bold',
-    color: '#004532', // primary
-  },
-  schoolDetails: {
-    fontSize: 9,
-    color: '#545f73',
-    marginTop: 2,
-  },
-  headerRight: {
-    alignItems: 'flex-end',
-  },
-  title: {
-    fontSize: 16,
-    fontFamily: 'Helvetica-Bold',
-    marginBottom: 5,
-  },
-  term: {
-    fontSize: 10,
-    color: '#545f73',
-  },
-  studentInfo: {
-    marginBottom: 20,
-    padding: 10,
-    backgroundColor: '#f8f9ff',
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#dce9ff',
-  },
-  studentName: {
-    fontSize: 12,
-    fontFamily: 'Helvetica-Bold',
-    marginBottom: 3,
-  },
-  table: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#6f7973',
-    borderRadius: 4,
-  },
-  tableHeaderRow: {
-    flexDirection: 'row',
-    backgroundColor: '#004532',
-    color: 'white',
-    padding: 5,
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 9,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: '#d3e4fe',
-    padding: 5,
-  },
-  colSubject: { width: '25%' },
-  colCoef: { width: '10%', textAlign: 'center' },
-  colScore: { width: '15%', textAlign: 'center', fontFamily: 'Helvetica-Bold' },
-  colWeighted: { width: '15%', textAlign: 'center' },
-  colComment: { width: '35%', paddingLeft: 5, fontSize: 8 },
-  summaryBox: {
-    marginTop: 20,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#004532',
-    backgroundColor: '#f8f9ff',
-    borderRadius: 4,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  summaryItem: {
-    alignItems: 'center',
-  },
-  summaryLabel: {
-    fontSize: 10,
-    color: '#545f73',
-    marginBottom: 2,
-  },
-  summaryValue: {
-    fontSize: 16,
-    fontFamily: 'Helvetica-Bold',
-    color: '#004532',
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 30,
-    left: 30,
-    right: 30,
-    textAlign: 'center',
-    color: 'grey',
-    fontSize: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#d3e4fe',
-    paddingTop: 10,
-  }
+  page: { padding: 30, fontFamily: 'Helvetica', fontSize: 10, color: '#000' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15, borderBottomWidth: 1, borderBottomColor: '#000', paddingBottom: 10 },
+  headerCol: { flexDirection: 'column', alignItems: 'center', width: '33%' },
+  headerLeft: { flexDirection: 'column', alignItems: 'flex-start', width: '33%' },
+  headerRight: { flexDirection: 'column', alignItems: 'flex-end', width: '33%' },
+  titleText: { fontSize: 12, fontFamily: 'Helvetica-Bold' },
+  subtitleText: { fontSize: 9, fontStyle: 'italic' },
+  schoolName: { fontSize: 16, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
+  bulletinTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', marginTop: 4 },
+  
+  studentInfo: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15, padding: 10, backgroundColor: '#f9fafb', borderRadius: 4, borderWidth: 1, borderColor: '#e5e7eb' },
+  infoCol: { flexDirection: 'column' },
+  infoColCenter: { flexDirection: 'column', alignItems: 'center' },
+  infoColRight: { flexDirection: 'column', alignItems: 'flex-end' },
+  infoLabel: { fontSize: 8, color: '#4b5563' },
+  infoValue: { fontSize: 12, fontFamily: 'Helvetica-Bold' },
+
+  table: { width: '100%', borderWidth: 1, borderColor: '#000', marginBottom: 15 },
+  rowHeader: { flexDirection: 'row', backgroundColor: '#e5e7eb', borderBottomWidth: 1, borderBottomColor: '#000', fontFamily: 'Helvetica-Bold', fontSize: 9 },
+  row: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#000', fontSize: 9 },
+  rowCategory: { backgroundColor: '#f9fafb', borderBottomWidth: 1, borderBottomColor: '#000', padding: 4 },
+  catText: { fontFamily: 'Helvetica-Bold', fontStyle: 'italic', fontSize: 9 },
+  
+  // Secondary cols
+  colSubj: { width: '22%', padding: 4, borderRightWidth: 1, borderRightColor: '#000' },
+  colScore: { width: '8%', padding: 4, textAlign: 'center', borderRightWidth: 1, borderRightColor: '#000' },
+  colMoy: { width: '10%', padding: 4, textAlign: 'center', backgroundColor: '#e5e7eb', fontFamily: 'Helvetica-Bold', borderRightWidth: 1, borderRightColor: '#000' },
+  colCoef: { width: '6%', padding: 4, textAlign: 'center', borderRightWidth: 1, borderRightColor: '#000' },
+  colProd: { width: '10%', padding: 4, textAlign: 'center', backgroundColor: '#e5e7eb', fontFamily: 'Helvetica-Bold', borderRightWidth: 1, borderRightColor: '#000' },
+  colProf: { width: '18%', padding: 4, borderRightWidth: 1, borderRightColor: '#000', fontSize: 8 },
+  colAppr: { width: '26%', padding: 4, fontSize: 8, fontStyle: 'italic' },
+
+  // Primary cols
+  colPrimSubj: { width: '25%', padding: 4, borderRightWidth: 1, borderRightColor: '#000' },
+  colPrimMonth: { width: '8%', padding: 4, textAlign: 'center', borderRightWidth: 1, borderRightColor: '#000' },
+  colPrimMoy: { width: '11%', padding: 4, textAlign: 'center', backgroundColor: '#e5e7eb', fontFamily: 'Helvetica-Bold' },
+
+  rowTotal: { flexDirection: 'row', backgroundColor: '#f3f4f6', borderBottomWidth: 1, borderBottomColor: '#000', fontFamily: 'Helvetica-Bold', fontSize: 9 },
+  colTotalLabelSec: { width: '38%', padding: 4, textAlign: 'right', borderRightWidth: 1, borderRightColor: '#000' },
+  colTotalLabelPrim: { width: '25%', padding: 4, textAlign: 'right', borderRightWidth: 1, borderRightColor: '#000' },
+  
+  statsBox: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginBottom: 15 },
+  statItem: { padding: 10, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, alignItems: 'center', width: '45%' },
+  statLabel: { fontSize: 9, color: '#4b5563', fontFamily: 'Helvetica-Bold', marginBottom: 4 },
+  statValue: { fontSize: 24, fontFamily: 'Helvetica-Bold' },
+  statSub: { fontSize: 12, color: '#6b7280', fontFamily: 'Helvetica' },
+
+  statsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
+  gridItem: { flex: 1, marginHorizontal: 4, padding: 8, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, alignItems: 'center' },
+
+  signaturesRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 15, paddingHorizontal: 10 },
+  signBlock: { width: '30%', alignItems: 'center' },
+  signTitle: { fontFamily: 'Helvetica-Bold', textDecoration: 'underline', marginBottom: 30, fontSize: 10 },
+  signText: { fontSize: 9, textAlign: 'center', marginTop: 10 },
+  signTextBold: { fontSize: 9, textAlign: 'center', marginTop: 5, fontFamily: 'Helvetica-Bold' },
+  
+  decisionBox: { borderWidth: 1, borderColor: '#000', padding: 6, borderRadius: 4, width: '100%', marginBottom: 10 },
+  decisionTitle: { fontFamily: 'Helvetica-Bold', textDecoration: 'underline', marginBottom: 4, fontSize: 9 },
+  checkboxRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
+  checkbox: { width: 8, height: 8, borderWidth: 1, borderColor: '#000', marginRight: 4 },
+  checkboxFilled: { width: 8, height: 8, backgroundColor: '#000', marginRight: 4 },
+  checkboxLabel: { fontSize: 8 }
 })
 
-type Grade = {
-  subject_name: string
-  score: number
-  max_score: number
+export type BulletinData = {
+  level: 'primaire' | 'secondaire' | 'maternelle'
+  student: { first_name: string; last_name: string; matricule: string }
+  cls: { name: string }
+  schoolName: string
+  academicYear: string
+  termOrMonth: string
+  
+  // Secondary specific
+  secondaryRows?: Array<{
+    id: string; name: string; cScore: string; compScore: string; moy: number | null; coefficient: number; produit: number | null; appr: string; profName?: string
+  }>
+  totalCoef?: number
+  totalProduct?: number
+  termAvg?: string
+  rank?: string
+  totalStudents?: number
+  stats?: { min: string; max: string; annual: string; t1?: string; t2?: string; annual_t3?: string }
+  footerInfo?: { appreciation: string; decision: string }
+  
+  // Primary specific
+  primaryCategories?: Record<string, Array<{
+    id: string; name: string; monthScores: Record<string, string>; avg: string
+  }>>
+  months?: number[]
+  monthTotals?: Record<string, string>
+  monthAvgs?: Record<string, string>
+  monthRanks?: Record<string, string>
 }
 
-type Props = {
-  student: {
-    first_name: string
-    last_name: string
-  }
-  term: string
-  termSummary: {
-    term_average: number
-    class_rank: number
-  } | null
-  grades: Grade[]
-}
-
-// Fonction utilitaire pour générer une appréciation basée sur la note (sur 20)
-function getAppreciation(score20: number) {
-  if (score20 >= 16) return "Très bon travail. Félicitations."
-  if (score20 >= 14) return "Bon trimestre, continuez ainsi."
-  if (score20 >= 12) return "Résultats satisfaisants."
-  if (score20 >= 10) return "Ensemble moyen. Des efforts sont attendus."
-  if (score20 >= 8) return "Résultats insuffisants. Il faut travailler davantage."
-  return "Très insuffisant. Mise en garde."
-}
-
-export function BulletinDocument({ student, term, termSummary, grades }: Props) {
-  // Agrégation et calculs pour affichage
-  const rows = grades.map(g => {
-    const score20 = (g.score / g.max_score) * 20
-    const coef = 1 // Dans un vrai système, la table grades ou subject aurait un coef
-    const weighted = score20 * coef
-    return {
-      subject: g.subject_name,
-      score: score20.toFixed(2),
-      coef: coef,
-      weighted: weighted.toFixed(2),
-      comment: getAppreciation(score20)
-    }
-  })
-
-  const year = new Date().getFullYear()
-
+function renderSecondaryTable(data: BulletinData) {
   return (
-    <Document>
+    <View style={styles.table}>
+      <View style={styles.rowHeader}>
+        <Text style={styles.colSubj}>MATIÈRES</Text>
+        <Text style={styles.colScore}>NOTE CL.</Text>
+        <Text style={styles.colScore}>COMPO.</Text>
+        <Text style={styles.colMoy}>MOY. /20</Text>
+        <Text style={styles.colCoef}>COEF</Text>
+        <Text style={styles.colProd}>PRODUIT</Text>
+        <Text style={styles.colProf}>PROFESSEUR</Text>
+        <Text style={styles.colAppr}>APPRÉCIATION</Text>
+      </View>
+      {data.secondaryRows?.map(row => (
+        <View key={row.id} style={styles.row}>
+          <Text style={[styles.colSubj, { fontFamily: 'Helvetica-Bold' }]}>{row.name}</Text>
+          <Text style={styles.colScore}>{row.cScore}</Text>
+          <Text style={styles.colScore}>{row.compScore}</Text>
+          <Text style={styles.colMoy}>{row.moy !== null ? row.moy.toFixed(2) : ''}</Text>
+          <Text style={styles.colCoef}>{row.coefficient}</Text>
+          <Text style={styles.colProd}>{row.produit !== null ? row.produit.toFixed(2) : ''}</Text>
+          <Text style={styles.colProf}>{row.profName || ''}</Text>
+          <Text style={styles.colAppr}>{row.appr}</Text>
+        </View>
+      ))}
+      <View style={styles.rowTotal}>
+        <Text style={styles.colTotalLabelSec}>TOTAL</Text>
+        <Text style={styles.colCoef}>{data.totalCoef}</Text>
+        <Text style={styles.colProd}>{data.totalProduct?.toFixed(2)}</Text>
+        <Text style={{ width: '44%' }}></Text>
+      </View>
+    </View>
+  )
+}
+
+function renderPrimaryTable(data: BulletinData) {
+  const months = data.months || [1,2,3,4,5,6,7,8,9];
+  return (
+    <View style={styles.table}>
+      <View style={styles.rowHeader}>
+        <Text style={styles.colPrimSubj}>DISCIPLINES</Text>
+        {months.map(m => (
+          <Text key={m} style={styles.colPrimMonth}>{m}e</Text>
+        ))}
+        <Text style={styles.colPrimMoy}>MOY.</Text>
+      </View>
+      {data.primaryCategories && Object.entries(data.primaryCategories).map(([cat, subjs]) => (
+        <React.Fragment key={cat}>
+          <View style={styles.rowCategory}>
+            <Text style={styles.catText}>{cat}</Text>
+          </View>
+          {subjs.map(subj => (
+            <View key={subj.id} style={styles.row}>
+              <Text style={styles.colPrimSubj}>{subj.name}</Text>
+              {months.map(m => (
+                <Text key={m} style={styles.colPrimMonth}>{subj.monthScores[m] || ''}</Text>
+              ))}
+              <Text style={styles.colPrimMoy}>{subj.avg}</Text>
+            </View>
+          ))}
+        </React.Fragment>
+      ))}
+      <View style={styles.rowTotal}>
+        <Text style={styles.colTotalLabelPrim}>Total des points</Text>
+        {months.map(m => (
+          <Text key={m} style={styles.colPrimMonth}>{data.monthTotals?.[m] || ''}</Text>
+        ))}
+        <Text style={styles.colPrimMoy}></Text>
+      </View>
+      <View style={styles.rowTotal}>
+        <Text style={styles.colTotalLabelPrim}>Moyenne / 10</Text>
+        {months.map(m => (
+          <Text key={m} style={[styles.colPrimMonth, { color: '#1e40af' }]}>{data.monthAvgs?.[m] || ''}</Text>
+        ))}
+        <Text style={styles.colPrimMoy}></Text>
+      </View>
+      <View style={styles.rowTotal}>
+        <Text style={styles.colTotalLabelPrim}>Rang</Text>
+        {months.map(m => (
+          <Text key={m} style={styles.colPrimMonth}>{data.monthRanks?.[m] || ''}</Text>
+        ))}
+        <Text style={styles.colPrimMoy}></Text>
+      </View>
+    </View>
+  )
+}
+
+function SecondaryFooter({ data }: { data: BulletinData }) {
+  const avg = parseFloat(data.termAvg || '0')
+  return (
+    <View>
+      <View style={styles.statsBox}>
+        <View style={styles.statItem}>
+          <Text style={styles.statLabel}>MOYENNE TRIMESTRIELLE</Text>
+          <Text style={styles.statValue}>{data.termAvg} <Text style={styles.statSub}>/ 20</Text></Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={styles.statLabel}>RANG</Text>
+          <Text style={styles.statValue}>{data.rank || '-'} <Text style={styles.statSub}>/ {data.totalStudents || '-'}</Text></Text>
+        </View>
+      </View>
+
+      <View style={styles.statsGrid}>
+        <View style={styles.gridItem}>
+          <Text style={styles.statLabel}>Moyenne la plus faible</Text>
+          <Text style={styles.statValue}>{data.stats?.min || '-'}</Text>
+        </View>
+        <View style={styles.gridItem}>
+          <Text style={styles.statLabel}>Moyenne la plus forte</Text>
+          <Text style={styles.statValue}>{data.stats?.max || '-'}</Text>
+        </View>
+        <View style={styles.gridItem}>
+          <Text style={styles.statLabel}>Moyenne Annuelle</Text>
+          <Text style={styles.statValue}>{data.stats?.annual || '-'}</Text>
+        </View>
+      </View>
+
+      <View style={styles.signaturesRow}>
+        <View style={styles.signBlock}>
+          <Text style={styles.signTitle}>Le Professeur Principal</Text>
+          <Text style={styles.signTextBold}>Appréciation :</Text>
+          <Text style={styles.signText}>{data.footerInfo?.appreciation || ''}</Text>
+        </View>
+        <View style={styles.signBlock}>
+          <View style={styles.decisionBox}>
+            <Text style={styles.decisionTitle}>Décision du conseil</Text>
+            <View style={styles.checkboxRow}><View style={avg >= 14 ? styles.checkboxFilled : styles.checkbox}/><Text style={styles.checkboxLabel}>Félicitations</Text></View>
+            <View style={styles.checkboxRow}><View style={avg >= 12 && avg < 14 ? styles.checkboxFilled : styles.checkbox}/><Text style={styles.checkboxLabel}>Encouragements</Text></View>
+            <View style={styles.checkboxRow}><View style={avg >= 10 && avg < 12 ? styles.checkboxFilled : styles.checkbox}/><Text style={styles.checkboxLabel}>Tableau d'honneur</Text></View>
+            <View style={styles.checkboxRow}><View style={avg > 0 && avg < 10 ? styles.checkboxFilled : styles.checkbox}/><Text style={styles.checkboxLabel}>Avertissement</Text></View>
+          </View>
+        </View>
+        <View style={styles.signBlock}>
+          <Text style={styles.signTitle}>Le Chef d'Établissement</Text>
+          <Text style={styles.signTextBold}>Décision :</Text>
+          <Text style={styles.signText}>{data.footerInfo?.decision || ''}</Text>
+        </View>
+      </View>
+    </View>
+  )
+}
+
+function PrimaryFooter({ data }: { data: BulletinData }) {
+  return (
+    <View style={styles.signaturesRow}>
+      <View style={styles.signBlock}>
+        <Text style={styles.signTitle}>Le Titulaire</Text>
+        <Text style={styles.signTextBold}>Appréciation :</Text>
+        <Text style={styles.signText}>{data.footerInfo?.appreciation || ''}</Text>
+      </View>
+      <View style={styles.signBlock}>
+        {/* Stamp placeholder */}
+      </View>
+      <View style={styles.signBlock}>
+        <Text style={styles.signTitle}>Le Directeur / La Directrice</Text>
+        <Text style={styles.signTextBold}>Décision :</Text>
+        <Text style={styles.signText}>{data.footerInfo?.decision || ''}</Text>
+      </View>
+    </View>
+  )
+}
+
+export function BulletinPage({ data }: { data: BulletinData }) {
+  return (
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.schoolName}>EduParent Togo</Text>
-            <Text style={styles.schoolDetails}>Excellence et Rigueur</Text>
-            <Text style={styles.schoolDetails}>Lomé, Togo</Text>
+            <Text style={styles.titleText}>RÉPUBLIQUE TOGOLAISE</Text>
+            <Text style={styles.subtitleText}>Travail - Liberté - Patrie</Text>
+          </View>
+          <View style={styles.headerCol}>
+            <Text style={styles.schoolName}>{data.schoolName}</Text>
+            <Text style={styles.bulletinTitle}>
+              {data.level === 'primaire' || data.level === 'maternelle' ? 'LIVRET SCOLAIRE' : 'BULLETIN DE NOTES'}
+            </Text>
           </View>
           <View style={styles.headerRight}>
-            <Text style={styles.title}>BULLETIN TRIMESTRIEL</Text>
-            <Text style={styles.term}>{term} - Année {year-1}/{year}</Text>
+            <Text style={styles.titleText}>Année : {data.academicYear}</Text>
+            {data.level === 'secondaire' && (
+              <Text style={styles.subtitleText}>{data.termOrMonth.replace(/_/g, ' ').toUpperCase()}</Text>
+            )}
           </View>
         </View>
 
         <View style={styles.studentInfo}>
-          <Text style={styles.studentName}>Élève : {student.first_name} {student.last_name}</Text>
-          <Text>Statut : Inscrit</Text>
-        </View>
-
-        <View style={styles.table}>
-          <View style={styles.tableHeaderRow}>
-            <Text style={styles.colSubject}>Matière</Text>
-            <Text style={styles.colCoef}>Coef.</Text>
-            <Text style={styles.colScore}>Note /20</Text>
-            <Text style={styles.colWeighted}>N. Pondérée</Text>
-            <Text style={styles.colComment}>Appréciation</Text>
+          <View style={styles.infoCol}>
+            <Text style={styles.infoLabel}>Nom et Prénom(s)</Text>
+            <Text style={styles.infoValue}>{data.student.last_name} {data.student.first_name}</Text>
           </View>
-
-          {rows.map((row, i) => (
-            <View key={i} style={styles.tableRow}>
-              <Text style={styles.colSubject}>{row.subject}</Text>
-              <Text style={styles.colCoef}>{row.coef}</Text>
-              <Text style={styles.colScore}>{row.score}</Text>
-              <Text style={styles.colWeighted}>{row.weighted}</Text>
-              <Text style={styles.colComment}>{row.comment}</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.summaryBox}>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Moyenne Générale</Text>
-            <Text style={styles.summaryValue}>{termSummary ? termSummary.term_average.toFixed(2) : '-'} / 20</Text>
+          <View style={styles.infoColCenter}>
+            <Text style={styles.infoLabel}>Classe</Text>
+            <Text style={styles.infoValue}>{data.cls.name}</Text>
           </View>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Rang dans la classe</Text>
-            <Text style={styles.summaryValue}>{termSummary ? `${termSummary.class_rank}e` : '-'}</Text>
+          <View style={styles.infoColRight}>
+            <Text style={styles.infoLabel}>Matricule</Text>
+            <Text style={styles.infoValue}>{data.student.matricule}</Text>
           </View>
         </View>
 
-        <Text style={styles.footer}>
-          Document généré numériquement par EduParent Togo. La direction.
-        </Text>
+        {data.level === 'secondaire' ? renderSecondaryTable(data) : renderPrimaryTable(data)}
+        {data.level === 'secondaire' ? <SecondaryFooter data={data} /> : <PrimaryFooter data={data} />}
+        
       </Page>
+  )
+}
+
+export function BulletinDocument({ data }: { data: BulletinData }) {
+  return (
+    <Document>
+      <BulletinPage data={data} />
     </Document>
   )
 }

@@ -147,64 +147,229 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
     })
   }
 
+  const buildStudentBulletinData = (stuId: string) => {
+    const stu = students.find(s => s.id === stuId)
+    const cl = classes.find(c => c.id === (stu?.class_id || selectedClass))
+    if (!stu || !cl) return null
+    
+    const isPrimary = selectedLevel === 'primaire' || selectedLevel === 'maternelle'
+    
+    const data: any = {
+      level: selectedLevel,
+      student: { id: stu.id, first_name: stu.first_name, last_name: stu.last_name, matricule: stu.matricule },
+      cls: { name: cl.name },
+      schoolName,
+      academicYear: "2026-2027",
+      termOrMonth: selectedTerm
+    }
+
+    if (isPrimary) {
+      const primarySubjects = subjects.filter(s => s.cycle === 'primaire' || s.cycle === 'maternelle')
+      const groupedSubjects: Record<string, any[]> = {}
+      
+      const months = Array.from({ length: 9 }, (_, i) => i + 1)
+      data.months = months
+      
+      primarySubjects.forEach(s => {
+        const cat = s.category || 'Général'
+        if (!groupedSubjects[cat]) groupedSubjects[cat] = []
+        
+        const monthScores: Record<string, string> = {}
+        let total = 0, count = 0
+        months.forEach(m => {
+          // Si c'est l'élève actuellement sélectionné, on prend le local state, sinon les props
+          let valStr = ''
+          if (stuId === selectedStudent && localPrimGrades[`${s.id}_${m}`] !== undefined) {
+            valStr = localPrimGrades[`${s.id}_${m}`]
+          } else {
+            const g = primaryGrades.find(g => g.student_id === stuId && g.subject_id === s.id && g.month_number === m)
+            valStr = g ? g.score.toString() : ''
+          }
+          monthScores[m] = valStr
+          const val = parseFloat(valStr)
+          if (!isNaN(val)) { total += val; count++ }
+        })
+        const avg = count > 0 ? (total / count).toFixed(2) : ''
+        
+        groupedSubjects[cat].push({
+          id: s.id, name: s.name, monthScores, avg
+        })
+      })
+      data.primaryCategories = groupedSubjects
+      
+      // Totals
+      data.monthTotals = {}
+      data.monthAvgs = {}
+      data.monthRanks = {}
+      months.forEach(m => {
+        let mTotal = 0, count = 0
+        primarySubjects.forEach(s => {
+          let valStr = ''
+          if (stuId === selectedStudent && localPrimGrades[`${s.id}_${m}`] !== undefined) valStr = localPrimGrades[`${s.id}_${m}`]
+          else {
+            const g = primaryGrades.find(g => g.student_id === stuId && g.subject_id === s.id && g.month_number === m)
+            valStr = g ? g.score.toString() : ''
+          }
+          const val = parseFloat(valStr)
+          if (!isNaN(val)) { mTotal += val; count++ }
+        })
+        data.monthTotals[m] = mTotal > 0 ? mTotal.toString() : ''
+        data.monthAvgs[m] = count > 0 ? (mTotal / count).toFixed(2) : ''
+        
+        if (stuId === selectedStudent && localPrimRanks[m] !== undefined) data.monthRanks[m] = localPrimRanks[m]
+        else {
+          const r = primaryRanks?.find(r => r.student_id === stuId && r.month_number === m)
+          data.monthRanks[m] = r ? r.rank_text : ''
+        }
+      })
+      
+      if (stuId === selectedStudent) {
+        data.footerInfo = localPrimInfo
+      } else {
+        const info = primaryInfo?.find(i => i.student_id === stuId)
+        data.footerInfo = { appreciation: info?.appreciation || '', decision: info?.director_decision || '' }
+      }
+      
+    } else {
+      // Secondary
+      const secondarySubjects = subjects.filter(s => s.cycle === 'secondaire')
+      let totalCoef = 0, totalProduct = 0
+      
+      data.secondaryRows = secondarySubjects.map(s => {
+        let cScore = '', compScore = ''
+        if (stuId === selectedStudent && localSecGrades[s.id]) {
+          cScore = localSecGrades[s.id].cScore
+          compScore = localSecGrades[s.id].compScore
+        } else {
+          const g = secondaryGrades.find(g => g.student_id === stuId && g.subject_id === s.id && g.term === selectedTerm)
+          if (g) {
+            cScore = g.class_score !== null ? g.class_score.toString() : ''
+            compScore = g.comp_score !== null ? g.comp_score.toString() : ''
+          }
+        }
+        const cVal = parseFloat(cScore)
+        const compVal = parseFloat(compScore)
+        let moy = null
+        if (!isNaN(cVal) && !isNaN(compVal)) moy = (cVal + compVal) / 2
+        else if (!isNaN(cVal)) moy = cVal
+        else if (!isNaN(compVal)) moy = compVal
+        
+        let produit = null
+        if (moy !== null) {
+          produit = moy * s.coefficient
+          totalCoef += s.coefficient
+          totalProduct += produit
+        }
+        
+        let defaultAppr = ''
+        if (moy !== null) {
+          if (moy >= 16) defaultAppr = 'Très Bien'
+          else if (moy >= 14) defaultAppr = 'Bien'
+          else if (moy >= 12) defaultAppr = 'Assez Bien'
+          else if (moy >= 10) defaultAppr = 'Passable'
+          else defaultAppr = 'Insuffisant'
+        }
+        
+        return {
+          id: s.id, name: s.name, cScore, compScore, moy, coefficient: s.coefficient, produit,
+          appr: stuId === selectedStudent && secAppr[s.id] !== undefined ? secAppr[s.id] : defaultAppr
+        }
+      })
+      
+      data.totalCoef = totalCoef
+      data.totalProduct = totalProduct
+      data.termAvg = totalCoef > 0 ? (totalProduct / totalCoef).toFixed(2) : '0.00'
+      data.rank = stuId === selectedStudent ? secRank : '-'
+      data.totalStudents = students.filter(s => s.class_id === cl.id).length
+      data.stats = stuId === selectedStudent ? secStats : { min: '-', max: '-', annual: '-' }
+      data.footerInfo = stuId === selectedStudent ? secFooterInfo : { appreciation: '', decision: '' }
+    }
+    
+    return data
+  }
+
   const handlePublishPDF = async () => {
-    if (!printRef.current || !selectedStudent || !schoolId) return;
+    if (!selectedStudent) return;
     
     try {
       setPublishStatus('loading')
       
-      const canvas = await html2canvas(printRef.current, { scale: 1.5 })
-      const imgData = canvas.toDataURL('image/jpeg', 0.75)
-      
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'px',
-        format: 'a4'
-      })
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
-      
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight)
-      const pdfBlob = pdf.output('blob')
-      
-      const academicYear = "2026-2027"
-      const fileName = `${schoolId}/${selectedStudent}_${selectedTerm}_${academicYear}_${Date.now()}.pdf`
-      
-      const supabase = createClient()
-      const { error: uploadError } = await supabase.storage.from('bulletins').upload(fileName, pdfBlob, {
-        contentType: 'application/pdf',
-        upsert: true
-      })
-      
-      if (uploadError) {
-        console.error('Erreur Upload Supabase:', uploadError)
-        setPublishStatus('error')
-        alert('Erreur upload : ' + uploadError.message)
-        setTimeout(() => setPublishStatus('idle'), 3000)
-        return
-      }
-      
-      const { data: urlData } = supabase.storage.from('bulletins').getPublicUrl(fileName)
-      
-      const res = await publishBulletinPDF(selectedStudent, selectedTerm, academicYear, urlData.publicUrl)
-      
-      if (res.success) {
-        setPublishStatus('success')
+      // Auto-save currently selected student
+      if (selectedLevel === 'primaire' || selectedLevel === 'maternelle') {
+        await saveBulletinPrimaryGrades(selectedStudent, localPrimGrades, localPrimRanks, localPrimInfo)
       } else {
-        console.error(res.error)
-        setPublishStatus('error')
-        alert(res.error)
+        await saveBulletinSecondaryGrades(selectedStudent, selectedTerm, localSecGrades)
       }
+
+      const dataList = [buildStudentBulletinData(selectedStudent)]
       
+      const response = await fetch('/api/bulletins/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataList, action: 'publish' })
+      })
+      
+      if (!response.ok) throw new Error("Erreur de génération API")
+      
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Bulletin_${student?.first_name}_${selectedTerm}.pdf`
+      a.click()
+      
+      setPublishStatus('success')
       setTimeout(() => setPublishStatus('idle'), 3000)
     } catch (err: any) {
       console.error(err)
       setPublishStatus('error')
-      alert("Erreur inattendue : " + err.message)
+      alert("Erreur: " + err.message)
       setTimeout(() => setPublishStatus('idle'), 3000)
     }
   }
+
+  const handleGenerateClassPDF = async () => {
+    if (!selectedClass) return;
+    try {
+      setPublishStatus('loading')
+      
+      // Auto-save currently selected student if any
+      if (selectedStudent) {
+        if (selectedLevel === 'primaire' || selectedLevel === 'maternelle') {
+          await saveBulletinPrimaryGrades(selectedStudent, localPrimGrades, localPrimRanks, localPrimInfo)
+        } else {
+          await saveBulletinSecondaryGrades(selectedStudent, selectedTerm, localSecGrades)
+        }
+      }
+
+      const classStudents = students.filter(s => s.class_id === selectedClass)
+      const dataList = classStudents.map(s => buildStudentBulletinData(s.id)).filter(Boolean)
+      
+      const response = await fetch('/api/bulletins/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataList, action: 'download' })
+      })
+      
+      if (!response.ok) throw new Error("Erreur de génération API")
+      
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Bulletins_Classe_${cls?.name}_${selectedTerm}.pdf`
+      a.click()
+      
+      setPublishStatus('success')
+      setTimeout(() => setPublishStatus('idle'), 3000)
+    } catch (err: any) {
+      console.error(err)
+      setPublishStatus('error')
+      alert("Erreur: " + err.message)
+      setTimeout(() => setPublishStatus('idle'), 3000)
+    }
+  }
+
 
   const renderStamp = () => {
     return (
@@ -772,6 +937,17 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
                 {availableStudents.map(s => <option key={s.id} value={s.id}>{s.last_name} {s.first_name}</option>)}
               </select>
             </div>
+            
+            {selectedClass && (
+              <button
+                onClick={handleGenerateClassPDF}
+                disabled={publishStatus === 'loading'}
+                className="h-11 px-6 bg-[#004532] text-white font-bold rounded-lg hover:opacity-90 disabled:opacity-50 transition-colors flex items-center gap-2 shadow-sm"
+              >
+                <span className="material-symbols-outlined">picture_as_pdf</span>
+                {publishStatus === 'loading' ? 'Génération...' : 'Bulletins de la classe'}
+              </button>
+            )}
           </div>
         </div>
 
