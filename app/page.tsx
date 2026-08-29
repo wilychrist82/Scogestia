@@ -28,7 +28,7 @@ export default function Home() {
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link href="#accueil" className="flex items-center gap-2">
-              <img src="/logo-scogestia.png" alt="Scogestia Logo" className="h-14 w-auto object-contain drop-shadow-sm mix-blend-multiply" />
+              <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="h-14 w-auto object-contain drop-shadow-sm" />
             </Link>
           </div>
           
@@ -505,7 +505,7 @@ export default function Home() {
             {/* Colonne 1: A propos */}
             <div className="space-y-6">
               <div className="flex items-center gap-2">
-                <img src="/logo-scogestia.png" alt="Scogestia Logo" className="h-12 w-auto object-contain" />
+                <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="h-12 w-auto object-contain" />
               </div>
               <p className="text-slate-400 text-sm leading-relaxed">
                 La gestion scolaire simplifiée. Le système d'information de gestion de l'éducation (SIGE) moderne qui connecte les directeurs, les enseignants et les parents.
