@@ -61,8 +61,8 @@ export default function Home() {
 
       <main>
         {/* Section Héro (#accueil) */}
-        <section id="accueil" className="relative pt-20 pb-32 lg:pt-32 lg:pb-40 overflow-hidden">
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-50 via-slate-50 to-slate-50"></div>
+        <section id="accueil" className="relative pt-20 pb-32 lg:pt-32 lg:pb-40 overflow-hidden bg-white">
+          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-50/40 via-white to-white"></div>
           
           <div className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
@@ -124,7 +124,11 @@ export default function Home() {
                    <img 
                      src="/hero-landing.png" 
                      alt="Scogestia - Gestion scolaire intuitive" 
-                     className="w-full lg:max-w-[120%] h-auto object-contain relative z-10 mix-blend-multiply"
+                     className="w-full lg:max-w-[120%] h-auto object-contain relative z-10"
+                     style={{
+                       WebkitMaskImage: 'radial-gradient(ellipse 95% 95% at 50% 50%, black 75%, transparent 100%)',
+                       maskImage: 'radial-gradient(ellipse 95% 95% at 50% 50%, black 75%, transparent 100%)'
+                     }}
                    />
                 </div>
               </motion.div>
