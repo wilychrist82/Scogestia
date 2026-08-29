@@ -40,6 +40,22 @@ export function PaiementsManager({ payments, pendingSchedules, basePath = "/admi
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [isSmsPending, setIsSmsPending] = useState(false)
+
+  const handleTriggerSMS = async () => {
+    setIsSmsPending(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/cron/payment-reminders')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur lors de l\'envoi')
+      alert(`Relances terminées : ${data.data?.stats?.['j-3_sent'] || 0} rappels J-3, ${data.data?.stats?.['overdue_sent'] || 0} rappels en retard envoyés.`)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setIsSmsPending(false)
+    }
+  }
 
   const openAddModal = () => {
     setError(null)
@@ -82,10 +98,16 @@ export function PaiementsManager({ payments, pendingSchedules, basePath = "/admi
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Historique des Paiements</h2>
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Consultez et enregistrez les paiements reçus.</p>
           </div>
-          <button onClick={openAddModal} className="flex items-center justify-center gap-2 bg-[var(--color-primary)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:opacity-90 transition-colors shadow-sm w-full sm:w-auto shrink-0">
-            <span className="material-symbols-outlined text-[20px]">payments</span>
-            Enregistrer un paiement
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <button onClick={handleTriggerSMS} disabled={isSmsPending} className="flex items-center justify-center gap-2 bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] h-12 px-6 rounded-full text-sm font-semibold hover:bg-[var(--color-surface-container-highest)] transition-colors shadow-sm w-full sm:w-auto shrink-0 border border-[var(--color-outline-variant)] disabled:opacity-50">
+              <span className="material-symbols-outlined text-[20px]">sms</span>
+              {isSmsPending ? 'Envoi...' : 'Relances SMS'}
+            </button>
+            <button onClick={openAddModal} className="flex items-center justify-center gap-2 bg-[var(--color-primary)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:opacity-90 transition-colors shadow-sm w-full sm:w-auto shrink-0">
+              <span className="material-symbols-outlined text-[20px]">payments</span>
+              Enregistrer un paiement
+            </button>
+          </div>
         </div>
 
         {error && (
