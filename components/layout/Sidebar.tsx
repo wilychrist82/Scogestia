@@ -182,7 +182,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
         <div className="mb-8 px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 flex items-center justify-center overflow-hidden bg-white rounded-md p-1">
-              <img src="/logo.png" alt="Scogestia Logo" className="w-full h-full object-contain" />
+              <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-white tracking-wide">Scogestia</h1>

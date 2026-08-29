@@ -119,7 +119,7 @@ export default async function AdminDashboard() {
           <div className="flex-1">
             <p className="text-xs text-gray-500 font-medium mb-1">Absences aujourd'hui</p>
             <p className="text-2xl font-bold text-gray-900 leading-none mb-1">32</p>
-            <a href="#" className="text-[10px] text-[var(--color-chart-green)] font-medium underline">Voir le détail</a>
+            <Link href="/admin/eleves" className="text-[10px] text-[var(--color-chart-green)] font-medium underline">Voir le détail</Link>
           </div>
         </div>
       </div>
@@ -163,7 +163,7 @@ export default async function AdminDashboard() {
         <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-bold text-gray-900">Échéances impayées urgentes</h3>
-            <a href="#" className="text-sm font-semibold text-[var(--color-chart-green)] hover:underline">Voir toutes</a>
+            <Link href="/admin/finances" className="text-sm font-semibold text-[var(--color-chart-green)] hover:underline">Voir toutes</Link>
           </div>
           
           <div className="overflow-x-auto flex-1">
@@ -309,7 +309,7 @@ export default async function AdminDashboard() {
         <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-bold text-gray-900">Activités récentes</h3>
-            <a href="#" className="text-sm font-semibold text-[var(--color-chart-green)] hover:underline">Voir tout</a>
+            <Link href="/admin/finances" className="text-sm font-semibold text-[var(--color-chart-green)] hover:underline">Voir tout</Link>
           </div>
           <div className="space-y-5">
             <div className="flex gap-3">
@@ -405,11 +405,8 @@ export default async function AdminDashboard() {
       <footer className="pt-6 border-t border-gray-200 mt-8 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500 font-medium">
         <p>© 2025 Scogestia. Tous droits réservés.</p>
         <div className="flex items-center gap-4 mt-4 md:mt-0">
-          <a href="#" className="hover:text-gray-900 transition-colors">Confidentialité</a>
-          <span>•</span>
-          <a href="#" className="hover:text-gray-900 transition-colors">Conditions d'utilisation</a>
-          <span>•</span>
-          <a href="#" className="hover:text-gray-900 transition-colors">Aide</a>
+          <Link href="/confidentialite" className="hover:text-gray-900 transition-colors">Confidentialité</Link>
+          <Link href="/conditions-utilisation" className="hover:text-gray-900 transition-colors">Conditions d'utilisation</Link>
         </div>
       </footer>
     </div>

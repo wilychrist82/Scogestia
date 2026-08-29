@@ -269,7 +269,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-lg mx-auto shrink-0 mt-8">
            <div className="bg-emerald-50/50 border border-emerald-100 rounded-lg p-4 flex items-center justify-center gap-4 text-xs text-emerald-800">
               <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0" />
-              <p>En vous inscrivant, vous acceptez nos <Link href="#" className="underline">Conditions d'utilisation</Link> et notre <Link href="#" className="underline">Politique de confidentialité</Link>.</p>
+              <p>En vous inscrivant, vous acceptez nos <Link href="/conditions-utilisation" className="underline">Conditions d'utilisation</Link> et notre <Link href="/confidentialite" className="underline">Politique de confidentialité</Link>.</p>
            </div>
         </div>
 
