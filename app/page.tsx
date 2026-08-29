@@ -124,11 +124,7 @@ export default function Home() {
                    <img 
                      src="/hero-landing.png" 
                      alt="Scogestia - Gestion scolaire intuitive" 
-                     className="w-full lg:max-w-[120%] h-auto object-contain relative z-10"
-                     style={{
-                       WebkitMaskImage: 'radial-gradient(ellipse 95% 95% at 50% 50%, black 75%, transparent 100%)',
-                       maskImage: 'radial-gradient(ellipse 95% 95% at 50% 50%, black 75%, transparent 100%)'
-                     }}
+                     className="w-full lg:max-w-[120%] h-auto object-contain relative z-10 mix-blend-multiply contrast-[1.05] brightness-[1.05]"
                    />
                 </div>
               </motion.div>
