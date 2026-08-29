@@ -27,6 +27,7 @@ import {
   AttendanceData,
   ClassDistributionData
 } from '@/components/dashboard/DashboardCharts'
+import { OnboardingWizard } from '@/components/admin/OnboardingWizard'
 
 export const dynamic = 'force-dynamic'
 
@@ -151,6 +152,13 @@ export default async function AdminDashboard() {
           <CalendarOff size={16} className="text-gray-400 ml-2" />
         </div>
       </div>
+
+      {/* Onboarding Wizard (only visible if some basic steps are missing, component handles its own visibility) */}
+      <OnboardingWizard 
+        classesCount={classesCount || 0}
+        staffCount={staffCount || 0}
+        studentCount={studentCount || 0}
+      />
 
       {/* Top Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
