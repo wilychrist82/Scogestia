@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ChariowProduct } from '@/lib/chariow/api'
 import { ChariowCheckout } from './ChariowCheckout'
+import { CheckCircle2 } from 'lucide-react'
 
 type Props = {
   plans: ChariowProduct[]
@@ -21,65 +22,81 @@ export function AbonnementManager({ plans }: Props) {
     )
   }
 
+  // Triez les plans pour mettre le Standard en premier
+  const sortedPlans = [...plans].sort((a, b) => {
+    const aName = a.name?.toLowerCase() || ''
+    const bName = b.name?.toLowerCase() || ''
+    if (aName.includes('standard') && !bName.includes('standard')) return -1
+    if (!aName.includes('standard') && bName.includes('standard')) return 1
+    return 0
+  })
+
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-        {plans.map((plan) => (
-          <div key={plan.id} className={`bg-[var(--color-surface-container-lowest)] rounded-2xl border-2 p-8 shadow-sm hover:shadow-md transition-shadow flex flex-col relative overflow-hidden ${plan.name && plan.name.toLowerCase().includes('pro') ? 'border-indigo-600' : 'border-[var(--color-outline-variant)]'}`}>
-            {plan.name && plan.name.toLowerCase().includes('pro') && (
-              <div className="absolute top-0 right-0 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg shadow-sm">
-                RECOMMANDÉ
-              </div>
-            )}
-            <h4 className="text-xl font-bold text-[var(--color-on-surface)] mb-2">{plan.name || 'Plan inconnu'}</h4>
-            <div className="flex items-baseline gap-1 mb-6">
-              <span className={`text-4xl font-black ${plan.name && plan.name.toLowerCase().includes('pro') ? 'text-indigo-600' : 'text-[var(--color-primary)]'}`}>
-                {plan.price != null && plan.price > 0 
-                  ? Number(plan.price).toLocaleString('fr-FR') 
-                  : (plan.name?.toLowerCase().includes('pro') ? '9 900' : '7 000')}
-              </span>
-              <span className="text-sm font-semibold text-[var(--color-on-surface-variant)]">{plan.currency || 'FCFA'} / mois</span>
-            </div>
-            
-            <ul className="space-y-3 mb-8 flex-1">
-              <li className="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
-                <span className={`material-symbols-outlined text-[20px] ${plan.name && plan.name.toLowerCase().includes('pro') ? 'text-indigo-600' : 'text-[var(--color-primary)]'}`}>check_circle</span>
-                Gestion illimitée des élèves et classes
-              </li>
-              <li className="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
-                <span className={`material-symbols-outlined text-[20px] ${plan.name && plan.name.toLowerCase().includes('pro') ? 'text-indigo-600' : 'text-[var(--color-primary)]'}`}>check_circle</span>
-                Gestion des Frais Scolaires et Caisse
-              </li>
-              {plan.name && plan.name.toLowerCase().includes('pro') && (
-                <>
-                  <li className="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
-                    <span className="material-symbols-outlined text-indigo-600 text-[20px]">check_circle</span>
-                    Génération des bulletins et notes
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
-                    <span className="material-symbols-outlined text-indigo-600 text-[20px]">check_circle</span>
-                    Notifications SMS incluses
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-[var(--color-on-surface)]">
-                    <span className="material-symbols-outlined text-indigo-600 text-[20px]">check_circle</span>
-                    Support prioritaire 7j/7
-                  </li>
-                </>
-              )}
-            </ul>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto pt-4">
+        {sortedPlans.map((plan) => {
+          const isPro = plan.name?.toLowerCase().includes('pro')
+          const price = plan.price != null && plan.price > 0 ? Number(plan.price).toLocaleString('fr-FR') : (isPro ? '9 900' : '7 000')
 
-            <button 
-              onClick={() => setSelectedPlan(plan)}
-              className={`w-full py-3 rounded-xl font-bold transition-colors ${
-                plan.name && plan.name.toLowerCase().includes('pro') 
-                  ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md'
-                  : 'bg-[var(--color-surface-bright)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white border border-[var(--color-primary)]'
-              }`}
-            >
-              Souscrire à ce plan
-            </button>
-          </div>
-        ))}
+          if (isPro) {
+            return (
+              <div key={plan.id} className="bg-[#006039] rounded-3xl shadow-2xl p-8 flex flex-col relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-emerald-100 text-[#006039] text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Recommandé</div>
+                <div className="mb-8 relative z-10">
+                   <h3 className="text-2xl font-bold text-white mb-2">Plan Pro</h3>
+                   <p className="text-emerald-100/80">Pour les grands établissements</p>
+                </div>
+                <div className="mb-8 relative z-10 whitespace-nowrap">
+                   <span className="text-4xl font-extrabold text-white">{price} FCFA</span>
+                   <span className="text-emerald-200 font-medium"> / mois</span>
+                </div>
+                <ul className="space-y-4 mb-10 flex-1 relative z-10 text-sm md:text-base">
+                   <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Élèves et classes illimités</span></li>
+                   <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Toutes les fonctionnalités Standard</span></li>
+                   <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Gestion multi-campus / multi-sites</span></li>
+                   <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Gestion des Ressources Humaines (Paie)</span></li>
+                   <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Envoi de SMS et Emails aux parents</span></li>
+                   <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Tableaux de bord et analytics poussés</span></li>
+                   <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Accompagnement et formation de l'équipe</span></li>
+                   <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Support prioritaire 24/7 (WhatsApp/Appel)</span></li>
+                </ul>
+                <button onClick={() => setSelectedPlan(plan)} className="w-full py-4 rounded-xl bg-white font-bold text-[#006039] hover:bg-slate-50 transition-colors text-center relative z-10 shadow-lg block mt-auto">
+                   S'abonner au Plan Pro
+                </button>
+                {/* Background decoration */}
+                <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-emerald-600 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+                <div className="absolute -top-20 -left-20 w-40 h-40 bg-emerald-500 rounded-full blur-3xl opacity-40 pointer-events-none"></div>
+              </div>
+            )
+          }
+
+          // Plan Standard
+          return (
+            <div key={plan.id} className="bg-white rounded-3xl shadow-xl border-2 border-[#006039] p-8 flex flex-col relative overflow-hidden">
+               <div className="absolute top-0 right-0 bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Populaire</div>
+               <div className="mb-8 relative z-10">
+                  <h3 className="text-2xl font-bold text-slate-900 mb-2">Plan Standard</h3>
+                  <p className="text-slate-600">Pour les petites écoles</p>
+               </div>
+               <div className="mb-8 relative z-10 whitespace-nowrap">
+                  <span className="text-4xl font-extrabold text-slate-900">{price} FCFA</span>
+                  <span className="text-slate-500 font-medium"> / mois</span>
+               </div>
+               <ul className="space-y-4 mb-10 flex-1 relative z-10 text-sm md:text-base">
+                  <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Jusqu'à 500 élèves</span></li>
+                  <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Gestion des inscriptions et classes</span></li>
+                  <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Suivi de la comptabilité et paiements</span></li>
+                  <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Génération des reçus automatisée</span></li>
+                  <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Saisie des notes et bulletins scolaires</span></li>
+                  <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Portail Parents (Notes & Absences)</span></li>
+                  <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Support client par chat / email</span></li>
+               </ul>
+               <button onClick={() => setSelectedPlan(plan)} className="w-full py-4 rounded-xl bg-[#006039] font-bold text-white hover:bg-[#004d2e] transition-colors text-center relative z-10 shadow-md block mt-auto">
+                  S'abonner au Plan Standard
+               </button>
+            </div>
+          )
+        })}
       </div>
 
       {selectedPlan && (
