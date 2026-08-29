@@ -311,7 +311,7 @@ export default function Home() {
 
                {/* Plan Standard */}
                <motion.div variants={fadeIn} className="bg-white rounded-3xl shadow-xl border-2 border-[#006039] p-8 flex flex-col relative overflow-hidden transform md:-translate-y-4">
-                  <div className="absolute top-0 right-0 bg-emerald-100 text-[#006039] text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Recommandé</div>
+                  <div className="absolute top-0 right-0 bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Populaire</div>
                   <div className="mb-8 relative z-10">
                      <h3 className="text-2xl font-bold text-slate-900 mb-2">Plan Standard</h3>
                      <p className="text-slate-600">Pour les petites écoles</p>
@@ -336,7 +336,7 @@ export default function Home() {
 
                {/* Plan Pro */}
                <motion.div variants={fadeIn} className="bg-[#006039] rounded-3xl shadow-2xl p-8 flex flex-col relative overflow-hidden">
-                  <div className="absolute top-0 right-0 bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Populaire</div>
+                  <div className="absolute top-0 right-0 bg-emerald-100 text-[#006039] text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Recommandé</div>
                   <div className="mb-8 relative z-10">
                      <h3 className="text-2xl font-bold text-white mb-2">Plan Pro</h3>
                      <p className="text-emerald-100/80 whitespace-nowrap">Pour les grands établissements</p>
