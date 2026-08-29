@@ -9,35 +9,51 @@ import * as Sentry from '@sentry/nextjs'
  */
 export async function sendSms(phoneNumber: string, message: string): Promise<boolean> {
   try {
-    // Note: on utilise Supabase Admin ou le client standard selon le contexte
-    // Si c'est appelé depuis un Webhook (serveur), il faut s'assurer d'avoir les clés.
-    // L'Edge function elle-même gère la logique métier.
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const username = process.env.AFRICASTALKING_USERNAME
+    const apiKey = process.env.AFRICASTALKING_API_KEY
 
-    if (!supabaseUrl || !supabaseKey) {
-      console.error("Clés Supabase manquantes pour invoquer l'Edge Function.")
-      Sentry.captureException(new Error("Missing Supabase keys for SMS Edge Function"), { tags: { feature: 'sms', severity: 'critical' } })
-      return false
+    if (!username || !apiKey) {
+      console.log(`[SMS MOCK] Message to ${phoneNumber}: ${message}`)
+      return true
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    let formattedPhone = phoneNumber
+    if (!formattedPhone.startsWith('+')) {
+      formattedPhone = `+228${formattedPhone}`
+    }
 
-    const { data, error } = await supabase.functions.invoke('send-sms', {
-      body: { phone: phoneNumber, message }
+    const url = username === 'sandbox' 
+      ? 'https://api.sandbox.africastalking.com/version1/messaging'
+      : 'https://api.africastalking.com/version1/messaging'
+
+    const formData = new URLSearchParams()
+    formData.append('username', username)
+    formData.append('to', formattedPhone)
+    formData.append('message', message)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'apiKey': apiKey,
+      },
+      body: formData
     })
 
-    if (error) {
-      console.error("Erreur lors de l'appel à l'Edge Function send-sms:", error)
-      Sentry.captureException(error, { 
+    const data = await response.json()
+
+    if (response.ok) {
+      console.log(`[SMS SUCCESS] Résultat:`, data)
+      return true
+    } else {
+      console.error('Africa\'s Talking API error:', data)
+      Sentry.captureException(new Error('Erreur fournisseur SMS'), { 
         tags: { feature: 'sms', severity: 'error' },
-        extra: { phone: phoneNumber }
+        extra: { phone: phoneNumber, details: data }
       })
       return false
     }
-
-    console.log(`[SMS SUCCESS] Résultat:`, data)
-    return true
   } catch (error) {
     console.error("Erreur interne lors de l'envoi du SMS:", error)
     Sentry.captureException(error, { 
