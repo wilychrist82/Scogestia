@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ShieldCheck, Cloud, Zap, CheckCircle2, LayoutDashboard, CreditCard, Users, ArrowRight, BarChart, Smartphone, Globe, Mail, Phone, MapPin, Star, PlayCircle, Lock, X } from 'lucide-react'
+import { ShieldCheck, Cloud, Zap, CheckCircle2, LayoutDashboard, CreditCard, Users, ArrowRight, BarChart, Smartphone, Globe, Mail, Phone, MapPin, Star, PlayCircle, Lock, X, Play } from 'lucide-react'
 
 // Animation Variants
 const fadeIn = {
