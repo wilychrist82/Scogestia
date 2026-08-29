@@ -72,11 +72,8 @@ export default function Home() {
                 animate="visible"
                 variants={staggerContainer}
               >
-                <motion.div variants={fadeIn} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100/50 text-[#006039] text-sm font-semibold mb-8 border border-emerald-200">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>Le logiciel de gestion scolaire N°1</span>
-                </motion.div>
                 
+
                 <motion.h1 variants={fadeIn} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-6">
                   Gérez votre école <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006039] to-emerald-500">en toute simplicité</span>. Gagnez du temps, maîtrisez vos finances.
                 </motion.h1>
@@ -319,7 +316,7 @@ export default function Home() {
                      <h3 className="text-2xl font-bold text-slate-900 mb-2">Plan Standard</h3>
                      <p className="text-slate-600">Pour les petites écoles</p>
                   </div>
-                  <div className="mb-8 relative z-10">
+                  <div className="mb-8 relative z-10 whitespace-nowrap">
                      <span className="text-4xl font-extrabold text-slate-900">7 000 FCFA</span>
                      <span className="text-slate-500 font-medium"> / mois</span>
                   </div>
@@ -344,7 +341,7 @@ export default function Home() {
                      <h3 className="text-2xl font-bold text-white mb-2">Plan Pro</h3>
                      <p className="text-emerald-100/80">Pour les grands établissements</p>
                   </div>
-                  <div className="mb-8 relative z-10">
+                  <div className="mb-8 relative z-10 whitespace-nowrap">
                      <span className="text-4xl font-extrabold text-white">9 900 FCFA</span>
                      <span className="text-emerald-200 font-medium"> / mois</span>
                   </div>
@@ -384,7 +381,7 @@ export default function Home() {
             </motion.div>
 
             <motion.div 
-              className="grid grid-cols-1 md:grid-cols-3 gap-8"
+              className="flex overflow-x-auto snap-x snap-mandatory pb-4 md:grid md:grid-cols-3 gap-8 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
@@ -395,7 +392,7 @@ export default function Home() {
                 { name: "Amina T.", role: "Comptable", text: "Avant, je passais des jours à pointer les reçus de scolarité. Maintenant, en quelques clics, j'ai la situation financière exacte de l'école. Un gain de temps énorme." },
                 { name: "Jean-Paul M.", role: "Parent d'élève", text: "Pouvoir consulter les notes de mon fils directement sur mon téléphone me rassure. L'école est beaucoup plus transparente grâce à ce portail." }
               ].map((testimonial, i) => (
-                <motion.div key={i} variants={fadeIn} className="bg-slate-50 p-8 rounded-2xl border border-slate-200">
+                <motion.div key={i} variants={fadeIn} className="bg-slate-50 p-8 rounded-2xl border border-slate-200 min-w-[85%] md:min-w-0 snap-center">
                   <div className="flex gap-1 mb-4 text-amber-400">
                     <Star className="w-5 h-5 fill-current" />
                     <Star className="w-5 h-5 fill-current" />
@@ -486,10 +483,7 @@ export default function Home() {
                 >
                   Démarrer mon essai gratuit
                 </Link>
-                <div className="text-emerald-100/80 flex items-center gap-2 mt-4 sm:mt-0 ml-0 sm:ml-4">
-                  <Lock className="w-5 h-5" />
-                  <span>Sans engagement</span>
-                </div>
+
               </div>
             </motion.div>
           </div>
