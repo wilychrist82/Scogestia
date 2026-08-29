@@ -122,23 +122,11 @@ export default function Home() {
               >
                 <div className="relative overflow-visible group flex justify-center lg:justify-end">
                    <img 
-                     src="/mockup-scogestia.png" 
-                     alt="Interface de Scogestia sur ordinateur et mobile" 
-                     className="w-full max-w-[120%] lg:max-w-[130%] h-auto object-contain relative z-10 drop-shadow-2xl"
+                     src="/hero-image.png" 
+                     alt="La communauté Scogestia : enseignants, élèves et parents" 
+                     className="w-full lg:max-w-[110%] h-auto rounded-3xl shadow-2xl object-cover relative z-10 border-4 border-white"
                    />
                 </div>
-                {/* Decorative floating elements */}
-                <motion.div 
-                  className="absolute top-1/4 -right-10 bg-white p-4 rounded-xl shadow-xl border border-slate-100 hidden lg:flex items-center gap-3 z-20"
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <div className="bg-emerald-100 p-2 rounded-lg text-[#006039]"><BarChart className="w-6 h-6"/></div>
-                  <div>
-                    <div className="text-xs text-slate-500 font-medium">Taux de recouvrement</div>
-                    <div className="text-lg font-bold text-slate-900">98.5%</div>
-                  </div>
-                </motion.div>
               </motion.div>
             </div>
           </div>
