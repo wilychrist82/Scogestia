@@ -29,7 +29,9 @@ export default function LoginPage() {
         
         <div className="relative z-10 w-full max-w-md flex flex-col items-center">
           <Link href="/" className="inline-flex flex-col items-center mb-12">
-            <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="h-20 sm:h-24 w-auto object-contain mb-4" />
+            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl mb-6">
+              <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="h-16 sm:h-20 w-auto object-contain" />
+            </div>
             <p className="text-emerald-300 font-medium tracking-widest text-xs uppercase text-center border-b border-emerald-500/30 pb-4">
               La gestion scolaire simplifiée
             </p>
