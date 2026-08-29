@@ -217,7 +217,7 @@ export function ClassesManager({ classes }: Props) {
 
       {/* Modal Overlay: Ajouter / Modifier une classe */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1c30]/40 backdrop-blur-sm transition-opacity">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0b1c30]/40 backdrop-blur-sm transition-opacity">
           <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-lg rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[var(--color-outline-variant)] flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
@@ -317,7 +317,7 @@ export function ClassesManager({ classes }: Props) {
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1c30]/40 backdrop-blur-sm transition-opacity">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0b1c30]/40 backdrop-blur-sm transition-opacity">
           <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-sm rounded-xl shadow-lg border border-[var(--color-outline-variant)] flex flex-col overflow-hidden">
             <div className="p-6">
               <h2 className="text-xl font-bold text-[var(--color-on-surface)] mb-2">Supprimer la classe</h2>

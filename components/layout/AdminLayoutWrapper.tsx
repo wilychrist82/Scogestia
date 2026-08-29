@@ -41,7 +41,7 @@ export function AdminLayoutWrapper({
           schoolName={schoolName}
           schoolCity={schoolCity}
         />
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto custom-scrollbar relative z-0">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto custom-scrollbar relative">
           {children}
         </main>
       </div>

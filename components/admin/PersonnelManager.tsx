@@ -269,7 +269,7 @@ export function PersonnelManager({ staffList }: Props) {
 
       {/* Modal Overlay: Ajouter un membre */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1c30]/40 backdrop-blur-sm transition-opacity">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0b1c30]/40 backdrop-blur-sm transition-opacity">
           <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-lg rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[var(--color-outline-variant)] flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
@@ -410,7 +410,7 @@ export function PersonnelManager({ staffList }: Props) {
 
       {/* Modal Overlay: Modifier un membre */}
       {isEditModalOpen && staffToEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1c30]/40 backdrop-blur-sm transition-opacity">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0b1c30]/40 backdrop-blur-sm transition-opacity">
           <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-lg rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[var(--color-outline-variant)] flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
             <div className="px-6 py-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
               <h2 className="text-xl font-semibold text-[var(--color-on-surface)]">
