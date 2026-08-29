@@ -124,7 +124,7 @@ export default function Home() {
                    <img 
                      src="/hero-landing.png" 
                      alt="Scogestia - Gestion scolaire intuitive" 
-                     className="w-full lg:max-w-[120%] h-auto object-contain relative z-10 drop-shadow-xl"
+                     className="w-full lg:max-w-[120%] h-auto object-contain relative z-10 mix-blend-multiply"
                    />
                 </div>
               </motion.div>
