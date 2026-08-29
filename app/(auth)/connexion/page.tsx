@@ -250,9 +250,10 @@ export default function LoginPage() {
         <div className="w-full max-w-lg mx-auto">
            <div className="text-center text-xs text-slate-500 mb-6">
               © {new Date().getFullYear()} Scogestia. Tous droits réservés.<br/>
-              <div className="flex justify-center gap-3 mt-2">
+              <div className="flex justify-center gap-3 mt-2 flex-wrap px-4">
                  <Link href="/confidentialite" className="hover:text-[#006039]">Confidentialité</Link>
                  <Link href="/conditions-utilisation" className="hover:text-[#006039]">Conditions d'utilisation</Link>
+                 <Link href="/mentions-legales" className="hover:text-[#006039]">Mentions légales</Link>
               </div>
            </div>
 

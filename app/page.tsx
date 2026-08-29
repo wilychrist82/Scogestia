@@ -605,9 +605,10 @@ export default function Home() {
             <div>
               © {new Date().getFullYear()} Scogestia. Tous droits réservés.
             </div>
-            <div className="flex gap-6">
+            <div className="flex flex-wrap justify-center md:justify-end gap-6 mt-4 md:mt-0">
               <Link href="/confidentialite" className="hover:text-white transition-colors">Confidentialité</Link>
               <Link href="/conditions-utilisation" className="hover:text-white transition-colors">Conditions d'utilisation</Link>
+              <Link href="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</Link>
             </div>
           </div>
         </div>
