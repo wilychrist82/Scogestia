@@ -8,12 +8,14 @@ export function AdminLayoutWrapper({
   children, 
   userFullName, 
   userRoleLabel,
-  navVariant = 'admin'
+  navVariant = 'admin',
+  banner
 }: { 
   children: React.ReactNode, 
   userFullName: string, 
   userRoleLabel: string,
-  navVariant?: 'admin' | 'enseignant' | 'super_admin'
+  navVariant?: 'admin' | 'enseignant' | 'super_admin',
+  banner?: React.ReactNode
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
@@ -27,6 +29,7 @@ export function AdminLayoutWrapper({
         onClose={() => setIsSidebarOpen(false)}
       />
       <div className="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden w-full">
+        {banner}
         <TopHeader 
           userFullName={userFullName} 
           userRoleLabel={userRoleLabel} 

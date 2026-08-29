@@ -61,23 +61,24 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex flex-col h-screen w-full">
-      {showBanner && (
-        <div className={`px-4 py-3 flex items-center justify-between shadow-sm z-50 ${isExpired ? 'bg-[#d93025] text-white' : 'bg-[#f57f17] text-white'}`}>
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <AlertTriangle className="w-5 h-5" />
-            <span>{bannerMessage}</span>
+    <div className="h-screen w-full">
+      <AdminLayoutWrapper 
+        userFullName={userFullName} 
+        userRoleLabel={userRoleLabel}
+        banner={showBanner ? (
+          <div className={`px-4 py-3 flex items-center justify-between shadow-sm z-50 ${isExpired ? 'bg-[#d93025] text-white' : 'bg-[#f57f17] text-white'}`}>
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+              <span>{bannerMessage}</span>
+            </div>
+            <Link href="/admin/abonnement" className="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded transition-colors whitespace-nowrap ml-4">
+              Renouveler
+            </Link>
           </div>
-          <Link href="/admin/abonnement" className="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded transition-colors whitespace-nowrap ml-4">
-            Renouveler
-          </Link>
-        </div>
-      )}
-      <div className="flex-1 overflow-hidden relative">
-        <AdminLayoutWrapper userFullName={userFullName} userRoleLabel={userRoleLabel}>
-          {children}
-        </AdminLayoutWrapper>
-      </div>
+        ) : null}
+      >
+        {children}
+      </AdminLayoutWrapper>
     </div>
   )
 }
