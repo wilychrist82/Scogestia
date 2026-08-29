@@ -28,7 +28,7 @@ export default function Home() {
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link href="#accueil" className="flex items-center gap-2">
-              <img src="/logo.png" alt="Scogestia Logo" className="h-14 w-auto object-contain drop-shadow-sm" />
+              <img src="/logo-scogestia.png" alt="Scogestia Logo" className="h-14 w-auto object-contain drop-shadow-sm mix-blend-multiply" />
             </Link>
           </div>
           
@@ -78,11 +78,11 @@ export default function Home() {
                 </motion.div>
                 
                 <motion.h1 variants={fadeIn} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-6">
-                  Gérez votre école <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006039] to-emerald-500">simplement</span>, des frais aux bulletins.
+                  Gérez votre école <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006039] to-emerald-500">en toute simplicité</span>. Gagnez du temps, maîtrisez vos finances.
                 </motion.h1>
                 
                 <motion.p variants={fadeIn} className="text-lg text-slate-600 mb-10 max-w-xl leading-relaxed">
-                  Scogestia est la solution 100% web qui aide les directeurs, comptables et enseignants à gagner du temps, et renforce la confiance des parents.
+                  Scogestia est la solution 100 % web qui aide les directeurs, comptables et enseignants à gagner du temps, à mieux piloter leur établissement et à renforcer la confiance des parents.
                 </motion.p>
                 
                 <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
@@ -505,10 +505,10 @@ export default function Home() {
             {/* Colonne 1: A propos */}
             <div className="space-y-6">
               <div className="flex items-center gap-2">
-                <img src="/logo.png" alt="Scogestia Logo" className="h-12 w-auto bg-white p-2 rounded-lg" />
+                <img src="/logo-scogestia.png" alt="Scogestia Logo" className="h-12 w-auto object-contain" />
               </div>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Le système d'information de gestion de l'éducation (SIGE) moderne qui connecte les directeurs, les enseignants et les parents.
+                La gestion scolaire simplifiée. Le système d'information de gestion de l'éducation (SIGE) moderne qui connecte les directeurs, les enseignants et les parents.
               </p>
               <div className="flex gap-4">
                 <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-[#006039] hover:text-white transition-colors">
