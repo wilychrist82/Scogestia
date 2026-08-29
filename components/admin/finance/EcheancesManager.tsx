@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, FormEvent } from 'react'
-import { generateSchedule } from '@/app/actions/finance'
+import { generateSchedule, deleteSchedule } from '@/app/actions/finance'
 import Link from 'next/link'
 
 type ClassItem = { id: string; name: string }
@@ -45,6 +45,19 @@ export function EcheancesManager({ schedules, classes, students, basePath = "/ad
         setError(result.error)
       } else {
         setIsModalOpen(false)
+      }
+    })
+  }
+
+  const handleDelete = (id: string) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette échéance ? Cette action est irréversible.")) return
+    
+    startTransition(async () => {
+      const result = await deleteSchedule(id)
+      if (result?.error) {
+        alert(result.error)
+      } else {
+        setOpenDropdownId(null)
       }
     })
   }
@@ -179,15 +192,7 @@ export function EcheancesManager({ schedules, classes, students, basePath = "/ad
                               <>
                                 <div className="fixed inset-0 z-10" onClick={() => setOpenDropdownId(null)}></div>
                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-[var(--color-outline-variant)] py-1 z-20 overflow-hidden">
-                                  <button onClick={() => { setOpenDropdownId(null); alert("Afficher les détails (à implémenter)") }} className="w-full text-left px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#f8f9fa] flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-[18px]">visibility</span>
-                                    Voir les détails
-                                  </button>
-                                  <button onClick={() => { setOpenDropdownId(null); alert("Modifier l'échéance (à implémenter)") }} className="w-full text-left px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#f8f9fa] flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-[18px]">edit</span>
-                                    Modifier
-                                  </button>
-                                  <button onClick={() => { setOpenDropdownId(null); alert("Supprimer l'échéance (à implémenter)") }} className="w-full text-left px-4 py-2 text-sm text-[var(--color-status-retard-text)] hover:bg-[#fff0f0] flex items-center gap-2 border-t border-[var(--color-outline-variant)]">
+                                  <button onClick={() => handleDelete(schedule.id)} disabled={isPending} className="w-full text-left px-4 py-2 text-sm text-[var(--color-status-retard-text)] hover:bg-[#fff0f0] flex items-center gap-2 border-[var(--color-outline-variant)] disabled:opacity-50">
                                     <span className="material-symbols-outlined text-[18px]">delete</span>
                                     Supprimer
                                   </button>

@@ -492,51 +492,6 @@ export default function Home() {
               <p className="text-slate-400 text-sm leading-relaxed">
                 La gestion scolaire simplifiée. Le système d'information de gestion de l'éducation (SIGE) moderne qui connecte les directeurs, les enseignants et les parents.
               </p>
-              <div className="flex gap-4">
-                {/* Facebook */}
-                <a href="#" className="w-10 h-10 flex items-center justify-center hover:scale-110 transition-transform">
-                  <svg viewBox="0 0 36 36" className="w-8 h-8" fill="url(#fb-grad)">
-                    <defs>
-                      <linearGradient x1="50%" y1="97.078%" x2="50%" y2="0%" id="fb-grad">
-                        <stop stopColor="#0062E0" offset="0%"></stop>
-                        <stop stopColor="#19AFFF" offset="100%"></stop>
-                      </linearGradient>
-                    </defs>
-                    <path d="M15 35.8C6.5 34.3 0 26.9 0 18 0 8.1 8.1 0 18 0s18 8.1 18 18c0 8.9-6.5 16.3-15 17.8v-11.9h-4v-4.7h4v-3c0-4.6 2.5-7 6.6-7 1.9 0 3.8.3 3.8.3v4.2h-2.1c-2.1 0-2.8 1.3-2.8 2.7v2.8h4.7l-.8 4.7h-3.9v11.9z"/>
-                    <path d="M24.7 18h-4.7v-2.8c0-1.4.7-2.7 2.8-2.7h2.1V8.3s-1.9-.3-3.8-.3c-4.1 0-6.6 2.4-6.6 7v3h-4v4.7h4v11.9c.9.1 1.9.2 2.9.2s1.9-.1 2.9-.2v-11.9h3.9l.8-4.7z" fill="#FFF"/>
-                  </svg>
-                </a>
-                {/* LinkedIn */}
-                <a href="#" className="w-10 h-10 flex items-center justify-center hover:scale-110 transition-transform">
-                  <svg viewBox="0 0 24 24" className="w-8 h-8" fill="#0A66C2">
-                    <path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5V9h3v10zM6.5 7.7a1.8 1.8 0 110-3.6 1.8 1.8 0 010 3.6zM19 19h-3v-5c0-1.2 0-2.7-1.6-2.7-1.6 0-1.9 1.3-1.9 2.6V19h-3V9h2.9v1.4h.1c.4-.8 1.4-1.6 2.9-1.6 3.1 0 3.6 2 3.6 4.7V19z" fill="#FFF"/>
-                    <path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5V9h3v10zM6.5 7.7a1.8 1.8 0 110-3.6 1.8 1.8 0 010 3.6zM19 19h-3v-5c0-1.2 0-2.7-1.6-2.7-1.6 0-1.9 1.3-1.9 2.6V19h-3V9h2.9v1.4h.1c.4-.8 1.4-1.6 2.9-1.6 3.1 0 3.6 2 3.6 4.7V19z"/>
-                  </svg>
-                </a>
-                {/* TikTok */}
-                <a href="#" className="w-10 h-10 flex items-center justify-center hover:scale-110 transition-transform">
-                  <svg viewBox="0 0 48 48" className="w-8 h-8">
-                    <rect width="48" height="48" rx="8" fill="#000" />
-                    <path d="M24.8 10h5.1c.5 2 2.1 4.1 4.9 4.6v5c-2.3-.1-4.2-1-5.6-2.1v9c0 5-4.1 9.1-9.1 9.1-5.1 0-9.1-4.1-9.1-9.1s4.1-9.1 9.1-9.1c.8 0 1.6.1 2.4.3v5.2c-.8-.2-1.5-.4-2.3-.4-2.3 0-4.1 1.9-4.1 4.1s1.9 4.1 4.1 4.1c2.2 0 4-1.8 4-4V10z" fill="#25F4EE" transform="translate(-1, 0)"/>
-                    <path d="M24.8 10h5.1c.5 2 2.1 4.1 4.9 4.6v5c-2.3-.1-4.2-1-5.6-2.1v9c0 5-4.1 9.1-9.1 9.1-5.1 0-9.1-4.1-9.1-9.1s4.1-9.1 9.1-9.1c.8 0 1.6.1 2.4.3v5.2c-.8-.2-1.5-.4-2.3-.4-2.3 0-4.1 1.9-4.1 4.1s1.9 4.1 4.1 4.1c2.2 0 4-1.8 4-4V10z" fill="#FE2C55" transform="translate(1, 1)"/>
-                    <path d="M24.8 10h5.1c.5 2 2.1 4.1 4.9 4.6v5c-2.3-.1-4.2-1-5.6-2.1v9c0 5-4.1 9.1-9.1 9.1-5.1 0-9.1-4.1-9.1-9.1s4.1-9.1 9.1-9.1c.8 0 1.6.1 2.4.3v5.2c-.8-.2-1.5-.4-2.3-.4-2.3 0-4.1 1.9-4.1 4.1s1.9 4.1 4.1 4.1c2.2 0 4-1.8 4-4V10z" fill="#FFF"/>
-                  </svg>
-                </a>
-                {/* Instagram */}
-                <a href="#" className="w-10 h-10 flex items-center justify-center hover:scale-110 transition-transform">
-                  <svg viewBox="0 0 36 36" className="w-8 h-8">
-                    <defs>
-                      <linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%">
-                        <stop stopColor="#FCCB90" offset="0%" />
-                        <stop stopColor="#F93236" offset="50%" />
-                        <stop stopColor="#C915AC" offset="100%" />
-                      </linearGradient>
-                    </defs>
-                    <rect width="36" height="36" rx="10" fill="url(#ig-grad)" />
-                    <path d="M24 10.5c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5-1.5-.7-1.5-1.5.7-1.5 1.5-1.5zM18 13.5c-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5 4.5-2 4.5-4.5-2-4.5-4.5-4.5zm0 7c-1.4 0-2.5-1.1-2.5-2.5s1.1-2.5 2.5-2.5 2.5 1.1 2.5 2.5-1.1 2.5-2.5 2.5zm6-9.5c1.6 0 3 1.4 3 3v8c0 1.6-1.4 3-3 3h-8c-1.6 0-3-1.4-3-3v-8c0-1.6 1.4-3 3-3h8zm0-2h-8c-2.8 0-5 2.2-5 5v8c0 2.8 2.2 5 5 5h8c2.8 0 5-2.2 5-5v-8c0-2.8-2.2-5-5-5z" fill="#FFF"/>
-                  </svg>
-                </a>
-              </div>
             </div>
 
             {/* Colonne 2: Liens Rapides */}

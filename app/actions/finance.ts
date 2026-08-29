@@ -24,6 +24,20 @@ async function getActiveSchoolId() {
   return roleData.school_id;
 }
 
+function getDynamicAcademicYear() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = date.getMonth(); // 0-indexed (0 = Jan, 7 = Aug)
+  
+  // Si on est avant août, l'année a commencé l'année précédente
+  if (month < 7) {
+    return `${year - 1}/${year}`;
+  } else {
+    // Si on est en août ou après, c'est la nouvelle rentrée
+    return `${year}/${year + 1}`;
+  }
+}
+
 export async function generateSchedule(prevState: ActionState, formData: FormData): Promise<ActionState> {
   const type = formData.get('type') as string; // 'individual' or 'class'
   const studentId = formData.get('studentId') as string;
@@ -31,7 +45,7 @@ export async function generateSchedule(prevState: ActionState, formData: FormDat
   const label = formData.get('label') as string;
   const amount = parseFloat(formData.get('amount') as string);
   const dueDate = formData.get('dueDate') as string;
-  const academicYear = '2026-2027'; // Should be dynamic in a real app
+  const academicYear = getDynamicAcademicYear();
 
   if (!label || !amount || !dueDate) {
     return { error: 'Veuillez remplir les champs obligatoires (libellé, montant, date).' };
@@ -330,6 +344,38 @@ export async function deleteFeeType(id: string): Promise<ActionState> {
     if (error) throw error;
 
     revalidatePath('/admin/finance/frais');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
+export async function deleteSchedule(id: string): Promise<ActionState> {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+    
+    // Check if there are any payments attached to this schedule first
+    const { count, error: countError } = await supabase
+      .from('payments')
+      .select('*', { count: 'exact', head: true })
+      .eq('schedule_id', id);
+      
+    if (countError) throw countError;
+    
+    if (count && count > 0) {
+      return { error: "Impossible de supprimer cette échéance car des paiements y sont déjà attachés." };
+    }
+    
+    const { error } = await supabase
+      .from('payment_schedules')
+      .delete()
+      .eq('id', id)
+      .eq('school_id', school_id);
+
+    if (error) throw error;
+
+    revalidatePath('/admin/finance/echeances');
     return { success: true };
   } catch (err: any) {
     return { error: err.message };

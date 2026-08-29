@@ -190,9 +190,13 @@ export default function LoginPage() {
               </div>
 
               <div className="text-sm">
-                <Link href="#" className="font-medium text-[#006039] hover:text-[#004d2e]">
+                <button 
+                  type="button" 
+                  onClick={() => alert("Veuillez contacter l'administrateur de votre établissement pour réinitialiser votre mot de passe.")} 
+                  className="font-medium text-[#006039] hover:text-[#004d2e]"
+                >
                   Mot de passe oublié ?
-                </Link>
+                </button>
               </div>
             </div>
 

@@ -21,6 +21,20 @@ async function getActiveSchoolId() {
   return roleData.school_id;
 }
 
+function getDynamicAcademicYear() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = date.getMonth(); // 0-indexed (0 = Jan, 7 = Aug)
+  
+  // Si on est avant août, l'année a commencé l'année précédente
+  if (month < 7) {
+    return `${year - 1}/${year}`;
+  } else {
+    // Si on est en août ou après, c'est la nouvelle rentrée
+    return `${year}/${year + 1}`;
+  }
+}
+
 export async function saveSchoolSubject(
   prevState: ActionState,
   formData: FormData,
@@ -90,7 +104,7 @@ export async function savePrimaryGrades(
               month_number: monthNumber,
               score,
               max_score: 10,
-              academic_year: "2023/2024",
+              academic_year: getDynamicAcademicYear(),
               entered_by: user?.id,
             });
           }
@@ -161,7 +175,7 @@ export async function saveSecondaryGrades(
           class_score: classScore,
           comp_score: compScore,
           max_score: 20,
-          academic_year: "2023/2024", // TODO: dynamic
+          academic_year: getDynamicAcademicYear(),
           entered_by: user?.id,
         });
       }
@@ -214,7 +228,7 @@ export async function saveBulletinPrimaryGrades(
             month_number: monthNumber,
             score,
             max_score: 10,
-            academic_year: "2023/2024",
+            academic_year: getDynamicAcademicYear(),
             entered_by: user?.id,
           });
         }
@@ -246,11 +260,13 @@ export async function saveBulletinPrimaryGrades(
     if (info.appreciation || info.decision) {
       await supabase.from("primary_bulletin_info").upsert(
         {
+          school_id,
           student_id: studentId,
           appreciation: info.appreciation,
           director_decision: info.decision,
+          academic_year: getDynamicAcademicYear(),
         },
-        { onConflict: "student_id" },
+        { onConflict: "student_id, academic_year" },
       );
     }
 
@@ -287,7 +303,7 @@ export async function saveBulletinSecondaryGrades(
           class_score: classScore,
           comp_score: compScore,
           max_score: 20,
-          academic_year: "2023/2024",
+          academic_year: getDynamicAcademicYear(),
           entered_by: user?.id,
         });
       }
