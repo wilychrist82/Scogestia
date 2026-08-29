@@ -42,6 +42,31 @@ export function PaiementsManager({ payments, pendingSchedules, basePath = "/admi
   const [error, setError] = useState<string | null>(null)
   const [isSmsPending, setIsSmsPending] = useState(false)
 
+  const handleExportCSV = () => {
+    if (!payments || payments.length === 0) return
+    const headers = ['Date', 'Eleve', 'Motif', 'Montant', 'Statut']
+    const rows = payments.map(p => [
+      new Date(p.payment_date).toLocaleDateString('fr-FR'),
+      `${p.student?.first_name || ''} ${p.student?.last_name || ''}`,
+      p.reason,
+      p.amount,
+      p.status
+    ])
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(r => r.map(cell => `"${cell}"`).join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.setAttribute('download', `paiements_scogestia_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   const handleTriggerSMS = async () => {
     setIsSmsPending(true)
     setError(null)
@@ -99,6 +124,10 @@ export function PaiementsManager({ payments, pendingSchedules, basePath = "/admi
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Consultez et enregistrez les paiements reçus.</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <button onClick={handleExportCSV} className="flex items-center justify-center gap-2 bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] h-12 px-6 rounded-full text-sm font-semibold hover:bg-[var(--color-surface-container-highest)] transition-colors shadow-sm w-full sm:w-auto shrink-0 border border-[var(--color-outline-variant)]">
+              <span className="material-symbols-outlined text-[20px]">download</span>
+              Exporter (CSV)
+            </button>
             <button onClick={handleTriggerSMS} disabled={isSmsPending} className="flex items-center justify-center gap-2 bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] h-12 px-6 rounded-full text-sm font-semibold hover:bg-[var(--color-surface-container-highest)] transition-colors shadow-sm w-full sm:w-auto shrink-0 border border-[var(--color-outline-variant)] disabled:opacity-50">
               <span className="material-symbols-outlined text-[20px]">sms</span>
               {isSmsPending ? 'Envoi...' : 'Relances SMS'}

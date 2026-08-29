@@ -47,6 +47,31 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
     })
   }
 
+  const handleExportCSV = () => {
+    if (!students || students.length === 0) return
+    const headers = ['Matricule', 'Nom', 'Prénom', 'Classe', 'Statut']
+    const rows = students.map(s => [
+      s.matricule,
+      s.last_name,
+      s.first_name,
+      s.classes?.name || '',
+      s.status
+    ])
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(r => r.map(cell => `"${cell}"`).join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.setAttribute('download', `eleves_scogestia_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   const handleFilterChange = useCallback((key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
     if (value) {
@@ -87,6 +112,11 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
             </select>
             <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-on-surface-variant)]">expand_more</span>
           </div>
+          {/* Export CSV */}
+          <button onClick={handleExportCSV} className="bg-[var(--color-surface-container-high)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-sm font-semibold px-4 py-3 h-12 rounded-lg hover:bg-[var(--color-surface-container-highest)] transition-colors flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shrink-0 shadow-sm">
+            <span className="material-symbols-outlined text-[20px]">download</span>
+            Exporter (CSV)
+          </button>
           {/* Primary Button */}
           <Link href="/admin/eleves/nouveau" className="bg-[var(--color-primary)] text-white text-sm font-semibold px-6 py-3 h-12 rounded-lg hover:opacity-90 transition-colors flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shrink-0 shadow-sm">
             <span className="material-symbols-outlined text-[20px]">person_add</span>

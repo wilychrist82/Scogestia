@@ -33,6 +33,13 @@ export default async function AbonnementPage() {
       console.warn("Abonnement non trouvé ou erreur:", subError)
     }
 
+    // Récupérer l'historique des paiements SaaS
+    const { data: saasPayments } = await supabase
+      .from('saas_payments')
+      .select('*')
+      .eq('school_id', roleData.school_id)
+      .order('created_at', { ascending: false })
+
     // Récupérer les produits Chariow
     const chariowProducts = await getChariowProducts()
     
@@ -93,6 +100,56 @@ export default async function AbonnementPage() {
           <div className="mt-8">
             <h3 className="font-bold text-2xl text-[var(--color-on-surface)] mb-6 text-center">Choisissez votre plan</h3>
             <AbonnementManager plans={plans} />
+          </div>
+
+          {/* Historique de facturation */}
+          <div className="mt-12 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] shadow-sm">
+            <h3 className="font-bold text-lg text-[var(--color-on-surface)] mb-4">Historique de facturation</h3>
+            
+            {!saasPayments || saasPayments.length === 0 ? (
+              <p className="text-[var(--color-on-surface-variant)] text-sm">Aucun paiement enregistré pour le moment.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-[var(--color-outline-variant)] text-[var(--color-on-surface-variant)] text-sm">
+                      <th className="pb-3 font-semibold">Date</th>
+                      <th className="pb-3 font-semibold">Plan</th>
+                      <th className="pb-3 font-semibold">Montant</th>
+                      <th className="pb-3 font-semibold">Référence</th>
+                      <th className="pb-3 font-semibold">Statut</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {saasPayments.map((payment: any) => (
+                      <tr key={payment.id} className="border-b border-[var(--color-outline-variant)] last:border-0 hover:bg-[var(--color-surface-container-highest)] transition-colors">
+                        <td className="py-4 text-sm font-medium text-[var(--color-on-surface)]">
+                          {new Date(payment.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </td>
+                        <td className="py-4 text-sm text-[var(--color-on-surface-variant)]">
+                          {payment.plan_name || 'Standard'}
+                        </td>
+                        <td className="py-4 text-sm text-[var(--color-on-surface-variant)]">
+                          {Number(payment.amount).toLocaleString('fr-FR')} {payment.currency}
+                        </td>
+                        <td className="py-4 text-sm font-mono text-[var(--color-on-surface-variant)] text-xs">
+                          {payment.provider_sale_id || '-'}
+                        </td>
+                        <td className="py-4 text-sm">
+                          <span className={`px-2 py-1 rounded-md text-xs font-bold ${
+                            payment.status === 'succeeded' ? 'bg-[#e6f4ea] text-[#1e8e3e]' : 
+                            payment.status === 'failed' ? 'bg-[#fce8e6] text-[#d93025]' : 
+                            'bg-[#f1f3f4] text-[#5f6368]'
+                          }`}>
+                            {payment.status === 'succeeded' ? 'Payé' : payment.status === 'failed' ? 'Échoué' : 'En attente'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
         </div>
