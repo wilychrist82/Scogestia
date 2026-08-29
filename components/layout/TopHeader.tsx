@@ -6,7 +6,19 @@ import { logout } from '@/app/actions/auth'
 import { useNotifications } from '@/components/providers/NotificationProvider'
 import { useState, useRef, useEffect } from 'react'
 
-export function TopHeader({ userFullName, userRoleLabel, onMenuClick }: { userFullName: string, userRoleLabel: string, onMenuClick?: () => void }) {
+export function TopHeader({ 
+  userFullName, 
+  userRoleLabel, 
+  onMenuClick,
+  schoolName,
+  schoolCity
+}: { 
+  userFullName: string, 
+  userRoleLabel: string, 
+  onMenuClick?: () => void,
+  schoolName?: string,
+  schoolCity?: string
+}) {
   const pathname = usePathname()
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
   const [showNotifs, setShowNotifs] = useState(false)
@@ -58,8 +70,8 @@ export function TopHeader({ userFullName, userRoleLabel, onMenuClick }: { userFu
         {/* School Selector */}
         <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
           <div className="text-right">
-            <p className="text-sm font-semibold text-gray-900 leading-tight">École La Réussite</p>
-            <p className="text-[11px] text-gray-500">Lomé, Togo</p>
+            <p className="text-sm font-semibold text-gray-900 leading-tight">{schoolName || 'École inconnue'}</p>
+            <p className="text-[11px] text-gray-500">{schoolCity || ''}</p>
           </div>
           <ChevronDown size={14} className="text-gray-400 ml-1" />
         </div>

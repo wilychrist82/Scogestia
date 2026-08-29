@@ -9,13 +9,17 @@ export function AdminLayoutWrapper({
   userFullName, 
   userRoleLabel,
   navVariant = 'admin',
-  banner
+  banner,
+  schoolName,
+  schoolCity
 }: { 
   children: React.ReactNode, 
   userFullName: string, 
   userRoleLabel: string,
   navVariant?: 'admin' | 'enseignant' | 'super_admin',
-  banner?: React.ReactNode
+  banner?: React.ReactNode,
+  schoolName?: string,
+  schoolCity?: string
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
@@ -34,6 +38,8 @@ export function AdminLayoutWrapper({
           userFullName={userFullName} 
           userRoleLabel={userRoleLabel} 
           onMenuClick={() => setIsSidebarOpen(true)}
+          schoolName={schoolName}
+          schoolCity={schoolCity}
         />
         <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto custom-scrollbar relative z-0">
           {children}

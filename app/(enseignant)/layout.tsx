@@ -16,15 +16,28 @@ export default async function EnseignantLayout({
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('full_name, role')
+    .select(`
+      full_name, 
+      role,
+      schools (
+        name,
+        city
+      )
+    `)
     .eq('user_id', user.id)
     .limit(1).maybeSingle()
+
+  const school = roleData?.schools as any
+  const schoolName = school?.name || 'École inconnue'
+  const schoolCity = school?.city || ''
 
   return (
     <AdminLayoutWrapper 
       userFullName={roleData?.full_name || 'Enseignant'} 
       userRoleLabel="Enseignant"
       navVariant="enseignant"
+      schoolName={schoolName}
+      schoolCity={schoolCity}
     >
       {children}
     </AdminLayoutWrapper>

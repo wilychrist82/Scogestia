@@ -18,9 +18,21 @@ export default async function AdminLayout({
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('school_id, full_name, role')
+    .select(`
+      school_id, 
+      full_name, 
+      role,
+      schools (
+        name,
+        city
+      )
+    `)
     .eq('user_id', user.id)
     .limit(1).maybeSingle()
+
+  const school = roleData?.schools as any
+  const schoolName = school?.name || 'École inconnue'
+  const schoolCity = school?.city || ''
 
   const userFullName = roleData?.full_name || 'Admin User'
   const userRoleLabel = 'Administrateur'
@@ -65,6 +77,8 @@ export default async function AdminLayout({
       <AdminLayoutWrapper 
         userFullName={userFullName} 
         userRoleLabel={userRoleLabel}
+        schoolName={schoolName}
+        schoolCity={schoolCity}
         banner={showBanner ? (
           <div className={`px-4 py-3 flex items-center justify-between shadow-sm z-50 ${isExpired ? 'bg-[#d93025] text-white' : 'bg-[#f57f17] text-white'}`}>
             <div className="flex items-center gap-2 text-sm font-medium">
