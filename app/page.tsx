@@ -339,7 +339,7 @@ export default function Home() {
                   <div className="absolute top-0 right-0 bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Populaire</div>
                   <div className="mb-8 relative z-10">
                      <h3 className="text-2xl font-bold text-white mb-2">Plan Pro</h3>
-                     <p className="text-emerald-100/80">Pour les grands établissements</p>
+                     <p className="text-emerald-100/80 whitespace-nowrap">Pour les grands établissements</p>
                   </div>
                   <div className="mb-8 relative z-10 whitespace-nowrap">
                      <span className="text-4xl font-extrabold text-white">9 900 FCFA</span>
