@@ -21,12 +21,14 @@ export async function sendCommunication(formData: FormData) {
   const recipientType = formData.get('recipientType') as string
   const selectedClass = formData.get('selectedClass') as string
   const selectedParent = formData.get('selectedParent') as string
-  const subject = formData.get('subject') as string
-  const message = formData.get('message') as string
+  const subject = formData.get('subject') as string || 'Message vocal'
+  const message = formData.get('message') as string || 'Message vocal'
   const shouldSendSms = formData.get('sendSms') === 'true'
+  const audioUrl = formData.get('audioUrl') as string | null
 
-  if (!subject || !message) {
-    return { error: 'L\'objet et le message sont requis' }
+  // If there's an audio URL but no text message, we still allow it
+  if (!subject && !audioUrl) {
+    return { error: 'L\'objet ou l\'audio est requis' }
   }
 
   let recipientId = null
@@ -44,7 +46,8 @@ export async function sendCommunication(formData: FormData) {
     recipient_type: recipientType,
     recipient_id: recipientId,
     subject,
-    content: message
+    content: message,
+    audio_url: audioUrl
   })
 
   if (error) {

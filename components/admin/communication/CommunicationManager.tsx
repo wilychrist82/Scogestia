@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { sendCommunication } from '@/app/actions/communication'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { AudioRecorder } from '@/components/ui/AudioRecorder'
 
 type ClassItem = { id: string; name: string }
 type ParentItem = { user_id: string; full_name: string }
@@ -20,6 +21,7 @@ export function CommunicationManager({ classes, parents, recentCommunications = 
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedParent, setSelectedParent] = useState('')
   const [sendSmsOption, setSendSmsOption] = useState(false)
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
   
   const [isPending, startTransition] = useTransition()
   const [success, setSuccess] = useState(false)
@@ -36,6 +38,7 @@ export function CommunicationManager({ classes, parents, recentCommunications = 
     if (recipientType === 'class') formData.append('selectedClass', selectedClass)
     if (recipientType === 'parent') formData.append('selectedParent', selectedParent)
     if (sendSmsOption) formData.append('sendSms', 'true')
+    if (audioUrl) formData.append('audioUrl', audioUrl)
     
     startTransition(async () => {
       const result = await sendCommunication(formData)
@@ -144,13 +147,17 @@ export function CommunicationManager({ classes, parents, recentCommunications = 
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Message</label>
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Message texte (Optionnel si vocal)</label>
                 <textarea 
                   name="message"
                   placeholder="Rédigez votre message ici..." 
-                  className="w-full p-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] min-h-[150px]"
-                  required
+                  className="w-full p-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] min-h-[120px]"
                 ></textarea>
+              </div>
+
+              <div className="flex flex-col gap-1.5 border-t border-[var(--color-outline-variant)] pt-4 mt-2">
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Message vocal</label>
+                <AudioRecorder onAudioReady={(url) => setAudioUrl(url)} />
               </div>
 
               <div className="flex items-center gap-2 mt-2">
@@ -220,9 +227,14 @@ export function CommunicationManager({ classes, parents, recentCommunications = 
                         <h4 className="font-semibold text-sm text-[var(--color-on-surface)] truncate" title={comm.subject}>
                           {comm.subject}
                         </h4>
-                        <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5 truncate">
+                        <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5 truncate mb-2">
                           Envoyé à {recipientText} • Il y a {formatDistanceToNow(new Date(comm.created_at), { locale: fr })}
                         </p>
+                        {comm.audio_url && (
+                          <div className="mt-2 w-full max-w-[200px]">
+                            <audio controls src={comm.audio_url} className="w-full h-8" />
+                          </div>
+                        )}
                       </div>
                     </div>
                   )

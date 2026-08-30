@@ -72,6 +72,14 @@ export default async function ParentMessagesPage() {
                 <div className="text-[var(--color-on-surface-variant)] whitespace-pre-wrap text-base">
                   {msg.content}
                 </div>
+                {msg.audio_url && (
+                  <div className="mt-2 w-full sm:max-w-md bg-[#eff4ff] p-3 rounded-xl border border-[var(--color-primary)]/20">
+                    <p className="text-sm font-semibold text-[var(--color-primary)] mb-2 flex items-center gap-2">
+                      <span className="material-symbols-outlined">mic</span> Message vocal
+                    </p>
+                    <audio controls src={msg.audio_url} className="w-full h-10" />
+                  </div>
+                )}
               </div>
             ))
           )}
