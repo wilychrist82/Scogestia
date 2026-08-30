@@ -32,19 +32,8 @@ export default async function FraisPage() {
   // Server actions for FraisManager
   async function handleAdd(data: { label: string; amount: number; periodicity: string; target: string }) {
     'use server'
-    // Verify user authorization again
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: 'Non authentifié' }
-
-    // Use service role to bypass RLS for insertion
-    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
-    const adminSupabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-
-    const { error } = await adminSupabase.from('fee_types').insert({
+    const { error } = await supabase.from('fee_types').insert({
       school_id: schoolId,
       label: data.label,
       amount: data.amount,
@@ -60,16 +49,7 @@ export default async function FraisPage() {
   async function handleDelete(id: string) {
     'use server'
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: 'Non authentifié' }
-
-    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
-    const adminSupabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-
-    const { error } = await adminSupabase.from('fee_types').delete().eq('id', id).eq('school_id', schoolId)
+    const { error } = await supabase.from('fee_types').delete().eq('id', id).eq('school_id', schoolId)
     
     if (error) return { error: error.message }
     revalidatePath('/admin/finance/frais')
