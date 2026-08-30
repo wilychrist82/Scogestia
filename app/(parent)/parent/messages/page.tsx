@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { ParentMessageForm } from '@/components/parent/communication/ParentMessageForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,7 +50,10 @@ export default async function ParentMessagesPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)]">
           <div>
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Messages</h2>
-            <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Consultez les communications de l'école.</p>
+            <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Consultez les communications de l'école et contactez l'administration.</p>
+          </div>
+          <div>
+            <ParentMessageForm />
           </div>
         </div>
 
