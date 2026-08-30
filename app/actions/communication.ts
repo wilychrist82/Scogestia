@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { sendSms } from '@/lib/sms'
 
@@ -70,33 +71,34 @@ export async function sendCommunication(formData: FormData) {
 
   // --- Trigger Notifications (Bell icon) ---
   try {
+    const adminClient = createAdminClient()
     let usersToNotify: string[] = []
 
     if (recipientType === 'parent' && recipientId) {
       usersToNotify = [recipientId]
     } else if (recipientType === 'admin') {
-      const { data: adminUsers } = await supabase
+      const { data: adminUsers } = await adminClient
         .from('user_school_roles')
         .select('user_id')
         .eq('school_id', roleData.school_id)
         .eq('role', 'admin')
       if (adminUsers) usersToNotify = adminUsers.map(u => u.user_id)
     } else if (recipientType === 'all') {
-      const { data: parentUsers } = await supabase
+      const { data: parentUsers } = await adminClient
         .from('user_school_roles')
         .select('user_id')
         .eq('school_id', roleData.school_id)
         .eq('role', 'parent')
       if (parentUsers) usersToNotify = parentUsers.map(u => u.user_id)
     } else if (recipientType === 'class') {
-      const { data: studentsInClass } = await supabase
+      const { data: studentsInClass } = await adminClient
         .from('students')
         .select('id')
         .eq('class_id', selectedClass)
       
       if (studentsInClass && studentsInClass.length > 0) {
         const studentIds = studentsInClass.map(s => s.id)
-        const { data: linkData } = await supabase
+        const { data: linkData } = await adminClient
           .from('parent_student_links')
           .select('parent_user_id')
           .in('student_id', studentIds)
@@ -119,7 +121,7 @@ export async function sendCommunication(formData: FormData) {
         type: 'message'
       }))
 
-      await supabase.from('notifications').insert(notificationsToInsert)
+      await adminClient.from('notifications').insert(notificationsToInsert)
     }
   } catch (notifErr) {
     console.error('Error creating notifications:', notifErr)
