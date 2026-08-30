@@ -124,6 +124,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
             <div key={item.href}>
               <Link 
                 href={item.href}
+                onClick={onClose}
                 className={`flex items-center justify-between px-4 py-2.5 rounded-lg transition-colors duration-200 mx-2 ${
                   isActive 
                     ? 'bg-[var(--color-sidebar-active)] text-white font-semibold' 
@@ -150,6 +151,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
                       <Link
                         key={subItem.href}
                         href={subItem.href}
+                        onClick={onClose}
                         className={`block px-3 py-2 rounded-md text-xs font-medium transition-colors ${
                           isSubActive
                             ? 'text-white bg-[var(--color-sidebar-hover)]'
