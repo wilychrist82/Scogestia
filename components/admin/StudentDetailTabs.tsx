@@ -15,6 +15,8 @@ type Student = {
   gender?: string | null
   blood_group?: string | null
   address?: string | null
+  parent_phone?: string | null
+  parent_email?: string | null
   classes: {
     name: string
   } | null
@@ -384,9 +386,10 @@ export function StudentDetailTabs({ student }: Props) {
               </p>
               
               <div className="grid grid-cols-1 gap-3 mt-4">
-                <button 
-                  onClick={() => alert("Le module d'appel direct sera disponible prochainement.")}
-                  className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group"
+                <a 
+                  href={student.parent_phone ? `tel:${student.parent_phone}` : '#'}
+                  onClick={(e) => { if (!student.parent_phone) { e.preventDefault(); alert("Le numéro de téléphone du parent n'est pas encore renseigné."); } }}
+                  className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
@@ -394,15 +397,16 @@ export function StudentDetailTabs({ student }: Props) {
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-[var(--color-on-surface)] text-sm">Appel vocal</p>
-                      <p className="text-xs text-[var(--color-on-surface-variant)]">Contacter par téléphone</p>
+                      <p className="text-xs text-[var(--color-on-surface-variant)]">Appel via votre téléphone</p>
                     </div>
                   </div>
                   <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
-                </button>
+                </a>
 
-                <button 
-                  onClick={() => alert("Le module d'envoi de SMS sera activé prochainement.")}
-                  className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group"
+                <a 
+                  href={student.parent_phone ? `sms:${student.parent_phone}` : '#'}
+                  onClick={(e) => { if (!student.parent_phone) { e.preventDefault(); alert("Le numéro de téléphone du parent n'est pas encore renseigné."); } }}
+                  className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
@@ -410,15 +414,35 @@ export function StudentDetailTabs({ student }: Props) {
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-[var(--color-on-surface)] text-sm">Envoyer un SMS</p>
-                      <p className="text-xs text-[var(--color-on-surface-variant)]">Message texte rapide</p>
+                      <p className="text-xs text-[var(--color-on-surface-variant)]">SMS via votre forfait mobile</p>
                     </div>
                   </div>
                   <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
-                </button>
+                </a>
 
-                <button 
-                  onClick={() => alert("Le module Email sera activé prochainement.")}
-                  className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group"
+                <a 
+                  href={student.parent_phone ? `https://wa.me/${student.parent_phone.replace(/[^0-9]/g, '')}` : '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => { if (!student.parent_phone) { e.preventDefault(); alert("Le numéro de téléphone du parent n'est pas encore renseigné."); } }}
+                  className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[#25D366] hover:bg-[#dcf8c6]/30 transition-all group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#dcf8c6] text-[#25D366] flex items-center justify-center group-hover:bg-[#25D366] group-hover:text-white transition-colors">
+                      <span className="material-symbols-outlined">chat</span>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-[var(--color-on-surface)] text-sm">WhatsApp</p>
+                      <p className="text-xs text-[var(--color-on-surface-variant)]">Message WhatsApp direct</p>
+                    </div>
+                  </div>
+                  <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[#25D366]">chevron_right</span>
+                </a>
+
+                <a 
+                  href={student.parent_email ? `mailto:${student.parent_email}` : '#'}
+                  onClick={(e) => { if (!student.parent_email) { e.preventDefault(); alert("L'email du parent n'est pas encore renseigné."); } }}
+                  className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
@@ -426,11 +450,11 @@ export function StudentDetailTabs({ student }: Props) {
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-[var(--color-on-surface)] text-sm">Envoyer un Email</p>
-                      <p className="text-xs text-[var(--color-on-surface-variant)]">Message formel avec pièces jointes</p>
+                      <p className="text-xs text-[var(--color-on-surface-variant)]">Ouvre votre boîte mail</p>
                     </div>
                   </div>
                   <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
-                </button>
+                </a>
               </div>
               
               <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
