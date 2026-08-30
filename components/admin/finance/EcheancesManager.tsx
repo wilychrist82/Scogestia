@@ -39,17 +39,16 @@ export function EcheancesManager({ schedules, classes, students, basePath = "/ad
     const formData = new FormData(e.currentTarget)
     formData.append('type', scheduleType)
     
-    // Convertir la date JJ/MM/AAAA en AAAA-MM-JJ pour le serveur
-    const dateStr = formData.get('dueDateText') as string
-    if (dateStr) {
-      const parts = dateStr.split('/')
-      if (parts.length === 3) {
-        const [day, month, year] = parts
-        formData.set('dueDate', `${year}-${month}-${day}`)
-      } else {
-        setError("La date doit être au format JJ/MM/AAAA")
-        return
-      }
+    // Récupérer et formater la date depuis les 3 listes déroulantes
+    const day = formData.get('dueDay') as string
+    const month = formData.get('dueMonth') as string
+    const year = formData.get('dueYear') as string
+    
+    if (day && month && year) {
+      formData.set('dueDate', `${year}-${month}-${day}`)
+    } else {
+      setError("Veuillez sélectionner une date complète.")
+      return
     }
     
     startTransition(async () => {
@@ -296,19 +295,29 @@ export function EcheancesManager({ schedules, classes, students, basePath = "/ad
                     <input className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]" id="amount" name="amount" type="number" min="0" placeholder="Ex: 50000" required />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="dueDate">
+                    <label className="text-sm font-semibold text-[var(--color-on-surface)]">
                       Date d'échéance <span className="text-[var(--color-status-retard-text)]">*</span>
                     </label>
-                    <input 
-                      className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]" 
-                      id="dueDateText" 
-                      name="dueDateText" 
-                      type="text" 
-                      placeholder="JJ/MM/AAAA"
-                      pattern="\d{2}/\d{2}/\d{4}"
-                      title="Format: JJ/MM/AAAA"
-                      required 
-                    />
+                    <div className="flex gap-2">
+                      <select name="dueDay" required className="w-1/3 h-12 px-2 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] appearance-none text-center">
+                        <option value="">Jour</option>
+                        {Array.from({length: 31}, (_, i) => i + 1).map(d => (
+                          <option key={d} value={d.toString().padStart(2, '0')}>{d}</option>
+                        ))}
+                      </select>
+                      <select name="dueMonth" required className="w-1/3 h-12 px-2 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] appearance-none text-center">
+                        <option value="">Mois</option>
+                        {['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'].map((m, i) => (
+                          <option key={m} value={(i + 1).toString().padStart(2, '0')}>{m}</option>
+                        ))}
+                      </select>
+                      <select name="dueYear" required className="w-1/3 h-12 px-2 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] appearance-none text-center">
+                        <option value="">Année</option>
+                        {Array.from({length: 10}, (_, i) => new Date().getFullYear() + i).map(y => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
 
