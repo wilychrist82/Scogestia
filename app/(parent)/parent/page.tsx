@@ -70,28 +70,31 @@ export default async function ParentDashboardPage() {
     <div className="flex flex-col min-h-full pb-6">
       {/* Premium Header Greeting */}
       <div 
-        className="relative px-6 pt-12 pb-12 rounded-b-[2.5rem] shadow-lg min-h-[220px] flex items-end"
+        className="relative px-6 rounded-b-[2.5rem] shadow-lg h-[240px] flex items-end"
         style={{
           backgroundImage: 'url(/hero-landing.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center 20%',
         }}
       >
-        {/* Overlay sombre pour faire ressortir la carte blanche */}
-        <div className="absolute inset-0 bg-[#0c5946]/40 rounded-b-[2.5rem]"></div>
-        
-        {/* Carte blanche contenant le nom */}
-        <div className="relative z-10 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white/20 w-[85%] sm:w-[70%]">
-          <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-0.5">Bonjour,</p>
-          <h1 className="text-xl font-black text-gray-900 tracking-tight truncate leading-tight">{displayName}</h1>
-          <p className="text-gray-400 text-[10px] font-medium mt-2 flex items-center gap-1">
-            <span className="material-symbols-outlined text-[12px]">calendar_today</span>
-            {format(new Date(), 'EEEE d MMMM', { locale: fr })}
-          </p>
-        </div>
+        {/* Overlay léger pour adoucir */}
+        <div className="absolute inset-0 bg-black/10 rounded-b-[2.5rem]"></div>
       </div>
 
-      <div className="px-5 -mt-6 space-y-6">
+      <div className="px-5 space-y-5 -mt-6 relative z-20">
+        {/* Carte de bienvenue (déplacée en bas pour ne pas cacher l'image) */}
+        <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-md border border-gray-100 flex items-center justify-between">
+          <div>
+            <p className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider mb-0.5">Bonjour,</p>
+            <h1 className="text-lg font-black text-[var(--color-primary)] tracking-tight truncate leading-tight">{displayName}</h1>
+          </div>
+          <div className="bg-[var(--color-primary-container)]/30 px-3 py-2 rounded-xl text-right shrink-0">
+            <span className="material-symbols-outlined text-[14px] text-[var(--color-primary)] block mb-0.5">calendar_today</span>
+            <p className="text-[var(--color-primary)] text-[10px] font-bold">
+              {format(new Date(), 'EEEE d MMM', { locale: fr })}
+            </p>
+          </div>
+        </div>
         {/* Annonces Récentes (Featured) */}
         {communications && communications.length > 0 && (
           <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 relative overflow-hidden">
