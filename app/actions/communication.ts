@@ -68,6 +68,64 @@ export async function sendCommunication(formData: FormData) {
     return { error: 'Erreur lors de l\'envoi du message' }
   }
 
+  // --- Trigger Notifications (Bell icon) ---
+  try {
+    let usersToNotify: string[] = []
+
+    if (recipientType === 'parent' && recipientId) {
+      usersToNotify = [recipientId]
+    } else if (recipientType === 'admin') {
+      const { data: adminUsers } = await supabase
+        .from('user_school_roles')
+        .select('user_id')
+        .eq('school_id', roleData.school_id)
+        .eq('role', 'admin')
+      if (adminUsers) usersToNotify = adminUsers.map(u => u.user_id)
+    } else if (recipientType === 'all') {
+      const { data: parentUsers } = await supabase
+        .from('user_school_roles')
+        .select('user_id')
+        .eq('school_id', roleData.school_id)
+        .eq('role', 'parent')
+      if (parentUsers) usersToNotify = parentUsers.map(u => u.user_id)
+    } else if (recipientType === 'class') {
+      const { data: studentsInClass } = await supabase
+        .from('students')
+        .select('id')
+        .eq('class_id', selectedClass)
+      
+      if (studentsInClass && studentsInClass.length > 0) {
+        const studentIds = studentsInClass.map(s => s.id)
+        const { data: linkData } = await supabase
+          .from('parent_student_links')
+          .select('parent_user_id')
+          .in('student_id', studentIds)
+        if (linkData) usersToNotify = linkData.map(l => l.parent_user_id)
+      }
+    }
+
+    // Remove duplicates
+    usersToNotify = Array.from(new Set(usersToNotify))
+
+    // Insert notifications
+    if (usersToNotify.length > 0) {
+      const notifTitle = 'Nouveau message'
+      const notifMessage = audioUrl ? 'Vous avez reçu un nouveau message vocal.' : subject
+      
+      const notificationsToInsert = usersToNotify.map(uid => ({
+        user_id: uid,
+        title: notifTitle,
+        message: notifMessage,
+        type: 'message'
+      }))
+
+      await supabase.from('notifications').insert(notificationsToInsert)
+    }
+  } catch (notifErr) {
+    console.error('Error creating notifications:', notifErr)
+  }
+  // ----------------------------------------
+
   // Envoi de SMS si demandé
   if (shouldSendSms) {
     try {

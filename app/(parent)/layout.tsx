@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { BottomNav } from '@/components/parent/BottomNav'
+import { ParentHeader } from '@/components/parent/ParentHeader'
 
 export default async function ParentLayout({
   children,
@@ -26,14 +27,7 @@ export default async function ParentLayout({
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex justify-center">
       <div className="w-full max-w-md bg-white min-h-screen relative shadow-2xl flex flex-col">
-        {/* Header App-Like */}
-        <header className="h-14 bg-[var(--color-primary)] text-white flex items-center px-4 sticky top-0 z-10 shadow-md">
-          <span className="material-symbols-outlined text-white mr-3">account_circle</span>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold truncate max-w-[200px]">{roleData.full_name}</span>
-            <span className="text-[10px] text-[var(--color-primary-container)]">Espace Parent</span>
-          </div>
-        </header>
+        <ParentHeader fullName={roleData.full_name} />
 
         {/* Contenu de la page avec padding bottom pour le nav */}
         <main className="flex-1 pb-20 bg-[#f4f7f6] overflow-y-auto">

@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Menu, Bell, ChevronDown, CheckCheck } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useNotifications } from '@/components/providers/NotificationProvider'
@@ -20,9 +20,26 @@ export function TopHeader({
   schoolCity?: string
 }) {
   const pathname = usePathname()
+  const router = useRouter()
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
   const [showNotifs, setShowNotifs] = useState(false)
   const notifRef = useRef<HTMLDivElement>(null)
+
+  const handleNotificationClick = async (notif: any) => {
+    if (!notif.is_read) {
+      await markAsRead(notif.id)
+    }
+    setShowNotifs(false)
+    
+    // Si c'est un message, rediriger vers la messagerie
+    if (notif.type === 'message') {
+      if (pathname.startsWith('/admin')) {
+        router.push('/admin/communication')
+      } else if (pathname.startsWith('/enseignant')) {
+        router.push('/enseignant/messages')
+      }
+    }
+  }
   
   // Fermer le dropdown quand on clique en dehors
   useEffect(() => {
@@ -109,7 +126,7 @@ export function TopHeader({
                   notifications.map(notif => (
                     <div 
                       key={notif.id} 
-                      onClick={() => !notif.is_read && markAsRead(notif.id)}
+                      onClick={() => handleNotificationClick(notif)}
                       className={`p-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors ${notif.is_read ? 'opacity-60' : 'bg-blue-50/30'}`}
                     >
                       <div className="flex justify-between items-start mb-1">
