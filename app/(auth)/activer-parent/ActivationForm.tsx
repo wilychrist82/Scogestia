@@ -17,6 +17,7 @@ export function ActivationForm({ initialCode = '' }: { initialCode?: string }) {
   
   const [otp, setOtp] = useState<string[]>(defaultOtp)
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   
@@ -140,14 +141,21 @@ export function ActivationForm({ initialCode = '' }: { initialCode?: string }) {
             <span className="material-symbols-outlined absolute left-3 text-[var(--color-on-surface-variant)]">lock</span>
             <input 
               id="password-input" 
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="••••••••"
               required 
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-12 pl-10 pr-3 rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] text-[var(--color-on-surface)] focus:ring-2 focus:ring-[var(--color-primary-container)] focus:border-[var(--color-primary-container)] text-base outline-none transition-all font-medium"
+              className="w-full h-12 pl-10 pr-10 rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] text-[var(--color-on-surface)] focus:ring-2 focus:ring-[var(--color-primary-container)] focus:border-[var(--color-primary-container)] text-base outline-none transition-all font-medium"
             />
+            <button 
+              type="button" 
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors p-1"
+            >
+              <span className="material-symbols-outlined text-[20px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
+            </button>
           </div>
           <span className="text-xs text-[var(--color-on-surface-variant)]">Ce mot de passe vous servira pour vos prochaines connexions. (Min 6 caractères)</span>
         </div>

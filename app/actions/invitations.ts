@@ -109,21 +109,36 @@ export async function activateParentAccount(prevState: any, formData: FormData):
 
   let parentUserId: string | undefined = undefined
 
-  // On tente l'inscription
-  const { data: authData, error: authError } = await supabase.auth.signUp(signUpOptions)
-
-  if (authError && !authError.message.includes('already registered')) {
-    return { error: `Erreur d'inscription: ${authError.message}` }
-  }
-
-  // Qu'il soit nouveau ou déjà enregistré, on le connecte
+  // 1. Tenter la connexion en premier (si le parent existe déjà)
   const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword(signUpOptions)
-  
-  if (signInError) {
-    return { error: `Erreur de connexion automatique: ${signInError.message}` }
-  }
 
-  parentUserId = signInData.user?.id
+  if (signInError) {
+    // Si la connexion échoue (identifiants invalides = n'existe pas ou mauvais mot de passe)
+    // Tentons de créer le compte avec auto-confirmation
+    const { data: newUserData, error: createUserError } = await adminClient.auth.admin.createUser({
+      ...signUpOptions,
+      email_confirm: true,
+      phone_confirm: true
+    })
+
+    if (createUserError) {
+      // S'il existe déjà mais mauvais mot de passe, createUser échouera avec 'already registered'
+      if (createUserError.message.includes('already registered')) {
+        return { error: 'Ce numéro de téléphone est déjà enregistré avec un autre mot de passe.' }
+      }
+      return { error: `Erreur d'inscription: ${createUserError.message}` }
+    }
+
+    // Le compte est créé et confirmé, on le connecte
+    const { data: newSignInData, error: newSignInError } = await supabase.auth.signInWithPassword(signUpOptions)
+    if (newSignInError) {
+      return { error: `Erreur de connexion automatique: ${newSignInError.message}` }
+    }
+    parentUserId = newSignInData.user?.id
+  } else {
+    // Il existait déjà et le mot de passe est bon
+    parentUserId = signInData.user?.id
+  }
 
   if (!parentUserId) {
     return { error: 'Erreur inattendue lors de la récupération du compte.' }
