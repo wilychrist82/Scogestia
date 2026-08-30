@@ -36,8 +36,31 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     // Initialiser l'audio côté client uniquement
-    setAudio(new Audio('/notification.mp3'))
+    const notifAudio = new Audio('/notification.mp3')
+    notifAudio.preload = 'auto'
+    setAudio(notifAudio)
   }, [])
+
+  // Débloquer l'audio sur la première interaction de l'utilisateur (pour contourner le blocage du navigateur)
+  useEffect(() => {
+    const unlockAudio = () => {
+      if (audio) {
+        audio.play().then(() => {
+          audio.pause()
+          audio.currentTime = 0
+        }).catch(() => {})
+      }
+      document.removeEventListener('click', unlockAudio)
+      document.removeEventListener('touchstart', unlockAudio)
+    }
+    document.addEventListener('click', unlockAudio)
+    document.addEventListener('touchstart', unlockAudio)
+    
+    return () => {
+      document.removeEventListener('click', unlockAudio)
+      document.removeEventListener('touchstart', unlockAudio)
+    }
+  }, [audio])
 
   useEffect(() => {
     const supabase = createClient()

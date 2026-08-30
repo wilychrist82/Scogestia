@@ -38,6 +38,12 @@ export default async function ParentDashboardPage() {
 
   const children = links?.map(l => l.students).filter(Boolean) || []
 
+  // Déterminer le nom à afficher
+  let displayName = roleData.full_name
+  if (displayName.toLowerCase() === 'parent' && children.length > 0) {
+    displayName = `Parent de ${children[0].first_name}`
+  }
+
   // Récupérer les communications récentes
   const { data: communications } = await supabase
     .from('communications')
@@ -63,18 +69,25 @@ export default async function ParentDashboardPage() {
   return (
     <div className="flex flex-col min-h-full pb-6">
       {/* Premium Header Greeting */}
-      <div className="bg-gradient-to-br from-[var(--color-primary)] to-[#0c5946] px-6 pt-8 pb-12 rounded-b-[2.5rem] shadow-lg text-white relative overflow-hidden flex items-center justify-between">
-        <div className="relative z-10">
-          <p className="text-white/80 text-sm font-medium mb-1">Bonjour,</p>
-          <h1 className="text-3xl font-extrabold tracking-tight">{roleData.full_name}</h1>
-          <p className="text-white/70 text-xs mt-2 flex items-center gap-1">
-            <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-            {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
+      <div 
+        className="relative px-6 pt-12 pb-12 rounded-b-[2.5rem] shadow-lg min-h-[220px] flex items-end"
+        style={{
+          backgroundImage: 'url(/hero-landing.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center 20%',
+        }}
+      >
+        {/* Overlay sombre pour faire ressortir la carte blanche */}
+        <div className="absolute inset-0 bg-[#0c5946]/40 rounded-b-[2.5rem]"></div>
+        
+        {/* Carte blanche contenant le nom */}
+        <div className="relative z-10 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-white/20 w-[85%] sm:w-[70%]">
+          <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-0.5">Bonjour,</p>
+          <h1 className="text-xl font-black text-gray-900 tracking-tight truncate leading-tight">{displayName}</h1>
+          <p className="text-gray-400 text-[10px] font-medium mt-2 flex items-center gap-1">
+            <span className="material-symbols-outlined text-[12px]">calendar_today</span>
+            {format(new Date(), 'EEEE d MMMM', { locale: fr })}
           </p>
-        </div>
-        {/* Image illustrative (Landing page mockup) */}
-        <div className="absolute right-0 bottom-0 w-32 h-32 opacity-90">
-          <img src="/hero-landing.png" alt="Illustration" className="w-full h-full object-cover transform translate-x-4 translate-y-2 mix-blend-screen" />
         </div>
       </div>
 
