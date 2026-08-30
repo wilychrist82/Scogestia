@@ -16,7 +16,7 @@ export async function processCashPayment(data: {
 
     // 1. Lire l'échéance (due)
     const { data: due, error: dueError } = await supabase
-      .from('dues')
+      .from('payment_schedules')
       .select('*, schools(*), students(*)')
       .eq('id', data.due_id)
       .single()
@@ -39,11 +39,11 @@ export async function processCashPayment(data: {
     const { data: existingPayments } = await supabase
       .from('payments')
       .select('amount')
-      .eq('due_id', due.id)
+      .eq('schedule_id', due.id)
       .eq('status', 'success')
 
     const totalPaidBefore = existingPayments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0
-    const remaining = Number(due.amount) - totalPaidBefore
+    const remaining = Number(due.amount_due) - totalPaidBefore
 
     if (data.amount_paid > remaining) {
       throw new Error(`Le montant payé (${data.amount_paid}) dépasse le reste à payer (${remaining})`)
@@ -58,10 +58,12 @@ export async function processCashPayment(data: {
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
       .insert({
-        due_id: due.id,
+        schedule_id: due.id,
+        school_id: due.school_id,
+        student_id: due.student_id,
         amount: data.amount_paid,
         payment_method: data.payment_method,
-        transaction_id: `CASH-${receiptNumber}`, // Identifiant unique local
+        transaction_reference: `CASH-${receiptNumber}`, // Identifiant unique local
         receipt_number: receiptNumber,
         status: 'success',
         created_by: user.id
@@ -75,7 +77,7 @@ export async function processCashPayment(data: {
     const totalPaidNow = totalPaidBefore + data.amount_paid
     let newStatus = due.status
 
-    if (totalPaidNow >= Number(due.amount)) {
+    if (totalPaidNow >= Number(due.amount_due)) {
       newStatus = 'paye'
     } else if (totalPaidNow > 0) {
       newStatus = 'partiel'
@@ -83,7 +85,7 @@ export async function processCashPayment(data: {
 
     if (newStatus !== due.status) {
       await supabase
-        .from('dues')
+        .from('payment_schedules')
         .update({ status: newStatus })
         .eq('id', due.id)
     }
@@ -95,7 +97,7 @@ export async function processCashPayment(data: {
       success: true, 
       payment, 
       due, 
-      remaining: Number(due.amount) - totalPaidNow 
+      remaining: Number(due.amount_due) - totalPaidNow 
     }
 
   } catch (error: any) {

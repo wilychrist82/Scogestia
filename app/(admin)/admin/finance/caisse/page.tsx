@@ -45,14 +45,13 @@ export default async function CaissePage() {
     .order('last_name')
 
   const { data: duesData } = await supabase
-    .from('dues')
-    .select('id, student_id, label, amount, status, due_date')
+    .from('payment_schedules')
+    .select('id, student_id, label, amount_due, status, due_date')
     .eq('school_id', userRole.school_id)
 
   const { data: paymentsData } = await supabase
     .from('payments')
-    .select('due_id, amount')
-    .eq('status', 'success')
+    .select('schedule_id, amount')
 
   // Assemblage des données
   const studentsMap = new Map<string, any>()
@@ -72,8 +71,8 @@ export default async function CaissePage() {
   // Agréger les paiements par échéance
   const paidAmountsByDue = new Map<string, number>()
   paymentsData?.forEach(p => {
-    const current = paidAmountsByDue.get(p.due_id) || 0
-    paidAmountsByDue.set(p.due_id, current + Number(p.amount))
+    const current = paidAmountsByDue.get(p.schedule_id) || 0
+    paidAmountsByDue.set(p.schedule_id, current + Number(p.amount))
   })
 
   // Assigner les échéances aux élèves
@@ -83,7 +82,7 @@ export default async function CaissePage() {
       student.dues.push({
         id: due.id,
         label: due.label,
-        amount: Number(due.amount),
+        amount: Number(due.amount_due),
         status: due.status,
         due_date: due.due_date,
         paid_amount: paidAmountsByDue.get(due.id) || 0
