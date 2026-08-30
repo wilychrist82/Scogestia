@@ -6,17 +6,19 @@ import { sendCommunication } from '@/app/actions/communication'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { AudioRecorder } from '@/components/ui/AudioRecorder'
+import { SearchableSelect } from '@/components/ui/SearchableSelect'
 
 type ClassItem = { id: string; name: string }
 type StudentItem = { id: string; first_name: string; last_name: string; classes: { name: string } | null }
 
 type Props = {
+  currentUserId: string
   classes: ClassItem[]
   students: StudentItem[]
   recentCommunications?: any[]
 }
 
-export function CommunicationManager({ classes, students, recentCommunications = [] }: Props) {
+export function CommunicationManager({ currentUserId, classes, students, recentCommunications = [] }: Props) {
   const [recipientType, setRecipientType] = useState('all') // all, class, parent
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedParent, setSelectedParent] = useState('')
@@ -123,19 +125,16 @@ export function CommunicationManager({ classes, students, recentCommunications =
               {recipientType === 'parent' && (
                 <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2">
                   <label className="text-sm font-semibold text-[var(--color-on-surface)]">Rechercher un élève (pour contacter son parent)</label>
-                  <select 
+                  <SearchableSelect 
                     value={selectedParent}
-                    onChange={(e) => setSelectedParent(e.target.value)}
-                    className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                    onChange={(val) => setSelectedParent(val)}
+                    placeholder="Taper le nom de l'élève..."
                     required
-                  >
-                    <option value="">Sélectionner un élève...</option>
-                    {students.map(s => (
-                      <option key={s.id} value={s.id}>
-                        Parent de {s.first_name} {s.last_name} {s.classes?.name ? `(${s.classes.name})` : ''}
-                      </option>
-                    ))}
-                  </select>
+                    options={students.map(s => ({
+                      value: s.id,
+                      label: `Parent de ${s.first_name} ${s.last_name} ${s.classes?.name ? `(${s.classes.name})` : ''}`
+                    }))}
+                  />
                 </div>
               )}
 
@@ -198,49 +197,61 @@ export function CommunicationManager({ classes, students, recentCommunications =
                 Historique Récent
               </h3>
             </div>
-            <div className="p-6 flex flex-col gap-4 flex-1">
+            <div className="p-4 flex flex-col gap-4 flex-1 bg-[var(--color-surface)]">
               {recentCommunications.length === 0 ? (
                 <div className="text-center text-sm text-[var(--color-on-surface-variant)] py-8">
                   Aucun message récent.
                 </div>
               ) : (
                 recentCommunications.slice(0, 5).map(comm => {
+                  const isSentByMe = comm.sender_id === currentUserId
+                  
                   let recipientText = ''
                   if (comm.recipient_type === 'all') recipientText = 'Tous les parents'
                   else if (comm.recipient_type === 'class') {
                     const c = classes.find(cl => cl.id === comm.recipient_id)
                     recipientText = c ? `Classe ${c.name}` : 'Classe inconnue'
                   } else if (comm.recipient_type === 'parent') {
-                    // Try to find if we have a student linked, but for recent communications, 
-                    // recipient_id in DB is now a user_id (the parent's auth.uid), not the student_id!
-                    // So we cannot easily map it back to student name here without another query.
                     recipientText = 'Parent(s) d\'un élève'
-                  }
-
-                  let icon = 'mark_email_read'
-                  let iconClass = 'bg-[#e8f0fe] text-[#1a73e8]'
-                  if (comm.recipient_type === 'all') {
-                    icon = 'campaign'
-                    iconClass = 'bg-[#fce8e6] text-[#d93025]'
+                  } else if (comm.recipient_type === 'admin') {
+                    recipientText = 'Administration'
                   }
 
                   return (
-                    <div key={comm.id} className="flex gap-3">
-                      <div className={`w-10 h-10 rounded-full ${iconClass} flex items-center justify-center shrink-0`}>
-                        <span className="material-symbols-outlined text-[20px]">{icon}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-sm text-[var(--color-on-surface)] truncate" title={comm.subject}>
-                          {comm.subject}
-                        </h4>
-                        <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5 truncate mb-2">
-                          Envoyé à {recipientText} • Il y a {formatDistanceToNow(new Date(comm.created_at), { locale: fr })}
-                        </p>
-                        {comm.audio_url && (
-                          <div className="mt-2 w-full max-w-[200px]">
-                            <audio controls src={comm.audio_url} className="w-full h-8" />
-                          </div>
-                        )}
+                    <div key={comm.id} className={`flex w-full ${isSentByMe ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[85%] flex flex-col gap-1 ${isSentByMe ? 'items-end' : 'items-start'}`}>
+                        {/* Bubble */}
+                        <div className={`p-3 rounded-2xl ${isSentByMe ? 'bg-[#dcf8c6] text-[#0b1c30] rounded-tr-sm' : 'bg-white border border-[var(--color-outline-variant)] text-[#0b1c30] rounded-tl-sm shadow-sm'}`}>
+                          {comm.subject && comm.subject !== 'Message vocal' && (
+                            <h4 className="font-bold text-sm mb-1">{comm.subject}</h4>
+                          )}
+                          {comm.content && comm.content !== 'Message vocal' && (
+                            <p className="text-sm whitespace-pre-wrap">{comm.content}</p>
+                          )}
+                          
+                          {comm.audio_url && (
+                            <div className="mt-2 min-w-[200px]">
+                              <audio controls src={comm.audio_url} className="w-full h-8" />
+                            </div>
+                          )}
+                        </div>
+                        {/* Metadata */}
+                        <div className="text-[10px] text-[var(--color-on-surface-variant)] flex items-center gap-1">
+                          {isSentByMe ? (
+                            <>
+                              <span>À: {recipientText}</span>
+                              <span>•</span>
+                              <span>{formatDistanceToNow(new Date(comm.created_at), { locale: fr })}</span>
+                              <span className="material-symbols-outlined text-[12px] text-blue-500">done_all</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>{formatDistanceToNow(new Date(comm.created_at), { locale: fr })}</span>
+                              <span>•</span>
+                              <span>De: {recipientText}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )

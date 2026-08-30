@@ -7,8 +7,11 @@ export function AudioRecorder({ onAudioReady }: { onAudioReady: (url: string | n
   const [isRecording, setIsRecording] = useState(false)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [recordingSeconds, setRecordingSeconds] = useState(0)
+  
   const mediaRecorder = useRef<MediaRecorder | null>(null)
   const audioChunks = useRef<Blob[]>([])
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   const startRecording = async () => {
     try {
@@ -53,6 +56,11 @@ export function AudioRecorder({ onAudioReady }: { onAudioReady: (url: string | n
 
       mediaRecorder.current.start()
       setIsRecording(true)
+      setRecordingSeconds(0)
+      
+      timerRef.current = setInterval(() => {
+        setRecordingSeconds(prev => prev + 1)
+      }, 1000)
     } catch (err) {
       console.error('Microphone access denied:', err)
       alert('Veuillez autoriser l\'accès au microphone pour enregistrer un message vocal.')
@@ -64,6 +72,10 @@ export function AudioRecorder({ onAudioReady }: { onAudioReady: (url: string | n
       mediaRecorder.current.stop()
       mediaRecorder.current.stream.getTracks().forEach(track => track.stop())
       setIsRecording(false)
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+        timerRef.current = null
+      }
     }
   }
 
@@ -90,6 +102,12 @@ export function AudioRecorder({ onAudioReady }: { onAudioReady: (url: string | n
     )
   }
 
+  const formatTime = (totalSeconds: number) => {
+    const mins = Math.floor(totalSeconds / 60)
+    const secs = totalSeconds % 60
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
+
   return (
     <div>
       {!isRecording ? (
@@ -102,14 +120,20 @@ export function AudioRecorder({ onAudioReady }: { onAudioReady: (url: string | n
           Ajouter un message vocal
         </button>
       ) : (
-        <button 
-          type="button" 
-          onClick={stopRecording}
-          className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-semibold w-full sm:w-auto justify-center animate-pulse"
-        >
-          <span className="material-symbols-outlined">stop_circle</span>
-          Arrêter l'enregistrement
-        </button>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <button 
+            type="button" 
+            onClick={stopRecording}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-semibold animate-pulse"
+          >
+            <span className="material-symbols-outlined">stop_circle</span>
+            Arrêter l'enregistrement
+          </button>
+          <div className="flex items-center gap-2 text-red-500 font-mono font-semibold px-3 py-2 bg-red-50 rounded-lg border border-red-200">
+            <span className="material-symbols-outlined text-[18px] animate-pulse">radio_button_checked</span>
+            {formatTime(recordingSeconds)}
+          </div>
+        </div>
       )}
     </div>
   )

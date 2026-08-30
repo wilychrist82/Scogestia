@@ -65,27 +65,53 @@ export default async function ParentMessagesPage() {
               <p className="text-[var(--color-on-surface-variant)] mt-2">Vous n'avez reçu aucun message pour le moment.</p>
             </div>
           ) : (
-            messages.map(msg => (
-              <div key={msg.id} className="bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] shadow-sm flex flex-col gap-3">
-                <div className="flex justify-between items-start gap-4">
-                  <h3 className="text-lg font-bold text-[var(--color-on-surface)]">{msg.subject}</h3>
-                  <span className="text-xs font-semibold text-[var(--color-on-surface-variant)] bg-[var(--color-surface-container)] px-3 py-1 rounded-full whitespace-nowrap">
-                    {format(new Date(msg.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
-                  </span>
-                </div>
-                <div className="text-[var(--color-on-surface-variant)] whitespace-pre-wrap text-base">
-                  {msg.content}
-                </div>
-                {msg.audio_url && (
-                  <div className="mt-2 w-full sm:max-w-md bg-[#eff4ff] p-3 rounded-xl border border-[var(--color-primary)]/20">
-                    <p className="text-sm font-semibold text-[var(--color-primary)] mb-2 flex items-center gap-2">
-                      <span className="material-symbols-outlined">mic</span> Message vocal
-                    </p>
-                    <audio controls src={msg.audio_url} className="w-full h-10" />
+            messages.map(msg => {
+              const isSentByMe = msg.sender_id === user.id
+
+              let senderText = isSentByMe ? 'Vous' : 'Administration'
+
+              return (
+                <div key={msg.id} className={`flex w-full ${isSentByMe ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] sm:max-w-[70%] flex flex-col gap-1 ${isSentByMe ? 'items-end' : 'items-start'}`}>
+                    {/* Bubble */}
+                    <div className={`p-4 rounded-2xl ${isSentByMe ? 'bg-[#dcf8c6] text-[#0b1c30] rounded-tr-sm' : 'bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] text-[#0b1c30] rounded-tl-sm shadow-sm'}`}>
+                      {msg.subject && msg.subject !== 'Message vocal' && (
+                        <h3 className="text-sm font-bold mb-1">{msg.subject}</h3>
+                      )}
+                      
+                      {msg.content && msg.content !== 'Message vocal' && (
+                        <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                          {msg.content}
+                        </div>
+                      )}
+                      
+                      {msg.audio_url && (
+                        <div className="mt-2 min-w-[200px]">
+                          <audio controls src={msg.audio_url} className="w-full h-10" />
+                        </div>
+                      )}
+                    </div>
+                    {/* Metadata */}
+                    <div className="text-xs text-[var(--color-on-surface-variant)] flex items-center gap-1 mt-1">
+                      {isSentByMe ? (
+                        <>
+                          <span>À: {msg.recipient_type === 'admin' ? 'Administration' : 'Enseignant'}</span>
+                          <span>•</span>
+                          <span>{format(new Date(msg.created_at), 'dd MMM à HH:mm', { locale: fr })}</span>
+                          <span className="material-symbols-outlined text-[14px] text-blue-500">done_all</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>{format(new Date(msg.created_at), 'dd MMM à HH:mm', { locale: fr })}</span>
+                          <span>•</span>
+                          <span>De: {senderText}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-            ))
+                </div>
+              )
+            })
           )}
         </div>
       </div>
