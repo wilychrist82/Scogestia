@@ -24,28 +24,26 @@ async function getActiveSchoolId() {
   return roleData.school_id;
 }
 
-// Génère un matricule unique pour l'école
+// Génère un matricule séquentiel simple pour l'école (1000, 1001, 1002...)
 async function generateUniqueMatricule(supabase: any, school_id: string): Promise<string> {
-  const year = new Date().getFullYear().toString().slice(-2); // e.g. 26 for 2026
-  let isUnique = false;
-  let matricule = '';
-  
-  while (!isUnique) {
-    // Génère un nombre aléatoire à 4 chiffres
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    matricule = `STU-${year}-${randomNum}`;
+  const { data, error } = await supabase
+    .from('students')
+    .select('matricule')
+    .eq('school_id', school_id);
     
-    const { count, error } = await supabase
-      .from('students')
-      .select('*', { count: 'exact', head: true })
-      .eq('school_id', school_id)
-      .eq('matricule', matricule);
-      
-    if (error) throw new Error('Erreur lors de la vérification du matricule');
-    if (count === 0) isUnique = true;
+  if (error) throw new Error('Erreur lors de la récupération des matricules');
+  
+  if (!data || data.length === 0) {
+    return '1000';
   }
   
-  return matricule;
+  // Extraire uniquement les matricules qui sont des nombres
+  const numericMatricules = data
+    .map((s: any) => parseInt(s.matricule, 10))
+    .filter((n: number) => !isNaN(n));
+    
+  const maxMatricule = numericMatricules.length > 0 ? Math.max(...numericMatricules) : 999;
+  return (maxMatricule + 1).toString();
 }
 
 import { studentSchema, updateStudentSchema } from '@/lib/validations';
