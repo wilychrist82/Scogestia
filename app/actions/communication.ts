@@ -116,6 +116,7 @@ export async function sendCommunication(formData: FormData) {
       
       const notificationsToInsert = usersToNotify.map(uid => ({
         user_id: uid,
+        school_id: roleData.school_id,
         title: notifTitle,
         message: notifMessage,
         type: 'message'
