@@ -41,6 +41,7 @@ export default async function CommunicationPage() {
     .order('created_at', { ascending: false })
     .limit(10)
 
+  return (
     <CommunicationManager 
       currentUserId={user.id}
       classes={classes || []} 
