@@ -119,9 +119,12 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
                   required
                   value={selectedClassId}
                   onChange={(e) => setSelectedClassId(e.target.value)}
-                  className="w-full px-3 py-2 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-10 appearance-none"
+                  className="w-full px-3 py-2 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-10"
+                  disabled={classes.length === 0}
                 >
-                  <option value="">Sélectionner une classe...</option>
+                  <option value="">
+                    {classes.length === 0 ? "Aucune classe disponible" : "Sélectionner une classe..."}
+                  </option>
                   {classes.map(c => (
                     <option key={c.id} value={c.id}>{c.name} {c.level && `(${c.level})`}</option>
                   ))}
@@ -140,9 +143,12 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
                   <select 
                     name="subjectName"
                     required
-                    className="w-full px-3 py-2 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-10 appearance-none"
+                    className="w-full px-3 py-2 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-10"
+                    disabled={subjects.length === 0}
                   >
-                    <option value="">Sélectionner une matière...</option>
+                    <option value="">
+                      {subjects.length === 0 ? "Aucune matière disponible" : "Sélectionner une matière..."}
+                    </option>
                     {subjects.map(s => (
                       <option key={s.id} value={s.name}>{s.name}</option>
                     ))}

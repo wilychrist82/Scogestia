@@ -354,7 +354,7 @@ export function PersonnelManager({ staffList }: Props) {
                       Rôle <span className="text-[var(--color-status-retard-text)]">*</span>
                     </label>
                     <select 
-                      className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12 appearance-none" 
+                      className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
                       id="role" name="role" 
                       required
                       defaultValue=""
@@ -453,7 +453,7 @@ export function PersonnelManager({ staffList }: Props) {
                     Rôle <span className="text-[var(--color-status-retard-text)]">*</span>
                   </label>
                   <select 
-                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12 appearance-none" 
+                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
                     id="edit-role" name="role" 
                     required
                     defaultValue={staffToEdit.role}
