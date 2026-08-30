@@ -41,6 +41,7 @@ export function PaiementsManager({ payments, pendingSchedules, basePath = "/admi
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [isSmsPending, setIsSmsPending] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
 
   const handleExportCSV = () => {
     if (!payments || payments.length === 0) return
@@ -106,6 +107,14 @@ export function PaiementsManager({ payments, pendingSchedules, basePath = "/admi
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount).replace('XOF', 'FCFA')
   }
 
+  const filteredPayments = payments.filter(p => {
+    if (!searchTerm) return true
+    const term = searchTerm.toLowerCase()
+    const fullName = `${p.student?.first_name || ''} ${p.student?.last_name || ''}`.toLowerCase()
+    const ref = (p.transaction_reference || '').toLowerCase()
+    return fullName.includes(term) || ref.includes(term)
+  })
+
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-[1280px] mx-auto space-y-6">
@@ -150,12 +159,18 @@ export function PaiementsManager({ payments, pendingSchedules, basePath = "/admi
           <div className="p-4 border-b border-[var(--color-outline-variant)] flex flex-col sm:flex-row gap-4 bg-[var(--color-surface-bright)] justify-between items-center">
             <div className="relative flex-grow max-w-md">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)]">search</span>
-              <input className="w-full pl-10 pr-4 py-2.5 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none transition-all" placeholder="Rechercher (élève, référence)..." type="text"/>
+              <input 
+                className="w-full pl-10 pr-4 py-2.5 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none transition-all" 
+                placeholder="Rechercher (élève, référence)..." 
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-            <span className="text-sm font-medium text-[var(--color-on-surface-variant)]">{payments.length} paiements</span>
+            <span className="text-sm font-medium text-[var(--color-on-surface-variant)]">{filteredPayments.length} paiements</span>
           </div>
 
-          {payments.length === 0 ? (
+          {filteredPayments.length === 0 ? (
              <div className="p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] flex-1">
                <span className="material-symbols-outlined text-4xl mb-2 opacity-50">account_balance_wallet</span>
                <p className="text-lg font-medium">Aucun paiement trouvé</p>
@@ -176,7 +191,7 @@ export function PaiementsManager({ payments, pendingSchedules, basePath = "/admi
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--color-outline-variant)] text-base">
-                  {payments.map((payment) => (
+                  {filteredPayments.map((payment) => (
                     <tr key={payment.id} className="hover:bg-[var(--color-surface-container-lowest)]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
                       <td className="py-3 px-6 text-[var(--color-on-surface-variant)]">
                         {new Date(payment.paid_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
