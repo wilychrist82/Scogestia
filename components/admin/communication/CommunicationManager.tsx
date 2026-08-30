@@ -8,15 +8,15 @@ import { fr } from 'date-fns/locale'
 import { AudioRecorder } from '@/components/ui/AudioRecorder'
 
 type ClassItem = { id: string; name: string }
-type ParentItem = { user_id: string; full_name: string }
+type StudentItem = { id: string; first_name: string; last_name: string; classes: { name: string } | null }
 
 type Props = {
   classes: ClassItem[]
-  parents: ParentItem[]
+  students: StudentItem[]
   recentCommunications?: any[]
 }
 
-export function CommunicationManager({ classes, parents, recentCommunications = [] }: Props) {
+export function CommunicationManager({ classes, students, recentCommunications = [] }: Props) {
   const [recipientType, setRecipientType] = useState('all') // all, class, parent
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedParent, setSelectedParent] = useState('')
@@ -101,7 +101,7 @@ export function CommunicationManager({ classes, parents, recentCommunications = 
                 >
                   <option value="all">Tous les parents</option>
                   <option value="class">Une classe spécifique</option>
-                  <option value="parent">Un parent précis</option>
+                  <option value="parent">Parent d'un élève précis</option>
                 </select>
               </div>
 
@@ -122,15 +122,19 @@ export function CommunicationManager({ classes, parents, recentCommunications = 
 
               {recipientType === 'parent' && (
                 <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]">Rechercher un parent</label>
+                  <label className="text-sm font-semibold text-[var(--color-on-surface)]">Rechercher un élève (pour contacter son parent)</label>
                   <select 
                     value={selectedParent}
                     onChange={(e) => setSelectedParent(e.target.value)}
                     className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
                     required
                   >
-                    <option value="">Sélectionner...</option>
-                    {parents.map(p => <option key={p.user_id} value={p.user_id}>{p.full_name}</option>)}
+                    <option value="">Sélectionner un élève...</option>
+                    {students.map(s => (
+                      <option key={s.id} value={s.id}>
+                        Parent de {s.first_name} {s.last_name} {s.classes?.name ? `(${s.classes.name})` : ''}
+                      </option>
+                    ))}
                   </select>
                 </div>
               )}
@@ -207,8 +211,10 @@ export function CommunicationManager({ classes, parents, recentCommunications = 
                     const c = classes.find(cl => cl.id === comm.recipient_id)
                     recipientText = c ? `Classe ${c.name}` : 'Classe inconnue'
                   } else if (comm.recipient_type === 'parent') {
-                    const p = parents.find(pa => pa.user_id === comm.recipient_id)
-                    recipientText = p ? p.full_name : 'Parent inconnu'
+                    // Try to find if we have a student linked, but for recent communications, 
+                    // recipient_id in DB is now a user_id (the parent's auth.uid), not the student_id!
+                    // So we cannot easily map it back to student name here without another query.
+                    recipientText = 'Parent(s) d\'un élève'
                   }
 
                   let icon = 'mark_email_read'

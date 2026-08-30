@@ -36,8 +36,21 @@ export async function sendCommunication(formData: FormData) {
     if (!selectedClass) return { error: 'La classe est requise' }
     recipientId = selectedClass
   } else if (recipientType === 'parent') {
-    if (!selectedParent) return { error: 'Le parent est requis' }
-    recipientId = selectedParent
+    if (!selectedParent) return { error: 'L\'élève/parent est requis' }
+    
+    // selectedParent is actually the student_id from the UI.
+    // Let's find the parent_user_id linked to this student.
+    const { data: linkData } = await supabase
+      .from('parent_student_links')
+      .select('parent_user_id')
+      .eq('student_id', selectedParent)
+      .maybeSingle()
+
+    if (!linkData?.parent_user_id) {
+      return { error: 'Aucun compte parent n\'est encore activé pour cet élève. Vous ne pouvez pas lui envoyer de notification interne pour le moment.' }
+    }
+    
+    recipientId = linkData.parent_user_id
   }
 
   const { error } = await supabase.from('communications').insert({
