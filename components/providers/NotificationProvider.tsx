@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast, { Toaster } from 'react-hot-toast'
 import { BellRing } from 'lucide-react'
@@ -30,24 +30,19 @@ export function useNotifications() {
 }
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const [audio, setAudio] = useState<HTMLAudioElement | null>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const unreadCount = notifications.filter(n => !n.is_read).length
-
-  useEffect(() => {
-    // Initialiser l'audio côté client uniquement
-    const notifAudio = new Audio('/notification.mp3')
-    notifAudio.preload = 'auto'
-    setAudio(notifAudio)
-  }, [])
 
   // Débloquer l'audio sur la première interaction de l'utilisateur (pour contourner le blocage du navigateur)
   useEffect(() => {
     const unlockAudio = () => {
-      if (audio) {
-        audio.play().then(() => {
-          audio.pause()
-          audio.currentTime = 0
+      if (audioRef.current) {
+        audioRef.current.play().then(() => {
+          if (audioRef.current) {
+            audioRef.current.pause()
+            audioRef.current.currentTime = 0
+          }
         }).catch(() => {})
       }
       document.removeEventListener('click', unlockAudio)
@@ -60,7 +55,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       document.removeEventListener('click', unlockAudio)
       document.removeEventListener('touchstart', unlockAudio)
     }
-  }, [audio])
+  }, [])
 
   useEffect(() => {
     const supabase = createClient()
@@ -98,9 +93,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             setNotifications(prev => [newNotif, ...prev].slice(0, 50))
 
             // 1. Jouer le son
-            if (audio) {
-              audio.currentTime = 0
-              audio.play().catch((e) => console.log('Audio play blocked by browser:', e))
+            if (audioRef.current) {
+              audioRef.current.currentTime = 0
+              audioRef.current.play().catch((e) => console.log('Audio play blocked by browser:', e))
             }
 
             // 2. Afficher le Toast visuel
@@ -128,7 +123,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
 
     setupRealtime()
-  }, [audio])
+  }, [])
 
   const markAsRead = async (id: string) => {
     const supabase = createClient()
@@ -146,6 +141,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   return (
     <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead }}>
+      <audio ref={audioRef} src="/notification.mp3" preload="auto" />
       <Toaster position="top-right" />
       {children}
     </NotificationContext.Provider>
