@@ -32,6 +32,8 @@ export function StudentDetailTabs({ student }: Props) {
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
+  
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false)
 
   const handleGenerateCode = () => {
     setError(null)
@@ -90,7 +92,10 @@ export function StudentDetailTabs({ student }: Props) {
                 <span className="material-symbols-outlined text-sm">edit</span>
                 Modifier
               </button>
-              <button className="h-12 px-4 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors flex items-center gap-2">
+              <button 
+                onClick={() => setIsContactModalOpen(true)}
+                className="h-12 px-4 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors flex items-center gap-2"
+              >
                 <span className="material-symbols-outlined text-sm">mail</span>
                 Contacter
               </button>
@@ -356,6 +361,85 @@ export function StudentDetailTabs({ student }: Props) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Contact Modal */}
+      {isContactModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0b1c30]/40 backdrop-blur-sm transition-opacity p-4">
+          <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-md rounded-xl shadow-lg border border-[var(--color-outline-variant)] flex flex-col overflow-hidden">
+            <div className="px-6 py-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
+              <h2 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2">
+                <span className="material-symbols-outlined text-[var(--color-primary)]">contact_mail</span>
+                Contacter le parent
+              </h2>
+              <button onClick={() => setIsContactModalOpen(false)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-[var(--color-on-surface-variant)]">
+                Sélectionnez un moyen de communication pour contacter le parent ou tuteur de <span className="font-semibold text-[var(--color-on-surface)]">{student.first_name}</span>.
+              </p>
+              
+              <div className="grid grid-cols-1 gap-3 mt-4">
+                <button 
+                  onClick={() => alert("Le module d'appel direct sera disponible prochainement.")}
+                  className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
+                      <span className="material-symbols-outlined">call</span>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-[var(--color-on-surface)] text-sm">Appel vocal</p>
+                      <p className="text-xs text-[var(--color-on-surface-variant)]">Contacter par téléphone</p>
+                    </div>
+                  </div>
+                  <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
+                </button>
+
+                <button 
+                  onClick={() => alert("Le module d'envoi de SMS sera activé prochainement.")}
+                  className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
+                      <span className="material-symbols-outlined">sms</span>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-[var(--color-on-surface)] text-sm">Envoyer un SMS</p>
+                      <p className="text-xs text-[var(--color-on-surface-variant)]">Message texte rapide</p>
+                    </div>
+                  </div>
+                  <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
+                </button>
+
+                <button 
+                  onClick={() => alert("Le module Email sera activé prochainement.")}
+                  className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
+                      <span className="material-symbols-outlined">mail</span>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-[var(--color-on-surface)] text-sm">Envoyer un Email</p>
+                      <p className="text-xs text-[var(--color-on-surface-variant)]">Message formel avec pièces jointes</p>
+                    </div>
+                  </div>
+                  <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
+                </button>
+              </div>
+              
+              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+                <span className="material-symbols-outlined text-amber-600 text-lg">info</span>
+                <p className="text-xs text-amber-800 leading-tight">
+                  Ces options utiliseront les coordonnées renseignées par le parent une fois son compte activé (voir section <b>Contact Parent</b>).
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}
