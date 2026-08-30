@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { GradesChart } from '@/components/parent/GradesChart'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -64,13 +63,19 @@ export default async function ParentDashboardPage() {
   return (
     <div className="flex flex-col min-h-full pb-6">
       {/* Premium Header Greeting */}
-      <div className="bg-gradient-to-br from-[var(--color-primary)] to-[#0c5946] px-6 pt-8 pb-12 rounded-b-[2.5rem] shadow-lg text-white">
-        <p className="text-white/80 text-sm font-medium mb-1">Bonjour,</p>
-        <h1 className="text-3xl font-extrabold tracking-tight">{roleData.full_name}</h1>
-        <p className="text-white/70 text-xs mt-2 flex items-center gap-1">
-          <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-          {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
-        </p>
+      <div className="bg-gradient-to-br from-[var(--color-primary)] to-[#0c5946] px-6 pt-8 pb-12 rounded-b-[2.5rem] shadow-lg text-white relative overflow-hidden flex items-center justify-between">
+        <div className="relative z-10">
+          <p className="text-white/80 text-sm font-medium mb-1">Bonjour,</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">{roleData.full_name}</h1>
+          <p className="text-white/70 text-xs mt-2 flex items-center gap-1">
+            <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+            {format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}
+          </p>
+        </div>
+        {/* Image illustrative (Landing page mockup) */}
+        <div className="absolute right-0 bottom-0 w-32 h-32 opacity-90">
+          <img src="/hero-landing.png" alt="Illustration" className="w-full h-full object-cover transform translate-x-4 translate-y-2 mix-blend-screen" />
+        </div>
       </div>
 
       <div className="px-5 -mt-6 space-y-6">
@@ -151,18 +156,7 @@ export default async function ParentDashboardPage() {
               </Link>
             </div>
             
-            {/* Chart Area */}
-            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-              <p className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Progression Annuelle</p>
-              <GradesChart 
-                studentName={child.first_name} 
-                data={[
-                  { name: 'Trimestre 1', moyenne: Math.floor(Math.random() * (18 - 10) + 10) },
-                  { name: 'Trimestre 2', moyenne: Math.floor(Math.random() * (18 - 10) + 10) },
-                  { name: 'Trimestre 3', moyenne: Math.floor(Math.random() * (18 - 10) + 10) }
-                ]} 
-              />
-            </div>
+
 
           </div>
         ))}

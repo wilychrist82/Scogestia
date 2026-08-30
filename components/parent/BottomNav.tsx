@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { useNotifications } from '@/components/providers/NotificationProvider'
 
 const navItems = [
   { label: 'Accueil', href: '/parent', icon: 'home' },
@@ -15,6 +16,7 @@ export function BottomNav() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const child = searchParams.get('child')
+  const { unreadCount } = useNotifications()
 
   return (
     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-[var(--color-outline-variant)] pb-safe h-16 flex items-center justify-around z-50">
@@ -24,11 +26,18 @@ export function BottomNav() {
           <Link 
             key={item.href} 
             href={child ? `${item.href}?child=${child}` : item.href}
-            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${isActive ? 'text-[var(--color-primary)]' : 'text-[var(--color-on-surface-variant)]'}`}
+            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors relative ${isActive ? 'text-[var(--color-primary)]' : 'text-[var(--color-on-surface-variant)]'}`}
           >
-            <span className={`material-symbols-outlined ${isActive ? 'filled' : ''} text-[24px]`}>
-              {item.icon}
-            </span>
+            <div className="relative">
+              <span className={`material-symbols-outlined ${isActive ? 'filled' : ''} text-[24px]`}>
+                {item.icon}
+              </span>
+              {item.href === '/parent/messages' && unreadCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </div>
             <span className="text-[10px] font-medium">{item.label}</span>
           </Link>
         )
