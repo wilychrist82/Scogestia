@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useTransition, FormEvent } from 'react'
+import { useState, useTransition, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { sendCommunication } from '@/app/actions/communication'
 import { formatDistanceToNow } from 'date-fns'
@@ -27,6 +28,15 @@ export function CommunicationManager({ currentUserId, classes, students, recentC
   
   const [isPending, startTransition] = useTransition()
   const [success, setSuccess] = useState(false)
+  const router = useRouter()
+
+  // Auto-refresh the page data every 10 seconds to get new messages without a hard reload
+  useEffect(() => {
+    const interval = setInterval(() => {
+      router.refresh()
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [router])
 
   const [error, setError] = useState<string | null>(null)
 

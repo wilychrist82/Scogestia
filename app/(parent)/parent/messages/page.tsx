@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { ParentMessageForm } from '@/components/parent/communication/ParentMessageForm'
+import { AutoRefresh } from '@/components/ui/AutoRefresh'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,6 +46,7 @@ export default async function ParentMessagesPage() {
 
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
+      <AutoRefresh />
       <div className="max-w-[1000px] mx-auto space-y-6">
         
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)]">
