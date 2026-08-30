@@ -39,6 +39,19 @@ export function EcheancesManager({ schedules, classes, students, basePath = "/ad
     const formData = new FormData(e.currentTarget)
     formData.append('type', scheduleType)
     
+    // Convertir la date JJ/MM/AAAA en AAAA-MM-JJ pour le serveur
+    const dateStr = formData.get('dueDateText') as string
+    if (dateStr) {
+      const parts = dateStr.split('/')
+      if (parts.length === 3) {
+        const [day, month, year] = parts
+        formData.set('dueDate', `${year}-${month}-${day}`)
+      } else {
+        setError("La date doit être au format JJ/MM/AAAA")
+        return
+      }
+    }
+    
     startTransition(async () => {
       const result = await generateSchedule(null, formData)
       if (result?.error) {
@@ -286,7 +299,16 @@ export function EcheancesManager({ schedules, classes, students, basePath = "/ad
                     <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="dueDate">
                       Date d'échéance <span className="text-[var(--color-status-retard-text)]">*</span>
                     </label>
-                    <input className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]" id="dueDate" name="dueDate" type="date" required />
+                    <input 
+                      className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]" 
+                      id="dueDateText" 
+                      name="dueDateText" 
+                      type="text" 
+                      placeholder="JJ/MM/AAAA"
+                      pattern="\d{2}/\d{2}/\d{4}"
+                      title="Format: JJ/MM/AAAA"
+                      required 
+                    />
                   </div>
                 </div>
 
