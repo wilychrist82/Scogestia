@@ -318,7 +318,7 @@ export async function getSchoolClassesAndSubjects() {
 
     const [classesRes, subjectsRes] = await Promise.all([
       supabase.from('classes').select('id, name, level').eq('school_id', school_id).order('name'),
-      supabase.from('subjects').select('id, name').eq('school_id', school_id).order('name')
+      supabase.from('subjects').select('id, name, cycle').eq('school_id', school_id).order('name')
     ]);
 
     return {

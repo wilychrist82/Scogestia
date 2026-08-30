@@ -147,9 +147,9 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
                     disabled={subjects.length === 0}
                   >
                     <option value="">
-                      {subjects.length === 0 ? "Aucune matière disponible" : "Sélectionner une matière..."}
+                      {subjects.filter(s => s.cycle === 'secondaire').length === 0 ? "Aucune matière disponible" : "Sélectionner une matière..."}
                     </option>
-                    {subjects.map(s => (
+                    {subjects.filter(s => s.cycle === 'secondaire').map(s => (
                       <option key={s.id} value={s.name}>{s.name}</option>
                     ))}
                   </select>
