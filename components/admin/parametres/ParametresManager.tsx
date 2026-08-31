@@ -139,6 +139,17 @@ export function ParametresManager({ school }: Props) {
                 />
               </div>
 
+              <div className="flex flex-col gap-1.5 md:col-span-2">
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">URL du Logo de l'École (affiché sur le reçu)</label>
+                <input 
+                  type="url" 
+                  name="logoUrl"
+                  defaultValue={school.logo_url || ''}
+                  className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                  placeholder="https://..."
+                />
+              </div>
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[var(--color-on-surface)]">URL de la Signature Numérique</label>
                 <input 

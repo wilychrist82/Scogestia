@@ -37,6 +37,7 @@ export async function updateSchoolSettings(prevState: ActionState, formData: For
     const directorName = formData.get('directorName') as string
     const signatureUrl = formData.get('signatureUrl') as string
     const stampUrl = formData.get('stampUrl') as string
+    const logoUrl = formData.get('logoUrl') as string
 
     const { error } = await supabase
       .from('schools')
@@ -48,7 +49,8 @@ export async function updateSchoolSettings(prevState: ActionState, formData: For
         current_academic_year: currentAcademicYear,
         director_name: directorName || null,
         signature_url: signatureUrl || null,
-        stamp_url: stampUrl || null
+        stamp_url: stampUrl || null,
+        logo_url: logoUrl || null
       })
       .eq('id', roleData.school_id);
 
