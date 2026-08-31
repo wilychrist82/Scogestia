@@ -40,7 +40,6 @@ export async function processCashPayment(data: {
       .from('payments')
       .select('amount')
       .eq('schedule_id', due.id)
-      .eq('status', 'success')
 
     const totalPaidBefore = existingPayments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0
     const remaining = Number(due.amount_due) - totalPaidBefore
@@ -65,8 +64,7 @@ export async function processCashPayment(data: {
         payment_method: data.payment_method,
         transaction_reference: `CASH-${receiptNumber}`, // Identifiant unique local
         receipt_number: receiptNumber,
-        status: 'success',
-        created_by: user.id
+        recorded_by: user.id
       })
       .select()
       .single()
