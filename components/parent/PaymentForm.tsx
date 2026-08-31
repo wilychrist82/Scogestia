@@ -12,10 +12,17 @@ export function PaymentForm({ dueId, label, amount }: Props) {
   const [selectedMethod, setSelectedMethod] = useState<string | null>('tmoney')
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [phoneLocal, setPhoneLocal] = useState('')
+  const [phoneCountry, setPhoneCountry] = useState('TG')
 
   const handlePayment = async () => {
     if (!selectedMethod) {
       setError('Veuillez sélectionner un moyen de paiement.')
+      return
+    }
+    
+    if (!phoneLocal || phoneLocal.trim() === '') {
+      setError('Veuillez saisir votre numéro de téléphone.')
       return
     }
 
@@ -28,7 +35,9 @@ export function PaymentForm({ dueId, label, amount }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           due_id: dueId,
-          payment_method: selectedMethod
+          payment_method: selectedMethod,
+          phoneLocal: phoneLocal.trim(),
+          phoneCountry
         })
       })
 
@@ -72,7 +81,28 @@ export function PaymentForm({ dueId, label, amount }: Props) {
 
       {/* Payment Methods */}
       <section className="flex-1 flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider mb-2">Moyen de paiement</h2>
+        <h2 className="text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider mb-2">Informations de facturation</h2>
+        <div className="flex gap-2 mb-4">
+          <select 
+            className="p-3 border border-[var(--color-outline-variant)] rounded-lg bg-white"
+            value={phoneCountry}
+            onChange={(e) => setPhoneCountry(e.target.value)}
+          >
+            <option value="TG">🇹🇬 +228</option>
+            <option value="CI">🇨🇮 +225</option>
+            <option value="SN">🇸🇳 +221</option>
+            <option value="BJ">🇧🇯 +229</option>
+          </select>
+          <input 
+            type="tel" 
+            placeholder="Numéro sans l'indicatif (ex: 90000000)"
+            className="flex-1 p-3 border border-[var(--color-outline-variant)] rounded-lg"
+            value={phoneLocal}
+            onChange={(e) => setPhoneLocal(e.target.value)}
+          />
+        </div>
+
+        <h2 className="text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider mb-2 mt-4">Moyen de paiement</h2>
         <div className="grid grid-cols-1 gap-3">
           
           {/* T-Money */}

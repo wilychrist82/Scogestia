@@ -465,6 +465,21 @@ export function PersonnelManager({ staffList }: Props) {
                     <option value="admin">Administrateur</option>
                   </select>
                 </div>
+
+                <div className="flex flex-col gap-1.5 bg-[#f8f9fa] p-4 rounded-lg border border-[var(--color-outline-variant)]">
+                  <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="edit-password">
+                    Nouveau mot de passe (Optionnel)
+                  </label>
+                  <input 
+                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
+                    id="edit-password" name="password" 
+                    placeholder="Laissez vide pour conserver l'actuel" 
+                    type="text"
+                  />
+                  <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">
+                    Si vous remplissez ce champ, le mot de passe actuel de ce membre sera écrasé. Vous pourrez ensuite lui communiquer ce nouveau code d'accès.
+                  </p>
+                </div>
               </div>
               <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end gap-3 mt-auto">
                 <button 

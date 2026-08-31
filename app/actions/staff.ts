@@ -206,6 +206,7 @@ export async function editStaff(staffRoleId: string, formData: FormData): Promis
   const fullName = formData.get('fullName') as string;
   const role = formData.get('role') as string;
   const phone = formData.get('phone') as string;
+  const password = formData.get('password') as string;
 
   if (!fullName || !role) {
     return { error: 'Nom et rôle sont obligatoires.' };
@@ -214,6 +215,27 @@ export async function editStaff(staffRoleId: string, formData: FormData): Promis
   try {
     const school_id = await getActiveSchoolId();
     const serviceClient = createServiceRoleClient();
+
+    // Récupérer l'user_id correspondant pour mettre à jour le mot de passe si fourni
+    const { data: roleData, error: fetchError } = await serviceClient
+      .from('user_school_roles')
+      .select('user_id')
+      .eq('id', staffRoleId)
+      .single();
+
+    if (fetchError || !roleData) {
+      return { error: 'Membre introuvable.' };
+    }
+
+    if (password && roleData.user_id) {
+      const { error: updateAuthError } = await serviceClient.auth.admin.updateUserById(
+        roleData.user_id,
+        { password: password }
+      );
+      if (updateAuthError) {
+        return { error: `Erreur lors de la modification du mot de passe : ${updateAuthError.message}` };
+      }
+    }
 
     const { error } = await serviceClient
       .from('user_school_roles')

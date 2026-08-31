@@ -4,10 +4,10 @@ import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(req: Request) {
   try {
-    const { due_id, payment_method } = await req.json()
+    const { due_id, payment_method, phoneLocal, phoneCountry } = await req.json()
     
-    if (!due_id || !payment_method) {
-      return NextResponse.json({ error: 'due_id et payment_method sont requis.' }, { status: 400 })
+    if (!due_id || !payment_method || !phoneLocal || !phoneCountry) {
+      return NextResponse.json({ error: 'due_id, payment_method, phoneLocal et phoneCountry sont requis.' }, { status: 400 })
     }
 
     const supabase = await createClient()
@@ -64,54 +64,59 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Erreur lors de la création de la transaction locale.' }, { status: 500 })
     }
 
-    // 4. Appeler CinetPay
-    const CINETPAY_API_KEY = process.env.CINETPAY_API_KEY
-    const CINETPAY_SITE_ID = process.env.CINETPAY_SITE_ID
+    // 4. Appeler Chariow
+    const CHARIOW_API_KEY = process.env.CHARIOW_API_KEY
+    const CHARIOW_PRODUCT_ID = process.env.CHARIOW_PRODUCT_ID
     const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
-    if (!CINETPAY_API_KEY || !CINETPAY_SITE_ID) {
-      console.error("Clés CinetPay manquantes dans les variables d'environnement.")
+    if (!CHARIOW_API_KEY || !CHARIOW_PRODUCT_ID) {
+      console.error("Clés Chariow manquantes dans les variables d'environnement.")
       return NextResponse.json({ error: 'Configuration de paiement invalide.' }, { status: 500 })
     }
 
     const payload = {
-      apikey: CINETPAY_API_KEY,
-      site_id: CINETPAY_SITE_ID,
-      transaction_id: transactionId,
-      amount: due.amount,
-      currency: 'XOF',
-      channels: 'ALL',
-      description: `Paiement pour ${due.label}`,
-      return_url: `${BASE_URL}/parent`,
-      notify_url: `${BASE_URL}/api/webhooks/cinetpay`,
-      customer_name: user.user_metadata?.first_name || 'Parent',
-      customer_surname: user.user_metadata?.last_name || 'Élève',
-      customer_email: user.email || '',
-      customer_phone_number: user.phone || '',
-      customer_address: 'Togo',
-      customer_city: 'Lomé',
-      customer_country: 'TG',
-      customer_state: 'TG',
-      customer_zip_code: '00000'
+      product_id: CHARIOW_PRODUCT_ID,
+      email: user.email || 'parent@scogestia.com',
+      first_name: user.user_metadata?.first_name || 'Parent',
+      last_name: user.user_metadata?.last_name || 'Élève',
+      phone: {
+        number: phoneLocal,
+        country_code: phoneCountry
+      },
+      // Optionally pass amount if Chariow supports overriding it, 
+      // but according to some docs, it relies on product_id. We pass it just in case.
+      amount: due.amount, 
+      redirect_url: `${BASE_URL}/parent/payments/success?due_id=${due.id}`,
+      custom_metadata: { 
+        due_id: due.id,
+        transaction_id: transactionId,
+        student_id: due.student_id 
+      }
     }
 
-    const cinetpayRes = await fetch('https://api-checkout.cinetpay.com/v2/payment', {
+    const chariowRes = await fetch('https://api.chariow.com/v1/checkout', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CHARIOW_API_KEY}`
       },
       body: JSON.stringify(payload)
     })
 
-    const cinetpayData = await cinetpayRes.json()
+    const chariowData = await chariowRes.json()
 
-    if (cinetpayData.code === '201' && cinetpayData.data?.payment_url) {
-      return NextResponse.json({ payment_url: cinetpayData.data.payment_url }, { status: 200 })
+    if (chariowRes.ok && chariowData?.data?.payment?.checkout_url) {
+      // Update our payment record with the provider's sale ID
+      if (chariowData.data?.purchase?.id) {
+         await supabase.from('payments').update({ 
+           provider_sale_id: chariowData.data.purchase.id 
+         }).eq('transaction_id', transactionId)
+      }
+      return NextResponse.json({ payment_url: chariowData.data.payment.checkout_url }, { status: 200 })
     } else {
-      console.error("Erreur CinetPay:", cinetpayData)
-      // Mettre le paiement local en 'failed' ?
+      console.error("Erreur Chariow:", chariowData)
       await supabase.from('payments').update({ status: 'failed' }).eq('transaction_id', transactionId)
-      return NextResponse.json({ error: 'Erreur lors de l\'initialisation du paiement CinetPay.' }, { status: 500 })
+      return NextResponse.json({ error: 'Erreur lors de l\'initialisation du paiement Chariow.' }, { status: 500 })
     }
 
   } catch (error) {
