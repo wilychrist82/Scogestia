@@ -30,6 +30,15 @@ export default async function CaissePage() {
     .eq('id', userRole.school_id)
     .single()
 
+  // 2.5 Récupérer le nom du caissier
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('first_name, last_name')
+    .eq('id', user.id)
+    .single()
+  
+  const cashierName = profile ? `${profile.first_name} ${profile.last_name}` : 'La Direction'
+
   // 3. Récupérer tous les élèves et leurs échéances (dues) et paiements
   // Note: On pourrait optimiser en ne chargeant que les élèves avec des dues, 
   // mais pour l'instant on charge tout et on calcule côté client.
@@ -109,6 +118,7 @@ export default async function CaissePage() {
           director_signature_url: schoolData?.director_signature_url,
           stamp_url: schoolData?.stamp_url
         }} 
+        cashierName={cashierName}
       />
     </div>
   )

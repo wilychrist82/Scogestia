@@ -29,9 +29,10 @@ type Props = {
     director_signature_url?: string
     stamp_url?: string
   }
+  cashierName: string
 }
 
-export function CashRegister({ students, schoolData }: Props) {
+export function CashRegister({ students, schoolData, cashierName }: Props) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
   
@@ -96,7 +97,8 @@ export function CashRegister({ students, schoolData }: Props) {
           schoolName: schoolData.name,
           schoolLogo: schoolData.logo_url,
           directorSignature: schoolData.director_signature_url,
-          schoolStamp: schoolData.stamp_url
+          schoolStamp: schoolData.stamp_url,
+          cashierName: cashierName
         })
         
         // Update local state (optimistic or wait for refresh)
