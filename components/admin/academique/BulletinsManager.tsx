@@ -320,13 +320,6 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
         throw new Error(errDetails)
       }
       
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `Bulletin_${student?.first_name}_${selectedTerm}.pdf`
-      a.click()
-      
       setPublishStatus('success')
       setTimeout(() => setPublishStatus('idle'), 3000)
     } catch (err: any) {
