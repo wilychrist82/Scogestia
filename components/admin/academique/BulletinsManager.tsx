@@ -50,6 +50,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
   const [secTeachers, setSecTeachers] = useState<Record<string, string>>({})
   const [secFooterInfo, setSecFooterInfo] = useState<{ appreciation: string, decision: string }>({ appreciation: '', decision: '' })
   const [secRank, setSecRank] = useState<string>('')
+  const [secTotalStudents, setSecTotalStudents] = useState<string>('')
   const [secStats, setSecStats] = useState<{ min: string, max: string, annual: string, t1: string, t2: string, annual_t3: string }>({ min: '', max: '', annual: '', t1: '', t2: '', annual_t3: '' })
 
   const printRef = useRef<HTMLDivElement>(null)
@@ -112,8 +113,9 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
         }
       })
       setLocalSecGrades(newSec)
+      setSecTotalStudents(availableStudents.length.toString())
     }
-  }, [student, selectedLevel, selectedTerm, primaryGrades, secondaryGrades])
+  }, [student, selectedLevel, selectedTerm, primaryGrades, secondaryGrades, availableStudents.length])
 
   const handlePrint = () => {
     window.print()
@@ -280,7 +282,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
       data.totalProduct = totalProduct
       data.termAvg = totalCoef > 0 ? (totalProduct / totalCoef).toFixed(2) : '0.00'
       data.rank = stuId === selectedStudent ? secRank : '-'
-      data.totalStudents = students.filter(s => s.class_id === cl.id).length
+      data.totalStudents = stuId === selectedStudent ? secTotalStudents : students.filter(s => s.class_id === cl.id).length.toString()
       data.stats = stuId === selectedStudent ? secStats : { min: '-', max: '-', annual: '-' }
       data.footerInfo = stuId === selectedStudent ? secFooterInfo : { appreciation: '', decision: '' }
     }
@@ -767,7 +769,13 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
                 value={secRank}
                 onChange={e => setSecRank(e.target.value)}
               />
-              <span className="text-sm font-medium text-gray-500 ml-1">/ {availableStudents.length}</span>
+              <span className="text-sm font-medium text-gray-500 mx-1">/</span>
+              <input 
+                type="text"
+                className="w-12 text-sm font-medium text-gray-500 text-center bg-transparent outline-none border-b border-transparent hover:border-gray-300 focus:border-[var(--color-primary)] print-input print:text-gray-500"
+                value={secTotalStudents}
+                onChange={e => setSecTotalStudents(e.target.value)}
+              />
             </div>
           </div>
         </div>

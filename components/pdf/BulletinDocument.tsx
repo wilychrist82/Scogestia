@@ -82,7 +82,7 @@ export type BulletinData = {
   totalProduct?: number
   termAvg?: string
   rank?: string
-  totalStudents?: number
+  totalStudents?: number | string
   stats?: { min: string; max: string; annual: string; t1?: string; t2?: string; annual_t3?: string }
   footerInfo?: { appreciation: string; decision: string }
   
