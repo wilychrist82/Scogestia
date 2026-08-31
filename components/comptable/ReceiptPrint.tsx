@@ -100,12 +100,12 @@ export function ReceiptPrint({ data, onClose }: { data: ReceiptData, onClose: ()
         <div className="text-center relative">
           <p className="text-[10px] font-semibold text-gray-500 uppercase mb-2">{data.cashierName}</p>
           
-          <div className="h-24 w-48 flex items-center justify-center relative mx-auto">
-            {data.schoolStamp && (
-              <img src={data.schoolStamp} alt="Cachet" className="absolute z-0 h-full w-full object-contain mix-blend-multiply" />
-            )}
+          <div className="h-24 w-full flex items-center justify-center gap-2 mx-auto">
             {data.directorSignature && (
-              <img src={data.directorSignature} alt="Signature" className="absolute z-10 h-full w-full object-contain mix-blend-multiply" />
+              <img src={data.directorSignature} alt="Signature" className="h-full max-w-[120px] object-contain mix-blend-multiply" />
+            )}
+            {data.schoolStamp && (
+              <img src={data.schoolStamp} alt="Cachet" className="h-full max-w-[120px] object-contain mix-blend-multiply" />
             )}
           </div>
           
