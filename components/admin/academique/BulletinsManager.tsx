@@ -311,7 +311,14 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
         body: JSON.stringify({ dataList, action: 'publish' })
       })
       
-      if (!response.ok) throw new Error("Erreur de génération API")
+      if (!response.ok) {
+        let errDetails = "Erreur de génération API"
+        try {
+          const json = await response.json()
+          errDetails = json.details || json.error || errDetails
+        } catch (e) {}
+        throw new Error(errDetails)
+      }
       
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
@@ -353,7 +360,14 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
         body: JSON.stringify({ dataList, action: 'download' })
       })
       
-      if (!response.ok) throw new Error("Erreur de génération API")
+      if (!response.ok) {
+        let errDetails = "Erreur de génération API"
+        try {
+          const json = await response.json()
+          errDetails = json.details || json.error || errDetails
+        } catch (e) {}
+        throw new Error(errDetails)
+      }
       
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
