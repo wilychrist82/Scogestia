@@ -26,7 +26,7 @@ export default async function CaissePage() {
   // 2. Récupérer les informations de l'école (pour le reçu)
   const { data: schoolData } = await supabase
     .from('schools')
-    .select('name, logo_url, director_signature_url, stamp_url')
+    .select('name, logo_url, signature_url, stamp_url')
     .eq('id', userRole.school_id)
     .single()
 
@@ -115,7 +115,7 @@ export default async function CaissePage() {
         schoolData={{
           name: schoolData?.name || 'École',
           logo_url: schoolData?.logo_url,
-          director_signature_url: schoolData?.director_signature_url,
+          director_signature_url: schoolData?.signature_url,
           stamp_url: schoolData?.stamp_url
         }} 
         cashierName={cashierName}

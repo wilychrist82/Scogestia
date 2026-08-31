@@ -138,7 +138,20 @@ export function ReceiptPrint({ data, onClose }: { data: ReceiptData, onClose: ()
               @page { margin: 15mm; size: A4 portrait; }
               body * { visibility: hidden; }
               #printable-receipt, #printable-receipt * { visibility: visible; }
-              #printable-receipt { position: absolute; left: 0; top: 0; width: 100%; }
+              #printable-receipt { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+              }
+              /* Annuler le masquage/défilement de la modale pour l'impression */
+              body, html { height: auto !important; overflow: visible !important; }
+              .fixed { position: absolute !important; }
+              .overflow-hidden, .overflow-y-auto, .max-h-[90vh] {
+                overflow: visible !important;
+                max-height: none !important;
+                height: auto !important;
+              }
             }
           `}} />
 
