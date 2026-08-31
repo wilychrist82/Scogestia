@@ -52,12 +52,8 @@ export async function POST(request: Request) {
       const trueStudentId = (data.student as any).id || dataList[0].student.matricule; // Fallback
       if (trueStudentId) {
         const filePath = `${data.schoolName.replace(/ /g, '_')}/${trueStudentId}_${data.termOrMonth}.pdf`;
-        const supabaseAdmin = createSupabaseClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!
-        )
 
-        const { error: uploadError } = await supabaseAdmin.storage
+        const { error: uploadError } = await supabase.storage
           .from('bulletins')
           .upload(filePath, pdfBuffer, {
             contentType: 'application/pdf',
@@ -65,13 +61,13 @@ export async function POST(request: Request) {
           });
 
         if (!uploadError) {
-          const { data: urlData } = supabaseAdmin.storage.from('bulletins').getPublicUrl(filePath)
+          const { data: urlData } = supabase.storage.from('bulletins').getPublicUrl(filePath)
           
           // Récupérer le school_id de l'admin actuel
           const { data: roleData } = await supabase.from('user_school_roles').select('school_id').eq('user_id', user.id).single();
           
           if (roleData) {
-            const { error: upsertError } = await supabaseAdmin.from('published_bulletins').upsert({
+            const { error: upsertError } = await supabase.from('published_bulletins').upsert({
               student_id: trueStudentId,
               school_id: roleData.school_id,
               term_or_month: data.termOrMonth,
