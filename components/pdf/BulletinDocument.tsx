@@ -8,7 +8,7 @@ const styles = StyleSheet.create({
   headerLeft: { flexDirection: 'column', alignItems: 'flex-start', width: '33%' },
   headerRight: { flexDirection: 'column', alignItems: 'flex-end', width: '33%' },
   titleText: { fontSize: 12, fontFamily: 'Helvetica-Bold' },
-  subtitleText: { fontSize: 9, fontStyle: 'italic' },
+  subtitleText: { fontSize: 9, fontFamily: 'Helvetica-Oblique' },
   schoolName: { fontSize: 16, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
   bulletinTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', marginTop: 4 },
   
@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
   rowHeader: { flexDirection: 'row', backgroundColor: '#e5e7eb', borderBottomWidth: 1, borderBottomColor: '#000', fontFamily: 'Helvetica-Bold', fontSize: 9 },
   row: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#000', fontSize: 9 },
   rowCategory: { backgroundColor: '#f9fafb', borderBottomWidth: 1, borderBottomColor: '#000', padding: 4 },
-  catText: { fontFamily: 'Helvetica-Bold', fontStyle: 'italic', fontSize: 9 },
+  catText: { fontFamily: 'Helvetica-BoldOblique', fontSize: 9 },
   
   // Secondary cols
   colSubj: { width: '22%', padding: 4, borderRightWidth: 1, borderRightColor: '#000' },
@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
   colCoef: { width: '6%', padding: 4, textAlign: 'center', borderRightWidth: 1, borderRightColor: '#000' },
   colProd: { width: '10%', padding: 4, textAlign: 'center', backgroundColor: '#e5e7eb', fontFamily: 'Helvetica-Bold', borderRightWidth: 1, borderRightColor: '#000' },
   colProf: { width: '18%', padding: 4, borderRightWidth: 1, borderRightColor: '#000', fontSize: 8 },
-  colAppr: { width: '26%', padding: 4, fontSize: 8, fontStyle: 'italic' },
+  colAppr: { width: '26%', padding: 4, fontSize: 8, fontFamily: 'Helvetica-Oblique' },
 
   // Primary cols
   colPrimSubj: { width: '25%', padding: 4, borderRightWidth: 1, borderRightColor: '#000' },
