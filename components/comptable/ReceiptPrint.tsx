@@ -136,37 +136,24 @@ export function ReceiptPrint({ data, onClose }: { data: ReceiptData, onClose: ()
           <style dangerouslySetInnerHTML={{__html: `
             @media print {
               @page { margin: 15mm; size: A4 portrait; }
-              body * { visibility: hidden; }
-              #printable-receipt, #printable-receipt * { visibility: visible; }
-              #printable-receipt { 
-                position: absolute; 
-                left: 0; 
-                top: 0; 
-                width: 100%; 
+              body { 
+                visibility: hidden !important; 
+                background: white !important;
               }
-              /* Annuler le masquage/défilement de la modale pour l'impression */
-              body, html { height: auto !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; }
-              
-              /* Réinitialiser le conteneur flex pour éviter le décalage à droite */
-              .fixed { 
-                position: absolute !important; 
+              #printable-receipt {
+                visibility: visible !important;
+                position: absolute !important;
                 left: 0 !important;
                 top: 0 !important;
-                display: block !important; /* Retire le flex et le centrage écran */
-                padding: 0 !important;
                 width: 100% !important;
-              }
-              .max-w-lg {
-                max-width: 100% !important; /* Permet d'occuper la largeur A4 */
-                width: 100% !important;
-                box-shadow: none !important;
                 margin: 0 !important;
+                padding: 0 !important;
               }
-
-              .overflow-hidden, .overflow-y-auto, .max-h-[90vh] {
-                overflow: visible !important;
-                max-height: none !important;
-                height: auto !important;
+              #printable-receipt * {
+                visibility: visible !important;
+              }
+              .print\\:hidden {
+                display: none !important;
               }
             }
           `}} />
