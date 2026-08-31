@@ -71,14 +71,22 @@ export async function POST(request: Request) {
           const { data: roleData } = await supabase.from('user_school_roles').select('school_id').eq('user_id', user.id).single();
           
           if (roleData) {
-            await supabaseAdmin.from('published_bulletins').upsert({
+            const { error: upsertError } = await supabaseAdmin.from('published_bulletins').upsert({
               student_id: trueStudentId,
               school_id: roleData.school_id,
               term_or_month: data.termOrMonth,
               academic_year: data.academicYear,
               file_url: urlData.publicUrl
             }, { onConflict: 'student_id, term_or_month, academic_year' });
+            
+            if (upsertError) {
+              throw new Error("Erreur base de données lors de la publication: " + upsertError.message);
+            }
+          } else {
+            throw new Error("Impossible de déterminer l'école de l'utilisateur pour publier le bulletin.");
           }
+        } else {
+          throw new Error("Erreur de téléversement du PDF: " + uploadError.message);
         }
       }
     }
