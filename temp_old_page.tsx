@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState } from 'react';
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ShieldCheck, Cloud, Zap, CheckCircle2, LayoutDashboard, CreditCard, Users, ArrowRight, BarChart, Smartphone, Globe, Mail, Phone, MapPin, Star, PlayCircle, Lock, X, Play, Wallet, TrendingUp, Building2, Settings, MessageSquare, GraduationCap } from 'lucide-react'
+import { ShieldCheck, Cloud, Zap, CheckCircle2, LayoutDashboard, CreditCard, Users, ArrowRight, BarChart, Smartphone, Globe, Mail, Phone, MapPin, Star, PlayCircle, Lock, X, Play } from 'lucide-react'
 
 // Animation Variants
 const fadeIn = {
@@ -38,10 +38,10 @@ export default function Home() {
           {/* Menu Principal */}
           <nav className="hidden lg:flex items-center gap-8">
             <Link href="#accueil" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">Accueil</Link>
-            <Link href="#fonctionnalites" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">Fonctionnalités</Link>
-            <Link href="#comment-ca-marche" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">Comment ça marche</Link>
+            <Link href="#fonctionnalites" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">Fonctionnalit├®s</Link>
+            <Link href="#comment-ca-marche" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">Comment ├ºa marche</Link>
             <Link href="#tarifs" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">Tarifs</Link>
-            <Link href="#temoignages" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">Témoignages</Link>
+            <Link href="#temoignages" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">T├®moignages</Link>
             <Link href="#contact" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">Contact</Link>
           </nav>
 
@@ -56,14 +56,14 @@ export default function Home() {
               href="/inscription-ecole"
               className="inline-flex items-center justify-center h-10 px-4 sm:px-6 text-sm font-medium text-white bg-[#006039] hover:bg-[#004d2e] rounded-full transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 whitespace-nowrap"
             >
-              Créer mon école
+              Cr├®er mon ├®cole
             </Link>
           </div>
         </div>
       </header>
 
       <main>
-        {/* Section Héro (#accueil) */}
+        {/* Section H├®ro (#accueil) */}
         <section id="accueil" className="relative pt-20 pb-32 lg:pt-32 lg:pb-40 overflow-hidden bg-white">
           <div className="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-50/40 via-white to-white"></div>
           
@@ -75,12 +75,14 @@ export default function Home() {
                 animate="visible"
                 variants={staggerContainer}
               >
+                
+
                 <motion.h1 variants={fadeIn} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-6">
-                  Gérez votre école <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006039] to-emerald-500">en toute simplicité</span>. Gagnez du temps, maîtrisez vos finances.
+                  G├®rez votre ├®cole <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006039] to-emerald-500">en toute simplicit├®</span>. Gagnez du temps, ma├«trisez vos finances.
                 </motion.h1>
                 
                 <motion.p variants={fadeIn} className="text-lg text-slate-600 mb-10 max-w-xl leading-relaxed">
-                  Scogestia est la solution 100 % web qui aide les directeurs, comptables et enseignants à gagner du temps, à mieux piloter leur établissement et à renforcer la confiance des parents.
+                  Scogestia est la solution 100 % web qui aide les directeurs, comptables et enseignants ├á gagner du temps, ├á mieux piloter leur ├®tablissement et ├á renforcer la confiance des parents.
                 </motion.p>
                 
                 <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
@@ -95,7 +97,7 @@ export default function Home() {
                     className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-base font-medium text-slate-700 bg-white border-2 border-slate-200 hover:border-emerald-200 hover:bg-emerald-50 rounded-full transition-all"
                   >
                     <PlayCircle className="w-5 h-5 mr-2 text-[#006039]" />
-                    Voir la démo
+                    Voir la d├®mo
                   </button>
                 </motion.div>
                 
@@ -106,7 +108,7 @@ export default function Home() {
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-[#006039]" />
-                    Installation immédiate
+                    Installation imm├®diate
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-[#006039]" />
@@ -133,7 +135,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Section Réassurance */}
+        {/* Section R├®assurance */}
         <section className="py-12 bg-white border-y border-slate-100 relative z-10">
           <div className="container mx-auto px-4">
             <motion.div 
@@ -147,186 +149,67 @@ export default function Home() {
                 <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center text-[#006039] mb-6 shadow-sm">
                   <ShieldCheck className="w-8 h-8" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">Données 100% sécurisées</h3>
-                <p className="text-slate-600">Chaque école dispose d'une base de données totalement isolée et cryptée. Vos informations ne fuient jamais.</p>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Donn├®es 100% s├®curis├®es</h3>
+                <p className="text-slate-600">Chaque ├®cole dispose d'une base de donn├®es totalement isol├®e et crypt├®e. Vos informations ne fuient jamais.</p>
               </motion.div>
               <motion.div variants={fadeIn} className="flex flex-col items-center text-center p-6 rounded-2xl hover:bg-slate-50 transition-colors">
                 <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 mb-6 shadow-sm">
                   <Cloud className="w-8 h-8" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-3">Accessible partout</h3>
-                <p className="text-slate-600">Entièrement basé sur le Cloud sécurisé. Accédez à la scolarité de vos élèves depuis n'importe quel appareil.</p>
+                <p className="text-slate-600">Enti├¿rement bas├® sur le Cloud s├®curis├®. Acc├®dez ├á la scolarit├® de vos ├®l├¿ves depuis n'importe quel appareil.</p>
               </motion.div>
               <motion.div variants={fadeIn} className="flex flex-col items-center text-center p-6 rounded-2xl hover:bg-slate-50 transition-colors">
                 <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 mb-6 shadow-sm">
                   <Zap className="w-8 h-8" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">Conçu pour la rapidité</h3>
-                <p className="text-slate-600">Une interface ultra-légère et optimisée pour fonctionner parfaitement même avec une connexion internet limitée.</p>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Con├ºu pour la rapidit├®</h3>
+                <p className="text-slate-600">Une interface ultra-l├®g├¿re et optimis├®e pour fonctionner parfaitement m├¬me avec une connexion internet limit├®e.</p>
               </motion.div>
             </motion.div>
           </div>
         </section>
 
-        {/* Section Fonctionnalités (#fonctionnalites) */}
-        <section id="fonctionnalites" className="py-32 bg-white">
+        {/* Section Fonctionnalit├®s (#fonctionnalites) */}
+        <section id="fonctionnalites" className="py-24 bg-slate-50">
           <div className="container mx-auto px-4 max-w-6xl">
             <motion.div 
-              className="mb-20"
+              className="text-center mb-16"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight max-w-2xl">
-                Un contrôle total sur l'ensemble de votre établissement.
-              </h2>
-              <p className="text-xl text-slate-600 max-w-2xl leading-relaxed">
-                Des outils financiers puissants aux carnets de notes automatisés, chaque module est conçu pour être invisible et efficace.
-              </p>
+              <span className="text-[#006039] font-semibold tracking-wider uppercase text-sm mb-2 block">Fonctionnalit├®s Cl├®s</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Tout ce dont vous avez besoin pour diriger</h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Scogestia remplace vos fichiers Excel, vos cahiers volants et vos longs calculs par un outil unique, automatis├® et collaboratif.</p>
             </motion.div>
 
             <motion.div 
-              className="grid grid-cols-1 md:grid-cols-12 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
               variants={staggerContainer}
             >
-              {/* Grande Carte 1 */}
-              <motion.div variants={fadeIn} className="md:col-span-8 bg-slate-50 rounded-3xl p-10 border border-slate-100 relative overflow-hidden group">
-                <div className="relative z-20 w-full md:w-[60%] lg:w-[55%]">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/50 shadow-[0_2px_10px_rgba(16,185,129,0.1)]">
-                      <div className="absolute inset-0 bg-white/40 backdrop-blur-sm rounded-2xl"></div>
-                      <Wallet className="w-6 h-6 text-emerald-700 relative z-10 stroke-[1.5]" />
-                      <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-white rounded-lg border border-emerald-100 shadow-sm flex items-center justify-center z-20">
-                        <TrendingUp className="w-3 h-3 text-emerald-500 stroke-[2.5]" />
-                      </div>
-                    </div>
-                    <span className="text-sm font-bold tracking-widest text-slate-400 uppercase">Finance & Comptabilité</span>
+              {[
+                { icon: Users, color: "blue", title: "Gestion Scolaire Compl├¿te", desc: "Inscriptions, gestion des classes, liste des enseignants et emplois du temps. Retrouvez n'importe quel ├®l├¿ve en un clic." },
+                { icon: CreditCard, color: "amber", title: "Suivi Financier & Impay├®s", desc: "Suivez les paiements de scolarit├® (tranches), imprimez les re├ºus officiels, et identifiez imm├®diatement les ├®l├¿ves en retard de paiement." },
+                { icon: BarChart, color: "purple", title: "Notes & Bulletins", desc: "Les enseignants saisissent les notes, Scogestia calcule les moyennes, les rangs, et g├®n├¿re les bulletins trimestriels sans erreur humaine." },
+                { icon: Smartphone, color: "emerald", title: "Portail Parents Temps R├®el", desc: "Un espace d├®di├® pour les parents afin qu'ils consultent les notes, l'assiduit├® et les paiements de leurs enfants depuis leur smartphone." },
+                { icon: LayoutDashboard, color: "red", title: "Tableaux de bord (Analytics)", desc: "Visualisez la sant├® financi├¿re et acad├®mique de votre ├®cole d'un seul coup d'┼ôil gr├óce ├á des graphiques dynamiques et d├®taill├®s." },
+                { icon: Globe, color: "indigo", title: "Multi-R├┤les S├®curis├®", desc: "Directeur, Comptable, Enseignant, Parent. Chacun a un acc├¿s strictement limit├® aux informations dont il a besoin." }
+              ].map((feature, i) => (
+                <motion.div key={i} variants={fadeIn} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+                  <div className={`w-14 h-14 bg-${feature.color}-50 text-${feature.color}-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                    <feature.icon className="w-7 h-7" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-4">Suivi Financier & Recouvrement</h3>
-                  <p className="text-slate-600 leading-relaxed text-lg mb-8">
-                    Fini les tableaux Excel croisés. Visualisez instantanément les impayés, relancez les parents par SMS, et générez des reçus en un clic.
-                  </p>
-                </div>
-                {/* Visual */}
-                <div className="absolute bottom-0 right-0 w-[85%] md:w-[45%] h-[75%] bg-white rounded-tl-2xl shadow-xl border-t border-l border-slate-200/60 hidden sm:block translate-y-4 translate-x-4 group-hover:translate-y-0 group-hover:translate-x-0 transition-transform duration-500">
-                  <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-                     <span className="font-mono text-[10px] sm:text-xs text-slate-400 font-semibold tracking-wider uppercase">Paiements Récents</span>
-                     <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-                  </div>
-                  <div className="p-4 space-y-3">
-                     <div className="bg-slate-50 rounded-lg border border-slate-100 p-3 flex justify-between items-center">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800">Frais Scolarité (T1)</p>
-                          <p className="text-xs text-slate-500">Famille Dubois</p>
-                        </div>
-                        <span className="text-sm font-bold text-emerald-600">+45 000 FCFA</span>
-                     </div>
-                     <div className="bg-slate-50 rounded-lg border border-slate-100 p-3 flex justify-between items-center">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800">Cantine (Nov)</p>
-                          <p className="text-xs text-slate-500">Famille Martin</p>
-                        </div>
-                        <span className="text-sm font-bold text-emerald-600">+12 000 FCFA</span>
-                     </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Petite Carte 1 */}
-              <motion.div variants={fadeIn} className="md:col-span-4 bg-white border border-slate-200 rounded-3xl p-10 relative overflow-hidden flex flex-col justify-between group hover:border-[#006039]/30 transition-colors">
-                <div className="relative z-10">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50 shadow-[0_2px_10px_rgba(59,130,246,0.1)]">
-                      <div className="absolute inset-0 bg-white/40 backdrop-blur-sm rounded-2xl"></div>
-                      <Building2 className="w-6 h-6 text-blue-700 relative z-10 stroke-[1.5]" />
-                      <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-white rounded-lg border border-blue-100 shadow-sm flex items-center justify-center z-20">
-                        <Settings className="w-3 h-3 text-blue-500 stroke-[2.5]" />
-                      </div>
-                    </div>
-                    <span className="text-sm font-bold tracking-widest text-slate-400 uppercase">Administration</span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-4">Gestion Scolaire</h3>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
                   <p className="text-slate-600 leading-relaxed">
-                    Classes, enseignants, emplois du temps. Une architecture claire pour gérer des milliers d'élèves avec fluidité.
+                    {feature.desc}
                   </p>
-                </div>
-              </motion.div>
-
-              {/* Petite Carte 2 */}
-              <motion.div variants={fadeIn} className="md:col-span-4 bg-[#f8fafc] rounded-3xl p-10 border border-slate-100 group hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 border border-indigo-200/50 shadow-[0_2px_10px_rgba(99,102,241,0.1)]">
-                      <div className="absolute inset-0 bg-white/40 backdrop-blur-sm rounded-2xl"></div>
-                      <Smartphone className="w-6 h-6 text-indigo-700 relative z-10 stroke-[1.5]" />
-                      <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-white rounded-lg border border-indigo-100 shadow-sm flex items-center justify-center z-20">
-                        <MessageSquare className="w-3 h-3 text-indigo-500 stroke-[2.5]" />
-                      </div>
-                    </div>
-                    <span className="text-sm font-bold tracking-widest text-slate-400 uppercase">Communication</span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-4">Portail Parents</h3>
-                  <p className="text-slate-600 leading-relaxed">
-                    Transparence totale. Les parents suivent l'assiduité, les notes et les paiements depuis leur téléphone en temps réel.
-                  </p>
-              </motion.div>
-
-              {/* Grande Carte 2 */}
-              <motion.div variants={fadeIn} className="md:col-span-8 bg-white rounded-3xl p-10 border border-slate-200 flex flex-col md:flex-row items-center gap-10 overflow-hidden relative group hover:border-slate-300 transition-colors">
-                 <div className="flex-1 relative z-20">
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50 shadow-[0_2px_10px_rgba(245,158,11,0.1)]">
-                        <div className="absolute inset-0 bg-white/40 backdrop-blur-sm rounded-2xl"></div>
-                        <GraduationCap className="w-6 h-6 text-amber-700 relative z-10 stroke-[1.5]" />
-                        <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-white rounded-lg border border-amber-100 shadow-sm flex items-center justify-center z-20">
-                          <Star className="w-3 h-3 text-amber-500 stroke-[2.5]" />
-                        </div>
-                      </div>
-                      <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">Académique</span>
-                    </div>
-                    <h3 className="text-2xl font-bold text-slate-900 mb-4">Notes & Bulletins Automatisés</h3>
-                    <p className="text-slate-600 leading-relaxed text-lg">
-                      Saisissez les notes, le système fait le reste. Calcul des moyennes, des rangs, et génération massive des bulletins scolaires trimestriels sans erreurs.
-                    </p>
-                 </div>
-                 <div className="w-full md:w-[45%] h-full min-h-[200px] relative mt-6 md:mt-0">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-slate-50 to-slate-100/50 rounded-2xl border border-slate-200/60 p-5 flex flex-col transform group-hover:scale-[1.02] transition-transform duration-500">
-                        <div className="flex justify-between items-start mb-4">
-                           <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold border border-indigo-200">
-                                JL
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-slate-800">Jean Dupont</p>
-                                <p className="text-xs text-slate-500">Terminale S</p>
-                              </div>
-                           </div>
-                           <div className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-1 rounded">1er Trimestre</div>
-                        </div>
-                        <div className="bg-white rounded-lg border border-slate-100 p-4 shadow-sm mb-3">
-                           <div className="flex justify-between text-sm mb-2">
-                             <span className="text-slate-600 font-medium">Mathématiques</span>
-                             <span className="font-bold text-slate-900">16.5 / 20</span>
-                           </div>
-                           <div className="w-full bg-slate-100 rounded-full h-1.5">
-                             <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '82%' }}></div>
-                           </div>
-                        </div>
-                        <div className="bg-white rounded-lg border border-slate-100 p-4 shadow-sm">
-                           <div className="flex justify-between text-sm mb-2">
-                             <span className="text-slate-600 font-medium">Physique-Chimie</span>
-                             <span className="font-bold text-slate-900">14.0 / 20</span>
-                           </div>
-                           <div className="w-full bg-slate-100 rounded-full h-1.5">
-                             <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: '70%' }}></div>
-                           </div>
-                        </div>
-                    </div>
-                 </div>
-              </motion.div>
+                </motion.div>
+              ))}
             </motion.div>
           </div>
         </section>
@@ -341,9 +224,9 @@ export default function Home() {
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <span className="text-[#006039] font-semibold tracking-wider uppercase text-sm mb-2 block">Déploiement Facile</span>
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Prêt à l'emploi en 3 étapes simples</h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Pas besoin de connaissances techniques. Notre processus d'installation est conçu pour être aussi rapide que possible.</p>
+              <span className="text-[#006039] font-semibold tracking-wider uppercase text-sm mb-2 block">D├®ploiement Facile</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Pr├¬t ├á l'emploi en 3 ├®tapes simples</h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Pas besoin de connaissances techniques. Notre processus d'installation est con├ºu pour ├¬tre aussi rapide que possible.</p>
             </motion.div>
 
             <div className="relative">
@@ -358,9 +241,9 @@ export default function Home() {
                 variants={staggerContainer}
               >
                 {[
-                  { step: "1", title: "Créez votre compte", desc: "Inscrivez votre établissement en 2 minutes. Aucune carte bancaire requise pour commencer l'essai gratuit." },
-                  { step: "2", title: "Importez vos élèves", desc: "Utilisez notre modèle Excel pour importer toute votre liste d'élèves et de classes en un seul clic." },
-                  { step: "3", title: "Invitez votre équipe", desc: "Ajoutez vos enseignants et comptables, et laissez la plateforme automatiser vos tâches quotidiennes." }
+                  { step: "1", title: "Cr├®ez votre compte", desc: "Inscrivez votre ├®tablissement en 2 minutes. Aucune carte bancaire requise pour commencer l'essai gratuit." },
+                  { step: "2", title: "Importez vos ├®l├¿ves", desc: "Utilisez notre mod├¿le Excel pour importer toute votre liste d'├®l├¿ves et de classes en un seul clic." },
+                  { step: "3", title: "Invitez votre ├®quipe", desc: "Ajoutez vos enseignants et comptables, et laissez la plateforme automatiser vos t├óches quotidiennes." }
                 ].map((item, i) => (
                   <motion.div key={i} variants={fadeIn} className="flex flex-col items-center text-center bg-white">
                     <div className="w-16 h-16 rounded-full bg-[#006039] text-white flex items-center justify-center text-2xl font-bold mb-6 shadow-xl border-4 border-white">
@@ -387,7 +270,7 @@ export default function Home() {
             >
               <span className="text-[#006039] font-semibold tracking-wider uppercase text-sm mb-2 block">Tarification</span>
               <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Des tarifs simples, sans surprise</h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Commencez gratuitement, puis choisissez le plan qui correspond à la taille de votre établissement.</p>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Commencez gratuitement, puis choisissez le plan qui correspond ├á la taille de votre ├®tablissement.</p>
             </motion.div>
 
             <motion.div 
@@ -401,15 +284,15 @@ export default function Home() {
                <motion.div variants={fadeIn} className="bg-white rounded-3xl shadow-md border border-slate-200 p-8 flex flex-col relative overflow-hidden hover:shadow-xl transition-shadow">
                   <div className="mb-8">
                      <h3 className="text-2xl font-bold text-slate-900 mb-2">Essai Gratuit</h3>
-                     <p className="text-slate-500">Pour découvrir la plateforme</p>
+                     <p className="text-slate-500">Pour d├®couvrir la plateforme</p>
                   </div>
                   <div className="mb-8">
                      <span className="text-4xl font-extrabold text-slate-900">0 FCFA</span>
                      <span className="text-slate-500 font-medium"> / 14 jours</span>
                   </div>
                   <ul className="space-y-4 mb-10 flex-1">
-                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Accès complet aux fonctionnalités de base</span></li>
-                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Jusqu'à 50 élèves</span></li>
+                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Acc├¿s complet aux fonctionnalit├®s de base</span></li>
+                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Jusqu'├á 50 ├®l├¿ves</span></li>
                      <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Support par email</span></li>
                   </ul>
                   <Link href="/inscription-ecole" className="w-full py-4 rounded-xl border-2 border-slate-200 font-bold text-slate-700 hover:border-[#006039] hover:text-[#006039] hover:bg-emerald-50 transition-colors text-center block">
@@ -418,21 +301,21 @@ export default function Home() {
                </motion.div>
 
                {/* Plan Standard */}
-               <motion.div variants={fadeIn} className="bg-white rounded-3xl shadow-xl border-2 border-[#006039] p-8 flex flex-col relative overflow-hidden">
+               <motion.div variants={fadeIn} className="bg-white rounded-3xl shadow-xl border-2 border-[#006039] p-8 flex flex-col relative overflow-hidden transform md:-translate-y-4">
                   <div className="absolute top-0 right-0 bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Populaire</div>
                   <div className="mb-8 relative z-10">
                      <h3 className="text-2xl font-bold text-slate-900 mb-2">Plan Standard</h3>
-                     <p className="text-slate-600">Pour les petites écoles</p>
+                     <p className="text-slate-600">Pour les petites ├®coles</p>
                   </div>
                   <div className="mb-8 relative z-10 whitespace-nowrap">
                      <span className="text-4xl font-extrabold text-slate-900">7 000 FCFA</span>
                      <span className="text-slate-500 font-medium"> / mois</span>
                   </div>
                   <ul className="space-y-4 mb-10 flex-1 relative z-10 text-sm md:text-base">
-                     <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Jusqu'à 500 élèves</span></li>
+                     <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Jusqu'├á 500 ├®l├¿ves</span></li>
                      <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Gestion des inscriptions et classes</span></li>
-                     <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Suivi de la comptabilité et paiements</span></li>
-                     <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Génération des reçus automatisée</span></li>
+                     <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Suivi de la comptabilit├® et paiements</span></li>
+                     <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>G├®n├®ration des re├ºus automatis├®e</span></li>
                      <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Saisie des notes et bulletins scolaires</span></li>
                      <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Portail Parents (Notes & Absences)</span></li>
                      <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Support client par chat / email</span></li>
@@ -444,23 +327,23 @@ export default function Home() {
 
                {/* Plan Pro */}
                <motion.div variants={fadeIn} className="bg-[#006039] rounded-3xl shadow-2xl p-8 flex flex-col relative overflow-hidden">
-                  <div className="absolute top-0 right-0 bg-emerald-100 text-[#006039] text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Recommandé</div>
+                  <div className="absolute top-0 right-0 bg-emerald-100 text-[#006039] text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Recommand├®</div>
                   <div className="mb-8 relative z-10">
                      <h3 className="text-2xl font-bold text-white mb-2">Plan Pro</h3>
-                     <p className="text-emerald-100/80 whitespace-nowrap">Pour les grands établissements</p>
+                     <p className="text-emerald-100/80 whitespace-nowrap">Pour les grands ├®tablissements</p>
                   </div>
                   <div className="mb-8 relative z-10 whitespace-nowrap">
                      <span className="text-4xl font-extrabold text-white">9 900 FCFA</span>
                      <span className="text-emerald-200 font-medium"> / mois</span>
                   </div>
                   <ul className="space-y-4 mb-10 flex-1 relative z-10 text-sm md:text-base">
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Élèves et classes illimités</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Toutes les fonctionnalités Standard</span></li>
+                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>├ël├¿ves et classes illimit├®s</span></li>
+                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Toutes les fonctionnalit├®s Standard</span></li>
                      <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Gestion multi-campus / multi-sites</span></li>
                      <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Gestion des Ressources Humaines (Paie)</span></li>
                      <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Envoi de SMS et Emails aux parents</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Tableaux de bord et analytics poussés</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Accompagnement et formation de l'équipe</span></li>
+                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Tableaux de bord et analytics pouss├®s</span></li>
+                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Accompagnement et formation de l'├®quipe</span></li>
                      <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Support prioritaire 24/7 (WhatsApp/Appel)</span></li>
                   </ul>
                   <Link href="/inscription-ecole" className="w-full py-4 rounded-xl bg-white font-bold text-[#006039] hover:bg-slate-50 transition-colors text-center relative z-10 shadow-lg block mt-auto">
@@ -474,7 +357,7 @@ export default function Home() {
            </div>
         </section>
 
-        {/* Section Témoignages (#temoignages) */}
+        {/* Section T├®moignages (#temoignages) */}
         <section id="temoignages" className="py-24 bg-white border-y border-slate-100">
           <div className="container mx-auto px-4 max-w-6xl">
             <motion.div 
@@ -484,8 +367,8 @@ export default function Home() {
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Ils font confiance à Scogestia</h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Découvrez ce que les directeurs et comptables pensent de notre plateforme.</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Ils font confiance ├á Scogestia</h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">D├®couvrez ce que les directeurs et comptables pensent de notre plateforme.</p>
             </motion.div>
 
             <motion.div 
@@ -496,9 +379,9 @@ export default function Home() {
               variants={staggerContainer}
             >
               {[
-                { name: "Kodjo E.", role: "Directeur Fondateur", text: "Scogestia a révolutionné la gestion de notre complexe scolaire. Fini les erreurs de calcul sur les bulletins et le suivi des impayés est devenu un jeu d'enfant." },
-                { name: "Amina T.", role: "Comptable", text: "Avant, je passais des jours à pointer les reçus de scolarité. Maintenant, en quelques clics, j'ai la situation financière exacte de l'école. Un gain de temps énorme." },
-                { name: "Jean-Paul M.", role: "Parent d'élève", text: "Pouvoir consulter les notes de mon fils directement sur mon téléphone me rassure. L'école est beaucoup plus transparente grâce à ce portail." }
+                { name: "Kodjo E.", role: "Directeur Fondateur", text: "Scogestia a r├®volutionn├® la gestion de notre complexe scolaire. Fini les erreurs de calcul sur les bulletins et le suivi des impay├®s est devenu un jeu d'enfant." },
+                { name: "Amina T.", role: "Comptable", text: "Avant, je passais des jours ├á pointer les re├ºus de scolarit├®. Maintenant, en quelques clics, j'ai la situation financi├¿re exacte de l'├®cole. Un gain de temps ├®norme." },
+                { name: "Jean-Paul M.", role: "Parent d'├®l├¿ve", text: "Pouvoir consulter les notes de mon fils directement sur mon t├®l├®phone me rassure. L'├®cole est beaucoup plus transparente gr├óce ├á ce portail." }
               ].map((testimonial, i) => (
                 <motion.div key={i} variants={fadeIn} className="bg-slate-50 p-8 rounded-2xl border border-slate-200 min-w-[85%] md:min-w-0 snap-center">
                   <div className="flex gap-1 mb-4 text-amber-400">
@@ -534,8 +417,8 @@ export default function Home() {
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Questions Fréquentes</h2>
-              <p className="text-lg text-slate-600">Vous avez des questions ? Nous avons les réponses.</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Questions Fr├®quentes</h2>
+              <p className="text-lg text-slate-600">Vous avez des questions ? Nous avons les r├®ponses.</p>
             </motion.div>
 
             <motion.div 
@@ -546,10 +429,10 @@ export default function Home() {
               variants={staggerContainer}
             >
               {[
-                { q: "Faut-il installer un logiciel sur mon ordinateur ?", a: "Absolument pas ! Scogestia est un logiciel 100% web (en nuage). Vous n'avez besoin que d'un navigateur internet (Chrome, Safari, Edge) et d'une connexion internet. Vous pouvez vous connecter depuis n'importe quel ordinateur ou téléphone." },
-                { q: "Mes données sont-elles en sécurité ?", a: "Oui. La sécurité est notre priorité absolue. Nous utilisons une architecture qui garantit que vos données sont strictement isolées de celles des autres écoles. Les sauvegardes sont effectuées quotidiennement sur des serveurs sécurisés." },
-                { q: "Les parents doivent-ils payer pour utiliser l'application ?", a: "Non. L'abonnement est payé uniquement par l'établissement scolaire. Les parents bénéficient d'un accès totalement gratuit à leur portail pour suivre l'évolution de leurs enfants." },
-                { q: "Comment se passe l'intégration de mes anciens élèves (Excel) ?", a: "Nous vous fournissons un fichier modèle Excel. Il vous suffit de copier-coller vos listes actuelles dedans et de nous le transmettre, ou d'utiliser notre outil d'importation. Notre équipe de support peut vous accompagner." }
+                { q: "Faut-il installer un logiciel sur mon ordinateur ?", a: "Absolument pas ! Scogestia est un logiciel 100% web (en nuage). Vous n'avez besoin que d'un navigateur internet (Chrome, Safari, Edge) et d'une connexion internet. Vous pouvez vous connecter depuis n'importe quel ordinateur ou t├®l├®phone." },
+                { q: "Mes donn├®es sont-elles en s├®curit├® ?", a: "Oui. La s├®curit├® est notre priorit├® absolue. Nous utilisons une architecture qui garantit que vos donn├®es sont strictement isol├®es de celles des autres ├®coles. Les sauvegardes sont effectu├®es quotidiennement sur des serveurs s├®curis├®s." },
+                { q: "Les parents doivent-ils payer pour utiliser l'application ?", a: "Non. L'abonnement est pay├® uniquement par l'├®tablissement scolaire. Les parents b├®n├®ficient d'un acc├¿s totalement gratuit ├á leur portail pour suivre l'├®volution de leurs enfants." },
+                { q: "Comment se passe l'int├®gration de mes anciens ├®l├¿ves (Excel) ?", a: "Nous vous fournissons un fichier mod├¿le Excel. Il vous suffit de copier-coller vos listes actuelles dedans et de nous le transmettre, ou d'utiliser notre outil d'importation. Notre ├®quipe de support peut vous accompagner." }
               ].map((faq, i) => (
                 <motion.details key={i} variants={fadeIn} className="group bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden cursor-pointer">
                    <summary className="flex items-center justify-between p-6 font-semibold text-slate-900 hover:text-[#006039] transition-colors select-none">
@@ -581,15 +464,15 @@ export default function Home() {
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Prêt à simplifier la gestion de votre école ?</h2>
-              <p className="text-emerald-100 text-lg md:text-xl mb-10 max-w-2xl mx-auto">Rejoignez les dizaines d'établissements qui utilisent déjà Scogestia pour gagner du temps et rassurer les parents.</p>
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Pr├¬t ├á simplifier la gestion de votre ├®cole ?</h2>
+              <p className="text-emerald-100 text-lg md:text-xl mb-10 max-w-2xl mx-auto">Rejoignez les dizaines d'├®tablissements qui utilisent d├®j├á Scogestia pour gagner du temps et rassurer les parents.</p>
               
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link 
                   href="/inscription-ecole"
                   className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-lg font-bold text-[#006039] bg-white hover:bg-slate-50 rounded-full transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
                 >
-                  Démarrer mon essai gratuit
+                  D├®marrer mon essai gratuit
                 </Link>
 
               </div>
@@ -610,7 +493,7 @@ export default function Home() {
                 <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="h-12 w-auto object-contain" />
               </div>
               <p className="text-slate-400 text-sm leading-relaxed">
-                La gestion scolaire simplifiée. Le système d'information de gestion de l'éducation (SIGE) moderne qui connecte les directeurs, les enseignants et les parents.
+                La gestion scolaire simplifi├®e. Le syst├¿me d'information de gestion de l'├®ducation (SIGE) moderne qui connecte les directeurs, les enseignants et les parents.
               </p>
             </div>
 
@@ -619,9 +502,9 @@ export default function Home() {
               <h4 className="text-white font-semibold mb-6">Liens Rapides</h4>
               <ul className="space-y-4">
                 <li><Link href="#accueil" className="hover:text-white transition-colors flex items-center gap-2">Accueil</Link></li>
-                <li><Link href="#fonctionnalites" className="hover:text-white transition-colors flex items-center gap-2">Fonctionnalités</Link></li>
+                <li><Link href="#fonctionnalites" className="hover:text-white transition-colors flex items-center gap-2">Fonctionnalit├®s</Link></li>
                 <li><Link href="#tarifs" className="hover:text-white transition-colors flex items-center gap-2">Tarifs</Link></li>
-                <li><Link href="#temoignages" className="hover:text-white transition-colors flex items-center gap-2">Témoignages</Link></li>
+                <li><Link href="#temoignages" className="hover:text-white transition-colors flex items-center gap-2">T├®moignages</Link></li>
               </ul>
             </div>
 
@@ -631,7 +514,7 @@ export default function Home() {
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-[#006039] mt-0.5" />
-                  <span className="text-slate-400">Lomé - Togo</span>
+                  <span className="text-slate-400">Lom├® - Togo</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <svg className="w-5 h-5 text-[#006039]" fill="currentColor" viewBox="0 0 24 24">
@@ -648,10 +531,10 @@ export default function Home() {
 
             {/* Colonne 4: Newsletter / Inscription */}
             <div>
-              <h4 className="text-white font-semibold mb-6">Prêt à digitaliser votre école ?</h4>
-              <p className="text-slate-400 text-sm mb-4">Créez votre compte maintenant et profitez de 14 jours d'essai gratuit.</p>
+              <h4 className="text-white font-semibold mb-6">Pr├¬t ├á digitaliser votre ├®cole ?</h4>
+              <p className="text-slate-400 text-sm mb-4">Cr├®ez votre compte maintenant et profitez de 14 jours d'essai gratuit.</p>
               <Link href="/inscription-ecole" className="w-full inline-flex justify-center items-center px-4 py-3 bg-[#006039] text-white rounded-lg hover:bg-[#004d2e] transition-colors font-medium">
-                Créer mon école
+                Cr├®er mon ├®cole
               </Link>
             </div>
 
@@ -660,17 +543,17 @@ export default function Home() {
           {/* Copyrights */}
           <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
             <div>
-              © {new Date().getFullYear()} Scogestia. Tous droits réservés.
+              ┬® {new Date().getFullYear()} Scogestia. Tous droits r├®serv├®s.
             </div>
             <div className="flex flex-wrap justify-center md:justify-end gap-6 mt-4 md:mt-0">
-              <Link href="/confidentialite" className="hover:text-white transition-colors">Confidentialité</Link>
+              <Link href="/confidentialite" className="hover:text-white transition-colors">Confidentialit├®</Link>
               <Link href="/conditions-utilisation" className="hover:text-white transition-colors">Conditions d'utilisation</Link>
-              <Link href="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</Link>
+              <Link href="/mentions-legales" className="hover:text-white transition-colors">Mentions l├®gales</Link>
             </div>
           </div>
         </div>
       </footer>
-      {/* Modal de Démo Vidéo */}
+      {/* Modal de D├®mo Vid├®o */}
       {demoModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setDemoModalOpen(false)}></div>
@@ -683,16 +566,16 @@ export default function Home() {
               <X className="w-6 h-6" />
             </button>
             
-            {/* Conteneur Vidéo */}
+            {/* Conteneur Vid├®o */}
             <div className="relative pt-[56.25%] w-full bg-slate-800">
               {/* Remplacer cette div par une vraie iframe YouTube/Vimeo plus tard */}
               <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center">
                 <div className="w-20 h-20 rounded-full bg-[#006039]/20 flex items-center justify-center mb-6">
                   <Play className="w-10 h-10 text-[#006039] ml-1" />
                 </div>
-                <h3 className="text-2xl font-bold mb-2">Vidéo de présentation</h3>
+                <h3 className="text-2xl font-bold mb-2">Vid├®o de pr├®sentation</h3>
                 <p className="text-slate-300 max-w-md">
-                  Ici, vous pourrez insérer votre vidéo de présentation (Youtube ou Loom) montrant les fonctionnalités principales de Scogestia.
+                  Ici, vous pourrez ins├®rer votre vid├®o de pr├®sentation (Youtube ou Loom) montrant les fonctionnalit├®s principales de Scogestia.
                 </p>
                 <div className="mt-8 px-4 py-2 bg-slate-900 rounded-lg font-mono text-sm text-slate-400 border border-slate-700">
                   {`<iframe src="https://www.youtube.com/embed/VOTRE_VIDEO" ...></iframe>`}
