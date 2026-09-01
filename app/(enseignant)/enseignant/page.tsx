@@ -57,18 +57,18 @@ export default async function EnseignantDashboardPage() {
     <div className="flex flex-col min-h-full bg-gray-50/50 pb-8">
       {/* Hero Header avec Image */}
       <div 
-        className="relative px-6 rounded-b-[2.5rem] shadow-lg h-[220px] md:h-[320px] lg:h-[400px] flex items-end"
+        className="relative px-6 rounded-b-[2.5rem] shadow-lg h-[220px] md:h-[360px] lg:h-[450px] flex items-end"
         style={{
           backgroundImage: 'url(/hero-landing.png)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center 15%',
+          backgroundPosition: 'center 25%',
           backgroundColor: 'var(--color-primary)'
         }}
       >
-        <div className="absolute inset-0 bg-black/25 rounded-b-[2.5rem]"></div>
+        <div className="absolute inset-0 bg-black/10 rounded-b-[2.5rem]"></div>
       </div>
 
-      <div className="px-4 md:px-8 space-y-6 -mt-12 md:-mt-16 relative z-20 max-w-[1280px] mx-auto w-full">
+      <div className="px-4 md:px-8 space-y-6 mt-4 md:mt-8 relative z-20 max-w-[1280px] mx-auto w-full">
         
         {/* Welcome Card Premium */}
         <div className="bg-white/95 backdrop-blur-md p-4 md:p-5 rounded-2xl shadow-md border border-gray-100 flex items-center justify-between">
