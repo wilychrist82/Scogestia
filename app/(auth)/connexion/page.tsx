@@ -41,46 +41,17 @@ export default function LoginPage() {
             La solution complète pour gérer votre école efficacement, de manière simple et sécurisée.
           </p>
 
-          <div className="space-y-8 w-full">
-            <div className="flex gap-4 items-start">
-              <div className="w-12 h-12 rounded-full bg-emerald-800/50 flex items-center justify-center shrink-0 border border-emerald-600/30">
-                <Users className="w-6 h-6 text-emerald-100" />
-              </div>
-              <div>
-                <h3 className="font-bold text-white mb-1">Gestion complète</h3>
-                <p className="text-sm text-emerald-100/70">Élèves, classes, personnel, notes, présences et plus.</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 items-start">
-              <div className="w-12 h-12 rounded-full bg-emerald-800/50 flex items-center justify-center shrink-0 border border-emerald-600/30">
-                <BarChart3 className="w-6 h-6 text-emerald-100" />
-              </div>
-              <div>
-                <h3 className="font-bold text-white mb-1">Suivi financier clair</h3>
-                <p className="text-sm text-emerald-100/70">Échéances, paiements, rapports et relances.</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 items-start">
-              <div className="w-12 h-12 rounded-full bg-emerald-800/50 flex items-center justify-center shrink-0 border border-emerald-600/30">
-                <ShieldCheck className="w-6 h-6 text-emerald-100" />
-              </div>
-              <div>
-                <h3 className="font-bold text-white mb-1">Sécurisé et fiable</h3>
-                <p className="text-sm text-emerald-100/70">Vos données sont protégées 24h/24 et 7j/7.</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 items-start">
-              <div className="w-12 h-12 rounded-full bg-emerald-800/50 flex items-center justify-center shrink-0 border border-emerald-600/30">
-                <Smartphone className="w-6 h-6 text-emerald-100" />
-              </div>
-              <div>
-                <h3 className="font-bold text-white mb-1">Accessible partout</h3>
-                <p className="text-sm text-emerald-100/70">Utilisez Scogestia depuis votre ordinateur ou mobile.</p>
-              </div>
-            </div>
+          <div className="mt-4 w-full relative rounded-xl overflow-hidden shadow-2xl border border-emerald-400/30 group bg-slate-900 transform transition-all duration-700 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+             {/* Barre de navigateur mini */}
+             <div className="h-8 bg-slate-800/90 border-b border-white/10 flex items-center px-3 gap-1.5 backdrop-blur-md">
+                <div className="w-2.5 h-2.5 rounded-full bg-slate-600 group-hover:bg-red-400 transition-colors"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-slate-600 group-hover:bg-amber-400 transition-colors delay-75"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-slate-600 group-hover:bg-emerald-400 transition-colors delay-150"></div>
+             </div>
+             <div className="relative aspect-[4/3] w-full overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 z-10 pointer-events-none"></div>
+                <img src="/hero-landing.png" alt="Scogestia Interface" className="w-full h-full object-cover object-top transform group-hover:scale-[1.05] transition-transform duration-1000 ease-out" />
+             </div>
           </div>
           
           <div className="mt-16 pt-8 border-t border-emerald-700/50 w-full text-center">

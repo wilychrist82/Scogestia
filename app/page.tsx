@@ -122,9 +122,25 @@ export default function Home() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-slate-900/50 backdrop-blur-sm">
-                   <div className="absolute inset-0 flex items-center justify-center">
-                     <p className="text-slate-500 font-mono text-sm border border-slate-700/50 px-4 py-2 rounded">UI Dashboard Preview</p>
+                <div className="relative w-full rounded-2xl overflow-hidden border border-white/10 shadow-[0_0_60px_rgba(16,185,129,0.15)] bg-[#0f172a] group transform transition-all duration-700 hover:-translate-y-2 hover:shadow-[0_0_80px_rgba(16,185,129,0.25)]">
+                   {/* Barre de navigateur premium */}
+                   <div className="h-10 bg-slate-800/80 border-b border-white/10 flex items-center px-4 gap-2 backdrop-blur-md">
+                      <div className="w-3 h-3 rounded-full bg-slate-600 group-hover:bg-red-400 transition-colors duration-300"></div>
+                      <div className="w-3 h-3 rounded-full bg-slate-600 group-hover:bg-amber-400 transition-colors duration-300 delay-75"></div>
+                      <div className="w-3 h-3 rounded-full bg-slate-600 group-hover:bg-emerald-400 transition-colors duration-300 delay-150"></div>
+                      <div className="ml-4 h-4 w-full max-w-[180px] bg-slate-700/50 rounded flex items-center px-2">
+                        <Lock className="w-3 h-3 text-emerald-400/70 mr-2" />
+                        <span className="text-[10px] text-slate-400 font-mono">scogestia.com/app</span>
+                      </div>
+                   </div>
+                   {/* Image container */}
+                   <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-slate-900">
+                     <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 z-10 pointer-events-none"></div>
+                     <img 
+                       src="/hero-landing.png" 
+                       alt="Dashboard Parent, Enseignant, Élève" 
+                       className="w-full h-full object-cover object-top transform group-hover:scale-[1.03] transition-transform duration-1000 ease-out"
+                     />
                    </div>
                 </div>
               </motion.div>
