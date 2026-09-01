@@ -209,10 +209,21 @@ export default function Home() {
                      <span className="font-mono text-[10px] sm:text-xs text-slate-400 font-semibold tracking-wider uppercase">Paiements Récents</span>
                      <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
                   </div>
-                  <div className="p-5 space-y-4">
-                     <div className="h-10 bg-slate-50 rounded-lg border border-slate-100 w-full"></div>
-                     <div className="h-10 bg-slate-50 rounded-lg border border-slate-100 w-[85%]"></div>
-                     <div className="h-10 bg-slate-50 rounded-lg border border-slate-100 w-[60%]"></div>
+                  <div className="p-4 space-y-3">
+                     <div className="bg-slate-50 rounded-lg border border-slate-100 p-3 flex justify-between items-center">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">Frais Scolarité (T1)</p>
+                          <p className="text-xs text-slate-500">Famille Dubois</p>
+                        </div>
+                        <span className="text-sm font-bold text-emerald-600">+450 €</span>
+                     </div>
+                     <div className="bg-slate-50 rounded-lg border border-slate-100 p-3 flex justify-between items-center">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">Cantine (Nov)</p>
+                          <p className="text-xs text-slate-500">Famille Martin</p>
+                        </div>
+                        <span className="text-sm font-bold text-emerald-600">+120 €</span>
+                     </div>
                   </div>
                 </div>
               </motion.div>
@@ -256,13 +267,37 @@ export default function Home() {
                     </p>
                  </div>
                  <div className="w-full md:w-[45%] h-full min-h-[200px] relative mt-6 md:mt-0">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-slate-50 to-slate-100/50 rounded-2xl border border-slate-200/60 p-6 flex flex-col gap-3 transform group-hover:scale-[1.02] transition-transform duration-500">
-                        <div className="flex items-center gap-3 mb-2">
-                           <div className="w-8 h-8 rounded-full bg-white shadow-sm border border-slate-100"></div>
-                           <div className="h-4 bg-white rounded border border-slate-100 w-24"></div>
+                    <div className="absolute inset-0 bg-gradient-to-tr from-slate-50 to-slate-100/50 rounded-2xl border border-slate-200/60 p-5 flex flex-col transform group-hover:scale-[1.02] transition-transform duration-500">
+                        <div className="flex justify-between items-start mb-4">
+                           <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold border border-indigo-200">
+                                JL
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-slate-800">Jean Dupont</p>
+                                <p className="text-xs text-slate-500">Terminale S</p>
+                              </div>
+                           </div>
+                           <div className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-1 rounded">1er Trimestre</div>
                         </div>
-                        <div className="h-16 bg-white rounded-lg border border-slate-100 w-full shadow-sm"></div>
-                        <div className="h-8 bg-white rounded-lg border border-slate-100 w-[70%] shadow-sm"></div>
+                        <div className="bg-white rounded-lg border border-slate-100 p-4 shadow-sm mb-3">
+                           <div className="flex justify-between text-sm mb-2">
+                             <span className="text-slate-600 font-medium">Mathématiques</span>
+                             <span className="font-bold text-slate-900">16.5 / 20</span>
+                           </div>
+                           <div className="w-full bg-slate-100 rounded-full h-1.5">
+                             <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '82%' }}></div>
+                           </div>
+                        </div>
+                        <div className="bg-white rounded-lg border border-slate-100 p-4 shadow-sm">
+                           <div className="flex justify-between text-sm mb-2">
+                             <span className="text-slate-600 font-medium">Physique-Chimie</span>
+                             <span className="font-bold text-slate-900">14.0 / 20</span>
+                           </div>
+                           <div className="w-full bg-slate-100 rounded-full h-1.5">
+                             <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: '70%' }}></div>
+                           </div>
+                        </div>
                     </div>
                  </div>
               </motion.div>
