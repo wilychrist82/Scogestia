@@ -194,7 +194,7 @@ export default function Home() {
             >
               {/* Grande Carte 1 */}
               <motion.div variants={fadeIn} className="md:col-span-8 bg-slate-50 rounded-3xl p-10 border border-slate-100 relative overflow-hidden group">
-                <div className="relative z-10 w-full max-w-md">
+                <div className="relative z-20 w-full md:w-[60%] lg:w-[55%]">
                   <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center mb-6">
                     <CreditCard className="w-6 h-6 text-slate-900" />
                   </div>
@@ -204,55 +204,66 @@ export default function Home() {
                   </p>
                 </div>
                 {/* Visual */}
-                <div className="absolute -bottom-10 -right-10 w-[60%] h-[70%] bg-white rounded-tl-2xl shadow-xl border border-slate-200/60 hidden sm:block group-hover:-translate-y-2 group-hover:-translate-x-2 transition-transform duration-500">
-                  <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                     <span className="font-mono text-xs text-slate-400">Paiements Récents</span>
-                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <div className="absolute bottom-0 right-0 w-[85%] md:w-[45%] h-[75%] bg-white rounded-tl-2xl shadow-xl border-t border-l border-slate-200/60 hidden sm:block translate-y-4 translate-x-4 group-hover:translate-y-0 group-hover:translate-x-0 transition-transform duration-500">
+                  <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                     <span className="font-mono text-[10px] sm:text-xs text-slate-400 font-semibold tracking-wider uppercase">Paiements Récents</span>
+                     <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
                   </div>
-                  <div className="p-6 space-y-4">
-                     <div className="h-8 bg-slate-50 rounded-md border border-slate-100 w-full"></div>
-                     <div className="h-8 bg-slate-50 rounded-md border border-slate-100 w-[80%]"></div>
+                  <div className="p-5 space-y-4">
+                     <div className="h-10 bg-slate-50 rounded-lg border border-slate-100 w-full"></div>
+                     <div className="h-10 bg-slate-50 rounded-lg border border-slate-100 w-[85%]"></div>
+                     <div className="h-10 bg-slate-50 rounded-lg border border-slate-100 w-[60%]"></div>
                   </div>
                 </div>
               </motion.div>
 
               {/* Petite Carte 1 */}
-              <motion.div variants={fadeIn} className="md:col-span-4 bg-slate-900 rounded-3xl p-10 relative overflow-hidden flex flex-col justify-between">
-                <div className="absolute top-0 right-0 p-10 opacity-10">
-                  <Users className="w-32 h-32 text-white" />
+              <motion.div variants={fadeIn} className="md:col-span-4 bg-white border border-slate-200 rounded-3xl p-10 relative overflow-hidden flex flex-col justify-between group hover:border-[#006039]/30 transition-colors">
+                <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] transform group-hover:scale-110 transition-transform duration-500">
+                  <Users className="w-48 h-48 text-slate-900" />
                 </div>
-                <div>
-                  <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 backdrop-blur-sm border border-white/10">
-                    <Users className="w-6 h-6 text-white" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mb-6 border border-slate-100">
+                    <Users className="w-6 h-6 text-slate-700" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-4">Gestion Scolaire</h3>
-                  <p className="text-slate-400 leading-relaxed">
-                    Classes, enseignants, emplois du temps. Une architecture claire pour gérer des milliers d'élèves.
+                  <h3 className="text-2xl font-bold text-slate-900 mb-4">Gestion Scolaire</h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    Classes, enseignants, emplois du temps. Une architecture claire pour gérer des milliers d'élèves avec fluidité.
                   </p>
                 </div>
               </motion.div>
 
               {/* Petite Carte 2 */}
-              <motion.div variants={fadeIn} className="md:col-span-4 bg-emerald-50 rounded-3xl p-10 border border-emerald-100">
-                 <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6">
-                    <Smartphone className="w-6 h-6 text-emerald-700" />
+              <motion.div variants={fadeIn} className="md:col-span-4 bg-[#f8fafc] rounded-3xl p-10 border border-slate-100 group hover:shadow-md transition-shadow">
+                 <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6 border border-slate-200">
+                    <Smartphone className="w-6 h-6 text-emerald-600" />
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 mb-4">Portail Parents</h3>
                   <p className="text-slate-600 leading-relaxed">
-                    Transparence totale. Les parents suivent l'assiduité, les notes et les paiements depuis leur téléphone.
+                    Transparence totale. Les parents suivent l'assiduité, les notes et les paiements depuis leur téléphone en temps réel.
                   </p>
               </motion.div>
 
               {/* Grande Carte 2 */}
-              <motion.div variants={fadeIn} className="md:col-span-8 bg-slate-50 rounded-3xl p-10 border border-slate-100 flex flex-col md:flex-row items-center gap-8">
-                 <div className="flex-1">
-                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center mb-6">
-                      <BarChart className="w-6 h-6 text-slate-900" />
+              <motion.div variants={fadeIn} className="md:col-span-8 bg-white rounded-3xl p-10 border border-slate-200 flex flex-col md:flex-row items-center gap-10 overflow-hidden relative group hover:border-slate-300 transition-colors">
+                 <div className="flex-1 relative z-20">
+                    <div className="w-12 h-12 bg-slate-50 rounded-xl shadow-sm border border-slate-100 flex items-center justify-center mb-6">
+                      <BarChart className="w-6 h-6 text-slate-800" />
                     </div>
                     <h3 className="text-2xl font-bold text-slate-900 mb-4">Notes & Bulletins Automatisés</h3>
                     <p className="text-slate-600 leading-relaxed text-lg">
-                      Saisissez les notes, le système fait le reste. Calcul des moyennes, des rangs, et génération massive des bulletins scolaires sans erreurs.
+                      Saisissez les notes, le système fait le reste. Calcul des moyennes, des rangs, et génération massive des bulletins scolaires trimestriels sans erreurs.
                     </p>
+                 </div>
+                 <div className="w-full md:w-[45%] h-full min-h-[200px] relative mt-6 md:mt-0">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-slate-50 to-slate-100/50 rounded-2xl border border-slate-200/60 p-6 flex flex-col gap-3 transform group-hover:scale-[1.02] transition-transform duration-500">
+                        <div className="flex items-center gap-3 mb-2">
+                           <div className="w-8 h-8 rounded-full bg-white shadow-sm border border-slate-100"></div>
+                           <div className="h-4 bg-white rounded border border-slate-100 w-24"></div>
+                        </div>
+                        <div className="h-16 bg-white rounded-lg border border-slate-100 w-full shadow-sm"></div>
+                        <div className="h-8 bg-white rounded-lg border border-slate-100 w-[70%] shadow-sm"></div>
+                    </div>
                  </div>
               </motion.div>
             </motion.div>
