@@ -195,8 +195,9 @@ export default function Home() {
               {/* Grande Carte 1 */}
               <motion.div variants={fadeIn} className="md:col-span-8 bg-slate-50 rounded-3xl p-10 border border-slate-100 relative overflow-hidden group">
                 <div className="relative z-20 w-full md:w-[60%] lg:w-[55%]">
-                  <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center mb-6">
-                    <CreditCard className="w-6 h-6 text-slate-900" />
+                  <div className="inline-flex items-center gap-3 mb-6">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs">01</span>
+                    <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">Finance & Comptabilité</span>
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 mb-4">Suivi Financier & Recouvrement</h3>
                   <p className="text-slate-600 leading-relaxed text-lg mb-8">
@@ -215,14 +216,14 @@ export default function Home() {
                           <p className="text-sm font-semibold text-slate-800">Frais Scolarité (T1)</p>
                           <p className="text-xs text-slate-500">Famille Dubois</p>
                         </div>
-                        <span className="text-sm font-bold text-emerald-600">+450 €</span>
+                        <span className="text-sm font-bold text-emerald-600">+45 000 FCFA</span>
                      </div>
                      <div className="bg-slate-50 rounded-lg border border-slate-100 p-3 flex justify-between items-center">
                         <div>
                           <p className="text-sm font-semibold text-slate-800">Cantine (Nov)</p>
                           <p className="text-xs text-slate-500">Famille Martin</p>
                         </div>
-                        <span className="text-sm font-bold text-emerald-600">+120 €</span>
+                        <span className="text-sm font-bold text-emerald-600">+12 000 FCFA</span>
                      </div>
                   </div>
                 </div>
@@ -230,12 +231,10 @@ export default function Home() {
 
               {/* Petite Carte 1 */}
               <motion.div variants={fadeIn} className="md:col-span-4 bg-white border border-slate-200 rounded-3xl p-10 relative overflow-hidden flex flex-col justify-between group hover:border-[#006039]/30 transition-colors">
-                <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] transform group-hover:scale-110 transition-transform duration-500">
-                  <Users className="w-48 h-48 text-slate-900" />
-                </div>
                 <div className="relative z-10">
-                  <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mb-6 border border-slate-100">
-                    <Users className="w-6 h-6 text-slate-700" />
+                  <div className="inline-flex items-center gap-3 mb-6">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">02</span>
+                    <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">Administration</span>
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 mb-4">Gestion Scolaire</h3>
                   <p className="text-slate-600 leading-relaxed">
@@ -246,8 +245,9 @@ export default function Home() {
 
               {/* Petite Carte 2 */}
               <motion.div variants={fadeIn} className="md:col-span-4 bg-[#f8fafc] rounded-3xl p-10 border border-slate-100 group hover:shadow-md transition-shadow">
-                 <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6 border border-slate-200">
-                    <Smartphone className="w-6 h-6 text-emerald-600" />
+                  <div className="inline-flex items-center gap-3 mb-6">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 text-slate-800 font-bold text-xs">03</span>
+                    <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">Communication</span>
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 mb-4">Portail Parents</h3>
                   <p className="text-slate-600 leading-relaxed">
@@ -258,8 +258,9 @@ export default function Home() {
               {/* Grande Carte 2 */}
               <motion.div variants={fadeIn} className="md:col-span-8 bg-white rounded-3xl p-10 border border-slate-200 flex flex-col md:flex-row items-center gap-10 overflow-hidden relative group hover:border-slate-300 transition-colors">
                  <div className="flex-1 relative z-20">
-                    <div className="w-12 h-12 bg-slate-50 rounded-xl shadow-sm border border-slate-100 flex items-center justify-center mb-6">
-                      <BarChart className="w-6 h-6 text-slate-800" />
+                    <div className="inline-flex items-center gap-3 mb-6">
+                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#006039] text-white font-bold text-xs">04</span>
+                      <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">Académique</span>
                     </div>
                     <h3 className="text-2xl font-bold text-slate-900 mb-4">Notes & Bulletins Automatisés</h3>
                     <p className="text-slate-600 leading-relaxed text-lg">
