@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ShieldCheck, Cloud, Zap, CheckCircle2, LayoutDashboard, CreditCard, Users, ArrowRight, BarChart, Smartphone, Globe, Mail, Phone, MapPin, Star, PlayCircle, Lock, X, Play } from 'lucide-react'
+import { ShieldCheck, Cloud, Zap, CheckCircle2, LayoutDashboard, CreditCard, Users, ArrowRight, BarChart, Smartphone, Globe, Mail, Phone, MapPin, Star, PlayCircle, Lock, X, Play, Wallet, TrendingUp, Building2, Settings, MessageSquare, GraduationCap } from 'lucide-react'
 
 // Animation Variants
 const fadeIn = {
@@ -195,9 +195,15 @@ export default function Home() {
               {/* Grande Carte 1 */}
               <motion.div variants={fadeIn} className="md:col-span-8 bg-slate-50 rounded-3xl p-10 border border-slate-100 relative overflow-hidden group">
                 <div className="relative z-20 w-full md:w-[60%] lg:w-[55%]">
-                  <div className="inline-flex items-center gap-3 mb-6">
-                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs">01</span>
-                    <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">Finance & Comptabilité</span>
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/50 shadow-[0_2px_10px_rgba(16,185,129,0.1)]">
+                      <div className="absolute inset-0 bg-white/40 backdrop-blur-sm rounded-2xl"></div>
+                      <Wallet className="w-6 h-6 text-emerald-700 relative z-10 stroke-[1.5]" />
+                      <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-white rounded-lg border border-emerald-100 shadow-sm flex items-center justify-center z-20">
+                        <TrendingUp className="w-3 h-3 text-emerald-500 stroke-[2.5]" />
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold tracking-widest text-slate-400 uppercase">Finance & Comptabilité</span>
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 mb-4">Suivi Financier & Recouvrement</h3>
                   <p className="text-slate-600 leading-relaxed text-lg mb-8">
@@ -232,9 +238,15 @@ export default function Home() {
               {/* Petite Carte 1 */}
               <motion.div variants={fadeIn} className="md:col-span-4 bg-white border border-slate-200 rounded-3xl p-10 relative overflow-hidden flex flex-col justify-between group hover:border-[#006039]/30 transition-colors">
                 <div className="relative z-10">
-                  <div className="inline-flex items-center gap-3 mb-6">
-                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">02</span>
-                    <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">Administration</span>
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50 shadow-[0_2px_10px_rgba(59,130,246,0.1)]">
+                      <div className="absolute inset-0 bg-white/40 backdrop-blur-sm rounded-2xl"></div>
+                      <Building2 className="w-6 h-6 text-blue-700 relative z-10 stroke-[1.5]" />
+                      <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-white rounded-lg border border-blue-100 shadow-sm flex items-center justify-center z-20">
+                        <Settings className="w-3 h-3 text-blue-500 stroke-[2.5]" />
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold tracking-widest text-slate-400 uppercase">Administration</span>
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 mb-4">Gestion Scolaire</h3>
                   <p className="text-slate-600 leading-relaxed">
@@ -245,9 +257,15 @@ export default function Home() {
 
               {/* Petite Carte 2 */}
               <motion.div variants={fadeIn} className="md:col-span-4 bg-[#f8fafc] rounded-3xl p-10 border border-slate-100 group hover:shadow-md transition-shadow">
-                  <div className="inline-flex items-center gap-3 mb-6">
-                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 text-slate-800 font-bold text-xs">03</span>
-                    <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">Communication</span>
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 border border-indigo-200/50 shadow-[0_2px_10px_rgba(99,102,241,0.1)]">
+                      <div className="absolute inset-0 bg-white/40 backdrop-blur-sm rounded-2xl"></div>
+                      <Smartphone className="w-6 h-6 text-indigo-700 relative z-10 stroke-[1.5]" />
+                      <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-white rounded-lg border border-indigo-100 shadow-sm flex items-center justify-center z-20">
+                        <MessageSquare className="w-3 h-3 text-indigo-500 stroke-[2.5]" />
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold tracking-widest text-slate-400 uppercase">Communication</span>
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 mb-4">Portail Parents</h3>
                   <p className="text-slate-600 leading-relaxed">
@@ -258,8 +276,14 @@ export default function Home() {
               {/* Grande Carte 2 */}
               <motion.div variants={fadeIn} className="md:col-span-8 bg-white rounded-3xl p-10 border border-slate-200 flex flex-col md:flex-row items-center gap-10 overflow-hidden relative group hover:border-slate-300 transition-colors">
                  <div className="flex-1 relative z-20">
-                    <div className="inline-flex items-center gap-3 mb-6">
-                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#006039] text-white font-bold text-xs">04</span>
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50 shadow-[0_2px_10px_rgba(245,158,11,0.1)]">
+                        <div className="absolute inset-0 bg-white/40 backdrop-blur-sm rounded-2xl"></div>
+                        <GraduationCap className="w-6 h-6 text-amber-700 relative z-10 stroke-[1.5]" />
+                        <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-white rounded-lg border border-amber-100 shadow-sm flex items-center justify-center z-20">
+                          <Star className="w-3 h-3 text-amber-500 stroke-[2.5]" />
+                        </div>
+                      </div>
                       <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">Académique</span>
                     </div>
                     <h3 className="text-2xl font-bold text-slate-900 mb-4">Notes & Bulletins Automatisés</h3>
