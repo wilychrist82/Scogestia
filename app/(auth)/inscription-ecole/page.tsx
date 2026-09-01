@@ -23,9 +23,9 @@ export default function RegisterPage() {
   return (
     <main className="flex min-h-screen bg-white overflow-hidden font-sans">
       {/* Colonne de gauche - Vert Émeraude (caché sur mobile) */}
-      <div className="hidden lg:flex lg:w-5/12 bg-[#006039] text-white p-12 flex-col justify-center items-center relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-5/12 bg-[#002116] text-white p-12 flex-col justify-center items-center relative overflow-hidden">
         {/* Motif de fond subtil */}
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-emerald-900/30 via-transparent to-transparent"></div>
         
         <div className="relative z-10 w-full max-w-md flex flex-col items-center">
           <Link href="/" className="inline-flex flex-col items-center mb-12">

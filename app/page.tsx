@@ -64,71 +64,68 @@ export default function Home() {
 
       <main>
         {/* Section Héro (#accueil) */}
-        <section id="accueil" className="relative pt-20 pb-32 lg:pt-32 lg:pb-40 overflow-hidden bg-white">
-          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-50/40 via-white to-white"></div>
+        <section id="accueil" className="relative pt-24 pb-20 lg:pt-32 lg:pb-32 overflow-hidden bg-[#0a0a0a]">
+          <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-900/40 via-[#0a0a0a] to-[#0a0a0a]"></div>
           
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-4 relative z-10">
             <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
               <motion.div 
-                className="w-full lg:w-5/12 flex flex-col items-center lg:items-start text-center lg:text-left"
+                className="w-full lg:w-6/12 flex flex-col items-start text-left"
                 initial="hidden"
                 animate="visible"
                 variants={staggerContainer}
               >
-                
+                <motion.div variants={fadeIn} className="mb-6 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md">
+                  <span className="flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                  <span className="text-xs font-medium text-emerald-100">La référence en gestion scolaire</span>
+                </motion.div>
 
-                <motion.h1 variants={fadeIn} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-6">
-                  Gérez votre école <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006039] to-emerald-500">en toute simplicité</span>. Gagnez du temps, maîtrisez vos finances.
+                <motion.h1 variants={fadeIn} className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-[1.05] mb-6">
+                  Gérez votre école avec <span className="text-emerald-400">précision</span>.
                 </motion.h1>
                 
-                <motion.p variants={fadeIn} className="text-lg text-slate-600 mb-10 max-w-xl leading-relaxed">
-                  Scogestia est la solution 100 % web qui aide les directeurs, comptables et enseignants à gagner du temps, à mieux piloter leur établissement et à renforcer la confiance des parents.
+                <motion.p variants={fadeIn} className="text-lg text-slate-400 mb-10 max-w-xl leading-relaxed">
+                  Le système d'information scolaire de nouvelle génération. Plus rapide, plus clair et conçu pour les établissements exigeants.
                 </motion.p>
                 
                 <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                   <Link 
                     href="/inscription-ecole"
-                    className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-base font-medium text-white bg-[#006039] hover:bg-[#004d2e] rounded-full transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
+                    className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-base font-semibold text-slate-900 bg-white hover:bg-slate-100 rounded-full transition-all active:scale-[0.98]"
                   >
-                    Essai gratuit de 14 jours
+                    Démarrer l'essai
                   </Link>
                   <button 
                     onClick={() => setDemoModalOpen(true)}
-                    className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-base font-medium text-slate-700 bg-white border-2 border-slate-200 hover:border-emerald-200 hover:bg-emerald-50 rounded-full transition-all"
+                    className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-base font-medium text-white bg-white/5 border border-white/10 hover:bg-white/10 rounded-full transition-all active:scale-[0.98]"
                   >
-                    <PlayCircle className="w-5 h-5 mr-2 text-[#006039]" />
+                    <PlayCircle className="w-5 h-5 mr-2 text-emerald-400" />
                     Voir la démo
                   </button>
                 </motion.div>
                 
-                <motion.div variants={fadeIn} className="mt-10 flex flex-wrap justify-center lg:justify-start gap-6 text-sm text-slate-500 font-medium">
+                <motion.div variants={fadeIn} className="mt-12 flex items-center gap-6 text-sm text-slate-500 font-medium">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-[#006039]" />
-                    Aucune carte requise
+                    <ShieldCheck className="w-5 h-5 text-slate-400" />
+                    Données chiffrées
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-[#006039]" />
-                    Installation immédiate
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-[#006039]" />
-                    Support 7j/7
+                    <Zap className="w-5 h-5 text-slate-400" />
+                    Performance absolue
                   </div>
                 </motion.div>
               </motion.div>
               
               <motion.div 
-                className="w-full lg:w-7/12 relative"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+                className="w-full lg:w-6/12 relative hidden lg:block"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                <div className="relative overflow-visible group flex justify-center lg:justify-end">
-                   <img 
-                     src="/hero-landing.png" 
-                     alt="Scogestia - Gestion scolaire intuitive" 
-                     className="w-full lg:max-w-[120%] h-auto object-contain relative z-10 mix-blend-multiply contrast-[1.05] brightness-[1.05]"
-                   />
+                <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-slate-900/50 backdrop-blur-sm">
+                   <div className="absolute inset-0 flex items-center justify-center">
+                     <p className="text-slate-500 font-mono text-sm border border-slate-700/50 px-4 py-2 rounded">UI Dashboard Preview</p>
+                   </div>
                 </div>
               </motion.div>
             </div>
@@ -171,45 +168,93 @@ export default function Home() {
         </section>
 
         {/* Section Fonctionnalités (#fonctionnalites) */}
-        <section id="fonctionnalites" className="py-24 bg-slate-50">
+        <section id="fonctionnalites" className="py-32 bg-white">
           <div className="container mx-auto px-4 max-w-6xl">
             <motion.div 
-              className="text-center mb-16"
+              className="mb-20"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <span className="text-[#006039] font-semibold tracking-wider uppercase text-sm mb-2 block">Fonctionnalités Clés</span>
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Tout ce dont vous avez besoin pour diriger</h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Scogestia remplace vos fichiers Excel, vos cahiers volants et vos longs calculs par un outil unique, automatisé et collaboratif.</p>
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight max-w-2xl">
+                Un contrôle total sur l'ensemble de votre établissement.
+              </h2>
+              <p className="text-xl text-slate-600 max-w-2xl leading-relaxed">
+                Des outils financiers puissants aux carnets de notes automatisés, chaque module est conçu pour être invisible et efficace.
+              </p>
             </motion.div>
 
             <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              className="grid grid-cols-1 md:grid-cols-12 gap-6"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
               variants={staggerContainer}
             >
-              {[
-                { icon: Users, color: "blue", title: "Gestion Scolaire Complète", desc: "Inscriptions, gestion des classes, liste des enseignants et emplois du temps. Retrouvez n'importe quel élève en un clic." },
-                { icon: CreditCard, color: "amber", title: "Suivi Financier & Impayés", desc: "Suivez les paiements de scolarité (tranches), imprimez les reçus officiels, et identifiez immédiatement les élèves en retard de paiement." },
-                { icon: BarChart, color: "purple", title: "Notes & Bulletins", desc: "Les enseignants saisissent les notes, Scogestia calcule les moyennes, les rangs, et génère les bulletins trimestriels sans erreur humaine." },
-                { icon: Smartphone, color: "emerald", title: "Portail Parents Temps Réel", desc: "Un espace dédié pour les parents afin qu'ils consultent les notes, l'assiduité et les paiements de leurs enfants depuis leur smartphone." },
-                { icon: LayoutDashboard, color: "red", title: "Tableaux de bord (Analytics)", desc: "Visualisez la santé financière et académique de votre école d'un seul coup d'œil grâce à des graphiques dynamiques et détaillés." },
-                { icon: Globe, color: "indigo", title: "Multi-Rôles Sécurisé", desc: "Directeur, Comptable, Enseignant, Parent. Chacun a un accès strictement limité aux informations dont il a besoin." }
-              ].map((feature, i) => (
-                <motion.div key={i} variants={fadeIn} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-                  <div className={`w-14 h-14 bg-${feature.color}-50 text-${feature.color}-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                    <feature.icon className="w-7 h-7" />
+              {/* Grande Carte 1 */}
+              <motion.div variants={fadeIn} className="md:col-span-8 bg-slate-50 rounded-3xl p-10 border border-slate-100 relative overflow-hidden group">
+                <div className="relative z-10 w-full max-w-md">
+                  <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center mb-6">
+                    <CreditCard className="w-6 h-6 text-slate-900" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
-                  <p className="text-slate-600 leading-relaxed">
-                    {feature.desc}
+                  <h3 className="text-2xl font-bold text-slate-900 mb-4">Suivi Financier & Recouvrement</h3>
+                  <p className="text-slate-600 leading-relaxed text-lg mb-8">
+                    Fini les tableaux Excel croisés. Visualisez instantanément les impayés, relancez les parents par SMS, et générez des reçus en un clic.
                   </p>
-                </motion.div>
-              ))}
+                </div>
+                {/* Visual */}
+                <div className="absolute -bottom-10 -right-10 w-[60%] h-[70%] bg-white rounded-tl-2xl shadow-xl border border-slate-200/60 hidden sm:block group-hover:-translate-y-2 group-hover:-translate-x-2 transition-transform duration-500">
+                  <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                     <span className="font-mono text-xs text-slate-400">Paiements Récents</span>
+                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  </div>
+                  <div className="p-6 space-y-4">
+                     <div className="h-8 bg-slate-50 rounded-md border border-slate-100 w-full"></div>
+                     <div className="h-8 bg-slate-50 rounded-md border border-slate-100 w-[80%]"></div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Petite Carte 1 */}
+              <motion.div variants={fadeIn} className="md:col-span-4 bg-slate-900 rounded-3xl p-10 relative overflow-hidden flex flex-col justify-between">
+                <div className="absolute top-0 right-0 p-10 opacity-10">
+                  <Users className="w-32 h-32 text-white" />
+                </div>
+                <div>
+                  <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 backdrop-blur-sm border border-white/10">
+                    <Users className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4">Gestion Scolaire</h3>
+                  <p className="text-slate-400 leading-relaxed">
+                    Classes, enseignants, emplois du temps. Une architecture claire pour gérer des milliers d'élèves.
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Petite Carte 2 */}
+              <motion.div variants={fadeIn} className="md:col-span-4 bg-emerald-50 rounded-3xl p-10 border border-emerald-100">
+                 <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6">
+                    <Smartphone className="w-6 h-6 text-emerald-700" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-4">Portail Parents</h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    Transparence totale. Les parents suivent l'assiduité, les notes et les paiements depuis leur téléphone.
+                  </p>
+              </motion.div>
+
+              {/* Grande Carte 2 */}
+              <motion.div variants={fadeIn} className="md:col-span-8 bg-slate-50 rounded-3xl p-10 border border-slate-100 flex flex-col md:flex-row items-center gap-8">
+                 <div className="flex-1">
+                    <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-200 flex items-center justify-center mb-6">
+                      <BarChart className="w-6 h-6 text-slate-900" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-4">Notes & Bulletins Automatisés</h3>
+                    <p className="text-slate-600 leading-relaxed text-lg">
+                      Saisissez les notes, le système fait le reste. Calcul des moyennes, des rangs, et génération massive des bulletins scolaires sans erreurs.
+                    </p>
+                 </div>
+              </motion.div>
             </motion.div>
           </div>
         </section>
@@ -301,7 +346,7 @@ export default function Home() {
                </motion.div>
 
                {/* Plan Standard */}
-               <motion.div variants={fadeIn} className="bg-white rounded-3xl shadow-xl border-2 border-[#006039] p-8 flex flex-col relative overflow-hidden transform md:-translate-y-4">
+               <motion.div variants={fadeIn} className="bg-white rounded-3xl shadow-xl border-2 border-[#006039] p-8 flex flex-col relative overflow-hidden">
                   <div className="absolute top-0 right-0 bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Populaire</div>
                   <div className="mb-8 relative z-10">
                      <h3 className="text-2xl font-bold text-slate-900 mb-2">Plan Standard</h3>

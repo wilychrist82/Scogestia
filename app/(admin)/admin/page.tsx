@@ -163,57 +163,57 @@ export default async function AdminDashboard() {
       {/* Top Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Total Élèves */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-50 flex items-center justify-center text-[var(--color-chart-green)] shrink-0">
-            <Users size={20} className="sm:w-6 sm:h-6" />
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col items-start gap-3">
+          <div className="flex w-full items-center justify-between">
+            <p className="text-xs text-gray-500 font-medium">Total élèves</p>
+            <Users size={16} className="text-gray-400" />
           </div>
           <div>
-            <p className="text-[11px] sm:text-xs text-gray-500 font-medium mb-0.5 sm:mb-1">Total élèves</p>
-            <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{studentCount || 0}</p>
+            <p className="text-2xl font-bold text-gray-900 leading-none">{studentCount || 0}</p>
           </div>
         </div>
 
         {/* Total Classes */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center text-[var(--color-chart-blue)] shrink-0">
-            <Presentation size={20} className="sm:w-6 sm:h-6" />
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col items-start gap-3">
+          <div className="flex w-full items-center justify-between">
+            <p className="text-xs text-gray-500 font-medium">Total classes</p>
+            <Presentation size={16} className="text-gray-400" />
           </div>
           <div>
-            <p className="text-[11px] sm:text-xs text-gray-500 font-medium mb-0.5 sm:mb-1">Total classes</p>
-            <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{classesCount || 0}</p>
+            <p className="text-2xl font-bold text-gray-900 leading-none">{classesCount || 0}</p>
           </div>
         </div>
 
         {/* Total Personnel */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-50 flex items-center justify-center text-[var(--color-chart-purple)] shrink-0">
-            <UserCircle size={20} className="sm:w-6 sm:h-6" />
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col items-start gap-3">
+          <div className="flex w-full items-center justify-between">
+            <p className="text-xs text-gray-500 font-medium">Personnel</p>
+            <UserCircle size={16} className="text-gray-400" />
           </div>
           <div>
-            <p className="text-[11px] sm:text-xs text-gray-500 font-medium mb-0.5 sm:mb-1">Personnel</p>
-            <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{staffCount || 0}</p>
+            <p className="text-2xl font-bold text-gray-900 leading-none">{staffCount || 0}</p>
           </div>
         </div>
 
         {/* Taux de recouvrement */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-50 flex items-center justify-center text-[var(--color-chart-orange)] shrink-0">
-            <Wallet size={20} className="sm:w-6 sm:h-6" />
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col items-start gap-3">
+          <div className="flex w-full items-center justify-between">
+            <p className="text-xs text-gray-500 font-medium">Recouvrement</p>
+            <Wallet size={16} className="text-gray-400" />
           </div>
           <div>
-            <p className="text-[11px] sm:text-xs text-gray-500 font-medium mb-0.5 sm:mb-1">Recouvrement</p>
-            <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{recouvRate}%</p>
+            <p className="text-2xl font-bold text-gray-900 leading-none">{recouvRate}%</p>
           </div>
         </div>
 
         {/* Absences */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-red-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-50 flex items-center justify-center text-[var(--color-chart-red)] shrink-0">
-            <CalendarOff size={20} className="sm:w-6 sm:h-6" />
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col items-start gap-3">
+          <div className="flex w-full items-center justify-between">
+            <p className="text-xs text-gray-500 font-medium">Absences ce jour</p>
+            <CalendarOff size={16} className="text-gray-400" />
           </div>
-          <div className="flex-1">
-            <p className="text-[11px] sm:text-xs text-gray-500 font-medium mb-0.5 sm:mb-1">Absences ce jour</p>
-            <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none mb-1">{aCount}</p>
+          <div>
+            <p className="text-2xl font-bold text-gray-900 leading-none">{aCount}</p>
           </div>
         </div>
       </div>

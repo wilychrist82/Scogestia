@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Work_Sans } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
 
-const workSans = Work_Sans({
+const outfit = Outfit({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-sans",
@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${workSans.variable} h-full antialiased scroll-smooth`}>
+    <html lang="fr" className={`${outfit.variable} h-full antialiased scroll-smooth`}>
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
       </head>
