@@ -64,8 +64,8 @@ export default function Home() {
 
       <main>
         {/* Section Héro (#accueil) */}
-        <section id="accueil" className="relative pt-20 pb-32 lg:pt-32 lg:pb-40 overflow-hidden bg-white">
-          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-50/40 via-white to-white"></div>
+        <section id="accueil" className="relative pt-20 pb-32 lg:pt-32 lg:pb-40 overflow-hidden bg-slate-900">
+          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-900/40 via-slate-900 to-slate-900"></div>
           
           <div className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
@@ -75,42 +75,38 @@ export default function Home() {
                 animate="visible"
                 variants={staggerContainer}
               >
-                <motion.h1 variants={fadeIn} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-6">
-                  Gérez votre école <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#006039] to-emerald-500">en toute simplicité</span>. Gagnez du temps, maîtrisez vos finances.
+                <motion.h1 variants={fadeIn} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.1] mb-6">
+                  Gérez votre école <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-200">en toute simplicité</span>. Gagnez du temps, maîtrisez vos finances.
                 </motion.h1>
                 
-                <motion.p variants={fadeIn} className="text-lg text-slate-600 mb-10 max-w-xl leading-relaxed">
+                <motion.p variants={fadeIn} className="text-lg text-slate-300 mb-10 max-w-xl leading-relaxed">
                   Scogestia est la solution 100 % web qui aide les directeurs, comptables et enseignants à gagner du temps, à mieux piloter leur établissement et à renforcer la confiance des parents.
                 </motion.p>
                 
                 <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                   <Link 
                     href="/inscription-ecole"
-                    className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-base font-medium text-white bg-[#006039] hover:bg-[#004d2e] rounded-full transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
+                    className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-base font-medium text-slate-900 bg-white hover:bg-slate-100 rounded-full transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
                   >
                     Essai gratuit de 14 jours
                   </Link>
                   <button 
                     onClick={() => setDemoModalOpen(true)}
-                    className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-base font-medium text-slate-700 bg-white border-2 border-slate-200 hover:border-emerald-200 hover:bg-emerald-50 rounded-full transition-all"
+                    className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-base font-medium text-white bg-white/5 border-2 border-slate-700 hover:border-emerald-500/50 hover:bg-emerald-900/20 rounded-full transition-all"
                   >
-                    <PlayCircle className="w-5 h-5 mr-2 text-[#006039]" />
+                    <PlayCircle className="w-5 h-5 mr-2 text-emerald-400" />
                     Voir la démo
                   </button>
                 </motion.div>
                 
-                <motion.div variants={fadeIn} className="mt-10 flex flex-wrap justify-center lg:justify-start gap-6 text-sm text-slate-500 font-medium">
+                <motion.div variants={fadeIn} className="mt-10 flex flex-wrap justify-center lg:justify-start gap-6 text-sm text-slate-300 font-medium">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-[#006039]" />
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                     Aucune carte requise
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-[#006039]" />
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                     Installation immédiate
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-[#006039]" />
-                    Support 7j/7
                   </div>
                 </motion.div>
               </motion.div>
@@ -125,7 +121,7 @@ export default function Home() {
                    <img 
                      src="/hero-landing.png" 
                      alt="Scogestia - Gestion scolaire intuitive" 
-                     className="w-full lg:max-w-[120%] h-auto object-contain relative z-10 mix-blend-multiply contrast-[1.05] brightness-[1.05]"
+                     className="w-full lg:max-w-[120%] h-auto object-contain relative z-10 drop-shadow-2xl"
                    />
                 </div>
               </motion.div>
