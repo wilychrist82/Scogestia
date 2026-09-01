@@ -118,11 +118,16 @@ export default function Home() {
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
                 <div className="relative overflow-visible group flex justify-center lg:justify-end">
-                   <img 
-                     src="/hero-landing.png" 
-                     alt="Scogestia - Gestion scolaire intuitive" 
-                     className="w-full lg:max-w-[120%] h-auto object-contain relative z-10 drop-shadow-2xl"
-                   />
+                   <div className="relative w-full lg:max-w-[110%] rounded-[2.5rem] overflow-hidden shadow-[0_30px_80px_-15px_rgba(0,0,0,0.7)] border border-slate-700/50 transform transition-transform duration-700 group-hover:-translate-y-2 bg-white">
+                     <img 
+                       src="/hero-landing.png" 
+                       alt="Scogestia - Gestion scolaire intuitive" 
+                       className="w-full h-auto object-contain"
+                     />
+                     {/* Filtre subtil pour adoucir le blanc et l'intégrer au fond sombre (Slate 900) */}
+                     <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/20 via-transparent to-emerald-900/10 pointer-events-none"></div>
+                     <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(15,23,42,0.1)] pointer-events-none rounded-[2.5rem]"></div>
+                   </div>
                 </div>
               </motion.div>
             </div>
