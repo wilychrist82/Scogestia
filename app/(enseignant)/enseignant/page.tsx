@@ -55,17 +55,16 @@ export default async function EnseignantDashboardPage() {
 
   return (
     <div className="flex flex-col min-h-full bg-gray-50/50 pb-8">
-      {/* Hero Header avec Image */}
-      <div 
-        className="relative px-6 rounded-b-[2.5rem] shadow-lg h-[260px] sm:h-[360px] md:h-[460px] lg:h-[560px] flex items-end"
-        style={{
-          backgroundImage: 'url(/hero-landing.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundColor: 'var(--color-primary)'
-        }}
-      >
-        <div className="absolute inset-0 bg-black/10 rounded-b-[2.5rem]"></div>
+      {/* Hero Header avec Image (Responsive, sans aucun rognage) */}
+      <div className="w-full max-w-[1280px] mx-auto">
+        <div className="relative w-full shadow-lg lg:rounded-b-[2.5rem] overflow-hidden bg-[var(--color-primary)] flex items-end">
+          <img 
+            src="/hero-landing.png" 
+            alt="Espace Enseignant" 
+            className="w-full h-auto object-contain block"
+          />
+          <div className="absolute inset-0 bg-black/10"></div>
+        </div>
       </div>
 
       <div className="px-4 md:px-8 space-y-6 mt-4 md:mt-8 relative z-20 max-w-[1280px] mx-auto w-full">
