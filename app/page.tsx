@@ -173,16 +173,16 @@ export default function Home() {
         <section id="fonctionnalites" className="py-32 bg-white">
           <div className="container mx-auto px-4 max-w-6xl">
             <motion.div 
-              className="mb-20"
+              className="mb-20 flex flex-col items-center text-center"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight max-w-2xl">
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight max-w-5xl">
                 Un contrôle total sur l'ensemble de votre établissement.
               </h2>
-              <p className="text-xl text-slate-600 max-w-2xl leading-relaxed">
+              <p className="text-xl text-slate-600 max-w-3xl leading-relaxed">
                 Des outils financiers puissants aux carnets de notes automatisés, chaque module est conçu pour être invisible et efficace.
               </p>
             </motion.div>
