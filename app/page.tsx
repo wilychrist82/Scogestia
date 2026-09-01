@@ -419,28 +419,30 @@ export default function Home() {
                </motion.div>
 
                {/* Plan Standard */}
-               <motion.div variants={fadeIn} className="bg-white rounded-3xl shadow-xl border-2 border-[#006039] p-8 flex flex-col relative overflow-hidden">
+               <motion.div variants={fadeIn} className="bg-slate-900 rounded-3xl shadow-2xl border border-slate-700 p-8 flex flex-col relative overflow-hidden">
                   <div className="absolute top-0 right-0 bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Populaire</div>
                   <div className="mb-8 relative z-10">
-                     <h3 className="text-2xl font-bold text-slate-900 mb-2">Plan Standard</h3>
-                     <p className="text-slate-600">Pour les petites écoles</p>
+                     <h3 className="text-2xl font-bold text-white mb-2">Plan Standard</h3>
+                     <p className="text-slate-400">Pour les petites écoles</p>
                   </div>
                   <div className="mb-8 relative z-10 whitespace-nowrap">
-                     <span className="text-4xl font-extrabold text-slate-900">7 000 FCFA</span>
+                     <span className="text-4xl font-extrabold text-white">7 000 FCFA</span>
                      <span className="text-slate-500 font-medium"> / mois</span>
                   </div>
                   <ul className="space-y-4 mb-10 flex-1 relative z-10 text-sm md:text-base">
-                     <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Jusqu'à 500 élèves</span></li>
-                     <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Gestion des inscriptions et classes</span></li>
-                     <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Suivi de la comptabilité et paiements</span></li>
-                     <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Génération des reçus automatisée</span></li>
-                     <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Saisie des notes et bulletins scolaires</span></li>
-                     <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Portail Parents (Notes & Absences)</span></li>
-                     <li className="flex items-start gap-3 text-slate-700"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#006039]" /> <span>Support client par chat / email</span></li>
+                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Jusqu'à 500 élèves</span></li>
+                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Gestion des inscriptions et classes</span></li>
+                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Suivi de la comptabilité et paiements</span></li>
+                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Génération des reçus automatisée</span></li>
+                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Saisie des notes et bulletins scolaires</span></li>
+                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Portail Parents (Notes & Absences)</span></li>
+                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Support client par chat / email</span></li>
                   </ul>
-                  <Link href="/inscription-ecole" className="w-full py-4 rounded-xl bg-[#006039] font-bold text-white hover:bg-[#004d2e] transition-colors text-center relative z-10 shadow-md block mt-auto">
+                  <Link href="/inscription-ecole" className="w-full py-4 rounded-xl bg-emerald-600 font-bold text-white hover:bg-emerald-500 transition-colors text-center relative z-10 shadow-md block mt-auto">
                      S'abonner
                   </Link>
+                  {/* Background decoration */}
+                  <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-emerald-900 rounded-full blur-3xl opacity-30"></div>
                </motion.div>
 
                {/* Plan Pro */}
