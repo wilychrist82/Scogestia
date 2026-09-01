@@ -61,7 +61,7 @@ export default async function EnseignantDashboardPage() {
         style={{
           backgroundImage: 'url(/hero-landing.png)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center 25%',
+          backgroundPosition: 'center bottom',
           backgroundColor: 'var(--color-primary)'
         }}
       >
