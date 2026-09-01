@@ -57,11 +57,11 @@ export default async function EnseignantDashboardPage() {
     <div className="flex flex-col min-h-full bg-gray-50/50 pb-8">
       {/* Hero Header avec Image */}
       <div 
-        className="relative px-6 rounded-b-[2.5rem] shadow-lg h-[220px] md:h-[360px] lg:h-[450px] flex items-end"
+        className="relative px-6 rounded-b-[2.5rem] shadow-lg h-[260px] sm:h-[360px] md:h-[460px] lg:h-[560px] flex items-end"
         style={{
           backgroundImage: 'url(/hero-landing.png)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center bottom',
+          backgroundPosition: 'center',
           backgroundColor: 'var(--color-primary)'
         }}
       >
