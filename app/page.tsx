@@ -269,7 +269,7 @@ export default function Home() {
             >
               {/* Carte 1 : Finance (Image Background) */}
               <motion.div variants={fadeIn} className="md:col-span-8 h-[400px] rounded-[2rem] p-10 relative overflow-hidden group">
-                <img src="/images/finance_admin_saas.jpg" alt="Admin Finance" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <img src="/images/finance.png" alt="Admin Finance" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
                 
                 <div className="relative z-10 h-full flex flex-col justify-end">
@@ -285,7 +285,7 @@ export default function Home() {
 
               {/* Carte 2 : Parents (Image Background) */}
               <motion.div variants={fadeIn} className="md:col-span-4 h-[400px] rounded-[2rem] p-10 relative overflow-hidden group">
-                <img src="/images/parent_app_saas.jpg" alt="Portail Parent" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <img src="/images/parents.png" alt="Portail Parent" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/70 to-slate-900/20"></div>
                 
                 <div className="relative z-10 h-full flex flex-col justify-end">
@@ -317,7 +317,7 @@ export default function Home() {
 
               {/* Carte 4 : Académique / Enseignant (Image Background) */}
               <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] rounded-[2rem] p-10 relative overflow-hidden group">
-                <img src="/images/teacher_saas.jpg" alt="Enseignant" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <img src="/images/academie.png" alt="Enseignant" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
                 
                 <div className="relative z-10 h-full flex flex-col justify-end">
@@ -333,7 +333,7 @@ export default function Home() {
 
               {/* Carte 5 : Espace Élève / Sécurité (Image Background) */}
               <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] rounded-[2rem] p-10 relative overflow-hidden group">
-                <img src="/images/security_african.jpg" alt="Sécurité et Contrôle" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <img src="/images/securite.png" alt="Sécurité et Contrôle" className="absolute inset-0 w-full h-full object-cover object-right transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
                 
                 <div className="relative z-10 h-full flex flex-col justify-end">
