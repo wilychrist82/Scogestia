@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Send, CheckCircle2, MessageSquare } from 'lucide-react'
 import { toast } from 'react-hot-toast'
+import { sendSupportMessage } from '@/app/actions/support'
 
 export type ContactSupportModalProps = {
   isOpen: boolean
@@ -14,14 +15,23 @@ export function ContactSupportModal({ isOpen, onClose }: ContactSupportModalProp
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSubmitting(true)
     
-    // Simuler l'envoi d'un email
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    const formData = new FormData(e.currentTarget)
+    // Add default target email from the user request context
+    formData.append('targetEmail', 'wilfried2025@gmail.com')
+
+    const result = await sendSupportMessage(formData)
     
     setIsSubmitting(false)
+    
+    if (result.error) {
+      toast.error(result.error)
+      return
+    }
+
     setIsSuccess(true)
     toast.success('Message envoyé avec succès !')
     
@@ -81,9 +91,21 @@ export function ContactSupportModal({ isOpen, onClose }: ContactSupportModalProp
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
+                    <label htmlFor="userEmail" className="block text-sm font-medium text-gray-700 mb-1">Votre email de réponse</label>
+                    <input 
+                      id="userEmail"
+                      name="userEmail"
+                      type="email"
+                      required
+                      placeholder="ex: vous@ecole.com"
+                      className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[var(--color-sidebar-bg)] focus:border-transparent outline-none transition-all"
+                    />
+                  </div>
+                  <div>
                     <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">Sujet</label>
                     <select 
                       id="subject" 
+                      name="subject"
                       required
                       className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[var(--color-sidebar-bg)] focus:border-transparent outline-none transition-all"
                     >
@@ -97,7 +119,8 @@ export function ContactSupportModal({ isOpen, onClose }: ContactSupportModalProp
                   <div>
                     <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">Message</label>
                     <textarea 
-                      id="message" 
+                      id="message"
+                      name="message" 
                       rows={4} 
                       required
                       placeholder="Décrivez votre problème en détail..."

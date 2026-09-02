@@ -17,6 +17,9 @@ export function ShortcutsButton() {
     { name: 'Générer des échéances', icon: CalendarPlus, href: '/admin/finance/echeances', category: 'Finance' },
     { name: 'Encaisser un paiement', icon: Banknote, href: '/admin/finance/paiements', category: 'Finance' },
     { name: 'Gérer les impayés', icon: Wallet, href: '/admin/finance/impayes', category: 'Finance' },
+    { name: 'Gérer le personnel', icon: Users, href: '/admin/personnel', category: 'Administration' },
+    { name: 'Devoirs et Notes', icon: BookOpen, href: '/admin/academique', category: 'Académique' },
+    { name: 'Tableau de bord financier', icon: Wallet, href: '/admin/finance', category: 'Finance' },
   ]
 
   const filteredShortcuts = shortcuts.filter(s => 
