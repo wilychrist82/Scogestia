@@ -3,7 +3,7 @@
 import { useActionState, useState } from 'react'
 import { loginStaff } from '@/app/actions/auth'
 import Link from 'next/link'
-import { Mail, Lock, Eye, EyeOff, ShieldCheck, Users, BarChart3, Smartphone } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, ShieldCheck, ChevronDown, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
@@ -22,89 +22,86 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen bg-white overflow-hidden font-sans">
-      {/* Colonne de gauche - Vert Émeraude (caché sur mobile) */}
-      <div className="hidden lg:flex lg:w-5/12 bg-[#006039] text-white p-12 flex-col justify-center items-center relative overflow-hidden">
-        {/* Motif de fond subtil */}
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+      {/* Colonne de gauche - Premium SaaS Theme (caché sur mobile) */}
+      <div className="hidden lg:flex lg:w-5/12 bg-gradient-to-br from-violet-950 via-slate-900 to-[#006039] text-white p-12 flex-col justify-center items-center relative overflow-hidden">
+        {/* Abstract background glows */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-[20%] -right-[10%] w-[80%] h-[80%] bg-violet-600/20 blur-[120px] rounded-full"></div>
+          <div className="absolute bottom-[10%] -left-[10%] w-[60%] h-[60%] bg-emerald-500/20 blur-[100px] rounded-full"></div>
+        </div>
         
         <div className="relative z-10 w-full max-w-md flex flex-col items-center">
-          <Link href="/" className="inline-flex flex-col items-center mb-12">
-            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl mb-6">
-              <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="h-16 sm:h-20 w-auto object-contain" />
+          <Link href="/" className="inline-flex flex-col items-center mb-10 group">
+            <div className="bg-white/10 backdrop-blur-md p-5 rounded-[2rem] shadow-2xl mb-6 border border-white/10 group-hover:bg-white/20 transition-all duration-500">
+              <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="h-16 sm:h-20 w-auto object-contain drop-shadow-lg" />
             </div>
-            <p className="text-emerald-300 font-medium tracking-widest text-xs uppercase text-center border-b border-emerald-500/30 pb-4">
+            <p className="text-emerald-300/80 font-medium tracking-widest text-[10px] uppercase text-center pb-4">
               La gestion scolaire simplifiée
             </p>
           </Link>
 
-          <p className="text-lg text-emerald-50 mb-10 leading-relaxed text-center sm:text-left">
+          <p className="text-xl text-white/90 mb-12 leading-relaxed text-center font-medium">
             La solution complète pour gérer votre école efficacement, de manière simple et sécurisée.
           </p>
 
-          <div className="mt-8 w-full relative rounded-[2rem] overflow-hidden shadow-[0_30px_80px_-15px_rgba(0,0,0,0.7)] border border-emerald-400/30 group bg-white transform transition-transform duration-700 hover:-translate-y-2">
-             <div className="relative w-full overflow-hidden">
-                <img src="/hero-landing.png" alt="Scogestia Interface" className="w-full h-auto object-contain transform group-hover:scale-[1.03] transition-transform duration-1000 ease-out" />
-                {/* Filtre subtil pour adoucir le blanc et l'intégrer au fond vert sombre */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-[#004d2e]/20 via-transparent to-[#004d2e]/10 pointer-events-none"></div>
-                <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,40,20,0.1)] pointer-events-none rounded-[2rem]"></div>
+          <div className="w-full relative rounded-[2.5rem] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)] border border-white/10 group bg-slate-950/40 backdrop-blur-sm transform transition-transform duration-700 hover:-translate-y-2">
+             <div className="relative w-full h-[320px] overflow-hidden flex items-end justify-center">
+                <img src="/image_landing_page1.png" alt="Scogestia Interface" className="w-[110%] h-auto object-contain object-bottom transform group-hover:scale-[1.03] transition-transform duration-1000 ease-out translate-y-6" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none rounded-[2.5rem]"></div>
              </div>
-          </div>
-          
-          <div className="mt-16 pt-8 border-t border-emerald-700/50 w-full text-center">
-             <img src="/logo.png" alt="Ecole" className="h-20 opacity-30 mx-auto" />
           </div>
         </div>
       </div>
 
-      {/* Colonne de droite - Formulaire */}
+      {/* Colonne de droite - Formulaire Premium */}
       <div className="w-full lg:w-7/12 flex flex-col justify-between p-6 sm:p-12 relative bg-slate-50">
         
         {/* En-tête Langue */}
         <div className="flex justify-end w-full mb-8">
-           <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-md text-sm text-slate-600 font-medium hover:bg-slate-50 transition-colors">
+           <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-full text-sm text-slate-600 font-medium hover:bg-slate-50 transition-colors shadow-sm">
               <span className="text-lg">🌐</span> Français
-              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              <ChevronDown className="w-4 h-4 ml-1" />
            </button>
         </div>
 
         {/* Logo sur mobile uniquement */}
-        <div className="flex justify-center mb-8 lg:hidden">
+        <div className="flex justify-center mb-10 lg:hidden">
           <Link href="/">
-             <div className="flex items-center gap-2">
-               <img alt="Scogestia Logo" src="/logo.png" className="h-10 object-contain" />
-               <span className="text-xl font-bold text-slate-800">Scogestia</span>
+             <div className="flex items-center gap-2 bg-white px-4 py-3 rounded-2xl shadow-sm border border-slate-100">
+               <img alt="Scogestia Logo" src="/logo-scogestia-transparent.png" className="h-10 object-contain" />
              </div>
           </Link>
         </div>
 
         <div className="w-full max-w-md mx-auto flex-1 flex flex-col justify-center mb-12">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Connexion à votre compte</h2>
-            <p className="mt-4 text-slate-500">
-              Veuillez saisir vos identifiants pour accéder<br/>à votre espace Scogestia.
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Bon retour parmi nous</h2>
+            <p className="mt-3 text-slate-500 font-medium">
+              Saisissez vos identifiants pour accéder à votre espace Scogestia.
             </p>
           </div>
 
-          <form action={formAction} className="space-y-6">
+          <form action={formAction} className="space-y-5">
             {state?.error && (
-              <div className="bg-red-50 border border-red-200 p-4 rounded-md">
-                <p className="text-sm text-red-600 font-medium text-center">
+              <div className="bg-red-50 border border-red-200 p-4 rounded-xl flex items-center gap-3 text-red-600 shadow-sm animate-pulse">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <p className="text-sm font-medium">
                   {state.error}
                 </p>
               </div>
             )}
 
-            <div className="space-y-5">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="identifier">
+                <label className="block text-sm font-bold text-slate-700 mb-1.5" htmlFor="identifier">
                   Adresse email
                 </label>
-                <div className="relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="relative rounded-xl shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Mail className="h-5 w-5 text-slate-400" />
                   </div>
                   <input 
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006039] focus:border-[#006039] sm:text-sm transition-colors outline-none" 
+                    className="block w-full pl-11 pr-4 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 sm:text-sm transition-all outline-none bg-white hover:border-slate-300 font-medium" 
                     id="identifier" 
                     name="identifier" 
                     placeholder="exemple@ecole.tg" 
@@ -116,18 +113,18 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="password">
+                <label className="block text-sm font-bold text-slate-700 mb-1.5" htmlFor="password">
                   Mot de passe
                 </label>
-                <div className="relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="relative rounded-xl shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Lock className="h-5 w-5 text-slate-400" />
                   </div>
                   <input 
-                    className="block w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006039] focus:border-[#006039] sm:text-sm transition-colors outline-none" 
+                    className="block w-full pl-11 pr-11 py-3.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 sm:text-sm transition-all outline-none bg-white hover:border-slate-300 font-medium" 
                     id="password" 
                     name="password" 
-                    placeholder="Votre mot de passe" 
+                    placeholder="••••••••" 
                     required 
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
@@ -135,7 +132,7 @@ export default function LoginPage() {
                   <button 
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-emerald-600 focus:outline-none transition-colors"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
@@ -143,15 +140,15 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
+            <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center group cursor-pointer">
                 <input
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-[#006039] focus:ring-[#006039] border-slate-300 rounded"
+                  className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 rounded cursor-pointer transition-colors"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-700">
+                <label htmlFor="remember-me" className="ml-2.5 block text-sm font-medium text-slate-600 group-hover:text-slate-900 cursor-pointer transition-colors">
                   Se souvenir de moi
                 </label>
               </div>
@@ -160,7 +157,7 @@ export default function LoginPage() {
                 <button 
                   type="button" 
                   onClick={() => alert("Veuillez contacter l'administrateur de votre établissement pour réinitialiser votre mot de passe.")} 
-                  className="font-medium text-[#006039] hover:text-[#004d2e]"
+                  className="font-bold text-emerald-600 hover:text-emerald-500 transition-colors"
                 >
                   Mot de passe oublié ?
                 </button>
@@ -169,29 +166,29 @@ export default function LoginPage() {
 
             <button 
               disabled={isPending}
-              className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#006039] hover:bg-[#004d2e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#006039] transition-colors disabled:opacity-70 disabled:cursor-not-allowed" 
+              className="w-full flex justify-center py-4 px-4 mt-4 border border-transparent rounded-xl shadow-[0_0_20px_rgba(5,150,105,0.2)] hover:shadow-[0_0_30px_rgba(5,150,105,0.3)] text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none" 
               type="submit"
             >
               {isPending ? 'Connexion en cours...' : (
                  <span className="flex items-center gap-2">
-                   <Lock className="w-4 h-4" /> Se connecter
+                   Se connecter
                  </span>
               )}
             </button>
 
-            <div className="relative my-6">
+            <div className="relative my-8">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-300"></div>
+                <div className="w-full border-t border-slate-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-slate-50 text-slate-500">ou</span>
+                <span className="px-4 bg-slate-50 text-slate-400 font-medium tracking-wide">OU</span>
               </div>
             </div>
 
             <button 
               type="button"
               onClick={handleGoogleSignIn}
-              className="w-full flex justify-center items-center gap-3 py-3 px-4 border border-slate-300 rounded-md shadow-sm bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              className="w-full flex justify-center items-center gap-3 py-3.5 px-4 border border-slate-200 rounded-xl shadow-sm bg-white text-sm font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-[0.98]"
             >
               <svg viewBox="0 0 24 24" className="w-5 h-5">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -203,10 +200,10 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-8 text-center">
-            <p className="text-sm text-slate-600">
+          <div className="mt-10 text-center">
+            <p className="text-sm text-slate-600 font-medium">
               Vous n'avez pas de compte ?{' '}
-              <Link className="font-semibold text-[#006039] hover:text-[#004d2e] transition-colors" href="/inscription-ecole">
+              <Link className="font-bold text-emerald-600 hover:text-emerald-500 transition-colors ml-1" href="/inscription-ecole">
                 Inscrire une école
               </Link>
             </p>
@@ -214,26 +211,30 @@ export default function LoginPage() {
         </div>
 
         {/* Pied de page et Réassurance */}
-        <div className="w-full max-w-lg mx-auto">
-           <div className="text-center text-xs text-slate-500 mb-6">
+        <div className="w-full max-w-lg mx-auto mt-auto pt-6 border-t border-slate-200/60">
+           <div className="text-center text-xs font-medium text-slate-500 mb-6">
               © {new Date().getFullYear()} Scogestia. Tous droits réservés.<br/>
-              <div className="flex justify-center gap-3 mt-2 flex-wrap px-4">
-                 <Link href="/confidentialite" className="hover:text-[#006039]">Confidentialité</Link>
-                 <Link href="/conditions-utilisation" className="hover:text-[#006039]">Conditions d'utilisation</Link>
-                 <Link href="/mentions-legales" className="hover:text-[#006039]">Mentions légales</Link>
+              <div className="flex justify-center gap-4 mt-3 flex-wrap px-4">
+                 <Link href="/confidentialite" className="hover:text-emerald-600 transition-colors">Confidentialité</Link>
+                 <Link href="/conditions-utilisation" className="hover:text-emerald-600 transition-colors">Conditions d'utilisation</Link>
+                 <Link href="/mentions-legales" className="hover:text-emerald-600 transition-colors">Mentions légales</Link>
               </div>
            </div>
 
-           <div className="bg-emerald-50/50 border border-emerald-100 rounded-lg p-4 flex flex-col sm:flex-row items-center gap-4 text-xs text-emerald-800">
+           <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-5 flex flex-col sm:flex-row items-center gap-4 text-xs text-emerald-800 shadow-sm">
               <div className="flex items-center gap-3 flex-1">
-                 <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0" />
-                 <p>Scogestia est conçu pour protéger les données de votre école et garantir la confidentialité de vos informations.</p>
+                 <div className="p-2 bg-emerald-100 rounded-full shrink-0">
+                   <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                 </div>
+                 <p className="font-medium leading-relaxed">Scogestia protège les données de votre école et garantit la confidentialité de vos informations.</p>
               </div>
-              <div className="flex items-center gap-2 sm:border-l border-emerald-200 sm:pl-4">
-                 <Lock className="w-5 h-5 text-emerald-600 shrink-0" />
+              <div className="flex items-center gap-3 sm:border-l border-emerald-200 sm:pl-5">
+                 <div className="p-2 bg-emerald-100 rounded-full shrink-0">
+                   <Lock className="w-4 h-4 text-emerald-600" />
+                 </div>
                  <div>
-                    <p className="font-semibold">Connexion sécurisée</p>
-                    <p className="opacity-80">SSL encrypté</p>
+                    <p className="font-bold text-emerald-900">Connexion sécurisée</p>
+                    <p className="text-emerald-700/80 mt-0.5">SSL encrypté</p>
                  </div>
               </div>
            </div>
