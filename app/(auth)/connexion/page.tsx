@@ -41,16 +41,12 @@ export default function LoginPage() {
             La solution complète pour gérer votre école efficacement, de manière simple et sécurisée.
           </p>
 
-          <div className="mt-4 w-full relative rounded-xl overflow-hidden shadow-2xl border border-emerald-400/30 group bg-slate-900 transform transition-all duration-700 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
-             {/* Barre de navigateur mini */}
-             <div className="h-8 bg-slate-800/90 border-b border-white/10 flex items-center px-3 gap-1.5 backdrop-blur-md">
-                <div className="w-2.5 h-2.5 rounded-full bg-slate-600 group-hover:bg-red-400 transition-colors"></div>
-                <div className="w-2.5 h-2.5 rounded-full bg-slate-600 group-hover:bg-amber-400 transition-colors delay-75"></div>
-                <div className="w-2.5 h-2.5 rounded-full bg-slate-600 group-hover:bg-emerald-400 transition-colors delay-150"></div>
-             </div>
-             <div className="relative aspect-[4/3] w-full overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 z-10 pointer-events-none"></div>
-                <img src="/hero-landing.png" alt="Scogestia Interface" className="w-full h-full object-cover object-top transform group-hover:scale-[1.05] transition-transform duration-1000 ease-out" />
+          <div className="mt-8 w-full relative rounded-[2rem] overflow-hidden shadow-[0_30px_80px_-15px_rgba(0,0,0,0.7)] border border-emerald-400/30 group bg-white transform transition-transform duration-700 hover:-translate-y-2">
+             <div className="relative w-full overflow-hidden">
+                <img src="/hero-landing.png" alt="Scogestia Interface" className="w-full h-auto object-contain transform group-hover:scale-[1.03] transition-transform duration-1000 ease-out" />
+                {/* Filtre subtil pour adoucir le blanc et l'intégrer au fond vert sombre */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-[#004d2e]/20 via-transparent to-[#004d2e]/10 pointer-events-none"></div>
+                <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,40,20,0.1)] pointer-events-none rounded-[2rem]"></div>
              </div>
           </div>
           
