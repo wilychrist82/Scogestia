@@ -23,6 +23,7 @@ const staggerContainer = {
 
 export default function Home() {
   const [demoModalOpen, setDemoModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-[#006039]/20 selection:text-[#006039]">
@@ -58,8 +59,44 @@ export default function Home() {
             >
               Créer mon école
             </Link>
+            <button 
+              className="lg:hidden p-2 text-slate-600 hover:text-[#006039] hover:bg-slate-100 rounded-lg transition-colors"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Menu"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="lg:hidden bg-white border-b border-slate-200 shadow-xl overflow-hidden"
+            >
+              <div className="flex flex-col p-4 gap-4">
+                <Link href="#accueil" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Accueil</Link>
+                <Link href="#fonctionnalites" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Fonctionnalités</Link>
+                <Link href="#comment-ca-marche" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Comment ça marche</Link>
+                <Link href="#tarifs" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Tarifs</Link>
+                <Link href="#temoignages" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Témoignages</Link>
+                <Link href="#contact" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Contact</Link>
+                <hr className="border-slate-100 my-2" />
+                <Link 
+                  href="/connexion" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="sm:hidden flex items-center justify-center h-12 text-base font-medium text-slate-700 bg-white border border-slate-300 rounded-xl"
+                >
+                  Se connecter
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       <main>
