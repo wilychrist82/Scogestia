@@ -32,8 +32,8 @@ export default function LoginPage() {
         
         <div className="relative z-10 w-full max-w-md flex flex-col items-center">
           <Link href="/" className="inline-flex flex-col items-center mb-10 group">
-            <div className="bg-white/10 backdrop-blur-md p-5 rounded-[2rem] shadow-2xl mb-6 border border-white/10 group-hover:bg-white/20 transition-all duration-500">
-              <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="h-16 sm:h-20 w-auto object-contain drop-shadow-lg" />
+            <div className="mb-6 group-hover:scale-105 transition-transform duration-500">
+              <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="h-20 sm:h-24 w-auto object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]" />
             </div>
             <p className="text-emerald-300/80 font-medium tracking-widest text-[10px] uppercase text-center pb-4">
               La gestion scolaire simplifiée
@@ -44,9 +44,9 @@ export default function LoginPage() {
             La solution complète pour gérer votre école efficacement, de manière simple et sécurisée.
           </p>
 
-          <div className="w-full relative rounded-[2.5rem] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)] border border-white/10 group bg-slate-950/40 backdrop-blur-sm transform transition-transform duration-700 hover:-translate-y-2">
+          <div className="w-full relative rounded-[2.5rem] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)] border border-white/5 group transform transition-transform duration-700 hover:-translate-y-2">
              <div className="relative w-full h-[320px] overflow-hidden flex items-end justify-center">
-                <img src="/image_landing_page1.png" alt="Scogestia Interface" className="w-[110%] h-auto object-contain object-bottom transform group-hover:scale-[1.03] transition-transform duration-1000 ease-out translate-y-6" />
+                <img src="/mockup-scogestia.png" alt="Scogestia Interface" className="w-[120%] h-auto object-contain object-bottom transform group-hover:scale-[1.03] transition-transform duration-1000 ease-out translate-y-2" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none rounded-[2.5rem]"></div>
              </div>
           </div>
