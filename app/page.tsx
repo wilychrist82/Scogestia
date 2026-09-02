@@ -207,10 +207,6 @@ export default function Home() {
             <svg className="absolute bottom-0 w-[200%] h-full animate-wave-continuous-right" viewBox="0 0 2400 120" preserveAspectRatio="none">
               <path d="M0,60 C300,0 300,120 600,60 C900,0 900,120 1200,60 C1500,0 1500,120 1800,60 C2100,0 2100,120 2400,60 L2400,120 L0,120 Z" className="fill-violet-700/60" />
             </svg>
-            {/* Vague Blanche (Fondation) */}
-            <svg className="absolute bottom-0 w-[200%] h-full animate-wave-continuous-left-slow" viewBox="0 0 2400 120" preserveAspectRatio="none">
-              <path d="M0,80 C300,120 300,40 600,80 C900,120 900,40 1200,80 C1500,120 1500,40 1800,80 C2100,120 2100,40 2400,80 L2400,120 L0,120 Z" className="fill-white" />
-            </svg>
           </div>
         </section>
 
