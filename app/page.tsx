@@ -613,8 +613,11 @@ export default function Home() {
         </section>
 
         {/* Section FAQ (#faq) */}
-        <section id="faq" className="py-24 bg-slate-50">
-          <div className="container mx-auto px-4 max-w-3xl">
+        <section id="faq" className="py-24 bg-white relative overflow-hidden">
+          {/* Subtle background decoration */}
+          <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-emerald-50 rounded-full blur-[100px] opacity-60 pointer-events-none"></div>
+          
+          <div className="container mx-auto px-4 max-w-4xl relative z-10">
             <motion.div 
               className="text-center mb-16"
               initial="hidden"
@@ -622,32 +625,35 @@ export default function Home() {
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Questions Fréquentes</h2>
-              <p className="text-lg text-slate-600">Vous avez des questions ? Nous avons les réponses.</p>
+              <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-semibold text-sm tracking-wide uppercase shadow-sm">
+                F.A.Q
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">Questions <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-400">Fréquentes</span></h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">Tout ce que vous devez savoir sur le déploiement et l'utilisation de Scogestia dans votre établissement.</p>
             </motion.div>
 
             <motion.div 
-              className="space-y-4"
+              className="space-y-6"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-50px" }}
               variants={staggerContainer}
             >
               {[
-                { q: "Faut-il installer un logiciel sur mon ordinateur ?", a: "Absolument pas ! Scogestia est un logiciel 100% web (en nuage). Vous n'avez besoin que d'un navigateur internet (Chrome, Safari, Edge) et d'une connexion internet. Vous pouvez vous connecter depuis n'importe quel ordinateur ou téléphone." },
-                { q: "Mes données sont-elles en sécurité ?", a: "Oui. La sécurité est notre priorité absolue. Nous utilisons une architecture qui garantit que vos données sont strictement isolées de celles des autres écoles. Les sauvegardes sont effectuées quotidiennement sur des serveurs sécurisés." },
-                { q: "Les parents doivent-ils payer pour utiliser l'application ?", a: "Non. L'abonnement est payé uniquement par l'établissement scolaire. Les parents bénéficient d'un accès totalement gratuit à leur portail pour suivre l'évolution de leurs enfants." },
-                { q: "Comment se passe l'intégration de mes anciens élèves (Excel) ?", a: "Nous vous fournissons un fichier modèle Excel. Il vous suffit de copier-coller vos listes actuelles dedans et de nous le transmettre, ou d'utiliser notre outil d'importation. Notre équipe de support peut vous accompagner." }
+                { q: "Faut-il installer un logiciel sur mon ordinateur ?", a: "Absolument pas ! Scogestia est un logiciel 100% web (en nuage). Vous n'avez besoin que d'un navigateur internet (Chrome, Safari, Edge) et d'une connexion internet. Vous pouvez vous connecter depuis n'importe quel ordinateur, tablette ou smartphone en toute simplicité." },
+                { q: "Mes données sont-elles réellement en sécurité ?", a: "Oui, la sécurité est notre priorité absolue. Nous utilisons une architecture moderne qui garantit que vos données sont strictement isolées et cryptées. De plus, des sauvegardes automatiques sont effectuées quotidiennement sur des serveurs sécurisés pour prévenir toute perte." },
+                { q: "Les parents doivent-ils payer pour utiliser l'application ?", a: "Non, l'accès parent est inclus dans votre abonnement. L'école paie la licence, et les parents bénéficient d'un accès totalement gratuit à leur portail dédié pour suivre les notes, l'assiduité et la comptabilité de leurs enfants en temps réel." },
+                { q: "Comment se passe l'intégration de mes listes d'élèves (depuis Excel) ?", a: "C'est extrêmement rapide. Nous vous fournissons un modèle Excel pré-formaté. Il vous suffit d'y coller vos listes actuelles et de l'importer en un clic via notre outil d'importation massive. Notre équipe de support Premium est également là pour le faire à votre place lors de la configuration initiale !" }
               ].map((faq, i) => (
-                <motion.details key={i} variants={fadeIn} className="group bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden cursor-pointer">
-                   <summary className="flex items-center justify-between p-6 font-semibold text-slate-900 hover:text-violet-600 transition-colors select-none">
-                      {faq.q}
-                      <span className="text-violet-400">
-                        <svg className="block group-open:hidden" fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M12 5v14M5 12h14"></path></svg>
-                        <svg className="hidden group-open:block" fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M5 12h14"></path></svg>
+                <motion.details key={i} variants={fadeIn} className="group bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 overflow-hidden cursor-pointer hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-emerald-200 transition-all duration-300">
+                   <summary className="flex items-center justify-between p-6 md:p-8 font-bold text-lg text-slate-900 hover:text-emerald-700 transition-colors select-none">
+                      <span className="pr-6">{faq.q}</span>
+                      <span className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-50 border border-slate-100 text-emerald-600 flex items-center justify-center group-open:bg-emerald-600 group-open:border-emerald-600 group-open:text-white transition-all duration-300 shadow-sm">
+                        <svg className="block group-open:hidden" fill="none" height="20" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" viewBox="0 0 24 24" width="20"><path d="M12 5v14M5 12h14"></path></svg>
+                        <svg className="hidden group-open:block" fill="none" height="20" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" viewBox="0 0 24 24" width="20"><path d="M5 12h14"></path></svg>
                       </span>
                    </summary>
-                   <div className="p-6 pt-0 text-slate-600 leading-relaxed border-t border-slate-100 bg-slate-50/50">
+                   <div className="p-6 md:p-8 pt-0 text-slate-600 leading-relaxed border-t border-slate-100/50 bg-slate-50/50 text-base md:text-lg">
                       {faq.a}
                    </div>
                 </motion.details>
