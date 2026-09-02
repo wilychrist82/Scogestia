@@ -201,11 +201,11 @@ export default function Home() {
           <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-0 h-[80px] md:h-[120px]">
             {/* Vague Violet Clair */}
             <svg className="absolute bottom-0 w-[200%] h-full animate-wave-continuous-left" viewBox="0 0 2400 120" preserveAspectRatio="none">
-              <path d="M0,60 C300,120 300,0 600,60 C900,120 900,0 1200,60 C1500,120 1500,0 1800,60 C2100,120 2100,0 2400,60 L2400,120 L0,120 Z" className="fill-violet-500/40" />
+              <path d="M0,40 C300,100 300,0 600,40 C900,100 900,0 1200,40 C1500,100 1500,0 1800,40 C2100,100 2100,0 2400,40 L2400,120 L0,120 Z" className="fill-violet-600/90" />
             </svg>
             {/* Vague Violet Foncé (déphasée) */}
             <svg className="absolute bottom-0 w-[200%] h-full animate-wave-continuous-right" viewBox="0 0 2400 120" preserveAspectRatio="none">
-              <path d="M0,60 C300,0 300,120 600,60 C900,0 900,120 1200,60 C1500,0 1500,120 1800,60 C2100,0 2100,120 2400,60 L2400,120 L0,120 Z" className="fill-violet-700/60" />
+              <path d="M0,60 C300,0 300,100 600,60 C900,0 900,100 1200,60 C1500,0 1500,100 1800,60 C2100,0 2100,100 2400,60 L2400,120 L0,120 Z" className="fill-violet-900" />
             </svg>
           </div>
         </section>
