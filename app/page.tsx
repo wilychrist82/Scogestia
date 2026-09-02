@@ -176,36 +176,27 @@ export default function Home() {
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
                 <div className="relative overflow-visible group flex justify-center lg:justify-end perspective-1000">
-                   {/* Glow effect derrière l'image */}
-                   <div className="absolute inset-0 bg-emerald-500/10 blur-[120px] rounded-full"></div>
-                   
-                   <div className="relative w-full lg:max-w-[110%] rounded-[2.5rem] overflow-hidden transform transition-all duration-700 group-hover:-translate-y-4 group-hover:scale-[1.02] hover-3d shadow-2xl">
-                     <div className="absolute inset-0 bg-violet-900/40 mix-blend-color z-20 pointer-events-none"></div>
-                     <img 
-                       src="/hero-landing.png" 
-                       alt="Scogestia - Gestion scolaire intuitive" 
-                       className="w-full h-auto object-contain relative z-10 opacity-85 hover:opacity-100 transition-opacity duration-700"
-                       style={{ 
-                         WebkitMaskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)',
-                         filter: 'contrast(1.1) brightness(0.9) saturate(0.8)'
-                       }}
-                     />
-                     <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(15,23,42,0.6)] pointer-events-none rounded-[2.5rem] z-30 border border-white/5"></div>
-                   </div>
+                    <div className="relative w-full lg:max-w-[110%] transform transition-all duration-700 group-hover:-translate-y-4 group-hover:scale-[1.02] hover-3d">
+                      <img 
+                        src="/hero-landing.png" 
+                        alt="Scogestia - Gestion scolaire intuitive" 
+                        className="w-full h-auto object-contain relative z-10"
+                      />
+                    </div>
                 </div>
               </motion.div>
             </div>
           </div>
 
-          {/* Vagues dynamiques animées (iziSAAS style) - Forme de 8 restaurée */}
+          {/* Vagues dynamiques animées (iziSAAS style) - Forme de 8 restaurée avec overshoot */}
           <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-0 h-[80px] md:h-[120px]">
             {/* Vague Violet Clair (descend en premier) */}
-            <svg className="absolute bottom-0 w-[200%] h-full animate-wave-continuous-left" viewBox="0 0 2400 120" preserveAspectRatio="none">
-              <path d="M0,60 C300,180 300,-60 600,60 C900,180 900,-60 1200,60 C1500,180 1500,-60 1800,60 C2100,180 2100,-60 2400,60 L2400,120 L0,120 Z" className="fill-violet-500/90" />
+            <svg className="block absolute bottom-0 w-[200%] h-full animate-wave-continuous-left" viewBox="0 0 2400 120" preserveAspectRatio="none">
+              <path d="M0,60 C300,280 300,-160 600,60 C900,280 900,-160 1200,60 C1500,280 1500,-160 1800,60 C2100,280 2100,-160 2400,60 L2400,120 L0,120 Z" className="fill-violet-600/90" />
             </svg>
             {/* Vague Violet Foncé (monte en premier) */}
-            <svg className="absolute bottom-0 w-[200%] h-full animate-wave-continuous-right" viewBox="0 0 2400 120" preserveAspectRatio="none">
-              <path d="M0,60 C300,-60 300,180 600,60 C900,-60 900,180 1200,60 C1500,-60 1500,180 1800,60 C2100,-60 2100,180 2400,60 L2400,120 L0,120 Z" className="fill-violet-700" />
+            <svg className="block absolute bottom-0 w-[200%] h-full animate-wave-continuous-right" viewBox="0 0 2400 120" preserveAspectRatio="none">
+              <path d="M0,60 C300,-160 300,280 600,60 C900,-160 900,280 1200,60 C1500,-160 1500,280 1800,60 C2100,-160 2100,280 2400,60 L2400,120 L0,120 Z" className="fill-violet-800" />
             </svg>
           </div>
         </section>
