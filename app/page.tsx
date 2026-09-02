@@ -178,9 +178,9 @@ export default function Home() {
                 <div className="relative overflow-visible group flex justify-center lg:justify-end perspective-1000">
                     <div className="relative w-full lg:max-w-[110%] transform transition-all duration-700 group-hover:-translate-y-4 group-hover:scale-[1.02] hover-3d">
                       <img 
-                        src="/hero-landing.png" 
+                        src="/image_landing_page1.png" 
                         alt="Scogestia - Gestion scolaire intuitive" 
-                        className="w-full h-auto object-contain relative z-10"
+                        className="w-full h-auto object-contain relative z-10 rounded-b-[4rem]"
                       />
                     </div>
                 </div>
