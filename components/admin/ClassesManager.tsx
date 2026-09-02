@@ -104,9 +104,9 @@ export function ClassesManager({ classes }: Props) {
         </div>
         <button 
           onClick={openAddModal}
-          className="bg-[var(--color-primary)] hover:opacity-90 text-white px-6 py-3 rounded-lg font-semibold text-sm flex items-center gap-2 transition-all shadow-sm"
+          className="bg-[var(--color-primary)] hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5 text-white px-6 py-3 rounded-lg font-semibold text-sm flex items-center gap-2 transition-all duration-300 shadow-sm active:scale-95 group"
         >
-          <span className="material-symbols-outlined text-[20px]">add</span>
+          <span className="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">add</span>
           Ajouter une classe
         </button>
       </div>
@@ -168,7 +168,7 @@ export function ClassesManager({ classes }: Props) {
                     <td className="py-3 px-6 text-right relative">
                       <button 
                         onClick={() => setOpenActionId(openActionId === cls.id ? null : cls.id)}
-                        className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[#eff4ff] rounded-full transition-colors inline-block"
+                        className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[#eff4ff] rounded-full transition-all duration-300 hover:rotate-90 inline-block"
                       >
                         <span className="material-symbols-outlined text-[20px]">more_vert</span>
                       </button>
@@ -296,14 +296,14 @@ export function ClassesManager({ classes }: Props) {
               <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end gap-3 mt-auto">
                 <button 
                   onClick={() => setIsModalOpen(false)} 
-                  className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors" 
+                  className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] hover:text-[var(--color-primary)] transition-all duration-300" 
                   type="button"
                   disabled={isPending}
                 >
                   Annuler
                 </button>
                 <button 
-                  className="px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors shadow-sm disabled:opacity-50" 
+                  className="px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all duration-300 shadow-sm disabled:opacity-50" 
                   type="submit"
                   disabled={isPending}
                 >
