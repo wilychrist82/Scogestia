@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { 
   LayoutDashboard, 
@@ -23,6 +24,7 @@ import {
   CreditCard
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
+import { ContactSupportModal } from './ContactSupportModal'
 
 export type NavItem = {
   label: string
@@ -110,6 +112,7 @@ const superAdminNavItems: NavItem[] = [
 
 export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
 
   const NavGroup = ({ title, items }: { title: string, items: NavItem[] }) => (
     <div className="mb-6">
@@ -220,7 +223,10 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
           <p className="text-[var(--color-sidebar-muted)] text-xs mb-4 leading-tight">
             Consultez notre centre d'aide ou contactez le support.
           </p>
-          <button className="w-full bg-white text-[var(--color-sidebar-bg)] font-semibold text-sm py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors">
+          <button 
+            onClick={() => setIsSupportModalOpen(true)}
+            className="w-full bg-white text-[var(--color-sidebar-bg)] font-semibold text-sm py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors"
+          >
             Centre d'aide
           </button>
         </div>
@@ -237,6 +243,11 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
         </form>
       </div>
     </aside>
+    
+    <ContactSupportModal 
+      isOpen={isSupportModalOpen} 
+      onClose={() => setIsSupportModalOpen(false)} 
+    />
     </>
   )
 }

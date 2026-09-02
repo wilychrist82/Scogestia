@@ -163,10 +163,13 @@ export default async function AdminDashboard() {
       {/* Top Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Total Élèves */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col items-start gap-3">
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col items-start gap-3 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-sidebar-bg)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex w-full items-center justify-between">
-            <p className="text-xs text-gray-500 font-medium">Total élèves</p>
-            <Users size={16} className="text-gray-400" />
+            <p className="text-xs text-gray-500 font-medium group-hover:text-gray-700 transition-colors">Total élèves</p>
+            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[var(--color-sidebar-bg)]/10 transition-colors">
+              <Users size={16} className="text-gray-400 group-hover:text-[var(--color-sidebar-bg)] transition-colors" />
+            </div>
           </div>
           <div>
             <p className="text-2xl font-bold text-gray-900 leading-none">{studentCount || 0}</p>
@@ -174,10 +177,13 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Total Classes */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col items-start gap-3">
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col items-start gap-3 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-sidebar-bg)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex w-full items-center justify-between">
-            <p className="text-xs text-gray-500 font-medium">Total classes</p>
-            <Presentation size={16} className="text-gray-400" />
+            <p className="text-xs text-gray-500 font-medium group-hover:text-gray-700 transition-colors">Total classes</p>
+            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[var(--color-sidebar-bg)]/10 transition-colors">
+              <Presentation size={16} className="text-gray-400 group-hover:text-[var(--color-sidebar-bg)] transition-colors" />
+            </div>
           </div>
           <div>
             <p className="text-2xl font-bold text-gray-900 leading-none">{classesCount || 0}</p>
@@ -185,10 +191,13 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Total Personnel */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col items-start gap-3">
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col items-start gap-3 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-sidebar-bg)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex w-full items-center justify-between">
-            <p className="text-xs text-gray-500 font-medium">Personnel</p>
-            <UserCircle size={16} className="text-gray-400" />
+            <p className="text-xs text-gray-500 font-medium group-hover:text-gray-700 transition-colors">Personnel</p>
+            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[var(--color-sidebar-bg)]/10 transition-colors">
+              <UserCircle size={16} className="text-gray-400 group-hover:text-[var(--color-sidebar-bg)] transition-colors" />
+            </div>
           </div>
           <div>
             <p className="text-2xl font-bold text-gray-900 leading-none">{staffCount || 0}</p>
@@ -196,10 +205,13 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Taux de recouvrement */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col items-start gap-3">
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col items-start gap-3 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-sidebar-bg)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex w-full items-center justify-between">
-            <p className="text-xs text-gray-500 font-medium">Recouvrement</p>
-            <Wallet size={16} className="text-gray-400" />
+            <p className="text-xs text-gray-500 font-medium group-hover:text-gray-700 transition-colors">Recouvrement</p>
+            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[var(--color-sidebar-bg)]/10 transition-colors">
+              <Wallet size={16} className="text-gray-400 group-hover:text-[var(--color-sidebar-bg)] transition-colors" />
+            </div>
           </div>
           <div>
             <p className="text-2xl font-bold text-gray-900 leading-none">{recouvRate}%</p>
@@ -207,10 +219,13 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Absences */}
-        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm flex flex-col items-start gap-3">
+        <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col items-start gap-3 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-sidebar-bg)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex w-full items-center justify-between">
-            <p className="text-xs text-gray-500 font-medium">Absences ce jour</p>
-            <CalendarOff size={16} className="text-gray-400" />
+            <p className="text-xs text-gray-500 font-medium group-hover:text-gray-700 transition-colors">Absences ce jour</p>
+            <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[var(--color-sidebar-bg)]/10 transition-colors">
+              <CalendarOff size={16} className="text-gray-400 group-hover:text-[var(--color-sidebar-bg)] transition-colors" />
+            </div>
           </div>
           <div>
             <p className="text-2xl font-bold text-gray-900 leading-none">{aCount}</p>
@@ -280,9 +295,14 @@ export default async function AdminDashboard() {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={3} className="text-center py-8 text-gray-400">
-                      <AlertCircle className="w-6 h-6 mx-auto mb-2 opacity-50" />
-                      Aucun retard
+                    <td colSpan={3} className="text-center py-8">
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mb-3">
+                           <AlertCircle className="w-6 h-6 text-green-500" />
+                        </div>
+                        <p className="font-medium text-gray-900 text-sm">Aucun retard</p>
+                        <p className="text-xs text-gray-500 mt-1">Tous les paiements urgents sont à jour.</p>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -378,28 +398,28 @@ export default async function AdminDashboard() {
       <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-100 shadow-sm mt-2">
         <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Actions rapides</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-          <Link href="/admin/eleves/nouveau" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-colors border border-gray-100 text-center leading-tight">
-            <UserPlus size={16} className="text-[var(--color-chart-green)] shrink-0" />
+          <Link href="/admin/eleves/nouveau" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-white hover:shadow-md hover:-translate-y-0.5 text-gray-700 hover:text-[var(--color-sidebar-bg)] py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-all duration-300 border border-gray-100 text-center leading-tight group">
+            <UserPlus size={16} className="text-[var(--color-chart-green)] group-hover:scale-110 transition-transform shrink-0" />
             <span className="hidden sm:inline">Ajouter un</span> élève
           </Link>
-          <Link href="/admin/classes" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-colors border border-gray-100 text-center leading-tight">
-            <PlusSquare size={16} className="text-[var(--color-chart-green)] shrink-0" />
+          <Link href="/admin/classes" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-white hover:shadow-md hover:-translate-y-0.5 text-gray-700 hover:text-[var(--color-sidebar-bg)] py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-all duration-300 border border-gray-100 text-center leading-tight group">
+            <PlusSquare size={16} className="text-[var(--color-chart-green)] group-hover:scale-110 transition-transform shrink-0" />
             Créer classe
           </Link>
-          <Link href="/admin/finance/echeances" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-colors border border-gray-100 text-center leading-tight">
-            <CalendarPlus size={16} className="text-[var(--color-chart-green)] shrink-0" />
+          <Link href="/admin/finance/echeances" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-white hover:shadow-md hover:-translate-y-0.5 text-gray-700 hover:text-[var(--color-sidebar-bg)] py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-all duration-300 border border-gray-100 text-center leading-tight group">
+            <CalendarPlus size={16} className="text-[var(--color-chart-green)] group-hover:scale-110 transition-transform shrink-0" />
             Générer échéance
           </Link>
-          <Link href="/admin/finance/paiements" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-colors border border-gray-100 text-center leading-tight">
-            <Banknote size={16} className="text-[var(--color-chart-green)] shrink-0" />
+          <Link href="/admin/finance/paiements" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-white hover:shadow-md hover:-translate-y-0.5 text-gray-700 hover:text-[var(--color-sidebar-bg)] py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-all duration-300 border border-gray-100 text-center leading-tight group">
+            <Banknote size={16} className="text-[var(--color-chart-green)] group-hover:scale-110 transition-transform shrink-0" />
             Paiement
           </Link>
-          <Link href="/admin/academique/devoirs" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-colors border border-gray-100 text-center leading-tight">
-            <BookOpenCheck size={16} className="text-[var(--color-chart-green)] shrink-0" />
+          <Link href="/admin/academique/devoirs" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-white hover:shadow-md hover:-translate-y-0.5 text-gray-700 hover:text-[var(--color-sidebar-bg)] py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-all duration-300 border border-gray-100 text-center leading-tight group">
+            <BookOpenCheck size={16} className="text-[var(--color-chart-green)] group-hover:scale-110 transition-transform shrink-0" />
             Devoir
           </Link>
-          <Link href="/admin" className="flex items-center justify-center gap-2 bg-[var(--color-sidebar-bg)] hover:bg-[var(--color-sidebar-hover)] text-white py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-colors shadow-sm text-center leading-tight">
-            <LayoutGrid size={16} className="shrink-0" />
+          <Link href="/admin" className="flex items-center justify-center gap-2 bg-[var(--color-sidebar-bg)] hover:bg-[var(--color-sidebar-hover)] hover:shadow-lg hover:-translate-y-0.5 text-white py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-all duration-300 shadow-sm text-center leading-tight group">
+            <LayoutGrid size={16} className="group-hover:scale-110 transition-transform shrink-0" />
             Raccourcis
           </Link>
         </div>

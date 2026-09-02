@@ -130,13 +130,13 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
             <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-on-surface-variant)]">expand_more</span>
           </div>
           {/* Export CSV */}
-          <button onClick={handleExportCSV} className="bg-[var(--color-surface-container-high)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-sm font-semibold px-4 py-3 h-12 rounded-lg hover:bg-[var(--color-surface-container-highest)] transition-colors flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shrink-0 shadow-sm">
+          <button onClick={handleExportCSV} className="bg-[var(--color-surface-container-high)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-sm font-semibold px-4 py-3 h-12 rounded-lg hover:bg-[var(--color-surface-container-highest)] hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shrink-0 shadow-sm active:scale-95">
             <span className="material-symbols-outlined text-[20px]">download</span>
             Exporter (CSV)
           </button>
           {/* Primary Button */}
-          <Link href="/admin/eleves/nouveau" className="bg-[var(--color-primary)] text-white text-sm font-semibold px-6 py-3 h-12 rounded-lg hover:opacity-90 transition-colors flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shrink-0 shadow-sm">
-            <span className="material-symbols-outlined text-[20px]">person_add</span>
+          <Link href="/admin/eleves/nouveau" className="bg-[var(--color-primary)] text-white text-sm font-semibold px-6 py-3 h-12 rounded-lg hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shrink-0 shadow-sm active:scale-95 group">
+            <span className="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">person_add</span>
             Inscrire un élève
           </Link>
         </div>
@@ -219,7 +219,7 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
                       <td className="py-3 px-6 text-right relative">
                         <button 
                           onClick={() => setOpenActionId(openActionId === student.id ? null : student.id)}
-                          className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[#eff4ff] rounded-full transition-colors inline-block"
+                          className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[#eff4ff] rounded-full transition-all duration-300 hover:rotate-90 inline-block"
                         >
                           <span className="material-symbols-outlined text-[20px]">more_vert</span>
                         </button>
