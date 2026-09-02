@@ -1,6 +1,7 @@
 import { AdminLayoutWrapper } from '@/components/layout/AdminLayoutWrapper'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { UnauthorizedAccess } from '@/components/shared/UnauthorizedAccess'
 
 export default async function EnseignantLayout({
   children,
@@ -25,9 +26,14 @@ export default async function EnseignantLayout({
       )
     `)
     .eq('user_id', user.id)
+    .eq('role', 'enseignant')
     .limit(1).maybeSingle()
 
-  const school = roleData?.schools as any
+  if (!roleData) {
+    return <UnauthorizedAccess role="enseignant" />
+  }
+
+  const school = roleData.schools as any
   const schoolName = school?.name || 'École inconnue'
   const schoolCity = school?.city || ''
 

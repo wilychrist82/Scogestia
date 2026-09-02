@@ -19,7 +19,7 @@ export default async function EnseignantDashboardPage() {
     .eq('role', 'enseignant')
     .limit(1).maybeSingle()
 
-  if (!roleData) redirect('/')
+  if (!roleData) return null
 
   // Générer les initiales pour l'avatar
   const getInitials = (name: string) => {

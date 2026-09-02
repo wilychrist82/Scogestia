@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { BottomNav } from '@/components/parent/BottomNav'
 import { ParentHeader } from '@/components/parent/ParentHeader'
+import { UnauthorizedAccess } from '@/components/shared/UnauthorizedAccess'
 
 export default async function ParentLayout({
   children,
@@ -22,7 +23,9 @@ export default async function ParentLayout({
     .eq('role', 'parent')
     .limit(1).maybeSingle()
 
-  if (!roleData) redirect('/')
+  if (!roleData) {
+    return <UnauthorizedAccess role="parent" />
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex justify-center">

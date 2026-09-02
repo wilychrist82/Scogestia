@@ -19,7 +19,7 @@ export default async function ParentDashboardPage() {
     .eq('role', 'parent')
     .limit(1).maybeSingle()
 
-  if (!roleData) redirect('/')
+  if (!roleData) return null
 
   // Récupérer les enfants liés
   const { data: links } = await supabase
