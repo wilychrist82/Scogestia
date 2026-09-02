@@ -201,59 +201,59 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Section Réassurance */}
-        <section className="py-12 bg-white border-y border-slate-100 relative z-10">
-          <div className="container mx-auto px-4">
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-5xl mx-auto"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-50px" }}
-              variants={staggerContainer}
-            >
-              <motion.div variants={fadeIn} className="flex flex-col items-center text-center p-6 rounded-2xl hover:bg-slate-50 transition-colors">
-                <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center text-[#006039] mb-6 shadow-sm">
-                  <ShieldCheck className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">Données 100% sécurisées</h3>
-                <p className="text-slate-600">Chaque école dispose d'une base de données totalement isolée et cryptée. Vos informations ne fuient jamais.</p>
-              </motion.div>
-              <motion.div variants={fadeIn} className="flex flex-col items-center text-center p-6 rounded-2xl hover:bg-slate-50 transition-colors">
-                <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 mb-6 shadow-sm">
-                  <Cloud className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">Accessible partout</h3>
-                <p className="text-slate-600">Entièrement basé sur le Cloud sécurisé. Accédez à la scolarité de vos élèves depuis n'importe quel appareil.</p>
-              </motion.div>
-              <motion.div variants={fadeIn} className="flex flex-col items-center text-center p-6 rounded-2xl hover:bg-slate-50 transition-colors">
-                <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 mb-6 shadow-sm">
-                  <Zap className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">Conçu pour la rapidité</h3>
-                <p className="text-slate-600">Une interface ultra-légère et optimisée pour fonctionner parfaitement même avec une connexion internet limitée.</p>
-              </motion.div>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* Section Fonctionnalités (#fonctionnalites) */}
-        <section id="fonctionnalites" className="py-32 bg-white">
+        {/* Section Fonctionnalités & Réassurance (#fonctionnalites) */}
+        <section id="fonctionnalites" className="py-20 lg:py-32 bg-slate-50 relative z-10">
           <div className="container mx-auto px-4 max-w-6xl">
+            {/* EN-TÊTE DE SECTION */}
             <motion.div 
-              className="mb-20 flex flex-col items-center text-center"
+              className="mb-16 lg:mb-20 flex flex-col items-center text-center"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight max-w-5xl">
-                Un contrôle total sur l'ensemble de votre établissement.
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 tracking-tight max-w-4xl leading-tight">
+                Un contrôle total sur l'ensemble de <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-[#006039]">votre établissement.</span>
               </h2>
-              <p className="text-xl text-slate-600 max-w-3xl leading-relaxed">
+              <p className="text-xl text-slate-600 max-w-2xl leading-relaxed">
                 Des outils financiers puissants aux carnets de notes automatisés, chaque module est conçu pour être invisible et efficace.
               </p>
             </motion.div>
 
+            {/* CARTES DE RÉASSURANCE (BENTO) */}
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20 max-w-5xl mx-auto"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-50px" }}
+              variants={staggerContainer}
+            >
+              <motion.div variants={fadeIn} className="flex flex-col items-start p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#006039] mb-6">
+                  <ShieldCheck className="w-7 h-7" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Données 100% sécurisées</h3>
+                <p className="text-slate-600 leading-relaxed text-sm">Chaque école dispose d'une base de données totalement isolée et cryptée. Vos informations ne fuient jamais.</p>
+              </motion.div>
+
+              <motion.div variants={fadeIn} className="flex flex-col items-start p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+                <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-6">
+                  <Cloud className="w-7 h-7" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Accessible partout</h3>
+                <p className="text-slate-600 leading-relaxed text-sm">Entièrement basé sur le Cloud sécurisé. Accédez à la scolarité de vos élèves depuis n'importe quel appareil.</p>
+              </motion.div>
+
+              <motion.div variants={fadeIn} className="flex flex-col items-start p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
+                <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 mb-6">
+                  <Zap className="w-7 h-7" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Ultra-rapide</h3>
+                <p className="text-slate-600 leading-relaxed text-sm">Une interface ultra-légère et optimisée pour fonctionner parfaitement même avec une connexion internet limitée.</p>
+              </motion.div>
+            </motion.div>
+
+            {/* GRANDES CARTES FONCTIONNALITÉS */}
             <motion.div 
               className="grid grid-cols-1 md:grid-cols-12 gap-6"
               initial="hidden"
