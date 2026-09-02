@@ -197,15 +197,15 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Vagues dynamiques animées (iziSAAS style) */}
+          {/* Vagues dynamiques animées (iziSAAS style) - Forme de 8 restaurée */}
           <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-0 h-[80px] md:h-[120px]">
             {/* Vague Violet Clair (descend en premier) */}
             <svg className="absolute bottom-0 w-[200%] h-full animate-wave-continuous-left" viewBox="0 0 2400 120" preserveAspectRatio="none">
-              <path d="M0,60 Q150,180 300,60 T600,60 T900,60 T1200,60 T1500,60 T1800,60 T2100,60 T2400,60 L2400,120 L0,120 Z" className="fill-violet-600/90" />
+              <path d="M0,60 C300,180 300,-60 600,60 C900,180 900,-60 1200,60 C1500,180 1500,-60 1800,60 C2100,180 2100,-60 2400,60 L2400,120 L0,120 Z" className="fill-violet-500/90" />
             </svg>
             {/* Vague Violet Foncé (monte en premier) */}
             <svg className="absolute bottom-0 w-[200%] h-full animate-wave-continuous-right" viewBox="0 0 2400 120" preserveAspectRatio="none">
-              <path d="M0,60 Q150,-60 300,60 T600,60 T900,60 T1200,60 T1500,60 T1800,60 T2100,60 T2400,60 L2400,120 L0,120 Z" className="fill-violet-700" />
+              <path d="M0,60 C300,-60 300,180 600,60 C900,-60 900,180 1200,60 C1500,-60 1500,180 1800,60 C2100,-60 2100,180 2400,60 L2400,120 L0,120 Z" className="fill-violet-700" />
             </svg>
           </div>
         </section>
