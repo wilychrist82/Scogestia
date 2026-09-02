@@ -111,12 +111,16 @@ export default function Home() {
                 animate="visible"
                 variants={staggerContainer}
               >
-                <motion.h1 variants={fadeIn} className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.1] mb-6">
-                  Gérez votre école <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-200">en toute simplicité</span>. Gagnez du temps, maîtrisez vos finances.
+                <motion.h1 variants={fadeIn} className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.05] mb-6 font-sans">
+                  Gérez votre école
+                  <br />
+                  <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">
+                    en toute simplicité.
+                  </span>
                 </motion.h1>
                 
-                <motion.p variants={fadeIn} className="text-lg text-slate-300 mb-10 max-w-xl leading-relaxed">
-                  Scogestia est la solution 100 % web qui aide les directeurs, comptables et enseignants à gagner du temps, à mieux piloter leur établissement et à renforcer la confiance des parents.
+                <motion.p variants={fadeIn} className="text-lg text-slate-400 mb-10 max-w-xl leading-relaxed">
+                  Le premier ERP scolaire nouvelle génération en Afrique. Gagnez du temps, maîtrisez vos finances et rassurez les parents.
                 </motion.p>
                 
                 <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
@@ -155,22 +159,33 @@ export default function Home() {
               >
                 <div className="relative overflow-visible group flex justify-center lg:justify-end perspective-1000">
                    {/* Glow effect derrière l'image */}
-                   <div className="absolute inset-0 bg-emerald-500/20 blur-[100px] rounded-full"></div>
+                   <div className="absolute inset-0 bg-emerald-500/10 blur-[120px] rounded-full"></div>
                    
-                   <div className="relative w-full lg:max-w-[110%] rounded-[2rem] transform transition-all duration-700 group-hover:-translate-y-4 group-hover:scale-[1.02] hover-3d">
-                     {/* On utilise mix-blend-multiply si l'image a un fond blanc (à tester) ou on laisse transparent. On met un fond semi-transparent très élégant */}
-                     <div className="absolute inset-0 bg-white/5 backdrop-blur-sm rounded-[2rem] border border-white/10 shadow-[0_0_50px_rgba(109,40,217,0.3)]"></div>
+                   <div className="relative w-full lg:max-w-[110%] rounded-[2.5rem] overflow-hidden transform transition-all duration-700 group-hover:-translate-y-4 group-hover:scale-[1.02] hover-3d shadow-2xl">
+                     <div className="absolute inset-0 bg-violet-900/40 mix-blend-color z-20 pointer-events-none"></div>
                      <img 
                        src="/hero-landing.png" 
                        alt="Scogestia - Gestion scolaire intuitive" 
-                       className="w-full h-auto object-contain relative z-10 drop-shadow-2xl mix-blend-luminosity hover:mix-blend-normal transition-all duration-700 opacity-90 hover:opacity-100"
-                       style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)' }}
+                       className="w-full h-auto object-contain relative z-10 opacity-85 hover:opacity-100 transition-opacity duration-700"
+                       style={{ 
+                         WebkitMaskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)',
+                         filter: 'contrast(1.1) brightness(0.9) saturate(0.8)'
+                       }}
                      />
-                     <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(255,255,255,0.05)] pointer-events-none rounded-[2rem] z-20"></div>
+                     <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(15,23,42,0.6)] pointer-events-none rounded-[2.5rem] z-30 border border-white/5"></div>
                    </div>
                 </div>
               </motion.div>
             </div>
+          </div>
+
+          {/* Vague Oscillographe (iziSAAS style) */}
+          <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-0">
+            <svg className="relative block w-full h-[100px] md:h-[150px]" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+              <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" className="fill-emerald-500/20"></path>
+              <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" className="fill-violet-600/30"></path>
+              <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" className="fill-white"></path>
+            </svg>
           </div>
         </section>
 
