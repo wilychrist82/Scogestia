@@ -101,8 +101,7 @@ export default function Home() {
 
       <main>
         {/* Section Héro (#accueil) */}
-        <section id="accueil" className="relative pt-20 pb-32 lg:pt-32 lg:pb-40 overflow-hidden bg-slate-900">
-          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-900/40 via-slate-900 to-slate-900"></div>
+        <section id="accueil" className="relative pt-20 pb-32 lg:pt-32 lg:pb-40 overflow-hidden bg-floating-waves">
           
           <div className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
@@ -154,16 +153,20 @@ export default function Home() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                <div className="relative overflow-visible group flex justify-center lg:justify-end">
-                   <div className="relative w-full lg:max-w-[110%] rounded-[2.5rem] overflow-hidden shadow-[0_30px_80px_-15px_rgba(0,0,0,0.7)] border border-slate-700/50 transform transition-transform duration-700 group-hover:-translate-y-2 bg-white">
+                <div className="relative overflow-visible group flex justify-center lg:justify-end perspective-1000">
+                   {/* Glow effect derrière l'image */}
+                   <div className="absolute inset-0 bg-emerald-500/20 blur-[100px] rounded-full"></div>
+                   
+                   <div className="relative w-full lg:max-w-[110%] rounded-[2rem] transform transition-all duration-700 group-hover:-translate-y-4 group-hover:scale-[1.02] hover-3d">
+                     {/* On utilise mix-blend-multiply si l'image a un fond blanc (à tester) ou on laisse transparent. On met un fond semi-transparent très élégant */}
+                     <div className="absolute inset-0 bg-white/5 backdrop-blur-sm rounded-[2rem] border border-white/10 shadow-[0_0_50px_rgba(109,40,217,0.3)]"></div>
                      <img 
                        src="/hero-landing.png" 
                        alt="Scogestia - Gestion scolaire intuitive" 
-                       className="w-full h-auto object-contain"
+                       className="w-full h-auto object-contain relative z-10 drop-shadow-2xl mix-blend-luminosity hover:mix-blend-normal transition-all duration-700 opacity-90 hover:opacity-100"
+                       style={{ WebkitMaskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)' }}
                      />
-                     {/* Filtre subtil pour adoucir le blanc et l'intégrer au fond sombre (Slate 900) */}
-                     <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/20 via-transparent to-emerald-900/10 pointer-events-none"></div>
-                     <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(15,23,42,0.1)] pointer-events-none rounded-[2.5rem]"></div>
+                     <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(255,255,255,0.05)] pointer-events-none rounded-[2rem] z-20"></div>
                    </div>
                 </div>
               </motion.div>

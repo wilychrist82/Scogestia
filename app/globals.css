@@ -61,12 +61,12 @@
   --color-status-partiel-bg: #FFEDD5;
   --color-status-partiel-text: #9A3412;
 
-  --color-sidebar-bg: #0C4A3E;
-  --color-sidebar-active: #166555;
-  --color-sidebar-hover: #11594A;
-  --color-sidebar-text: #FFFFFF;
-  --color-sidebar-muted: #8BA9A3;
-  --color-dashboard-bg: #F4F7F6;
+  --color-sidebar-bg: #09090b; /* Zinc-950 / Ultra Dark */
+  --color-sidebar-active: #059669; /* Emerald 600 - Scogestia Green */
+  --color-sidebar-hover: #18181b; /* Zinc-900 */
+  --color-sidebar-text: #fafafa; /* Zinc-50 */
+  --color-sidebar-muted: #a1a1aa; /* Zinc-400 */
+  --color-dashboard-bg: #f8fafc;
   --color-chart-green: #059669;
   --color-chart-orange: #F59E0B;
   --color-chart-red: #EF4444;
@@ -131,6 +131,56 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+/* Animations Premium (Floating Waves) */
+@keyframes float-wave {
+  0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 0.3; }
+  50% { transform: translateY(-20px) scale(1.05) rotate(2deg); opacity: 0.5; }
+  100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 0.3; }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.2; }
+}
+
+.bg-floating-waves {
+  position: relative;
+  overflow: hidden;
+  background-color: #0b0f19; /* Deep dark base */
+}
+
+.bg-floating-waves::before,
+.bg-floating-waves::after {
+  content: "";
+  position: absolute;
+  filter: blur(100px);
+  z-index: 0;
+  border-radius: 50%;
+  animation: float-wave 15s ease-in-out infinite;
+}
+
+.bg-floating-waves::before {
+  top: -10%;
+  left: -10%;
+  width: 70%;
+  height: 70%;
+  background: radial-gradient(circle, rgba(109,40,217,0.4) 0%, rgba(0,0,0,0) 70%); /* Violet iziSAAS */
+}
+
+.bg-floating-waves::after {
+  bottom: -20%;
+  right: -10%;
+  width: 80%;
+  height: 80%;
+  background: radial-gradient(circle, rgba(5,150,105,0.3) 0%, rgba(0,0,0,0) 70%); /* Emerald Scogestia */
+  animation-delay: -7.5s;
+}
+
+.bg-floating-waves > * {
+  position: relative;
+  z-index: 1;
 }
 
 @media print {
