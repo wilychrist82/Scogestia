@@ -368,7 +368,7 @@ export default function Home() {
 
             <div className="relative">
               {/* Ligne connectrice (Desktop) */}
-              <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-emerald-100 -translate-y-1/2 rounded-full"></div>
+              <div className="hidden md:block absolute top-8 left-[16.66%] w-[66.66%] h-0.5 bg-violet-200 z-0"></div>
 
               <motion.div 
                 className="grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10"
@@ -382,8 +382,8 @@ export default function Home() {
                   { step: "2", title: "Importez vos élèves", desc: "Utilisez notre modèle Excel pour importer toute votre liste d'élèves et de classes en un seul clic." },
                   { step: "3", title: "Invitez votre équipe", desc: "Ajoutez vos enseignants et comptables, et laissez la plateforme automatiser vos tâches quotidiennes." }
                 ].map((item, i) => (
-                  <motion.div key={i} variants={fadeIn} className="flex flex-col items-center text-center bg-white">
-                    <div className="w-16 h-16 rounded-full bg-[#006039] text-white flex items-center justify-center text-2xl font-bold mb-6 shadow-xl border-4 border-white">
+                  <motion.div key={i} variants={fadeIn} className="flex flex-col items-center text-center bg-white relative z-10">
+                    <div className="w-16 h-16 rounded-full bg-violet-600 text-white flex items-center justify-center text-2xl font-bold mb-6 shadow-xl border-4 border-white">
                       {item.step}
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-3">{item.title}</h3>
@@ -574,10 +574,11 @@ export default function Home() {
                 { q: "Comment se passe l'intégration de mes anciens élèves (Excel) ?", a: "Nous vous fournissons un fichier modèle Excel. Il vous suffit de copier-coller vos listes actuelles dedans et de nous le transmettre, ou d'utiliser notre outil d'importation. Notre équipe de support peut vous accompagner." }
               ].map((faq, i) => (
                 <motion.details key={i} variants={fadeIn} className="group bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden cursor-pointer">
-                   <summary className="flex items-center justify-between p-6 font-semibold text-slate-900 hover:text-[#006039] transition-colors select-none">
+                   <summary className="flex items-center justify-between p-6 font-semibold text-slate-900 hover:text-violet-600 transition-colors select-none">
                       {faq.q}
-                      <span className="transition group-open:rotate-180 text-[#006039]">
-                        <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                      <span className="text-violet-400">
+                        <svg className="block group-open:hidden" fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M12 5v14M5 12h14"></path></svg>
+                        <svg className="hidden group-open:block" fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M5 12h14"></path></svg>
                       </span>
                    </summary>
                    <div className="p-6 pt-0 text-slate-600 leading-relaxed border-t border-slate-100 bg-slate-50/50">
