@@ -1,13 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { LayoutGrid, Search, X, Users, BookOpen, UserPlus, Wallet, Banknote, CalendarPlus } from 'lucide-react'
+import { useState, useEffect, useTransition } from 'react'
+import { LayoutGrid, Search, X, Users, BookOpen, UserPlus, Wallet, Banknote, CalendarPlus, Loader2, User, FileText, BadgeInfo } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { globalSearch, SearchResult } from '@/app/actions/search'
 
 export function ShortcutsButton() {
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
   const shortcuts = [
@@ -26,6 +30,26 @@ export function ShortcutsButton() {
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     s.category.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  // Debounce logic
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Fetch results when debounced query changes
+  useEffect(() => {
+    if (debouncedQuery.length >= 2) {
+      startTransition(async () => {
+        const results = await globalSearch(debouncedQuery)
+        setSearchResults(results)
+      })
+    } else {
+      setSearchResults([])
+    }
+  }, [debouncedQuery])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -76,40 +100,88 @@ export function ShortcutsButton() {
 
             {/* Results */}
             <div className="max-h-[60vh] overflow-y-auto p-2 custom-scrollbar bg-[var(--color-surface-container-lowest)]">
-              {filteredShortcuts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {filteredShortcuts.map((shortcut, index) => {
-                    const Icon = shortcut.icon
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          setIsOpen(false)
-                          router.push(shortcut.href)
-                        }}
-                        className="flex items-center gap-4 p-4 rounded-xl text-left hover:bg-[#eff4ff] group transition-colors border border-transparent hover:border-[#dce9ff]"
-                      >
-                        <div className="w-10 h-10 rounded-lg bg-[var(--color-surface-bright)] group-hover:bg-white flex items-center justify-center text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)] transition-colors shadow-sm">
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-sm text-[var(--color-on-surface)] group-hover:text-[var(--color-primary)] transition-colors">
-                            {shortcut.name}
-                          </p>
-                          <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">
-                            {shortcut.category}
-                          </p>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="py-12 text-center text-[var(--color-on-surface-variant)]">
-                  <p className="text-base font-medium">Aucun raccourci trouvé pour "{searchQuery}"</p>
-                  <p className="text-sm mt-1">Essayez d'autres mots-clés.</p>
+              {/* Database Search Results */}
+              {searchQuery.length >= 2 && (
+                <div className="mb-4">
+                  <div className="px-4 py-2 text-xs font-bold text-[var(--color-on-surface-variant)] uppercase tracking-wider flex items-center gap-2">
+                    Résultats de la base de données
+                    {isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+                  </div>
+                  
+                  {!isPending && searchResults.length === 0 ? (
+                     <div className="px-4 py-3 text-sm text-[var(--color-on-surface-variant)] italic">
+                       Aucun résultat trouvé pour "{searchQuery}".
+                     </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-2">
+                      {searchResults.map((result) => (
+                        <button
+                          key={result.id}
+                          onClick={() => {
+                            setIsOpen(false)
+                            router.push(result.href)
+                          }}
+                          className="flex items-center gap-4 p-3 rounded-xl text-left hover:bg-[#eff4ff] group transition-colors border border-transparent hover:border-[#dce9ff]"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-[var(--color-surface-bright)] group-hover:bg-white flex items-center justify-center text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)] transition-colors shadow-sm">
+                            {result.type === 'student' ? <User className="w-5 h-5" /> : 
+                             result.type === 'invoice' ? <FileText className="w-5 h-5" /> : 
+                             <BadgeInfo className="w-5 h-5" />}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm text-[var(--color-on-surface)] group-hover:text-[var(--color-primary)] transition-colors">
+                              {result.title}
+                            </p>
+                            <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">
+                              {result.subtitle}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* Static Shortcuts */}
+              <div>
+                <div className="px-4 py-2 text-xs font-bold text-[var(--color-on-surface-variant)] uppercase tracking-wider mb-2">
+                  Navigation rapide
+                </div>
+                {filteredShortcuts.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {filteredShortcuts.map((shortcut, index) => {
+                      const Icon = shortcut.icon
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            setIsOpen(false)
+                            router.push(shortcut.href)
+                          }}
+                          className="flex items-center gap-4 p-3 rounded-xl text-left hover:bg-[#eff4ff] group transition-colors border border-transparent hover:border-[#dce9ff]"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-[var(--color-surface-bright)] group-hover:bg-white flex items-center justify-center text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)] transition-colors shadow-sm">
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm text-[var(--color-on-surface)] group-hover:text-[var(--color-primary)] transition-colors">
+                              {shortcut.name}
+                            </p>
+                            <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">
+                              {shortcut.category}
+                            </p>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="py-6 text-center text-[var(--color-on-surface-variant)]">
+                    <p className="text-sm font-medium">Aucun raccourci trouvé.</p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Footer */}
