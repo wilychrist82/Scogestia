@@ -61,11 +61,11 @@
   --color-status-partiel-bg: #FFEDD5;
   --color-status-partiel-text: #9A3412;
 
-  --color-sidebar-bg: #09090b; /* Zinc-950 / Ultra Dark */
+  --color-sidebar-bg: #0b0f19; /* Deep Night Blue */
   --color-sidebar-active: #059669; /* Emerald 600 - Scogestia Green */
-  --color-sidebar-hover: #18181b; /* Zinc-900 */
+  --color-sidebar-hover: #1a1e2d; /* Lighter Night Blue */
   --color-sidebar-text: #fafafa; /* Zinc-50 */
-  --color-sidebar-muted: #a1a1aa; /* Zinc-400 */
+  --color-sidebar-muted: #94a3b8; /* Slate-400 */
   --color-dashboard-bg: #f8fafc;
   --color-chart-green: #059669;
   --color-chart-orange: #F59E0B;
