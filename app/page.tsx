@@ -585,7 +585,7 @@ export default function Home() {
                   </div>
 
                   <div>
-                    <div className="flex gap-1 mb-6 text-emerald-400 relative z-10">
+                    <div className="flex gap-1 mb-6 text-amber-400 relative z-10">
                       <Star className="w-5 h-5 fill-current" />
                       <Star className="w-5 h-5 fill-current" />
                       <Star className="w-5 h-5 fill-current" />
