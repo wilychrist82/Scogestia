@@ -69,16 +69,24 @@ export default async function ParentDashboardPage() {
   return (
     <div className="flex flex-col min-h-full pb-6">
       {/* Premium Header Greeting */}
-      <div 
-        className="relative px-6 rounded-b-[2.5rem] shadow-lg h-[240px] flex items-end"
-        style={{
-          backgroundImage: 'url(/hero-landing.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center 20%',
-        }}
-      >
-        {/* Overlay léger pour adoucir */}
-        <div className="absolute inset-0 bg-black/10 rounded-b-[2.5rem]"></div>
+      <div className="relative px-6 rounded-b-[3rem] shadow-[0_15px_40px_rgba(124,58,237,0.15)] h-[280px] flex items-end overflow-hidden bg-gradient-to-br from-violet-950 via-slate-900 to-[#006039]">
+        {/* Abstract background glows */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[150%] bg-violet-600/20 blur-[100px] rounded-full"></div>
+          <div className="absolute bottom-[10%] -left-[10%] w-[50%] h-[100%] bg-emerald-500/20 blur-[100px] rounded-full"></div>
+        </div>
+        
+        {/* Image de la landing page */}
+        <div className="absolute right-0 bottom-0 h-full w-[80%] sm:w-[60%] lg:w-[50%] z-10 flex items-end justify-end opacity-95 transition-transform duration-700 hover:scale-[1.02]">
+           <img 
+             src="/image_landing_page1.png" 
+             alt="Espace Parent" 
+             className="h-[120%] sm:h-[130%] w-auto object-contain object-right-bottom drop-shadow-2xl translate-y-4 sm:translate-y-6"
+           />
+        </div>
+        
+        {/* Overlay dégradé pour adoucir la transition avec les cartes en dessous */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/30 to-transparent rounded-b-[3rem] z-10 pointer-events-none"></div>
       </div>
 
       <div className="px-5 space-y-5 -mt-6 relative z-20">

@@ -56,14 +56,24 @@ export default async function EnseignantDashboardPage() {
   return (
     <div className="flex flex-col min-h-full bg-gray-50/50 pb-8">
       {/* Hero Header avec Image (Responsive, sans aucun rognage) */}
-      <div className="w-full max-w-[1280px] mx-auto">
-        <div className="relative w-full shadow-lg lg:rounded-b-[2.5rem] overflow-hidden bg-[var(--color-primary)] flex items-end">
-          <img 
-            src="/hero-landing.png" 
-            alt="Espace Enseignant" 
-            className="w-full h-auto object-contain block"
-          />
-          <div className="absolute inset-0 bg-black/10"></div>
+      <div className="w-full max-w-[1280px] mx-auto px-2 md:px-0">
+        <div className="relative w-full shadow-[0_15px_40px_rgba(124,58,237,0.15)] rounded-b-[2rem] lg:rounded-b-[3rem] overflow-hidden bg-gradient-to-br from-slate-900 via-violet-950 to-[#006039] flex items-end h-[220px] md:h-[300px]">
+          {/* Abstract glows */}
+          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+             <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[120%] bg-emerald-500/20 blur-[100px] rounded-full"></div>
+             <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[140%] bg-violet-600/30 blur-[100px] rounded-full"></div>
+          </div>
+
+          <div className="absolute right-0 bottom-0 h-full w-[85%] sm:w-[70%] md:w-[60%] z-10 flex items-end justify-end transition-transform duration-700 hover:scale-[1.02]">
+             <img 
+               src="/image_landing_page1.png" 
+               alt="Espace Enseignant" 
+               className="h-[120%] md:h-[135%] w-auto object-contain object-right-bottom drop-shadow-2xl translate-y-4 md:translate-y-6"
+             />
+          </div>
+          
+          {/* Overlay dégradé */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/30 to-transparent z-10 pointer-events-none"></div>
         </div>
       </div>
 
