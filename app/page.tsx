@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ShieldCheck, Cloud, Zap, CheckCircle2, LayoutDashboard, CreditCard, Users, ArrowRight, BarChart, Smartphone, Globe, Mail, Phone, MapPin, Star, PlayCircle, Lock, X, Play, Wallet, TrendingUp, Building2, Settings, MessageSquare, GraduationCap } from 'lucide-react'
@@ -24,6 +24,25 @@ const staggerContainer = {
 export default function Home() {
   const [demoModalOpen, setDemoModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const testimonialsScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (testimonialsScrollRef.current && window.innerWidth < 768) {
+        const { scrollLeft, scrollWidth, clientWidth } = testimonialsScrollRef.current;
+        // If we reached the end (with a small margin of error)
+        if (Math.ceil(scrollLeft + clientWidth) >= scrollWidth - 10) {
+          testimonialsScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          // Scroll by one item's width plus gap
+          const itemWidth = testimonialsScrollRef.current.children[0]?.clientWidth || 0;
+          testimonialsScrollRef.current.scrollBy({ left: itemWidth + 32, behavior: 'smooth' });
+        }
+      }
+    }, 4000); // Change slide every 4 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-[#006039]/20 selection:text-[#006039]">
@@ -565,6 +584,7 @@ export default function Home() {
             </motion.div>
 
             <motion.div 
+              ref={testimonialsScrollRef}
               className="flex overflow-x-auto snap-x snap-mandatory pb-8 md:grid md:grid-cols-3 gap-8 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               initial="hidden"
               whileInView="visible"
