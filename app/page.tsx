@@ -545,47 +545,65 @@ export default function Home() {
         </section>
 
         {/* Section Témoignages (#temoignages) */}
-        <section id="temoignages" className="py-24 bg-white border-y border-slate-100">
-          <div className="container mx-auto px-4 max-w-6xl">
+        <section id="temoignages" className="py-24 bg-[#0b0f19] relative overflow-hidden">
+          {/* Decorative background gradients */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+          
+          <div className="container mx-auto px-4 max-w-6xl relative z-10">
             <motion.div 
-              className="text-center mb-16"
+              className="text-center mb-20"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Ils font confiance à Scogestia</h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Découvrez ce que les directeurs et comptables pensent de notre plateforme.</p>
+              <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-sm tracking-wide uppercase shadow-sm backdrop-blur-sm">
+                Témoignages
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">Ils font confiance à <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-200">Scogestia</span></h2>
+              <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">Découvrez ce que les directeurs et comptables pensent de notre plateforme après avoir sauté le pas.</p>
             </motion.div>
 
             <motion.div 
-              className="flex overflow-x-auto snap-x snap-mandatory pb-4 md:grid md:grid-cols-3 gap-8 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              className="flex overflow-x-auto snap-x snap-mandatory pb-8 md:grid md:grid-cols-3 gap-8 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
               variants={staggerContainer}
             >
               {[
-                { name: "Kodjo E.", role: "Directeur Fondateur", text: "Scogestia a révolutionné la gestion de notre complexe scolaire. Fini les erreurs de calcul sur les bulletins et le suivi des impayés est devenu un jeu d'enfant." },
-                { name: "Amina T.", role: "Comptable", text: "Avant, je passais des jours à pointer les reçus de scolarité. Maintenant, en quelques clics, j'ai la situation financière exacte de l'école. Un gain de temps énorme." },
-                { name: "Jean-Paul M.", role: "Parent d'élève", text: "Pouvoir consulter les notes de mon fils directement sur mon téléphone me rassure. L'école est beaucoup plus transparente grâce à ce portail." }
+                { name: "Kodjo E.", role: "Directeur Fondateur", text: "Scogestia a totalement révolutionné la gestion de notre complexe scolaire. Fini les erreurs de calcul sur les bulletins et le suivi des impayés est devenu un jeu d'enfant absolu." },
+                { name: "Amina T.", role: "Comptable Principale", text: "Avant, je passais des jours à pointer les reçus de scolarité. Maintenant, en quelques clics, j'ai la situation financière exacte de l'école. Un gain de temps monumental." },
+                { name: "Jean-Paul M.", role: "Parent d'élève", text: "Pouvoir consulter les notes de mon fils directement sur mon téléphone me rassure au quotidien. L'école est beaucoup plus transparente grâce à ce portail interactif." }
               ].map((testimonial, i) => (
-                <motion.div key={i} variants={fadeIn} className="bg-slate-50 p-8 rounded-2xl border border-slate-200 min-w-[85%] md:min-w-0 snap-center">
-                  <div className="flex gap-1 mb-4 text-amber-400">
-                    <Star className="w-5 h-5 fill-current" />
-                    <Star className="w-5 h-5 fill-current" />
-                    <Star className="w-5 h-5 fill-current" />
-                    <Star className="w-5 h-5 fill-current" />
-                    <Star className="w-5 h-5 fill-current" />
+                <motion.div key={i} variants={fadeIn} className="bg-white/[0.03] backdrop-blur-xl p-10 rounded-[2rem] border border-white/[0.08] min-w-[85%] md:min-w-0 snap-center relative overflow-hidden group hover:bg-white/[0.05] hover:border-white/[0.12] transition-all duration-300 flex flex-col justify-between">
+                  {/* Subtle quote icon in background */}
+                  <div className="absolute -top-6 -right-6 text-white/[0.03] group-hover:text-emerald-500/[0.05] transition-colors duration-500">
+                    <svg width="140" height="140" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M14.017 21L16.411 14.504C16.892 13.064 16.924 11.531 16.5 10C16.142 8.711 15.358 7.618 14.269 6.883C13.18 6.148 11.848 5.815 10.5 6L8.5 6L8.5 10L10.5 10C10.963 10 11.411 10.15 11.782 10.428C12.152 10.706 12.427 11.097 12.569 11.545C12.71 11.993 12.71 12.476 12.569 12.924C12.427 13.372 12.152 13.763 11.782 14.041L10.017 14.504L14.017 21ZM5.01697 21L7.41097 14.504C7.89197 13.064 7.92397 11.531 7.49997 10C7.14197 8.711 6.35797 7.618 5.26897 6.883C4.17997 6.148 2.84797 5.815 1.49997 6L-0.500031 6L-0.500031 10L1.49997 10C1.96297 10 2.41097 10.15 2.78197 10.428C3.15297 10.706 3.42797 11.097 3.56997 11.545C3.71197 11.993 3.71197 12.476 3.56997 12.924C3.42797 13.372 3.15297 13.763 2.78197 14.041L1.01697 14.504L5.01697 21Z" />
+                    </svg>
                   </div>
-                  <p className="text-slate-700 mb-6 italic leading-relaxed">"{testimonial.text}"</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-200 flex items-center justify-center text-[#006039] font-bold">
+
+                  <div>
+                    <div className="flex gap-1 mb-6 text-emerald-400 relative z-10">
+                      <Star className="w-5 h-5 fill-current" />
+                      <Star className="w-5 h-5 fill-current" />
+                      <Star className="w-5 h-5 fill-current" />
+                      <Star className="w-5 h-5 fill-current" />
+                      <Star className="w-5 h-5 fill-current" />
+                    </div>
+                    <p className="text-slate-300 mb-8 leading-relaxed relative z-10 text-[15px] sm:text-base">
+                      "{testimonial.text}"
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 relative z-10 pt-6 border-t border-white/[0.05]">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-[0_0_15px_rgba(52,211,153,0.3)]">
                       {testimonial.name.charAt(0)}
                     </div>
                     <div>
-                      <div className="font-bold text-slate-900">{testimonial.name}</div>
-                      <div className="text-sm text-slate-500">{testimonial.role}</div>
+                      <div className="font-bold text-white tracking-wide">{testimonial.name}</div>
+                      <div className="text-sm text-emerald-400/80 font-medium mt-0.5">{testimonial.role}</div>
                     </div>
                   </div>
                 </motion.div>
