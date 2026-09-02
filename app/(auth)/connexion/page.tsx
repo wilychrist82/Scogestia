@@ -44,11 +44,8 @@ export default function LoginPage() {
             La solution complète pour gérer votre école efficacement, de manière simple et sécurisée.
           </p>
 
-          <div className="w-full relative rounded-[2.5rem] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)] border border-white/5 group transform transition-transform duration-700 hover:-translate-y-2">
-             <div className="relative w-full h-[320px] overflow-hidden flex items-end justify-center">
-                <img src="/image_landing_page1.png" alt="Scogestia Interface" className="w-[120%] h-auto object-contain object-bottom transform group-hover:scale-[1.03] transition-transform duration-1000 ease-out translate-y-2" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none rounded-[2.5rem]"></div>
-             </div>
+          <div className="w-full relative flex justify-center mt-4 group cursor-default">
+             <img src="/image_landing_page1.png" alt="Scogestia Interface" className="w-full sm:w-[110%] h-auto object-contain transform transition-transform duration-1000 ease-out group-hover:scale-105 group-hover:-translate-y-2 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" />
           </div>
         </div>
       </div>
