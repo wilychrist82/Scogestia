@@ -267,140 +267,86 @@ export default function Home() {
               viewport={{ once: true, margin: "-100px" }}
               variants={staggerContainer}
             >
-              {/* Grande Carte 1 */}
-              <motion.div variants={fadeIn} className="md:col-span-8 bg-slate-50 rounded-3xl p-10 border border-slate-100 relative overflow-hidden group">
-                <div className="relative z-20 w-full md:w-[60%] lg:w-[55%]">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/50 shadow-[0_2px_10px_rgba(16,185,129,0.1)]">
-                      <div className="absolute inset-0 bg-white/40 backdrop-blur-sm rounded-2xl"></div>
-                      <Wallet className="w-6 h-6 text-emerald-700 relative z-10 stroke-[1.5]" />
-                      <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-white rounded-lg border border-emerald-100 shadow-sm flex items-center justify-center z-20">
-                        <TrendingUp className="w-3 h-3 text-emerald-500 stroke-[2.5]" />
-                      </div>
-                    </div>
-                    <span className="text-sm font-bold tracking-widest text-slate-400 uppercase">Finance & Comptabilité</span>
+              {/* Carte 1 : Finance (Image Background) */}
+              <motion.div variants={fadeIn} className="md:col-span-8 h-[400px] rounded-[2rem] p-10 relative overflow-hidden group">
+                <img src="/images/finance_admin_saas.jpg" alt="Admin Finance" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
+                
+                <div className="relative z-10 h-full flex flex-col justify-end">
+                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
+                    <Wallet className="w-6 h-6 text-emerald-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-4">Suivi Financier & Recouvrement</h3>
-                  <p className="text-slate-600 leading-relaxed text-lg mb-8">
-                    Fini les tableaux Excel croisés. Visualisez instantanément les impayés, relancez les parents par SMS, et générez des reçus en un clic.
-                  </p>
-                </div>
-                {/* Visual */}
-                <div className="absolute bottom-0 right-0 w-[85%] md:w-[45%] h-[75%] bg-white rounded-tl-2xl shadow-xl border-t border-l border-slate-200/60 hidden sm:block translate-y-4 translate-x-4 group-hover:translate-y-0 group-hover:translate-x-0 transition-transform duration-500">
-                  <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-                     <span className="font-mono text-[10px] sm:text-xs text-slate-400 font-semibold tracking-wider uppercase">Paiements Récents</span>
-                     <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-                  </div>
-                  <div className="p-4 space-y-3">
-                     <div className="bg-slate-50 rounded-lg border border-slate-100 p-3 flex justify-between items-center">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800">Frais Scolarité (T1)</p>
-                          <p className="text-xs text-slate-500">Famille Dubois</p>
-                        </div>
-                        <span className="text-sm font-bold text-emerald-600">+45 000 FCFA</span>
-                     </div>
-                     <div className="bg-slate-50 rounded-lg border border-slate-100 p-3 flex justify-between items-center">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800">Cantine (Nov)</p>
-                          <p className="text-xs text-slate-500">Famille Martin</p>
-                        </div>
-                        <span className="text-sm font-bold text-emerald-600">+12 000 FCFA</span>
-                     </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Petite Carte 1 */}
-              <motion.div variants={fadeIn} className="md:col-span-4 bg-white border border-slate-200 rounded-3xl p-10 relative overflow-hidden flex flex-col justify-between group hover:border-[#006039]/30 transition-colors">
-                <div className="relative z-10">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50 shadow-[0_2px_10px_rgba(59,130,246,0.1)]">
-                      <div className="absolute inset-0 bg-white/40 backdrop-blur-sm rounded-2xl"></div>
-                      <Building2 className="w-6 h-6 text-blue-700 relative z-10 stroke-[1.5]" />
-                      <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-white rounded-lg border border-blue-100 shadow-sm flex items-center justify-center z-20">
-                        <Settings className="w-3 h-3 text-blue-500 stroke-[2.5]" />
-                      </div>
-                    </div>
-                    <span className="text-sm font-bold tracking-widest text-slate-400 uppercase">Administration</span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-4">Gestion Scolaire</h3>
-                  <p className="text-slate-600 leading-relaxed">
-                    Classes, enseignants, emplois du temps. Une architecture claire pour gérer des milliers d'élèves avec fluidité.
+                  <h3 className="text-3xl font-bold text-white mb-2 font-sans tracking-tight">Suivi Financier & Recouvrement</h3>
+                  <p className="text-slate-300 text-lg max-w-lg leading-relaxed">
+                    Visualisez instantanément les impayés, relancez les parents par SMS, et automatisez toute votre comptabilité sans tableaux croisés.
                   </p>
                 </div>
               </motion.div>
 
-              {/* Petite Carte 2 */}
-              <motion.div variants={fadeIn} className="md:col-span-4 bg-[#f8fafc] rounded-3xl p-10 border border-slate-100 group hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 border border-indigo-200/50 shadow-[0_2px_10px_rgba(99,102,241,0.1)]">
-                      <div className="absolute inset-0 bg-white/40 backdrop-blur-sm rounded-2xl"></div>
-                      <Smartphone className="w-6 h-6 text-indigo-700 relative z-10 stroke-[1.5]" />
-                      <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-white rounded-lg border border-indigo-100 shadow-sm flex items-center justify-center z-20">
-                        <MessageSquare className="w-3 h-3 text-indigo-500 stroke-[2.5]" />
-                      </div>
-                    </div>
-                    <span className="text-sm font-bold tracking-widest text-slate-400 uppercase">Communication</span>
+              {/* Carte 2 : Parents (Image Background) */}
+              <motion.div variants={fadeIn} className="md:col-span-4 h-[400px] rounded-[2rem] p-10 relative overflow-hidden group">
+                <img src="/images/parent_app_saas.jpg" alt="Portail Parent" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/70 to-slate-900/20"></div>
+                
+                <div className="relative z-10 h-full flex flex-col justify-end">
+                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
+                    <Smartphone className="w-6 h-6 text-violet-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-4">Portail Parents</h3>
-                  <p className="text-slate-600 leading-relaxed">
-                    Transparence totale. Les parents suivent l'assiduité, les notes et les paiements depuis leur téléphone en temps réel.
+                  <h3 className="text-2xl font-bold text-white mb-2 font-sans tracking-tight">Portail Parents</h3>
+                  <p className="text-slate-300">
+                    Transparence totale sur le téléphone des parents : notes, absences, et paiements.
                   </p>
+                </div>
               </motion.div>
 
-              {/* Grande Carte 2 */}
-              <motion.div variants={fadeIn} className="md:col-span-8 bg-white rounded-3xl p-10 border border-slate-200 flex flex-col md:flex-row items-center gap-10 overflow-hidden relative group hover:border-slate-300 transition-colors">
-                 <div className="flex-1 relative z-20">
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50 shadow-[0_2px_10px_rgba(245,158,11,0.1)]">
-                        <div className="absolute inset-0 bg-white/40 backdrop-blur-sm rounded-2xl"></div>
-                        <GraduationCap className="w-6 h-6 text-amber-700 relative z-10 stroke-[1.5]" />
-                        <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-white rounded-lg border border-amber-100 shadow-sm flex items-center justify-center z-20">
-                          <Star className="w-3 h-3 text-amber-500 stroke-[2.5]" />
-                        </div>
-                      </div>
-                      <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">Académique</span>
-                    </div>
-                    <h3 className="text-2xl font-bold text-slate-900 mb-4">Notes & Bulletins Automatisés</h3>
-                    <p className="text-slate-600 leading-relaxed text-lg">
-                      Saisissez les notes, le système fait le reste. Calcul des moyennes, des rangs, et génération massive des bulletins scolaires trimestriels sans erreurs.
+              {/* Carte 3 : Administration (Dark Card with Icon) */}
+              <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] bg-slate-900 rounded-[2rem] p-10 border border-white/5 relative overflow-hidden group hover:bg-slate-800 transition-colors">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-colors duration-500"></div>
+                <div className="relative z-10 h-full flex flex-col justify-between">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 flex items-center justify-center">
+                    <Building2 className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-2 font-sans">Gestion Scolaire</h3>
+                    <p className="text-slate-400">
+                      Classes, enseignants, emplois du temps. Une architecture claire pour gérer des milliers d'élèves.
                     </p>
-                 </div>
-                 <div className="w-full md:w-[45%] h-full min-h-[200px] relative mt-6 md:mt-0">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-slate-50 to-slate-100/50 rounded-2xl border border-slate-200/60 p-5 flex flex-col transform group-hover:scale-[1.02] transition-transform duration-500">
-                        <div className="flex justify-between items-start mb-4">
-                           <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold border border-indigo-200">
-                                JL
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-slate-800">Jean Dupont</p>
-                                <p className="text-xs text-slate-500">Terminale S</p>
-                              </div>
-                           </div>
-                           <div className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-1 rounded">1er Trimestre</div>
-                        </div>
-                        <div className="bg-white rounded-lg border border-slate-100 p-4 shadow-sm mb-3">
-                           <div className="flex justify-between text-sm mb-2">
-                             <span className="text-slate-600 font-medium">Mathématiques</span>
-                             <span className="font-bold text-slate-900">16.5 / 20</span>
-                           </div>
-                           <div className="w-full bg-slate-100 rounded-full h-1.5">
-                             <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '82%' }}></div>
-                           </div>
-                        </div>
-                        <div className="bg-white rounded-lg border border-slate-100 p-4 shadow-sm">
-                           <div className="flex justify-between text-sm mb-2">
-                             <span className="text-slate-600 font-medium">Physique-Chimie</span>
-                             <span className="font-bold text-slate-900">14.0 / 20</span>
-                           </div>
-                           <div className="w-full bg-slate-100 rounded-full h-1.5">
-                             <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: '70%' }}></div>
-                           </div>
-                        </div>
-                    </div>
-                 </div>
+                  </div>
+                </div>
               </motion.div>
+
+              {/* Carte 4 : Académique / Enseignant (Image Background) */}
+              <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] rounded-[2rem] p-10 relative overflow-hidden group">
+                <img src="/images/teacher_saas.jpg" alt="Enseignant" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
+                
+                <div className="relative z-10 h-full flex flex-col justify-end">
+                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
+                    <GraduationCap className="w-6 h-6 text-amber-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight">Académique</h3>
+                  <p className="text-slate-300">
+                    Saisie fluide des notes, bulletins automatisés et statistiques en temps réel.
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Carte 5 : Espace Élève / Sécurité (Dark Card with Icon) */}
+              <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] bg-slate-900 rounded-[2rem] p-10 border border-white/5 relative overflow-hidden group hover:bg-slate-800 transition-colors">
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-600/10 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2 group-hover:bg-emerald-500/20 transition-colors duration-500"></div>
+                <div className="relative z-10 h-full flex flex-col justify-between">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
+                    <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-2 font-sans">Sécurité & Contrôle</h3>
+                    <p className="text-slate-400">
+                      Vos données sensibles sont cryptées. Personne d'autre que vous n'y a accès. Fiabilité 99.9%.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+
             </motion.div>
           </div>
         </section>
