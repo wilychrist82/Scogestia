@@ -345,43 +345,86 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Section How It Works (#comment-ca-marche) */}
-        <section id="comment-ca-marche" className="py-24 bg-white">
-          <div className="container mx-auto px-4 max-w-5xl">
+        {/* Section Comment ça marche (#comment-ca-marche) */}
+        <section id="comment-ca-marche" className="py-24 bg-white relative overflow-hidden">
+          {/* Subtle background decoration */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-violet-50/50 rounded-full blur-[100px] -z-10"></div>
+          
+          <div className="container mx-auto px-4 max-w-6xl relative z-10">
             <motion.div 
-              className="text-center mb-16"
+              className="text-center mb-24"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <span className="text-[#006039] font-semibold tracking-wider uppercase text-sm mb-2 block">Déploiement Facile</span>
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Prêt à l'emploi en 3 étapes simples</h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Pas besoin de connaissances techniques. Notre processus d'installation est conçu pour être aussi rapide que possible.</p>
+              <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-violet-50 border border-violet-100 text-violet-600 font-semibold text-sm tracking-wide uppercase shadow-sm">
+                Déploiement Facile
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">Prêt à l'emploi en <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-emerald-500">3 étapes simples</span></h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">Pas besoin de connaissances techniques. Notre processus d'installation est conçu pour être aussi rapide que possible.</p>
             </motion.div>
 
             <div className="relative">
-              {/* Ligne connectrice (Desktop) */}
-              <div className="hidden md:block absolute top-8 left-[16.66%] w-[66.66%] h-0.5 bg-violet-200 z-0"></div>
-
+              {/* Ligne connectrice (Desktop) avec un beau dégradé */}
+              <div className="hidden md:block absolute top-[2.5rem] left-[15%] right-[15%] h-[3px] bg-gradient-to-r from-transparent via-slate-200 to-transparent z-0"></div>
+              
               <motion.div 
-                className="grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10"
+                className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-16 relative z-10"
+                variants={staggerContainer}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, margin: "-100px" }}
-                variants={staggerContainer}
               >
                 {[
-                  { step: "1", title: "Créez votre compte", desc: "Inscrivez votre établissement en 2 minutes. Aucune carte bancaire requise pour commencer l'essai gratuit." },
-                  { step: "2", title: "Importez vos élèves", desc: "Utilisez notre modèle Excel pour importer toute votre liste d'élèves et de classes en un seul clic." },
-                  { step: "3", title: "Invitez votre équipe", desc: "Ajoutez vos enseignants et comptables, et laissez la plateforme automatiser vos tâches quotidiennes." }
-                ].map((item, i) => (
-                  <motion.div key={i} variants={fadeIn} className="flex flex-col items-center text-center bg-white relative z-10">
-                    <div className="w-16 h-16 rounded-full bg-violet-600 text-white flex items-center justify-center text-2xl font-bold mb-6 shadow-xl border-4 border-white">
-                      {item.step}
+                  { 
+                    step: '1', 
+                    title: 'Créez votre compte', 
+                    desc: 'Inscrivez votre établissement en 2 minutes. Aucune carte bancaire requise pour commencer l\'essai gratuit.',
+                    styles: {
+                      blur: 'bg-violet-400/20',
+                      border: 'border-violet-50',
+                      text: 'text-violet-600',
+                      hoverBg: 'group-hover:bg-violet-600',
+                      hoverBorder: 'group-hover:border-violet-100'
+                    }
+                  },
+                  { 
+                    step: '2', 
+                    title: 'Importez vos élèves', 
+                    desc: 'Utilisez notre modèle Excel ultra-simple pour importer toute votre liste d\'élèves et de classes en un seul clic.',
+                    styles: {
+                      blur: 'bg-emerald-400/20',
+                      border: 'border-emerald-50',
+                      text: 'text-emerald-600',
+                      hoverBg: 'group-hover:bg-emerald-600',
+                      hoverBorder: 'group-hover:border-emerald-100'
+                    }
+                  },
+                  { 
+                    step: '3', 
+                    title: 'Invitez votre équipe', 
+                    desc: 'Ajoutez vos enseignants et comptables, et laissez la plateforme automatiser toutes vos tâches quotidiennes.',
+                    styles: {
+                      blur: 'bg-blue-400/20',
+                      border: 'border-blue-50',
+                      text: 'text-blue-600',
+                      hoverBg: 'group-hover:bg-blue-600',
+                      hoverBorder: 'group-hover:border-blue-100'
+                    }
+                  }
+                ].map((item, index) => (
+                  <motion.div key={index} variants={fadeIn} className="flex flex-col items-center text-center group">
+                    <div className="relative mb-8">
+                      <div className={`absolute inset-0 ${item.styles.blur} rounded-full blur-xl transform group-hover:scale-110 transition-transform duration-500`}></div>
+                      <div className={`relative w-20 h-20 rounded-full bg-white border-4 ${item.styles.border} ${item.styles.text} flex items-center justify-center text-2xl font-black shadow-[0_8px_30px_rgb(0,0,0,0.08)] ${item.styles.hoverBg} group-hover:text-white ${item.styles.hoverBorder} transition-all duration-300 z-10`}>
+                        {item.step}
+                      </div>
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-3">{item.title}</h3>
-                    <p className="text-slate-600">{item.desc}</p>
+                    <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 w-full h-full">
+                      <h3 className="text-xl font-bold text-slate-900 mb-4 tracking-tight">{item.title}</h3>
+                      <p className="text-slate-600 leading-relaxed">{item.desc}</p>
+                    </div>
                   </motion.div>
                 ))}
               </motion.div>
