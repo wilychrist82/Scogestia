@@ -186,3 +186,52 @@ export async function logout() {
   await supabase.auth.signOut();
   redirect('/connexion');
 }
+
+export async function requestPasswordReset(prevState: AuthState, formData: FormData): Promise<AuthState> {
+  const email = formData.get('email') as string;
+
+  if (!email) {
+    return { error: 'Veuillez renseigner votre adresse email.' };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback?next=/nouveau-mot-de-passe`,
+  });
+
+  if (error) {
+    // Ne pas révéler si l'email existe ou non pour des raisons de sécurité
+    return { error: 'Une erreur est survenue. Veuillez réessayer.' };
+  }
+
+  return { success: true };
+}
+
+export async function updatePassword(prevState: AuthState, formData: FormData): Promise<AuthState> {
+  const password = formData.get('password') as string;
+  const confirmPassword = formData.get('confirmPassword') as string;
+
+  if (!password || !confirmPassword) {
+    return { error: 'Veuillez remplir tous les champs.' };
+  }
+
+  if (password !== confirmPassword) {
+    return { error: 'Les mots de passe ne correspondent pas.' };
+  }
+
+  if (password.length < 6) {
+    return { error: 'Le mot de passe doit contenir au moins 6 caractères.' };
+  }
+
+  const supabase = await createClient();
+  
+  const { error } = await supabase.auth.updateUser({
+    password: password
+  });
+
+  if (error) {
+    return { error: `Erreur lors de la mise à jour: ${error.message}` };
+  }
+
+  redirect('/admin');
+}
