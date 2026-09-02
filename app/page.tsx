@@ -276,7 +276,7 @@ export default function Home() {
                   <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
                     <Wallet className="w-6 h-6 text-emerald-400" />
                   </div>
-                  <h3 className="text-3xl font-bold text-white mb-2 font-sans tracking-tight">Suivi Financier & Recouvrement</h3>
+                  <h3 className="text-3xl font-bold text-white mb-2 font-sans tracking-tight">Suivi Financier & <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Recouvrement</span></h3>
                   <p className="text-slate-300 text-lg max-w-lg leading-relaxed">
                     Visualisez instantanément les impayés, relancez les parents par SMS, et automatisez toute votre comptabilité sans tableaux croisés.
                   </p>
@@ -292,26 +292,26 @@ export default function Home() {
                   <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
                     <Smartphone className="w-6 h-6 text-violet-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-2 font-sans tracking-tight">Portail Parents</h3>
+                  <h3 className="text-2xl font-bold text-white mb-2 font-sans tracking-tight"><span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Portail</span> Parents</h3>
                   <p className="text-slate-300">
                     Transparence totale sur le téléphone des parents : notes, absences, et paiements.
                   </p>
                 </div>
               </motion.div>
 
-              {/* Carte 3 : Administration (Dark Card with Icon) */}
-              <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] bg-slate-900 rounded-[2rem] p-10 border border-white/5 relative overflow-hidden group hover:bg-slate-800 transition-colors">
-                <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-colors duration-500"></div>
-                <div className="relative z-10 h-full flex flex-col justify-between">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 flex items-center justify-center">
+              {/* Carte 3 : Administration (Image Background) */}
+              <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] rounded-[2rem] p-10 relative overflow-hidden group">
+                <img src="/images/gestion_scolaire_african.jpg" alt="Gestion Scolaire" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
+                
+                <div className="relative z-10 h-full flex flex-col justify-end">
+                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
                     <Building2 className="w-6 h-6 text-blue-400" />
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-2 font-sans">Gestion Scolaire</h3>
-                    <p className="text-slate-400">
-                      Classes, enseignants, emplois du temps. Une architecture claire pour gérer des milliers d'élèves.
-                    </p>
-                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight">Gestion <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Scolaire</span></h3>
+                  <p className="text-slate-300">
+                    Classes, enseignants, emplois du temps. Une architecture claire pour gérer des milliers d'élèves.
+                  </p>
                 </div>
               </motion.div>
 
@@ -324,26 +324,26 @@ export default function Home() {
                   <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
                     <GraduationCap className="w-6 h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight">Académique</h3>
+                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight"><span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Académique</span></h3>
                   <p className="text-slate-300">
                     Saisie fluide des notes, bulletins automatisés et statistiques en temps réel.
                   </p>
                 </div>
               </motion.div>
 
-              {/* Carte 5 : Espace Élève / Sécurité (Dark Card with Icon) */}
-              <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] bg-slate-900 rounded-[2rem] p-10 border border-white/5 relative overflow-hidden group hover:bg-slate-800 transition-colors">
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-600/10 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2 group-hover:bg-emerald-500/20 transition-colors duration-500"></div>
-                <div className="relative z-10 h-full flex flex-col justify-between">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
+              {/* Carte 5 : Espace Élève / Sécurité (Image Background) */}
+              <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] rounded-[2rem] p-10 relative overflow-hidden group">
+                <img src="/images/security_african.jpg" alt="Sécurité et Contrôle" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
+                
+                <div className="relative z-10 h-full flex flex-col justify-end">
+                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
                     <ShieldCheck className="w-6 h-6 text-emerald-400" />
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-2 font-sans">Sécurité & Contrôle</h3>
-                    <p className="text-slate-400">
-                      Vos données sensibles sont cryptées. Personne d'autre que vous n'y a accès. Fiabilité 99.9%.
-                    </p>
-                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight">Sécurité & <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Contrôle</span></h3>
+                  <p className="text-slate-300">
+                    Vos données sensibles sont cryptées. Personne d'autre que vous n'y a accès. Fiabilité 99.9%.
+                  </p>
                 </div>
               </motion.div>
 
