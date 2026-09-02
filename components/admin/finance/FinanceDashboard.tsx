@@ -80,8 +80,8 @@ export function FinanceDashboard({ schedules, payments, basePath = "/admin/finan
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Supervisez les encaissements, les échéances et les impayés de l'établissement.</p>
           </div>
           <div className="flex gap-2">
-            <Link href={`${basePath}/paiements`} className="flex items-center justify-center gap-2 bg-[var(--color-primary)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:opacity-90 transition-colors shadow-sm">
-              <span className="material-symbols-outlined text-[20px]">add_circle</span>
+            <Link href={`${basePath}/paiements`} className="flex items-center justify-center gap-2 bg-[var(--color-primary)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all duration-300 shadow-sm group">
+              <span className="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">add_circle</span>
               Encaisser
             </Link>
           </div>
@@ -89,7 +89,7 @@ export function FinanceDashboard({ schedules, payments, basePath = "/admin/finan
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] flex flex-col justify-between">
+          <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] flex flex-col justify-between hover:shadow-md hover:-translate-y-1 transition-all duration-300">
             <div className="flex items-center gap-3 mb-4 text-[var(--color-on-surface-variant)]">
               <span className="material-symbols-outlined text-[24px]">account_balance_wallet</span>
               <h3 className="font-semibold text-sm uppercase tracking-wide">Total Attendu</h3>
@@ -97,8 +97,8 @@ export function FinanceDashboard({ schedules, payments, basePath = "/admin/finan
             <p className="text-2xl font-bold text-[var(--color-on-surface)]">{formatCFA(totalAttendu)}</p>
           </div>
 
-          <div className="bg-[var(--color-primary)] p-6 rounded-xl shadow flex flex-col justify-between relative overflow-hidden text-white">
-            <div className="absolute -right-4 -top-4 opacity-10">
+          <div className="bg-[var(--color-primary)] p-6 rounded-xl shadow flex flex-col justify-between relative overflow-hidden text-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div className="absolute -right-4 -top-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
               <span className="material-symbols-outlined text-9xl">savings</span>
             </div>
             <div className="flex items-center gap-3 mb-4 relative z-10">
@@ -113,7 +113,7 @@ export function FinanceDashboard({ schedules, payments, basePath = "/admin/finan
             </div>
           </div>
 
-          <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] flex flex-col justify-between">
+          <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] flex flex-col justify-between hover:shadow-md hover:-translate-y-1 transition-all duration-300">
             <div className="flex items-center gap-3 mb-4 text-[var(--color-on-surface-variant)]">
               <span className="material-symbols-outlined text-[24px]">pending_actions</span>
               <h3 className="font-semibold text-sm uppercase tracking-wide">Reste à recouvrer</h3>
@@ -121,7 +121,7 @@ export function FinanceDashboard({ schedules, payments, basePath = "/admin/finan
             <p className="text-2xl font-bold text-[var(--color-on-surface)]">{formatCFA(resteARecouvrer)}</p>
           </div>
 
-          <div className="bg-[#fff0f0] p-6 rounded-xl border border-[#ffd6d6] flex flex-col justify-between">
+          <div className="bg-[#fff0f0] p-6 rounded-xl border border-[#ffd6d6] flex flex-col justify-between hover:shadow-md hover:-translate-y-1 transition-all duration-300">
             <div className="flex items-center gap-3 mb-4 text-[var(--color-status-retard-text)]">
               <span className="material-symbols-outlined text-[24px]">warning</span>
               <h3 className="font-semibold text-sm uppercase tracking-wide">Impayés / Retards</h3>
@@ -183,17 +183,17 @@ export function FinanceDashboard({ schedules, payments, basePath = "/admin/finan
                 Actions Rapides
               </h3>
               <div className="flex flex-col gap-3">
-                <Link href={`${basePath}/echeances`} className="flex items-center gap-3 p-3 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-colors group">
-                  <div className="h-10 w-10 rounded-full bg-[var(--color-surface-bright)] flex items-center justify-center group-hover:bg-white group-hover:text-[var(--color-primary)] text-[var(--color-on-surface-variant)]">
+                <Link href={`${basePath}/echeances`} className="flex items-center gap-3 p-3 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] hover:shadow-sm hover:-translate-y-0.5 transition-all duration-300 group">
+                  <div className="h-10 w-10 rounded-full bg-[var(--color-surface-bright)] flex items-center justify-center group-hover:bg-white group-hover:text-[var(--color-primary)] text-[var(--color-on-surface-variant)] transition-colors">
                     <span className="material-symbols-outlined">receipt_long</span>
                   </div>
-                  <span className="font-medium text-sm text-[var(--color-on-surface)] group-hover:text-[var(--color-primary)]">Générer des échéances</span>
+                  <span className="font-medium text-sm text-[var(--color-on-surface)] group-hover:text-[var(--color-primary)] transition-colors">Générer des échéances</span>
                 </Link>
-                <Link href={`${basePath}/impayes`} className="flex items-center gap-3 p-3 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-status-retard-text)] hover:bg-[#fff0f0] transition-colors group">
-                  <div className="h-10 w-10 rounded-full bg-[var(--color-surface-bright)] flex items-center justify-center group-hover:bg-white group-hover:text-[var(--color-status-retard-text)] text-[var(--color-on-surface-variant)]">
+                <Link href={`${basePath}/impayes`} className="flex items-center gap-3 p-3 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-status-retard-text)] hover:bg-[#fff0f0] hover:shadow-sm hover:-translate-y-0.5 transition-all duration-300 group">
+                  <div className="h-10 w-10 rounded-full bg-[var(--color-surface-bright)] flex items-center justify-center group-hover:bg-white group-hover:text-[var(--color-status-retard-text)] text-[var(--color-on-surface-variant)] transition-colors">
                     <span className="material-symbols-outlined">notification_important</span>
                   </div>
-                  <span className="font-medium text-sm text-[var(--color-on-surface)] group-hover:text-[var(--color-status-retard-text)]">Relancer les impayés</span>
+                  <span className="font-medium text-sm text-[var(--color-on-surface)] group-hover:text-[var(--color-status-retard-text)] transition-colors">Relancer les impayés</span>
                 </Link>
               </div>
             </div>

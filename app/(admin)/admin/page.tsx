@@ -28,6 +28,7 @@ import {
   ClassDistributionData
 } from '@/components/dashboard/DashboardCharts'
 import { OnboardingWizard } from '@/components/admin/OnboardingWizard'
+import { ShortcutsButton } from '@/components/admin/ShortcutsButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -418,10 +419,7 @@ export default async function AdminDashboard() {
             <BookOpenCheck size={16} className="text-[var(--color-chart-green)] group-hover:scale-110 transition-transform shrink-0" />
             Devoir
           </Link>
-          <Link href="/admin" className="flex items-center justify-center gap-2 bg-[var(--color-sidebar-bg)] hover:bg-[var(--color-sidebar-hover)] hover:shadow-lg hover:-translate-y-0.5 text-white py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-all duration-300 shadow-sm text-center leading-tight group">
-            <LayoutGrid size={16} className="group-hover:scale-110 transition-transform shrink-0" />
-            Raccourcis
-          </Link>
+          <ShortcutsButton />
         </div>
       </div>
 
