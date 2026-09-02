@@ -112,8 +112,8 @@ export function PersonnelManager({ staffList }: Props) {
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Personnel</h2>
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Gérez le personnel administratif et enseignant de votre établissement.</p>
           </div>
-          <button onClick={openAddModal} className="flex items-center justify-center gap-2 bg-[var(--color-primary-container)] text-[var(--color-on-primary)] h-12 px-6 rounded-full text-sm font-semibold hover:bg-[var(--color-primary)] transition-colors active:opacity-90 w-full sm:w-auto shrink-0 shadow-sm">
-            <span className="material-symbols-outlined" data-icon="person_add">person_add</span>
+          <button onClick={openAddModal} className="flex items-center justify-center gap-2 bg-[var(--color-primary-container)] text-[var(--color-on-primary)] h-12 px-6 rounded-full text-sm font-semibold hover:bg-[var(--color-primary)] hover:text-white hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 active:scale-95 w-full sm:w-auto shrink-0 shadow-sm group">
+            <span className="material-symbols-outlined group-hover:rotate-12 transition-transform" data-icon="person_add">person_add</span>
             Inviter un membre
           </button>
         </div>
@@ -189,7 +189,7 @@ export function PersonnelManager({ staffList }: Props) {
                     <td className="py-3 px-6 text-right relative">
                       <button 
                         onClick={() => setOpenActionId(openActionId === staff.id ? null : staff.id)}
-                        className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface-container-high)] rounded-full transition-colors inline-block"
+                        className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface-container-high)] rounded-full transition-all duration-300 hover:rotate-90 inline-block"
                       >
                         <span className="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
                       </button>
@@ -388,14 +388,14 @@ export function PersonnelManager({ staffList }: Props) {
                 <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end gap-3 mt-auto">
                   <button 
                     onClick={() => {setIsModalOpen(false); setGeneratedCode(null);}} 
-                    className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors" 
+                    className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] hover:text-[var(--color-primary)] transition-all duration-300" 
                     type="button"
                     disabled={isPending}
                   >
                     Annuler
                   </button>
                   <button 
-                    className="px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors shadow-sm disabled:opacity-50" 
+                    className="px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all duration-300 shadow-sm disabled:opacity-50" 
                     type="submit"
                     disabled={isPending}
                   >
@@ -484,14 +484,14 @@ export function PersonnelManager({ staffList }: Props) {
               <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end gap-3 mt-auto">
                 <button 
                   onClick={() => { setIsEditModalOpen(false); setStaffToEdit(null); }} 
-                  className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors" 
+                  className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] hover:text-[var(--color-primary)] transition-all duration-300" 
                   type="button"
                   disabled={isPending}
                 >
                   Annuler
                 </button>
                 <button 
-                  className="px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors shadow-sm disabled:opacity-50" 
+                  className="px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all duration-300 shadow-sm disabled:opacity-50" 
                   type="submit"
                   disabled={isPending}
                 >
