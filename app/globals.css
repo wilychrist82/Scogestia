@@ -183,27 +183,27 @@ body {
   z-index: 1;
 }
 
-/* Oscilloscope Wave Animations */
-@keyframes wave-move-1 {
-  0% { transform: translateX(0) scaleX(1); }
-  50% { transform: translateX(-2%) scaleX(1.05); }
-  100% { transform: translateX(0) scaleX(1); }
+/* Seamless Continuous Wave Animations */
+@keyframes wave-continuous-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
-@keyframes wave-move-2 {
-  0% { transform: translateX(-2%) scaleX(1.05); }
-  50% { transform: translateX(0) scaleX(1); }
-  100% { transform: translateX(-2%) scaleX(1.05); }
+@keyframes wave-continuous-right {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
 }
 
-.animate-wave-1 {
-  animation: wave-move-1 12s ease-in-out infinite;
-  transform-origin: center;
+.animate-wave-continuous-left {
+  animation: wave-continuous-left 15s linear infinite;
 }
 
-.animate-wave-2 {
-  animation: wave-move-2 18s ease-in-out infinite;
-  transform-origin: center;
+.animate-wave-continuous-right {
+  animation: wave-continuous-right 18s linear infinite;
+}
+
+.animate-wave-continuous-left-slow {
+  animation: wave-continuous-left 25s linear infinite;
 }
 
 @media print {
