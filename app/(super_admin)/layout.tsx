@@ -14,14 +14,10 @@ export default async function SuperAdminLayout({
     redirect('/connexion')
   }
 
-  // Vérifier si l'utilisateur est un Super Admin
-  const { data: superAdmin } = await supabase
-    .from('super_admins')
-    .select('id')
-    .eq('user_id', user.id)
-    .single()
+  // Vérifier si l'utilisateur est un Super Admin (bypasses RLS issues)
+  const { data: isSuperAdmin } = await supabase.rpc('is_super_admin')
 
-  if (!superAdmin) {
+  if (!isSuperAdmin) {
     redirect('/connexion?error=unauthorized_super_admin')
   }
 

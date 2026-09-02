@@ -13,13 +13,9 @@ async function verifySuperAdmin(supabase: any) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Non authentifié');
 
-  const { data: superAdmin, error } = await supabase
-    .from('super_admins')
-    .select('id')
-    .eq('user_id', user.id)
-    .single();
+  const { data: isSuperAdmin, error } = await supabase.rpc('is_super_admin')
 
-  if (error || !superAdmin) {
+  if (error || !isSuperAdmin) {
     throw new Error('Accès refusé. Vous n\'êtes pas un Super Administrateur du SaaS.');
   }
   

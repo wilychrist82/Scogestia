@@ -45,14 +45,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Check if user is a super admin
-  const { data: superAdmins } = await supabase
-    .from('super_admins')
-    .select('id')
-    .eq('user_id', user.id)
-    .limit(1)
-
-  const isSuperAdmin = superAdmins && superAdmins.length > 0
+  // Check if user is a super admin using the secure RPC function (bypasses RLS issues)
+  const { data: isSuperAdmin } = await supabase.rpc('is_super_admin')
 
   // If user is authenticated, find their role
   const { data: roles } = await supabase
