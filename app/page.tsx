@@ -453,14 +453,14 @@ export default function Home() {
             </motion.div>
 
             <motion.div 
-              className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-0 max-w-6xl mx-auto items-center"
+              className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
               variants={staggerContainer}
             >
                {/* Plan Gratuit (Left) */}
-               <motion.div variants={fadeIn} className="bg-white rounded-3xl lg:rounded-r-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 p-10 flex flex-col relative overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all z-10 lg:z-10">
+               <motion.div variants={fadeIn} className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 p-10 flex flex-col relative overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all z-10">
                   <div className="mb-8">
                      <h3 className="text-2xl font-bold text-slate-900 mb-2">Essai Gratuit</h3>
                      <p className="text-slate-500">Pour découvrir la plateforme</p>
@@ -481,7 +481,7 @@ export default function Home() {
                </motion.div>
 
                {/* Plan Standard (Center - Highlighted) */}
-               <motion.div variants={fadeIn} className="bg-slate-900 rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.2)] border border-slate-700 p-10 flex flex-col relative overflow-hidden transform lg:scale-105 z-20">
+               <motion.div variants={fadeIn} className="bg-slate-900 rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.2)] border border-slate-700 p-10 flex flex-col relative overflow-hidden z-20">
                   <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-emerald-400 to-emerald-600"></div>
                   <div className="absolute top-6 right-6">
                     <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider backdrop-blur-md">Populaire</span>
@@ -512,9 +512,9 @@ export default function Home() {
                </motion.div>
 
                {/* Plan Pro (Right) */}
-               <motion.div variants={fadeIn} className="bg-[#006039] rounded-3xl lg:rounded-l-none shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-[#004d2e] p-10 flex flex-col relative overflow-hidden transition-all z-10 lg:z-10">
+               <motion.div variants={fadeIn} className="bg-[#006039] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-[#004d2e] p-10 flex flex-col relative overflow-hidden transition-all z-10">
                   <div className="absolute top-6 right-6">
-                    <span className="bg-emerald-100 text-[#006039] border border-emerald-200 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider shadow-sm">Recommandé</span>
+                    <span className="bg-amber-400 text-amber-950 border border-amber-300 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider shadow-sm">Recommandé</span>
                   </div>
                   <div className="mb-8 mt-2 relative z-10">
                      <h3 className="text-2xl font-bold text-white mb-2">Plan Pro</h3>
