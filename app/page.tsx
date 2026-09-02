@@ -38,12 +38,30 @@ export default function Home() {
           
           {/* Menu Principal */}
           <nav className="hidden lg:flex items-center gap-8">
-            <Link href="#accueil" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">Accueil</Link>
-            <Link href="#fonctionnalites" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">Fonctionnalités</Link>
-            <Link href="#comment-ca-marche" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">Comment ça marche</Link>
-            <Link href="#tarifs" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">Tarifs</Link>
-            <Link href="#temoignages" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">Témoignages</Link>
-            <Link href="#contact" className="text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors">Contact</Link>
+            <Link href="#accueil" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+              Accueil
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+            </Link>
+            <Link href="#fonctionnalites" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+              Fonctionnalités
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+            </Link>
+            <Link href="#comment-ca-marche" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+              Comment ça marche
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+            </Link>
+            <Link href="#tarifs" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+              Tarifs
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+            </Link>
+            <Link href="#temoignages" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+              Témoignages
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+            </Link>
+            <Link href="#contact" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+              Contact
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+            </Link>
           </nav>
 
           <div className="flex items-center gap-3 sm:gap-4">
@@ -626,11 +644,7 @@ export default function Home() {
         </section>
 
         {/* Call to Action Pre-Footer */}
-        <section className="py-20 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[#006039]"></div>
-          {/* Decorative background */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500 rounded-full blur-3xl opacity-30 -translate-y-1/2 translate-x-1/3"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-800 rounded-full blur-3xl opacity-50 translate-y-1/3 -translate-x-1/3"></div>
+        <section className="py-20 relative overflow-hidden bg-floating-waves">
           
           <div className="container mx-auto px-4 relative z-10 text-center">
             <motion.div
@@ -639,8 +653,10 @@ export default function Home() {
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Prêt à simplifier la gestion de votre école ?</h2>
-              <p className="text-emerald-100 text-lg md:text-xl mb-10 max-w-2xl mx-auto">Rejoignez les dizaines d'établissements qui utilisent déjà Scogestia pour gagner du temps et rassurer les parents.</p>
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 font-sans">
+                Prêt à <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-emerald-300">simplifier</span> la gestion ?
+              </h2>
+              <p className="text-emerald-100/80 text-lg md:text-xl mb-10 max-w-2xl mx-auto">Rejoignez les dizaines d'établissements qui utilisent déjà Scogestia pour gagner du temps et rassurer les parents.</p>
               
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link 
@@ -658,8 +674,25 @@ export default function Home() {
       </main>
 
       {/* Footer & Contact (#contact) */}
-      <footer id="contact" className="bg-slate-900 text-slate-300 pt-20 pb-10">
-        <div className="container mx-auto px-4">
+      <footer id="contact" className="bg-floating-waves text-slate-300 pt-10 pb-10 relative overflow-hidden">
+        
+        {/* Vague Oscillographe en haut du footer (Renversée pour faire la transition) */}
+        <div className="absolute top-0 left-0 w-full overflow-hidden leading-none z-10 rotate-180">
+          <svg className="relative block w-full h-[60px] md:h-[100px]" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" className="fill-emerald-500/20"></path>
+            <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" className="fill-violet-600/30"></path>
+            <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" className="fill-white"></path>
+          </svg>
+        </div>
+
+        {/* Filigrane Géant SCOGESTIA (iziSAAS style) */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full flex justify-center pointer-events-none select-none z-0">
+          <h2 className="text-[12vw] sm:text-[180px] font-black leading-none text-white/[0.03] tracking-tighter mix-blend-overlay">
+            SCOGESTIA
+          </h2>
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10 pt-16">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
             
             {/* Colonne 1: A propos */}
