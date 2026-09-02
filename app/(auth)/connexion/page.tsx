@@ -45,7 +45,7 @@ export default function LoginPage() {
           </p>
 
           <div className="w-full relative flex justify-center mt-4 group cursor-default">
-             <img src="/image_landing_page1.png" alt="Scogestia Interface" className="w-full sm:w-[110%] h-auto object-contain transform transition-transform duration-1000 ease-out group-hover:scale-105 group-hover:-translate-y-2 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" />
+             <img src="/image_landing_page1.png" alt="Scogestia Interface" className="w-full sm:w-[110%] h-auto object-contain rounded-b-2xl transform transition-transform duration-1000 ease-out group-hover:scale-105 group-hover:-translate-y-2 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" />
           </div>
         </div>
       </div>
