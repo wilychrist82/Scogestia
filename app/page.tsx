@@ -433,101 +433,109 @@ export default function Home() {
         </section>
 
         {/* Section Tarifs (#tarifs) */}
-        <section id="tarifs" className="py-24 bg-slate-50">
-           <div className="container mx-auto px-4 max-w-5xl">
+        <section id="tarifs" className="py-24 bg-slate-50 relative overflow-hidden">
+          {/* Subtle background blur */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-100/40 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+
+          <div className="container mx-auto px-4 max-w-6xl relative z-10">
             <motion.div 
-              className="text-center mb-16"
+              className="text-center mb-20"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <span className="text-[#006039] font-semibold tracking-wider uppercase text-sm mb-2 block">Tarification</span>
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Des tarifs simples, sans surprise</h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Commencez gratuitement, puis choisissez le plan qui correspond à la taille de votre établissement.</p>
+              <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-semibold text-sm tracking-wide uppercase shadow-sm">
+                Tarification
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">Des tarifs simples, <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-400">sans surprise</span></h2>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">Commencez gratuitement, puis choisissez le plan qui correspond parfaitement à la taille de votre établissement.</p>
             </motion.div>
 
             <motion.div 
-              className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto"
+              className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-0 max-w-6xl mx-auto items-center"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
               variants={staggerContainer}
             >
-               {/* Plan Gratuit */}
-               <motion.div variants={fadeIn} className="bg-white rounded-3xl shadow-md border border-slate-200 p-8 flex flex-col relative overflow-hidden hover:shadow-xl transition-shadow">
+               {/* Plan Gratuit (Left) */}
+               <motion.div variants={fadeIn} className="bg-white rounded-3xl lg:rounded-r-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 p-10 flex flex-col relative overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all z-10 lg:z-10">
                   <div className="mb-8">
                      <h3 className="text-2xl font-bold text-slate-900 mb-2">Essai Gratuit</h3>
                      <p className="text-slate-500">Pour découvrir la plateforme</p>
                   </div>
-                  <div className="mb-8">
-                     <span className="text-4xl font-extrabold text-slate-900">0 FCFA</span>
-                     <span className="text-slate-500 font-medium"> / 14 jours</span>
+                  <div className="mb-8 flex items-baseline gap-2">
+                     <span className="text-5xl font-extrabold text-slate-900 tracking-tight">0</span>
+                     <span className="text-xl font-bold text-slate-900">FCFA</span>
+                     <span className="text-slate-500 font-medium">/ 14 jrs</span>
                   </div>
-                  <ul className="space-y-4 mb-10 flex-1">
-                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Accès complet aux fonctionnalités de base</span></li>
-                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Jusqu'à 50 élèves</span></li>
-                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Support par email</span></li>
+                  <ul className="space-y-5 mb-10 flex-1">
+                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Accès complet aux modules de base</span></li>
+                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Jusqu'à 50 élèves gérés</span></li>
+                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Support par email (48h)</span></li>
                   </ul>
-                  <Link href="/inscription-ecole" className="w-full py-4 rounded-xl border-2 border-slate-200 font-bold text-slate-700 hover:border-[#006039] hover:text-[#006039] hover:bg-emerald-50 transition-colors text-center block">
+                  <Link href="/inscription-ecole" className="w-full py-4 rounded-2xl border-2 border-slate-200 font-bold text-slate-700 hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-all text-center block mt-auto">
                      Commencer l'essai
                   </Link>
                </motion.div>
 
-               {/* Plan Standard */}
-               <motion.div variants={fadeIn} className="bg-slate-900 rounded-3xl shadow-2xl border border-slate-700 p-8 flex flex-col relative overflow-hidden">
-                  <div className="absolute top-0 right-0 bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Populaire</div>
-                  <div className="mb-8 relative z-10">
+               {/* Plan Standard (Center - Highlighted) */}
+               <motion.div variants={fadeIn} className="bg-slate-900 rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.2)] border border-slate-700 p-10 flex flex-col relative overflow-hidden transform lg:scale-105 z-20">
+                  <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-emerald-400 to-emerald-600"></div>
+                  <div className="absolute top-6 right-6">
+                    <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider backdrop-blur-md">Populaire</span>
+                  </div>
+                  
+                  <div className="mb-8 relative z-10 mt-2">
                      <h3 className="text-2xl font-bold text-white mb-2">Plan Standard</h3>
-                     <p className="text-slate-400">Pour les petites écoles</p>
+                     <p className="text-slate-400">L'idéal pour les petites écoles</p>
                   </div>
-                  <div className="mb-8 relative z-10 whitespace-nowrap">
-                     <span className="text-4xl font-extrabold text-white">7 000 FCFA</span>
-                     <span className="text-slate-500 font-medium"> / mois</span>
+                  <div className="mb-8 relative z-10 flex items-baseline gap-2">
+                     <span className="text-5xl font-extrabold text-white tracking-tight">7 000</span>
+                     <span className="text-xl font-bold text-white">FCFA</span>
+                     <span className="text-slate-400 font-medium">/ mois</span>
                   </div>
-                  <ul className="space-y-4 mb-10 flex-1 relative z-10 text-sm md:text-base">
+                  <ul className="space-y-5 mb-10 flex-1 relative z-10">
                      <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Jusqu'à 500 élèves</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Gestion des inscriptions et classes</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Suivi de la comptabilité et paiements</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Génération des reçus automatisée</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Saisie des notes et bulletins scolaires</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Portail Parents (Notes & Absences)</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Support client par chat / email</span></li>
+                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Inscriptions et classes illimitées</span></li>
+                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Suivi financier et paiements</span></li>
+                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Reçus et bulletins automatisés</span></li>
+                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Portail Parents interactif</span></li>
+                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Support prioritaire (Chat/Email)</span></li>
                   </ul>
-                  <Link href="/inscription-ecole" className="w-full py-4 rounded-xl bg-emerald-600 font-bold text-white hover:bg-emerald-500 transition-colors text-center relative z-10 shadow-md block mt-auto">
-                     S'abonner
+                  <Link href="/inscription-ecole" className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 font-bold text-white hover:from-emerald-400 hover:to-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transition-all text-center relative z-10 mt-auto transform hover:-translate-y-1">
+                     S'abonner maintenant
                   </Link>
-                  {/* Background decoration */}
-                  <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-emerald-900 rounded-full blur-3xl opacity-30"></div>
+                  {/* Subtle Background glow inside card */}
+                  <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none"></div>
                </motion.div>
 
-               {/* Plan Pro */}
-               <motion.div variants={fadeIn} className="bg-[#006039] rounded-3xl shadow-2xl p-8 flex flex-col relative overflow-hidden">
-                  <div className="absolute top-0 right-0 bg-emerald-100 text-[#006039] text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Recommandé</div>
-                  <div className="mb-8 relative z-10">
-                     <h3 className="text-2xl font-bold text-white mb-2">Plan Pro</h3>
-                     <p className="text-emerald-100/80 whitespace-nowrap">Pour les grands établissements</p>
+               {/* Plan Pro (Right) */}
+               <motion.div variants={fadeIn} className="bg-white rounded-3xl lg:rounded-l-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 p-10 flex flex-col relative overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all z-10 lg:z-10">
+                  <div className="absolute top-6 right-6">
+                    <span className="bg-slate-100 text-slate-600 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider">Pro</span>
                   </div>
-                  <div className="mb-8 relative z-10 whitespace-nowrap">
-                     <span className="text-4xl font-extrabold text-white">9 900 FCFA</span>
-                     <span className="text-emerald-200 font-medium"> / mois</span>
+                  <div className="mb-8 mt-2">
+                     <h3 className="text-2xl font-bold text-slate-900 mb-2">Plan Pro</h3>
+                     <p className="text-slate-500">Pour les grands établissements</p>
                   </div>
-                  <ul className="space-y-4 mb-10 flex-1 relative z-10 text-sm md:text-base">
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Élèves et classes illimités</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Toutes les fonctionnalités Standard</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Gestion multi-campus / multi-sites</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Gestion des Ressources Humaines (Paie)</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Envoi de SMS et Emails aux parents</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Tableaux de bord et analytics poussés</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Accompagnement et formation de l'équipe</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Support prioritaire 24/7 (WhatsApp/Appel)</span></li>
+                  <div className="mb-8 flex items-baseline gap-2">
+                     <span className="text-5xl font-extrabold text-slate-900 tracking-tight">9 900</span>
+                     <span className="text-xl font-bold text-slate-900">FCFA</span>
+                     <span className="text-slate-500 font-medium">/ mois</span>
+                  </div>
+                  <ul className="space-y-5 mb-10 flex-1">
+                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-slate-900" /> <span className="font-medium text-slate-900">Élèves illimités</span></li>
+                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Toutes les fonctions Standard</span></li>
+                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Gestion multi-campus</span></li>
+                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Ressources Humaines (Paie)</span></li>
+                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Envoi de SMS aux parents</span></li>
+                     <li className="flex items-start gap-3 text-slate-600"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" /> <span>Support VIP 24/7 (Appel/WhatsApp)</span></li>
                   </ul>
-                  <Link href="/inscription-ecole" className="w-full py-4 rounded-xl bg-white font-bold text-[#006039] hover:bg-slate-50 transition-colors text-center relative z-10 shadow-lg block mt-auto">
-                     S'abonner
+                  <Link href="/inscription-ecole" className="w-full py-4 rounded-2xl bg-slate-900 font-bold text-white hover:bg-slate-800 transition-all text-center block mt-auto">
+                     Passer à Pro
                   </Link>
-                  {/* Background decoration */}
-                  <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-emerald-600 rounded-full blur-3xl opacity-50"></div>
-                  <div className="absolute -top-20 -left-20 w-40 h-40 bg-emerald-500 rounded-full blur-3xl opacity-40"></div>
                </motion.div>
             </motion.div>
            </div>
