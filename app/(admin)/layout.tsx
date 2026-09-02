@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { AlertTriangle } from 'lucide-react'
+import { UnauthorizedAccess } from '@/components/shared/UnauthorizedAccess'
 
 export default async function AdminLayout({
   children,
@@ -28,9 +29,14 @@ export default async function AdminLayout({
       )
     `)
     .eq('user_id', user.id)
+    .in('role', ['admin', 'comptable'])
     .limit(1).maybeSingle()
 
-  const school = roleData?.schools as any
+  if (!roleData) {
+    return <UnauthorizedAccess role="admin" />
+  }
+
+  const school = roleData.schools as any
   const schoolName = school?.name || 'École inconnue'
   const schoolCity = school?.city || ''
 

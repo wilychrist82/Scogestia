@@ -98,11 +98,6 @@ export async function middleware(request: NextRequest) {
   if (attemptingToAccess) {
     if (isSuperAdmin) {
       // Super admins can access everything, no restriction
-    } else if (attemptingToAccess !== routePrefix) {
-      // User is trying to access another role's route
-      const url = request.nextUrl.clone()
-      url.pathname = routePrefix
-      return NextResponse.redirect(url)
     }
 
     // Check school suspension status for non-super admins

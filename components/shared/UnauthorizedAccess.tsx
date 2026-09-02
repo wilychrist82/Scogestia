@@ -2,12 +2,12 @@ import Link from 'next/link'
 import { Lock } from 'lucide-react'
 
 type Props = {
-  role: 'parent' | 'enseignant'
+  role: 'parent' | 'enseignant' | 'admin'
 }
 
 export function UnauthorizedAccess({ role }: Props) {
-  const roleName = role === 'parent' ? 'parents d\'élèves' : 'enseignants'
-  const title = role === 'parent' ? 'Espace Parent' : 'Espace Enseignant'
+  const roleName = role === 'parent' ? 'parents d\'élèves' : role === 'enseignant' ? 'enseignants' : 'administrateurs'
+  const title = role === 'parent' ? 'Espace Parent' : role === 'enseignant' ? 'Espace Enseignant' : 'Administration'
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center p-4">
