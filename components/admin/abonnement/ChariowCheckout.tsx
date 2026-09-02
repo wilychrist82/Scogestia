@@ -106,17 +106,17 @@ export function ChariowCheckout({ plan, onClose }: Props) {
               <select 
                 value={country} 
                 onChange={(e) => setCountry(e.target.value)}
-                className="w-24 h-12 px-3 border border-[var(--color-outline-variant)] rounded-lg bg-[var(--color-surface)] text-[var(--color-on-surface)] focus:border-[var(--color-primary)] outline-none"
+                className="w-32 h-12 px-2 border border-[var(--color-outline-variant)] rounded-lg bg-[var(--color-surface)] text-[var(--color-on-surface)] focus:border-[var(--color-primary)] outline-none font-medium"
               >
-                {/* Liste des pays principaux pris en charge */}
-                <option value="TG">🇹🇬 TG</option>
-                <option value="CI">🇨🇮 CI</option>
-                <option value="SN">🇸🇳 SN</option>
-                <option value="BJ">🇧🇯 BJ</option>
-                <option value="ML">🇲🇱 ML</option>
-                <option value="BF">🇧🇫 BF</option>
-                <option value="CM">🇨🇲 CM</option>
-                <option value="FR">🇫🇷 FR</option>
+                {/* Liste des pays principaux pris en charge avec drapeaux et indicatifs */}
+                <option value="TG">🇹🇬 +228</option>
+                <option value="CI">🇨🇮 +225</option>
+                <option value="SN">🇸🇳 +221</option>
+                <option value="BJ">🇧🇯 +229</option>
+                <option value="ML">🇲🇱 +223</option>
+                <option value="BF">🇧🇫 +226</option>
+                <option value="CM">🇨🇲 +237</option>
+                <option value="FR">🇫🇷 +33</option>
               </select>
               <input 
                 type="tel" 
@@ -135,7 +135,7 @@ export function ChariowCheckout({ plan, onClose }: Props) {
           <button 
             type="submit" 
             disabled={isLoading}
-            className="w-full h-12 flex items-center justify-center gap-2 bg-[var(--color-primary)] text-white rounded-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="w-full h-12 flex items-center justify-center gap-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
           >
             {isLoading ? (
               <>
