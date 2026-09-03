@@ -217,7 +217,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
       <div className="px-4 mt-auto pt-4 pb-6 space-y-1 relative z-10 shrink-0 border-t border-white/5 bg-[var(--color-sidebar-bg)]">
         <button 
           onClick={() => setIsSupportModalOpen(true)}
-          className="w-full flex items-center justify-start gap-3 px-4 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors font-medium text-sm"
+          className="w-full flex items-center justify-start gap-3 px-4 py-2.5 rounded-lg text-blue-400/90 hover:text-blue-400 hover:bg-blue-500/10 transition-colors font-medium text-sm border border-transparent hover:border-blue-500/20"
         >
           <Headset size={20} />
           Centre d'aide

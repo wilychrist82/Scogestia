@@ -60,7 +60,7 @@ export function ContactSupportModal({ isOpen, onClose }: ContactSupportModalProp
             className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl z-[101] overflow-hidden"
           >
             {/* Header */}
-            <div className="bg-[var(--color-sidebar-bg)] p-6 text-white relative">
+            <div className="bg-[var(--color-primary)] p-6 text-white relative">
               <button 
                 onClick={onClose}
                 className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
@@ -98,7 +98,7 @@ export function ContactSupportModal({ isOpen, onClose }: ContactSupportModalProp
                       type="email"
                       required
                       placeholder="ex: vous@ecole.com"
-                      className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[var(--color-sidebar-bg)] focus:border-transparent outline-none transition-all"
+                      className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none transition-all"
                     />
                   </div>
                   <div>
@@ -107,7 +107,7 @@ export function ContactSupportModal({ isOpen, onClose }: ContactSupportModalProp
                       id="subject" 
                       name="subject"
                       required
-                      className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[var(--color-sidebar-bg)] focus:border-transparent outline-none transition-all"
+                      className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none transition-all"
                     >
                       <option value="">Sélectionnez un sujet...</option>
                       <option value="bug">Signaler un bug</option>
@@ -124,13 +124,13 @@ export function ContactSupportModal({ isOpen, onClose }: ContactSupportModalProp
                       rows={4} 
                       required
                       placeholder="Décrivez votre problème en détail..."
-                      className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[var(--color-sidebar-bg)] focus:border-transparent outline-none transition-all resize-none"
+                      className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none transition-all resize-none"
                     />
                   </div>
                   <button 
                     type="submit" 
                     disabled={isSubmitting}
-                    className="w-full bg-[var(--color-sidebar-bg)] text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-[var(--color-sidebar-hover)] transition-colors disabled:opacity-70"
+                    className="w-full bg-[var(--color-primary)] text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-[#044d38] transition-colors disabled:opacity-70"
                   >
                     {isSubmitting ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
