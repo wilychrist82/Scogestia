@@ -37,7 +37,7 @@ export async function loginStaff(prevState: AuthState, formData: FormData): Prom
   const { data, error } = await supabase.auth.signInWithPassword(credentials);
 
   if (error || !data.session) {
-    return { error: 'Identifiants invalides.' };
+    return { error: 'Identifiants invalides. Si vous vous êtes inscrit avec Google, utilisez le bouton Google.' };
   }
 
   // Utiliser le token de la session utilisateur pour vérifier son rôle
@@ -194,9 +194,12 @@ export async function requestPasswordReset(prevState: AuthState, formData: FormD
     return { error: 'Veuillez renseigner votre adresse email.' };
   }
 
+  const headerList = await headers();
+  const origin = headerList.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback?next=/nouveau-mot-de-passe`,
+    redirectTo: `${origin}/api/auth/callback?next=/nouveau-mot-de-passe`,
   });
 
   if (error) {
