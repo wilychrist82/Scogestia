@@ -34,7 +34,15 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Allow auth routes and public landing page to be accessed by non-authenticated users
-  if (!user && (pathname === '/' || pathname.startsWith('/connexion') || pathname.startsWith('/inscription-ecole') || pathname.startsWith('/activer-parent'))) {
+  const isAuthRoute = pathname === '/' || 
+                      pathname.startsWith('/connexion') || 
+                      pathname.startsWith('/inscription-ecole') || 
+                      pathname.startsWith('/activer-parent') ||
+                      pathname.startsWith('/mot-de-passe-oublie') ||
+                      pathname.startsWith('/nouveau-mot-de-passe') ||
+                      pathname.startsWith('/api/auth');
+
+  if (!user && isAuthRoute) {
     return supabaseResponse
   }
 
@@ -79,7 +87,14 @@ export async function middleware(request: NextRequest) {
   const routePrefix = `/${userRole}` // e.g. /admin, /enseignant, /comptable, /parent
   
   // If user is going to the root or an auth page, redirect them to their dashboard
-  if (pathname === '/' || pathname.startsWith('/connexion') || pathname.startsWith('/inscription-ecole') || pathname.startsWith('/activer-parent')) {
+  const isAuthRouteForRedirect = pathname === '/' || 
+                                 pathname.startsWith('/connexion') || 
+                                 pathname.startsWith('/inscription-ecole') || 
+                                 pathname.startsWith('/activer-parent') ||
+                                 pathname.startsWith('/mot-de-passe-oublie') ||
+                                 pathname.startsWith('/nouveau-mot-de-passe');
+
+  if (isAuthRouteForRedirect) {
     const url = request.nextUrl.clone()
     url.pathname = routePrefix
     return NextResponse.redirect(url)
