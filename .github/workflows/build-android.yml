@@ -34,7 +34,7 @@ jobs:
 
 
       - name: Install Node Dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Build Android App (Gradle)
         working-directory: ./android
