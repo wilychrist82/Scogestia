@@ -150,30 +150,30 @@ export default async function ParentDashboardPage() {
             </div>
 
             {/* Quick Actions Grid */}
-            <div className="grid grid-cols-4 gap-3 mb-5">
-              <Link href={`/parent/notes?child=${child.id}`} className="flex flex-col items-center justify-center gap-2">
-                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center active:scale-95 transition-transform shadow-sm">
+            <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-5">
+              <Link href={`/parent/notes?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group">
+                <div className="w-[52px] h-[52px] bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-blue-100 group-hover:shadow-blue-200 group-hover:bg-blue-100">
                   <span className="material-symbols-outlined">grading</span>
                 </div>
                 <span className="text-[10px] font-bold text-gray-600">Notes</span>
               </Link>
               
-              <Link href={`/parent/presences?child=${child.id}`} className="flex flex-col items-center justify-center gap-2">
-                <div className="w-12 h-12 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center active:scale-95 transition-transform shadow-sm">
+              <Link href={`/parent/presences?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group">
+                <div className="w-[52px] h-[52px] bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-orange-100 group-hover:shadow-orange-200 group-hover:bg-orange-100">
                   <span className="material-symbols-outlined">fact_check</span>
                 </div>
                 <span className="text-[10px] font-bold text-gray-600">Absences</span>
               </Link>
               
-              <Link href={`/parent/devoirs?child=${child.id}`} className="flex flex-col items-center justify-center gap-2">
-                <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center active:scale-95 transition-transform shadow-sm">
+              <Link href={`/parent/devoirs?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group">
+                <div className="w-[52px] h-[52px] bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-purple-100 group-hover:shadow-purple-200 group-hover:bg-purple-100">
                   <span className="material-symbols-outlined">assignment</span>
                 </div>
                 <span className="text-[10px] font-bold text-gray-600">Devoirs</span>
               </Link>
               
-              <Link href={`/parent/bulletins?child=${child.id}`} className="flex flex-col items-center justify-center gap-2">
-                <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center active:scale-95 transition-transform shadow-sm">
+              <Link href={`/parent/bulletins?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group">
+                <div className="w-[52px] h-[52px] bg-green-50 text-green-600 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-green-100 group-hover:shadow-green-200 group-hover:bg-green-100">
                   <span className="material-symbols-outlined">workspace_premium</span>
                 </div>
                 <span className="text-[10px] font-bold text-gray-600">Bulletins</span>
@@ -187,9 +187,9 @@ export default async function ParentDashboardPage() {
 
         {/* Global Finance Card */}
         <div className="mt-4 pb-4">
-          <Link href={`/parent/paiements${children && children.length > 0 ? `?child=${(children[0] as any).id}` : ''}`} className="block relative overflow-hidden bg-[#1e293b] rounded-3xl p-6 shadow-xl text-white active:scale-95 transition-transform">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full -z-0"></div>
-            <div className="absolute bottom-[-20px] right-4 text-white/5 -z-0">
+          <Link href={`/parent/paiements${children && children.length > 0 ? `?child=${(children[0] as any).id}` : ''}`} className="block relative overflow-hidden bg-gradient-to-br from-[#1e293b] to-[#0f172a] rounded-[2rem] p-6 shadow-2xl text-white active:scale-95 transition-transform border border-slate-700/50 group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-bl-full -z-0 group-hover:scale-110 transition-transform"></div>
+            <div className="absolute bottom-[-20px] right-4 text-emerald-400/5 -z-0 group-hover:rotate-12 transition-transform">
               <span className="material-symbols-outlined" style={{ fontSize: '120px' }}>account_balance_wallet</span>
             </div>
             

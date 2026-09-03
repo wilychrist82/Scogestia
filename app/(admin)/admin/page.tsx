@@ -173,7 +173,12 @@ export default async function AdminDashboard() {
             </div>
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-900 leading-none">{studentCount || 0}</p>
+            <div className="flex items-end gap-2 mt-1">
+              <p className="text-2xl font-bold text-gray-900 leading-none">{studentCount || 0}</p>
+              <span className="flex items-center text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full mb-0.5">
+                <TrendingUp size={10} className="mr-0.5" /> +5%
+              </span>
+            </div>
           </div>
         </div>
 
@@ -187,7 +192,12 @@ export default async function AdminDashboard() {
             </div>
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-900 leading-none">{classesCount || 0}</p>
+            <div className="flex items-end gap-2 mt-1">
+              <p className="text-2xl font-bold text-gray-900 leading-none">{classesCount || 0}</p>
+              <span className="flex items-center text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full mb-0.5">
+                Nouveau
+              </span>
+            </div>
           </div>
         </div>
 
@@ -201,7 +211,9 @@ export default async function AdminDashboard() {
             </div>
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-900 leading-none">{staffCount || 0}</p>
+            <div className="flex items-end gap-2 mt-1">
+              <p className="text-2xl font-bold text-gray-900 leading-none">{staffCount || 0}</p>
+            </div>
           </div>
         </div>
 
@@ -215,7 +227,12 @@ export default async function AdminDashboard() {
             </div>
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-900 leading-none">{recouvRate}%</p>
+            <div className="flex items-end gap-2 mt-1">
+              <p className="text-2xl font-bold text-gray-900 leading-none">{recouvRate}%</p>
+              <span className="flex items-center text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full mb-0.5">
+                <TrendingUp size={10} className="mr-0.5" /> +2%
+              </span>
+            </div>
           </div>
         </div>
 
@@ -229,7 +246,12 @@ export default async function AdminDashboard() {
             </div>
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-900 leading-none">{aCount}</p>
+            <div className="flex items-end gap-2 mt-1">
+              <p className="text-2xl font-bold text-gray-900 leading-none">{aCount}</p>
+              <span className="flex items-center text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full mb-0.5">
+                -3 vs hier
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -378,7 +400,15 @@ export default async function AdminDashboard() {
               // we can render mock activities if we didn't fetch them to save time, 
               // but we fetched 'payments' earlier! Let's sort and take 4.
               const recent = payments?.slice(-4).reverse() || []
-              if (recent.length === 0) return <p className="text-gray-400 text-sm">Aucun paiement récent.</p>
+              if (recent.length === 0) return (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3 border border-gray-100">
+                     <Wallet className="w-5 h-5 text-gray-400" />
+                  </div>
+                  <p className="font-medium text-gray-900 text-sm">Aucune activité</p>
+                  <p className="text-xs text-gray-500 mt-1 max-w-[200px]">Les récents paiements apparaîtront ici.</p>
+                </div>
+              )
               return recent.map((p, i) => (
                 <div key={i} className="flex gap-3 items-center">
                   <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-[var(--color-chart-green)] shrink-0">

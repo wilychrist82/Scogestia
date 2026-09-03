@@ -4,6 +4,7 @@ import { useTransition, useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { createStudent } from '@/app/actions/students'
 import Link from 'next/link'
+import toast from 'react-hot-toast'
 
 type Props = {
   classes: { id: string, name: string, level?: string }[]
@@ -37,6 +38,9 @@ export function StudentForm({ classes }: Props) {
       const result = await createStudent(null, formData)
       if (result?.error) {
         setError(result.error)
+        toast.error(result.error)
+      } else {
+        toast.success("Élève inscrit avec succès !")
       }
       // If success, the action redirects automatically
     })
