@@ -68,7 +68,7 @@ export default async function EnseignantDashboardPage() {
              <img 
                src="/image_landing_page1.png" 
                alt="Espace Enseignant" 
-               className="h-[120%] md:h-[135%] w-auto object-contain object-right-bottom drop-shadow-2xl translate-y-4 md:translate-y-6"
+               className="h-[90%] md:h-[95%] w-auto object-contain object-right-bottom drop-shadow-2xl"
              />
           </div>
           

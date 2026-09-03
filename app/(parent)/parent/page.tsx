@@ -81,7 +81,7 @@ export default async function ParentDashboardPage() {
            <img 
              src="/image_landing_page1.png" 
              alt="Espace Parent" 
-             className="h-[120%] sm:h-[130%] w-auto object-contain object-right-bottom drop-shadow-2xl translate-y-4 sm:translate-y-6"
+             className="h-[90%] sm:h-[95%] w-auto object-contain object-right-bottom drop-shadow-2xl"
            />
         </div>
         
