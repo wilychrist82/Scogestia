@@ -73,7 +73,7 @@ export function OnboardingWizard({ classesCount, staffCount, studentCount }: Onb
 
         <button 
           onClick={() => setIsVisible(false)}
-          className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white backdrop-blur-sm transition-all z-20"
+          className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white  transition-all z-20"
           title="Masquer l'assistant"
         >
           <X className="w-4 h-4" />
@@ -101,7 +101,7 @@ export function OnboardingWizard({ classesCount, staffCount, studentCount }: Onb
                 <span className="text-slate-300">Progression globale</span>
                 <span className="text-xl font-bold text-white">{progress}%</span>
               </div>
-              <div className="w-full bg-white/5 border border-white/5 rounded-full h-3 overflow-hidden backdrop-blur-sm relative p-0.5">
+              <div className="w-full bg-white/5 border border-white/5 rounded-full h-3 overflow-hidden  relative p-0.5">
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}

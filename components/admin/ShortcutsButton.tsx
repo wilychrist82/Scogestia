@@ -77,7 +77,7 @@ export function ShortcutsButton() {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] bg-[#0b1c30]/40 backdrop-blur-sm transition-opacity p-4">
+        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] bg-[#0b1c30]/40  transition-opacity p-4">
           <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-2xl rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-[var(--color-outline-variant)] flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
             {/* Search Input */}
             <div className="flex items-center px-4 py-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">

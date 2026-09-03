@@ -107,7 +107,7 @@ export function FinanceDashboard({ schedules, payments, basePath = "/admin/finan
             </div>
             <div className="relative z-10 flex items-end justify-between">
               <p className="text-3xl font-bold">{formatCFA(totalEncaisse)}</p>
-              <div className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold backdrop-blur-sm">
+              <div className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold ">
                 {tauxRecouvrement}%
               </div>
             </div>

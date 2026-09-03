@@ -84,7 +84,7 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0b1c30]/40 backdrop-blur-sm transition-opacity">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0b1c30]/40  transition-opacity">
       <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-2xl max-h-[90vh] rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[var(--color-outline-variant)] flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
         <div className="px-6 py-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
           <div>
