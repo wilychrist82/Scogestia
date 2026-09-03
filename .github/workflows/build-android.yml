@@ -36,6 +36,9 @@ jobs:
       - name: Install Node Dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
       - name: Build Android App (Gradle)
         working-directory: ./android
         run: |
