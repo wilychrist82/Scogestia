@@ -64,11 +64,11 @@ export default async function EnseignantDashboardPage() {
              <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[140%] bg-violet-600/30 blur-[100px] rounded-full"></div>
           </div>
 
-          <div className="absolute right-0 bottom-0 h-full w-[85%] sm:w-[70%] md:w-[60%] z-10 flex items-end justify-end transition-transform duration-700 hover:scale-[1.02]">
+          <div className="absolute inset-0 z-10 flex items-end justify-center transition-transform duration-700 hover:scale-[1.02]">
              <img 
                src="/image_landing_page1.png" 
                alt="Espace Enseignant" 
-               className="h-[90%] md:h-[95%] w-auto object-contain object-right-bottom drop-shadow-2xl"
+               className="h-[90%] md:h-[95%] w-auto object-contain object-bottom drop-shadow-2xl"
              />
           </div>
           

@@ -77,11 +77,11 @@ export default async function ParentDashboardPage() {
         </div>
         
         {/* Image de la landing page */}
-        <div className="absolute right-0 bottom-0 h-full w-[80%] sm:w-[60%] lg:w-[50%] z-10 flex items-end justify-end opacity-95 transition-transform duration-700 hover:scale-[1.02]">
+        <div className="absolute inset-0 z-10 flex items-end justify-center opacity-95 transition-transform duration-700 hover:scale-[1.02]">
            <img 
              src="/image_landing_page1.png" 
              alt="Espace Parent" 
-             className="h-[90%] sm:h-[95%] w-auto object-contain object-right-bottom drop-shadow-2xl"
+             className="h-[90%] sm:h-[95%] w-auto object-contain object-bottom drop-shadow-2xl"
            />
         </div>
         
