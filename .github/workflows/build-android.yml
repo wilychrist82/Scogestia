@@ -37,7 +37,14 @@ jobs:
         working-directory: ./android
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace > build-error.txt 2>&1 || (cat build-error.txt && exit 1)
+
+      - name: Upload Build Log if Failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-log
+          path: android/build-error.txt
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
