@@ -182,16 +182,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
           onClick={onClose}
         />
       )}
-      <aside className={`bg-[var(--color-sidebar-bg)] h-screen w-64 fixed left-0 top-0 flex flex-col pt-4 z-50 shadow-2xl overflow-hidden transition-transform duration-300 md:translate-x-0 bg-floating-waves ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        
-        {/* Giant Faded Watermark (iziSAAS style) */}
-        <div className="absolute bottom-0 left-0 w-full overflow-hidden pointer-events-none select-none z-0 h-64 flex items-end opacity-20">
-          <h2 className="text-[100px] font-black leading-none text-white/10 tracking-tighter -ml-6 mb-[-15px] mix-blend-overlay transform -rotate-2">
-            sco
-            <br />
-            gestia
-          </h2>
-        </div>
+      <aside className={`bg-[var(--color-sidebar-bg)] h-screen w-64 fixed left-0 top-0 flex flex-col py-4 z-50 shadow-2xl overflow-hidden transition-transform duration-300 md:translate-x-0 bg-floating-waves ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Logo */}
         <div className="mb-4 px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
