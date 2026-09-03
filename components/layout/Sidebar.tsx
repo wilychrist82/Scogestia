@@ -182,7 +182,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
           onClick={onClose}
         />
       )}
-      <aside className={`bg-[var(--color-sidebar-bg)] h-screen w-64 fixed left-0 top-0 flex flex-col pt-0 z-50 shadow-2xl overflow-hidden transition-transform duration-300 md:translate-x-0 bg-floating-waves ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`bg-[var(--color-sidebar-bg)] h-screen w-64 fixed left-0 top-0 flex flex-col pt-0 pb-0 mt-0 z-50 shadow-2xl overflow-hidden transition-transform duration-300 md:translate-x-0 bg-floating-waves ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         
         {/* Giant Faded Watermark (iziSAAS style) */}
         <div className="absolute bottom-0 left-0 w-full overflow-hidden pointer-events-none select-none z-0 h-64 flex items-end opacity-20">
@@ -193,7 +193,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
           </h2>
         </div>
         {/* Logo */}
-        <div className="mb-2 pt-2 px-6 flex items-center justify-between">
+        <div className="mb-2 mt-0 pt-0 px-6 flex items-center justify-between" style={{ marginTop: '0px', paddingTop: '10px' }}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 flex items-center justify-center overflow-hidden bg-white rounded-md p-1">
               <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="w-full h-full object-contain" />
