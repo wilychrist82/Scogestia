@@ -6,6 +6,7 @@ import { useState, useCallback, useTransition } from 'react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Users } from 'lucide-react'
 import { deleteStudent } from '@/app/actions/students'
+import { ImportStudentsModal } from './ImportStudentsModal'
 
 export type StudentItem = {
   id: string
@@ -35,6 +36,7 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [openActionId, setOpenActionId] = useState<string | null>(null)
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 
   const handleDelete = (id: string, name: string) => {
     if (!window.confirm(`Êtes-vous sûr de vouloir supprimer l'élève ${name} ?`)) return
@@ -129,6 +131,11 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
             </select>
             <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-on-surface-variant)]">expand_more</span>
           </div>
+          {/* Import CSV */}
+          <button onClick={() => setIsImportModalOpen(true)} className="bg-[var(--color-surface-container-high)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-sm font-semibold px-4 py-3 h-12 rounded-lg hover:bg-[var(--color-surface-container-highest)] hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shrink-0 shadow-sm active:scale-95">
+            <span className="material-symbols-outlined text-[20px]">upload_file</span>
+            Importer (CSV)
+          </button>
           {/* Export CSV */}
           <button onClick={handleExportCSV} className="bg-[var(--color-surface-container-high)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-sm font-semibold px-4 py-3 h-12 rounded-lg hover:bg-[var(--color-surface-container-highest)] hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shrink-0 shadow-sm active:scale-95">
             <span className="material-symbols-outlined text-[20px]">download</span>
@@ -286,6 +293,11 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
           </>
         )}
       </div>
+      
+      <ImportStudentsModal 
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+      />
     </div>
   )
 }

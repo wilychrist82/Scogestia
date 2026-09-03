@@ -158,3 +158,98 @@ export async function updateStudent(prevState: ActionState, formData: FormData):
   revalidatePath(`/admin/eleves/${student_id}`);
   return { success: true };
 }
+
+export async function importStudents(studentsList: any[]): Promise<ActionState & { count?: number }> {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+
+    // 1. Fetch all classes for this school to map names to IDs
+    const { data: classesData, error: classesError } = await supabase
+      .from('classes')
+      .select('id, name')
+      .eq('school_id', school_id);
+
+    if (classesError) throw new Error('Erreur de récupération des classes.');
+    
+    // Create a map of Class Name -> Class ID (case insensitive, trimmed)
+    const classMap = new Map();
+    if (classesData) {
+      classesData.forEach((c) => {
+        classMap.set(c.name.trim().toLowerCase(), c.id);
+      });
+    }
+
+    // 2. Prepare bulk insert data
+    let currentMaxMatricule = parseInt(await generateUniqueMatricule(supabase, school_id), 10);
+    const insertData = [];
+
+    for (const student of studentsList) {
+      // Validate Required Fields
+      const firstName = student['Prénom']?.trim();
+      const lastName = student['Nom']?.trim();
+      const className = student['Classe']?.trim();
+      
+      if (!firstName || !lastName || !className) {
+        throw new Error(`L'élève ${firstName || ''} ${lastName || ''} n'a pas de prénom, nom ou classe.`);
+      }
+
+      // Map Class ID
+      const classId = classMap.get(className.toLowerCase());
+      if (!classId) {
+        throw new Error(`La classe "${className}" n'existe pas dans le système pour l'élève ${firstName} ${lastName}.`);
+      }
+
+      // Handle Matricule
+      let matricule = student['Matricule']?.toString().trim();
+      if (!matricule) {
+        matricule = currentMaxMatricule.toString();
+        currentMaxMatricule++;
+      }
+
+      // Format Date (if invalid, set to null)
+      let date_of_birth = student['Date de Naissance']?.trim() || null;
+      if (date_of_birth && isNaN(Date.parse(date_of_birth))) {
+        date_of_birth = null;
+      }
+
+      // Handle Parent Phone
+      const parent_phone = student['Téléphone Parent']?.toString().trim() || null;
+      const gender = student['Genre']?.trim().toUpperCase() === 'F' ? 'F' : (student['Genre']?.trim().toUpperCase() === 'M' ? 'M' : null);
+
+      insertData.push({
+        school_id,
+        first_name: firstName,
+        last_name: lastName,
+        matricule,
+        class_id: classId,
+        date_of_birth,
+        gender,
+        parent_phone,
+        status: 'actif'
+      });
+    }
+
+    if (insertData.length === 0) {
+      return { error: 'Aucun élève valide à importer.' };
+    }
+
+    // 3. Bulk Insert
+    const { error: insertError } = await supabase
+      .from('students')
+      .insert(insertData);
+
+    if (insertError) {
+      if (insertError.code === '23505') {
+        return { error: 'Un ou plusieurs élèves ont un matricule qui existe déjà.' };
+      }
+      throw insertError;
+    }
+
+    revalidatePath('/admin/eleves');
+    return { success: true, count: insertData.length };
+
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
