@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Scogestia</string>
+    <string name="title_activity_main">Scogestia</string>
+    <string name="package_name">com.scogestia.app</string>
+    <string name="custom_url_scheme">com.scogestia.app</string>
+</resources>

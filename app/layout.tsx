@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
@@ -8,10 +8,26 @@ const outfit = Outfit({
   display: "swap",
   variable: "--font-sans",
 });
+export const viewport: Viewport = {
+  themeColor: '#005841',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+}
 
 export const metadata: Metadata = {
   title: "Scogestia - ERP Scolaire",
   description: "Plateforme de gestion scolaire",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Scogestia",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
