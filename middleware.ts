@@ -91,8 +91,8 @@ export async function middleware(request: NextRequest) {
                                  pathname.startsWith('/connexion') || 
                                  pathname.startsWith('/inscription-ecole') || 
                                  pathname.startsWith('/activer-parent') ||
-                                 pathname.startsWith('/mot-de-passe-oublie') ||
-                                 pathname.startsWith('/nouveau-mot-de-passe');
+                                 pathname.startsWith('/mot-de-passe-oublie');
+                                 // Note: /nouveau-mot-de-passe est volontairement exclu car l'utilisateur y est redirigé APRÈS connexion automatique par Supabase
 
   if (isAuthRouteForRedirect) {
     const url = request.nextUrl.clone()
