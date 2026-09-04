@@ -59,21 +59,21 @@ export default async function EnseignantDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6 mb-6">
         
         {/* Carte Héro (Bannière) */}
-        <div className="lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-slate-900 via-violet-950 to-[#006039] rounded-[2rem] p-6 sm:p-8 min-h-[220px] sm:min-h-[280px] shadow-[0_15px_40px_rgba(124,58,237,0.15)] flex flex-col justify-between group">
-          <div className="relative z-20 w-full sm:w-3/5">
-            <div className="flex items-center gap-3 mb-2">
-               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-bold shadow-inner border border-white/10">
+        <div className="lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-slate-900 via-violet-950 to-[#006039] rounded-[2rem] p-5 sm:p-8 min-h-[200px] sm:min-h-[280px] shadow-[0_15px_40px_rgba(124,58,237,0.15)] flex flex-col justify-start group">
+          <div className="relative z-20 w-[70%] sm:w-3/5">
+            <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
+               <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-bold shadow-inner border border-white/10 text-xs sm:text-base">
                  {initials}
                </div>
-               <p className="text-white/70 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Bonjour,</p>
+               <p className="text-white/80 text-[9px] sm:text-xs font-bold uppercase tracking-widest">Bonjour,</p>
             </div>
             
-            <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight mb-3">{roleData.full_name}</h1>
-            <p className="text-white/80 text-sm sm:text-base leading-relaxed max-w-md hidden sm:block">Bienvenue sur votre espace enseignant. Gérez vos classes, saisissez vos notes et effectuez l'appel facilement.</p>
+            <h1 className="text-lg sm:text-3xl font-black text-white leading-tight mb-2 sm:mb-3 line-clamp-2">{roleData.full_name}</h1>
+            <p className="text-white/80 text-xs sm:text-base leading-relaxed max-w-md hidden sm:block">Bienvenue sur votre espace enseignant. Gérez vos classes, saisissez vos notes et effectuez l'appel facilement.</p>
             
-            <div className="mt-4 sm:mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border border-white/10 shadow-inner">
-              <span className="material-symbols-outlined text-emerald-400 text-[16px] sm:text-[18px]">calendar_today</span>
-              <span className="text-white text-xs sm:text-sm font-semibold capitalize">{format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}</span>
+            <div className="mt-2 sm:mt-6 inline-flex items-center gap-1.5 sm:gap-2 bg-white/10 backdrop-blur-md px-2.5 py-1 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl border border-white/10 shadow-inner">
+              <span className="material-symbols-outlined text-emerald-400 text-[14px] sm:text-[18px]">calendar_today</span>
+              <span className="text-white text-[9px] sm:text-sm font-semibold capitalize">{format(new Date(), 'EEEE d MMMM', { locale: fr })}</span>
             </div>
           </div>
           

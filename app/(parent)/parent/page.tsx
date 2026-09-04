@@ -72,15 +72,15 @@ export default async function ParentDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6 mb-6">
         
         {/* Carte Héro (Bannière) */}
-        <div className="lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-violet-950 via-slate-900 to-[#006039] rounded-[2rem] p-6 sm:p-8 min-h-[220px] sm:min-h-[280px] shadow-[0_15px_40px_rgba(124,58,237,0.15)] flex flex-col justify-between group">
-          <div className="relative z-20 w-full sm:w-3/5">
-            <p className="text-white/70 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2">Bonjour,</p>
-            <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight mb-3">{displayName}</h1>
-            <p className="text-white/80 text-sm sm:text-base leading-relaxed max-w-md hidden sm:block">Bienvenue sur votre portail parent. Retrouvez ici toutes les informations essentielles de la scolarité de vos enfants.</p>
+        <div className="lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-violet-950 via-slate-900 to-[#006039] rounded-[2rem] p-5 sm:p-8 min-h-[200px] sm:min-h-[280px] shadow-[0_15px_40px_rgba(124,58,237,0.15)] flex flex-col justify-start group">
+          <div className="relative z-20 w-[70%] sm:w-3/5">
+            <p className="text-white/70 text-[9px] sm:text-xs font-bold uppercase tracking-widest mb-1.5 sm:mb-2">Bonjour,</p>
+            <h1 className="text-lg sm:text-4xl font-black text-white leading-tight mb-2 sm:mb-3 line-clamp-2">{displayName}</h1>
+            <p className="text-white/80 text-xs sm:text-base leading-relaxed max-w-md hidden sm:block">Bienvenue sur votre portail parent. Retrouvez ici toutes les informations essentielles de la scolarité de vos enfants.</p>
             
-            <div className="mt-4 sm:mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border border-white/10 shadow-inner">
-              <span className="material-symbols-outlined text-emerald-400 text-[16px] sm:text-[18px]">calendar_today</span>
-              <span className="text-white text-xs sm:text-sm font-semibold capitalize">{format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}</span>
+            <div className="mt-2 sm:mt-6 inline-flex items-center gap-1.5 sm:gap-2 bg-white/10 backdrop-blur-md px-2.5 py-1 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl border border-white/10 shadow-inner">
+              <span className="material-symbols-outlined text-emerald-400 text-[14px] sm:text-[18px]">calendar_today</span>
+              <span className="text-white text-[9px] sm:text-sm font-semibold capitalize">{format(new Date(), 'EEEE d MMMM', { locale: fr })}</span>
             </div>
           </div>
           
