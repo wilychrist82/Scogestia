@@ -182,7 +182,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
           onClick={onClose}
         />
       )}
-      <aside className={`bg-[var(--color-sidebar-bg)] h-screen w-64 fixed left-0 top-0 flex flex-col py-4 z-50 shadow-2xl overflow-hidden transition-transform duration-300 md:translate-x-0 bg-floating-waves ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`bg-[var(--color-sidebar-bg)] h-screen w-64 fixed left-0 top-0 flex flex-col py-4 z-50 shadow-2xl overflow-hidden transition-transform duration-300 md:translate-x-0 bg-floating-waves ${isOpen ? 'translate-x-0' : 'max-md:-translate-x-full'}`}>
         {/* Logo */}
         <div className="mb-4 px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
