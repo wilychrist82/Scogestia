@@ -67,145 +67,136 @@ export default async function ParentDashboardPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-full pb-6">
-      {/* Premium Header Greeting */}
-      <div className="relative px-4 sm:px-6 rounded-b-[2rem] sm:rounded-b-[3rem] shadow-[0_15px_40px_rgba(124,58,237,0.15)] h-[220px] sm:h-[280px] flex items-end overflow-hidden bg-gradient-to-br from-violet-950 via-slate-900 to-[#006039]">
-        {/* Abstract background glows */}
-        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[150%] bg-violet-600/20 blur-[100px] rounded-full"></div>
-          <div className="absolute bottom-[10%] -left-[10%] w-[50%] h-[100%] bg-emerald-500/20 blur-[100px] rounded-full"></div>
-        </div>
+    <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 w-full">
+      {/* Ligne 1: Hero + Annonces */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6 mb-6">
         
-        {/* Image de la landing page */}
-        <div className="absolute inset-0 z-10 flex items-end justify-center opacity-95 transition-transform duration-700 hover:scale-[1.02]">
-           <img 
-             src="/image_landing_page1.png" 
-             alt="Espace Parent" 
-             className="h-[85%] sm:h-[95%] w-auto object-contain object-bottom drop-shadow-2xl"
-           />
+        {/* Carte Héro (Bannière) */}
+        <div className="lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-violet-950 via-slate-900 to-[#006039] rounded-[2rem] p-6 sm:p-8 min-h-[220px] sm:min-h-[280px] shadow-[0_15px_40px_rgba(124,58,237,0.15)] flex flex-col justify-between group">
+          <div className="relative z-20 w-full sm:w-3/5">
+            <p className="text-white/70 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2">Bonjour,</p>
+            <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight mb-3">{displayName}</h1>
+            <p className="text-white/80 text-sm sm:text-base leading-relaxed max-w-md hidden sm:block">Bienvenue sur votre portail parent. Retrouvez ici toutes les informations essentielles de la scolarité de vos enfants.</p>
+            
+            <div className="mt-4 sm:mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border border-white/10 shadow-inner">
+              <span className="material-symbols-outlined text-emerald-400 text-[16px] sm:text-[18px]">calendar_today</span>
+              <span className="text-white text-xs sm:text-sm font-semibold capitalize">{format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}</span>
+            </div>
+          </div>
+          
+          <div className="absolute right-0 bottom-0 w-[55%] sm:w-[45%] h-[90%] sm:h-[110%] z-10 transition-transform duration-700 group-hover:scale-105 origin-bottom-right">
+            <img src="/image_landing_page1.png" alt="Espace Parent" className="w-full h-full object-contain object-bottom drop-shadow-2xl" />
+          </div>
+          
+          <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[150%] bg-violet-600/30 blur-[80px] rounded-full pointer-events-none"></div>
+          <div className="absolute bottom-[10%] -left-[10%] w-[50%] h-[100%] bg-emerald-500/20 blur-[100px] rounded-full pointer-events-none"></div>
         </div>
-        
-        {/* Overlay dégradé pour adoucir la transition avec les cartes en dessous */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/30 to-transparent rounded-b-[3rem] z-10 pointer-events-none"></div>
+
+        {/* Carte Annonces (À la une) */}
+        <div className="lg:col-span-1 bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow min-h-[220px]">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary-container)] rounded-bl-full opacity-30 -z-10 group-hover:scale-110 transition-transform duration-500"></div>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[var(--color-primary)]">campaign</span>
+              À la une
+            </h2>
+            <Link href="/parent/messages" className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-primary)] bg-[var(--color-primary-container)]/50 px-3 py-1.5 rounded-full hover:bg-[var(--color-primary-container)] transition-colors">
+              Voir tout
+            </Link>
+          </div>
+          
+          <div className="flex-1 flex flex-col gap-4">
+            {communications && communications.length > 0 ? communications.map((comm: any, idx) => (
+              <Link key={comm.id} href="/parent/messages" className={`block group/item ${idx !== 0 ? 'pt-4 border-t border-gray-50' : ''}`}>
+                <h3 className="font-bold text-gray-800 text-sm leading-tight group-hover/item:text-[var(--color-primary)] transition-colors">{comm.subject}</h3>
+                <p className="text-xs text-gray-500 line-clamp-2 mt-1.5">{comm.content === 'Message vocal' ? '🎵 Message vocal reçu' : comm.content}</p>
+              </Link>
+            )) : (
+              <div className="flex-1 flex items-center justify-center text-sm text-gray-400 font-medium">Aucune annonce récente</div>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="px-4 sm:px-5 space-y-4 sm:space-y-5 -mt-8 sm:-mt-6 relative z-20">
-        {/* Carte de bienvenue (déplacée en bas pour ne pas cacher l'image) */}
-        <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-md border border-gray-100 flex items-center justify-between">
-          <div>
-            <p className="text-gray-500 text-[10px] font-semibold uppercase tracking-wider mb-0.5">Bonjour,</p>
-            <h1 className="text-lg font-black text-[var(--color-primary)] tracking-tight truncate leading-tight">{displayName}</h1>
-          </div>
-          <div className="bg-[var(--color-primary-container)]/30 px-3 py-2 rounded-xl text-right shrink-0">
-            <span className="material-symbols-outlined text-[14px] text-[var(--color-primary)] block mb-0.5">calendar_today</span>
-            <p className="text-[var(--color-primary)] text-[10px] font-bold">
-              {format(new Date(), 'EEEE d MMM', { locale: fr })}
-            </p>
-          </div>
-        </div>
-        {/* Annonces Récentes (Featured) */}
-        {communications && communications.length > 0 && (
-          <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary-container)] rounded-bl-full opacity-50 -z-10"></div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-extrabold text-gray-900 flex items-center gap-2">
-                <span className="material-symbols-outlined text-[var(--color-primary)]">campaign</span>
-                À la une
-              </h2>
-              <Link href="/parent/messages" className="text-xs font-semibold text-[var(--color-primary)] bg-[var(--color-primary-container)]/30 px-3 py-1 rounded-full">
-                Voir tout
-              </Link>
-            </div>
-            
-            <div className="space-y-3">
-              {communications.map((comm: any, idx) => (
-                <Link key={comm.id} href="/parent/messages" className={`block ${idx !== 0 ? 'pt-3 border-t border-gray-100' : ''}`}>
-                  <h3 className="font-bold text-gray-800 text-sm leading-tight">{comm.subject}</h3>
-                  <p className="text-xs text-gray-500 line-clamp-2 mt-1">{comm.content === 'Message vocal' ? '🎵 Message vocal reçu' : comm.content}</p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Liste des Enfants */}
-        <h2 className="text-sm font-extrabold text-gray-500 uppercase tracking-wider px-2 mt-8 mb-2">Mes Enfants</h2>
+      {/* Ligne 2: Dossiers Scolaires & Caisse */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6">
         
-        {children.map((child: any) => (
-          <div key={child.id} className="bg-white rounded-[2rem] p-5 shadow-sm border border-gray-100 transition-all hover:shadow-md">
-            
-            {/* Header Enfant */}
-            <div className="flex items-center gap-4 mb-5">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[var(--color-primary)] to-[#20b2aa] text-white flex items-center justify-center text-2xl font-bold shadow-inner">
-                {child.first_name[0]}{child.last_name[0]}
+        {/* Enfants */}
+        <div className="lg:col-span-8 space-y-4 sm:space-y-5">
+          <h2 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest px-2">Dossiers Scolaires</h2>
+          
+          {children.map((child: any) => (
+            <div key={child.id} className="bg-white/80 backdrop-blur-md rounded-[2rem] p-5 sm:p-6 shadow-sm border border-gray-100 transition-all hover:shadow-md hover:border-blue-100/50 flex flex-col sm:flex-row gap-5 sm:gap-6 group/child">
+              
+              <div className="flex items-center gap-4 sm:w-[35%] sm:border-r border-gray-100 sm:pr-4">
+                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[1.25rem] bg-gradient-to-tr from-[var(--color-primary)] to-[#20b2aa] text-white flex items-center justify-center text-xl sm:text-2xl font-bold shadow-inner flex-shrink-0 group-hover/child:scale-105 transition-transform duration-300">
+                   {child.first_name[0]}{child.last_name[0]}
+                 </div>
+                 <div className="min-w-0">
+                   <h3 className="text-lg sm:text-xl font-black text-gray-900 leading-tight truncate">{child.first_name}</h3>
+                   <h4 className="text-xs sm:text-sm text-gray-500 font-medium truncate">{child.last_name}</h4>
+                   <div className="inline-flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-lg mt-2 border border-gray-100">
+                     <span className="material-symbols-outlined text-[14px] text-gray-500">school</span>
+                     <span className="text-[11px] font-bold text-gray-700">{child.classes?.name}</span>
+                   </div>
+                 </div>
               </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-black text-gray-900 leading-tight">{child.first_name}</h3>
-                <h4 className="text-sm text-gray-500 font-medium">{child.last_name}</h4>
-                <div className="inline-flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-md mt-2">
-                  <span className="material-symbols-outlined text-[14px] text-gray-600">school</span>
-                  <span className="text-xs font-bold text-gray-700">{child.classes?.name}</span>
-                </div>
+
+              <div className="flex-1 grid grid-cols-4 gap-2 sm:gap-3">
+                <Link href={`/parent/notes?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group/action">
+                  <div className="w-full aspect-square max-h-[70px] bg-blue-50/80 text-blue-600 rounded-[1rem] sm:rounded-[1.25rem] flex items-center justify-center active:scale-90 transition-all duration-300 shadow-sm border border-blue-100/50 group-hover/action:bg-blue-600 group-hover/action:text-white group-hover/action:shadow-blue-200">
+                    <span className="material-symbols-outlined text-[24px]">grading</span>
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-600 group-hover/action:text-blue-600 transition-colors">Notes</span>
+                </Link>
+                <Link href={`/parent/presences?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group/action">
+                  <div className="w-full aspect-square max-h-[70px] bg-orange-50/80 text-orange-500 rounded-[1rem] sm:rounded-[1.25rem] flex items-center justify-center active:scale-90 transition-all duration-300 shadow-sm border border-orange-100/50 group-hover/action:bg-orange-500 group-hover/action:text-white group-hover/action:shadow-orange-200">
+                    <span className="material-symbols-outlined text-[24px]">fact_check</span>
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-600 group-hover/action:text-orange-500 transition-colors">Absences</span>
+                </Link>
+                <Link href={`/parent/devoirs?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group/action">
+                  <div className="w-full aspect-square max-h-[70px] bg-purple-50/80 text-purple-600 rounded-[1rem] sm:rounded-[1.25rem] flex items-center justify-center active:scale-90 transition-all duration-300 shadow-sm border border-purple-100/50 group-hover/action:bg-purple-600 group-hover/action:text-white group-hover/action:shadow-purple-200">
+                    <span className="material-symbols-outlined text-[24px]">assignment</span>
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-600 group-hover/action:text-purple-600 transition-colors">Devoirs</span>
+                </Link>
+                <Link href={`/parent/bulletins?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group/action">
+                  <div className="w-full aspect-square max-h-[70px] bg-emerald-50/80 text-emerald-600 rounded-[1rem] sm:rounded-[1.25rem] flex items-center justify-center active:scale-90 transition-all duration-300 shadow-sm border border-emerald-100/50 group-hover/action:bg-emerald-600 group-hover/action:text-white group-hover/action:shadow-emerald-200">
+                    <span className="material-symbols-outlined text-[24px]">workspace_premium</span>
+                  </div>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-600 group-hover/action:text-emerald-600 transition-colors">Bulletins</span>
+                </Link>
               </div>
             </div>
+          ))}
+        </div>
 
-            {/* Quick Actions Grid */}
-            <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-5">
-              <Link href={`/parent/notes?child=${child.id}`} className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 group">
-                <div className="w-[48px] h-[48px] sm:w-[52px] sm:h-[52px] bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-blue-100 group-hover:shadow-blue-200 group-hover:bg-blue-100">
-                  <span className="material-symbols-outlined text-[20px] sm:text-[24px]">grading</span>
-                </div>
-                <span className="text-[10px] font-bold text-gray-600">Notes</span>
-              </Link>
-              
-              <Link href={`/parent/presences?child=${child.id}`} className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 group">
-                <div className="w-[48px] h-[48px] sm:w-[52px] sm:h-[52px] bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-orange-100 group-hover:shadow-orange-200 group-hover:bg-orange-100">
-                  <span className="material-symbols-outlined text-[20px] sm:text-[24px]">fact_check</span>
-                </div>
-                <span className="text-[10px] font-bold text-gray-600">Absences</span>
-              </Link>
-              
-              <Link href={`/parent/devoirs?child=${child.id}`} className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 group">
-                <div className="w-[48px] h-[48px] sm:w-[52px] sm:h-[52px] bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-purple-100 group-hover:shadow-purple-200 group-hover:bg-purple-100">
-                  <span className="material-symbols-outlined text-[20px] sm:text-[24px]">assignment</span>
-                </div>
-                <span className="text-[10px] font-bold text-gray-600">Devoirs</span>
-              </Link>
-              
-              <Link href={`/parent/bulletins?child=${child.id}`} className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 group">
-                <div className="w-[48px] h-[48px] sm:w-[52px] sm:h-[52px] bg-green-50 text-green-600 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-green-100 group-hover:shadow-green-200 group-hover:bg-green-100">
-                  <span className="material-symbols-outlined text-[20px] sm:text-[24px]">workspace_premium</span>
-                </div>
-                <span className="text-[10px] font-bold text-gray-600">Bulletins</span>
-              </Link>
+        {/* Finance */}
+        <div className="lg:col-span-4 space-y-4 sm:space-y-5">
+          <h2 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest px-2">Caisse</h2>
+          <Link href={`/parent/paiements${children && children.length > 0 ? `?child=${(children[0] as any).id}` : ''}`} className="block relative overflow-hidden bg-gradient-to-br from-[#1e293b] to-[#0f172a] rounded-[2rem] p-6 sm:p-8 shadow-xl text-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 border border-slate-700/50 group min-h-[180px] lg:min-h-[200px] flex flex-col justify-between">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/10 rounded-bl-[100px] -z-0 group-hover:scale-125 transition-transform duration-700"></div>
+            <div className="absolute bottom-[-30px] right-[-10px] text-emerald-400/5 -z-0 group-hover:rotate-[-10deg] group-hover:scale-110 transition-transform duration-500">
+              <span className="material-symbols-outlined" style={{ fontSize: '160px' }}>account_balance_wallet</span>
             </div>
             
-
-
-          </div>
-        ))}
-
-        {/* Global Finance Card */}
-        <div className="mt-4 pb-4">
-          <Link href={`/parent/paiements${children && children.length > 0 ? `?child=${(children[0] as any).id}` : ''}`} className="block relative overflow-hidden bg-gradient-to-br from-[#1e293b] to-[#0f172a] rounded-[2rem] p-6 shadow-2xl text-white active:scale-95 transition-transform border border-slate-700/50 group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-bl-full -z-0 group-hover:scale-110 transition-transform"></div>
-            <div className="absolute bottom-[-20px] right-4 text-emerald-400/5 -z-0 group-hover:rotate-12 transition-transform">
-              <span className="material-symbols-outlined" style={{ fontSize: '120px' }}>account_balance_wallet</span>
+            <div className="relative z-10 flex justify-between items-start">
+              <div className="bg-white/10 backdrop-blur-sm p-3 rounded-2xl border border-white/10 shadow-inner">
+                <span className="material-symbols-outlined text-emerald-400 text-[28px]">payments</span>
+              </div>
+              <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm group-hover:bg-emerald-500 group-hover:text-white transition-colors text-white/70">
+                <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+              </div>
             </div>
             
-            <div className="relative z-10 flex justify-between items-center">
-              <div>
-                <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">Caisse</p>
-                <h3 className="font-black text-2xl">Finances</h3>
-                <p className="text-white/80 text-sm mt-1 max-w-[200px]">Gérez les frais de scolarité de vos enfants en toute simplicité.</p>
-              </div>
-              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </div>
+            <div className="relative z-10 mt-6">
+              <h3 className="font-black text-2xl sm:text-3xl tracking-tight mb-2">Finances</h3>
+              <p className="text-slate-300 text-sm leading-relaxed max-w-[220px]">Frais de scolarité, cantine et historique de paiements.</p>
             </div>
           </Link>
         </div>
-
+        
       </div>
     </div>
   )

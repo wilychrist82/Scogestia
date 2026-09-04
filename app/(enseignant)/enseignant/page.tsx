@@ -54,140 +54,115 @@ export default async function EnseignantDashboardPage() {
     .limit(2)
 
   return (
-    <div className="flex flex-col min-h-full bg-gray-50/50 pb-8">
-      {/* Hero Header avec Image (Responsive, sans aucun rognage) */}
-      <div className="w-full max-w-[1280px] mx-auto px-2 md:px-0">
-        <div className="relative w-full shadow-[0_15px_40px_rgba(124,58,237,0.15)] rounded-b-[2rem] lg:rounded-b-[3rem] overflow-hidden bg-gradient-to-br from-slate-900 via-violet-950 to-[#006039] flex items-end h-[220px] md:h-[300px]">
-          {/* Abstract glows */}
-          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-             <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[120%] bg-emerald-500/20 blur-[100px] rounded-full"></div>
-             <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[140%] bg-violet-600/30 blur-[100px] rounded-full"></div>
-          </div>
-
-          <div className="absolute inset-0 z-10 flex items-end justify-center transition-transform duration-700 hover:scale-[1.02]">
-             <img 
-               src="/image_landing_page1.png" 
-               alt="Espace Enseignant" 
-               className="h-[90%] md:h-[95%] w-auto object-contain object-bottom drop-shadow-2xl"
-             />
-          </div>
-          
-          {/* Overlay dégradé */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/30 to-transparent z-10 pointer-events-none"></div>
-        </div>
-      </div>
-
-      <div className="px-4 md:px-8 space-y-6 mt-4 md:mt-8 relative z-20 max-w-[1280px] mx-auto w-full">
+    <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 w-full">
+      {/* Ligne 1: Hero + Annonces */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6 mb-6">
         
-        {/* Welcome Card Premium */}
-        <div className="bg-white/95 backdrop-blur-md p-4 md:p-5 rounded-2xl shadow-md border border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-tr from-[var(--color-primary)] to-[#20b2aa] text-white flex items-center justify-center text-xl md:text-2xl font-bold shadow-inner">
-              {initials}
-            </div>
-            <div>
-              <p className="text-gray-500 text-[10px] md:text-xs font-semibold uppercase tracking-wider mb-0.5">Bonjour,</p>
-              <h1 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight leading-tight">{roleData.full_name}</h1>
-            </div>
-          </div>
-          <div className="bg-[var(--color-primary-container)]/30 px-4 py-2.5 rounded-xl text-center shrink-0 hidden sm:block">
-            <span className="material-symbols-outlined text-[16px] text-[var(--color-primary)] block mb-0.5">calendar_today</span>
-            <p className="text-[var(--color-primary)] text-xs font-bold capitalize">
-              {format(new Date(), 'EEEE d MMM', { locale: fr })}
-            </p>
-          </div>
-        </div>
-
-        {/* Annonces Récentes */}
-        {communications && communications.length > 0 && (
-          <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary-container)] rounded-bl-full opacity-50 -z-10"></div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base md:text-lg font-extrabold text-gray-900 flex items-center gap-2">
-                <span className="material-symbols-outlined text-[var(--color-primary)]">campaign</span>
-                À la une
-              </h2>
-              {/* Le lien vers les annonces complètes n'existe pas encore pour les profs, on met # ou on masque */}
-              <span className="text-xs font-semibold text-[var(--color-primary)] bg-[var(--color-primary-container)]/30 px-3 py-1 rounded-full">
-                Nouveau
-              </span>
+        {/* Carte Héro (Bannière) */}
+        <div className="lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-slate-900 via-violet-950 to-[#006039] rounded-[2rem] p-6 sm:p-8 min-h-[220px] sm:min-h-[280px] shadow-[0_15px_40px_rgba(124,58,237,0.15)] flex flex-col justify-between group">
+          <div className="relative z-20 w-full sm:w-3/5">
+            <div className="flex items-center gap-3 mb-2">
+               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-bold shadow-inner border border-white/10">
+                 {initials}
+               </div>
+               <p className="text-white/70 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Bonjour,</p>
             </div>
             
-            <div className="space-y-4">
-              {communications.map((comm: any, idx) => (
-                <div key={comm.id} className={`block ${idx !== 0 ? 'pt-4 border-t border-gray-100' : ''}`}>
-                  <h3 className="font-bold text-gray-800 text-sm md:text-base leading-tight">{comm.subject}</h3>
-                  <p className="text-xs md:text-sm text-gray-500 line-clamp-2 mt-1.5">{comm.content === 'Message vocal' ? '🎵 Message vocal reçu' : comm.content}</p>
-                </div>
-              ))}
+            <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight mb-3">{roleData.full_name}</h1>
+            <p className="text-white/80 text-sm sm:text-base leading-relaxed max-w-md hidden sm:block">Bienvenue sur votre espace enseignant. Gérez vos classes, saisissez vos notes et effectuez l'appel facilement.</p>
+            
+            <div className="mt-4 sm:mt-6 inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border border-white/10 shadow-inner">
+              <span className="material-symbols-outlined text-emerald-400 text-[16px] sm:text-[18px]">calendar_today</span>
+              <span className="text-white text-xs sm:text-sm font-semibold capitalize">{format(new Date(), 'EEEE d MMMM yyyy', { locale: fr })}</span>
             </div>
           </div>
-        )}
-
-        {/* Classes Assignées - Grille Moderne */}
-        <h2 className="text-sm font-extrabold text-gray-500 uppercase tracking-wider px-2 mt-8 mb-2">Mes Classes Assignées</h2>
-
-        {(!assignments || assignments.length === 0) ? (
-          <div className="bg-white rounded-[2rem] p-8 text-center text-gray-500 shadow-sm border border-gray-100">
-             Aucune classe ne vous a été assignée pour le moment.
+          
+          <div className="absolute right-0 bottom-0 w-[55%] sm:w-[45%] h-[90%] sm:h-[110%] z-10 transition-transform duration-700 group-hover:scale-105 origin-bottom-right">
+            <img src="/image_landing_page1.png" alt="Espace Enseignant" className="w-full h-full object-contain object-bottom drop-shadow-2xl" />
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {assignments.map((assignment: any) => (
-              <div key={assignment.id} className="bg-white rounded-[2rem] p-5 shadow-sm border border-gray-100 transition-all hover:shadow-md hover:border-indigo-100 flex flex-col group">
-                
-                {/* En-tête de la carte */}
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 rounded-[1.25rem] bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                    <span className="material-symbols-outlined text-3xl">school</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl md:text-2xl font-black text-gray-900 leading-tight tracking-tight">{assignment.classes?.name}</h3>
-                    <div className="inline-flex items-center gap-1.5 bg-indigo-50 px-2.5 py-1 rounded-lg mt-1.5">
-                      <span className="material-symbols-outlined text-[14px] text-indigo-600">book</span>
-                      <span className="text-xs font-bold text-indigo-700">{assignment.subject_name}</span>
-                    </div>
-                  </div>
+          
+          <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[150%] bg-violet-600/30 blur-[80px] rounded-full pointer-events-none"></div>
+          <div className="absolute bottom-[10%] -left-[10%] w-[50%] h-[100%] bg-emerald-500/20 blur-[100px] rounded-full pointer-events-none"></div>
+        </div>
+
+        {/* Carte Annonces (À la une) */}
+        <div className="lg:col-span-1 bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden group hover:shadow-md transition-shadow min-h-[220px]">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary-container)] rounded-bl-full opacity-30 -z-10 group-hover:scale-110 transition-transform duration-500"></div>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[var(--color-primary)]">campaign</span>
+              À la une
+            </h2>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-primary)] bg-[var(--color-primary-container)]/50 px-3 py-1.5 rounded-full">
+              Nouveau
+            </span>
+          </div>
+          
+          <div className="flex-1 flex flex-col gap-4">
+            {communications && communications.length > 0 ? communications.map((comm: any, idx) => (
+              <div key={comm.id} className={`block group/item ${idx !== 0 ? 'pt-4 border-t border-gray-50' : ''}`}>
+                <h3 className="font-bold text-gray-800 text-sm leading-tight group-hover/item:text-[var(--color-primary)] transition-colors">{comm.subject}</h3>
+                <p className="text-xs text-gray-500 line-clamp-2 mt-1.5">{comm.content === 'Message vocal' ? '🎵 Message vocal reçu' : comm.content}</p>
+              </div>
+            )) : (
+              <div className="flex-1 flex items-center justify-center text-sm text-gray-400 font-medium">Aucune annonce récente</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Ligne 2: Classes Assignées */}
+      <h2 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest px-2 mb-4 sm:mb-5">Mes Classes Assignées</h2>
+
+      {(!assignments || assignments.length === 0) ? (
+        <div className="bg-white rounded-[2rem] p-8 sm:p-12 text-center text-gray-500 shadow-sm border border-gray-100 flex flex-col items-center justify-center min-h-[200px]">
+           <span className="material-symbols-outlined text-[48px] text-gray-300 mb-4">school</span>
+           <p className="text-base font-medium">Aucune classe ne vous a été assignée pour le moment.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
+          {assignments.map((assignment: any) => (
+            <div key={assignment.id} className="bg-white/80 backdrop-blur-md rounded-[2rem] p-5 sm:p-6 shadow-sm border border-gray-100 transition-all hover:shadow-md hover:border-indigo-100/50 flex flex-col group/class">
+              
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[1.25rem] bg-indigo-50/80 text-indigo-600 flex items-center justify-center shadow-sm group-hover/class:scale-105 group-hover/class:bg-indigo-100 transition-all duration-300 flex-shrink-0">
+                  <span className="material-symbols-outlined text-3xl">school</span>
                 </div>
-
-                {/* Actions Rapides (Quick Actions) */}
-                <div className="grid grid-cols-3 gap-3 mt-auto">
-                  <Link 
-                    href={`/enseignant/notes?classId=${assignment.class_id}&subject=${encodeURIComponent(assignment.subject_name)}`}
-                    className="flex flex-col items-center justify-center gap-2"
-                  >
-                    <div className="w-full h-14 bg-emerald-50 text-emerald-600 rounded-[1rem] flex items-center justify-center active:scale-95 hover:bg-emerald-100 transition-all shadow-sm">
-                      <span className="material-symbols-outlined">edit_square</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-gray-600 text-center leading-tight">Saisir<br/>Notes</span>
-                  </Link>
-
-                  <Link 
-                    href={`/enseignant/presences?classId=${assignment.class_id}`}
-                    className="flex flex-col items-center justify-center gap-2"
-                  >
-                    <div className="w-full h-14 bg-blue-50 text-blue-600 rounded-[1rem] flex items-center justify-center active:scale-95 hover:bg-blue-100 transition-all shadow-sm">
-                      <span className="material-symbols-outlined">how_to_reg</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-gray-600 text-center leading-tight">Faire<br/>l'Appel</span>
-                  </Link>
-
-                  <Link 
-                    href={`/enseignant/devoirs?classId=${assignment.class_id}`}
-                    className="flex flex-col items-center justify-center gap-2"
-                  >
-                    <div className="w-full h-14 bg-orange-50 text-orange-600 rounded-[1rem] flex items-center justify-center active:scale-95 hover:bg-orange-100 transition-all shadow-sm">
-                      <span className="material-symbols-outlined">menu_book</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-gray-600 text-center leading-tight">Cahier<br/>de Texte</span>
-                  </Link>
+                <div className="min-w-0">
+                  <h3 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight tracking-tight truncate">{assignment.classes?.name}</h3>
+                  <div className="inline-flex items-center gap-1.5 bg-indigo-50/80 px-2.5 py-1 rounded-lg mt-1.5 border border-indigo-100/50">
+                    <span className="material-symbols-outlined text-[14px] text-indigo-600">book</span>
+                    <span className="text-[11px] font-bold text-indigo-700 truncate">{assignment.subject_name}</span>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
 
-      </div>
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-auto">
+                <Link href={`/enseignant/notes?classId=${assignment.class_id}&subject=${encodeURIComponent(assignment.subject_name)}`} className="flex flex-col items-center justify-center gap-2 group/action">
+                  <div className="w-full aspect-square max-h-[64px] bg-emerald-50/80 text-emerald-600 rounded-[1rem] flex items-center justify-center active:scale-90 hover:bg-emerald-600 hover:text-white transition-all duration-300 shadow-sm border border-emerald-100/50 group-hover/action:shadow-emerald-200">
+                    <span className="material-symbols-outlined text-[22px]">edit_square</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-600 text-center leading-tight group-hover/action:text-emerald-600 transition-colors">Saisir<br/>Notes</span>
+                </Link>
+
+                <Link href={`/enseignant/presences?classId=${assignment.class_id}`} className="flex flex-col items-center justify-center gap-2 group/action">
+                  <div className="w-full aspect-square max-h-[64px] bg-blue-50/80 text-blue-600 rounded-[1rem] flex items-center justify-center active:scale-90 hover:bg-blue-600 hover:text-white transition-all duration-300 shadow-sm border border-blue-100/50 group-hover/action:shadow-blue-200">
+                    <span className="material-symbols-outlined text-[22px]">how_to_reg</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-600 text-center leading-tight group-hover/action:text-blue-600 transition-colors">Faire<br/>Appel</span>
+                </Link>
+
+                <Link href={`/enseignant/devoirs?classId=${assignment.class_id}`} className="flex flex-col items-center justify-center gap-2 group/action">
+                  <div className="w-full aspect-square max-h-[64px] bg-orange-50/80 text-orange-600 rounded-[1rem] flex items-center justify-center active:scale-90 hover:bg-orange-500 hover:text-white transition-all duration-300 shadow-sm border border-orange-100/50 group-hover/action:shadow-orange-200">
+                    <span className="material-symbols-outlined text-[22px]">menu_book</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-600 text-center leading-tight group-hover/action:text-orange-500 transition-colors">Cahier<br/>Texte</span>
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
