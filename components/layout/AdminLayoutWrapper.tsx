@@ -24,7 +24,7 @@ export function AdminLayoutWrapper({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
-    <div className="flex h-screen bg-[var(--color-dashboard-bg)] overflow-hidden w-full relative">
+    <div className="h-screen bg-[var(--color-dashboard-bg)] overflow-hidden w-full relative">
       <Sidebar 
         userFullName={userFullName} 
         userRoleLabel={userRoleLabel} 
@@ -32,7 +32,7 @@ export function AdminLayoutWrapper({
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
-      <div className="flex-1 ml-0 md:ml-64 flex flex-col h-screen overflow-hidden relative">
+      <div className="ml-0 md:ml-64 flex flex-col h-screen overflow-hidden relative">
         {banner}
         <TopHeader 
           userFullName={userFullName} 
