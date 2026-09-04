@@ -162,7 +162,7 @@ export default async function AdminDashboard() {
       />
 
       {/* Top Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Total Élèves */}
         <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col items-start gap-3 relative overflow-hidden group">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-sidebar-bg)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -426,9 +426,9 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Actions rapides */}
-      <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-100 shadow-sm mt-2">
+      <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-100 shadow-sm mt-4">
         <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Actions rapides</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
           <Link href="/admin/eleves/nouveau" className="flex items-center justify-center gap-2 bg-gray-50 hover:bg-white hover:shadow-md hover:-translate-y-0.5 text-gray-700 hover:text-[var(--color-sidebar-bg)] py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-all duration-300 border border-gray-100 text-center leading-tight group">
             <UserPlus size={16} className="text-[var(--color-chart-green)] group-hover:scale-110 transition-transform shrink-0" />
             <span className="hidden sm:inline">Ajouter un</span> élève

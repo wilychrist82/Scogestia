@@ -297,8 +297,8 @@ export default function Home() {
               </motion.div>
 
               {/* Carte 2 : Parents (Image Background) */}
-              <motion.div variants={fadeIn} className="md:col-span-4 h-[400px] rounded-[2rem] p-10 relative overflow-hidden group">
-                <img src="/images/parents.png" alt="Portail Parent" className="absolute top-2 w-full h-[calc(100%-0.5rem)] object-cover object-right transition-transform duration-700 group-hover:scale-105" />
+              <motion.div variants={fadeIn} className="md:col-span-4 h-[300px] md:h-[400px] rounded-[2rem] p-6 md:p-10 relative overflow-hidden group">
+                <img src="/images/parents.png" alt="Portail Parent" className="absolute inset-0 w-full h-full object-cover object-top md:object-right transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/70 to-slate-900/20"></div>
                 
                 <div className="relative z-10 h-full flex flex-col justify-end">
@@ -306,7 +306,7 @@ export default function Home() {
                     <Smartphone className="w-6 h-6 text-violet-400" />
                   </div>
                   <h3 className="text-2xl font-bold text-white mb-2 font-sans tracking-tight"><span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Portail</span> Parents</h3>
-                  <p className="text-slate-300">
+                  <p className="text-slate-300 text-sm md:text-base">
                     Transparence totale sur le téléphone des parents : notes, absences, et paiements.
                   </p>
                 </div>
@@ -730,8 +730,8 @@ export default function Home() {
       <footer id="contact" className="bg-[#09090b] text-slate-300 pt-16 pb-10 relative overflow-hidden border-t-2 border-violet-900/30">
 
         {/* Filigrane Géant SCOGESTIA (iziSAAS style) */}
-        <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-full flex justify-center pointer-events-none select-none z-0">
-          <h2 className="text-[12vw] sm:text-[180px] font-black leading-none text-white/[0.03] tracking-tighter mix-blend-overlay">
+        <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-full flex justify-center pointer-events-none select-none z-0 overflow-hidden">
+          <h2 className="text-[28vw] sm:text-[180px] font-black leading-none text-white/[0.06] sm:text-white/[0.03] tracking-tighter mix-blend-overlay">
             SCOGESTIA
           </h2>
         </div>

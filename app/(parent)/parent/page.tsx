@@ -69,7 +69,7 @@ export default async function ParentDashboardPage() {
   return (
     <div className="flex flex-col min-h-full pb-6">
       {/* Premium Header Greeting */}
-      <div className="relative px-6 rounded-b-[3rem] shadow-[0_15px_40px_rgba(124,58,237,0.15)] h-[280px] flex items-end overflow-hidden bg-gradient-to-br from-violet-950 via-slate-900 to-[#006039]">
+      <div className="relative px-4 sm:px-6 rounded-b-[2rem] sm:rounded-b-[3rem] shadow-[0_15px_40px_rgba(124,58,237,0.15)] h-[220px] sm:h-[280px] flex items-end overflow-hidden bg-gradient-to-br from-violet-950 via-slate-900 to-[#006039]">
         {/* Abstract background glows */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-[20%] -right-[10%] w-[60%] h-[150%] bg-violet-600/20 blur-[100px] rounded-full"></div>
@@ -81,7 +81,7 @@ export default async function ParentDashboardPage() {
            <img 
              src="/image_landing_page1.png" 
              alt="Espace Parent" 
-             className="h-[90%] sm:h-[95%] w-auto object-contain object-bottom drop-shadow-2xl"
+             className="h-[85%] sm:h-[95%] w-auto object-contain object-bottom drop-shadow-2xl"
            />
         </div>
         
@@ -89,7 +89,7 @@ export default async function ParentDashboardPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/30 to-transparent rounded-b-[3rem] z-10 pointer-events-none"></div>
       </div>
 
-      <div className="px-5 space-y-5 -mt-6 relative z-20">
+      <div className="px-4 sm:px-5 space-y-4 sm:space-y-5 -mt-8 sm:-mt-6 relative z-20">
         {/* Carte de bienvenue (déplacée en bas pour ne pas cacher l'image) */}
         <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-md border border-gray-100 flex items-center justify-between">
           <div>
@@ -151,30 +151,30 @@ export default async function ParentDashboardPage() {
 
             {/* Quick Actions Grid */}
             <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-5">
-              <Link href={`/parent/notes?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group">
-                <div className="w-[52px] h-[52px] bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-blue-100 group-hover:shadow-blue-200 group-hover:bg-blue-100">
-                  <span className="material-symbols-outlined">grading</span>
+              <Link href={`/parent/notes?child=${child.id}`} className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 group">
+                <div className="w-[48px] h-[48px] sm:w-[52px] sm:h-[52px] bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-blue-100 group-hover:shadow-blue-200 group-hover:bg-blue-100">
+                  <span className="material-symbols-outlined text-[20px] sm:text-[24px]">grading</span>
                 </div>
                 <span className="text-[10px] font-bold text-gray-600">Notes</span>
               </Link>
               
-              <Link href={`/parent/presences?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group">
-                <div className="w-[52px] h-[52px] bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-orange-100 group-hover:shadow-orange-200 group-hover:bg-orange-100">
-                  <span className="material-symbols-outlined">fact_check</span>
+              <Link href={`/parent/presences?child=${child.id}`} className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 group">
+                <div className="w-[48px] h-[48px] sm:w-[52px] sm:h-[52px] bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-orange-100 group-hover:shadow-orange-200 group-hover:bg-orange-100">
+                  <span className="material-symbols-outlined text-[20px] sm:text-[24px]">fact_check</span>
                 </div>
                 <span className="text-[10px] font-bold text-gray-600">Absences</span>
               </Link>
               
-              <Link href={`/parent/devoirs?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group">
-                <div className="w-[52px] h-[52px] bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-purple-100 group-hover:shadow-purple-200 group-hover:bg-purple-100">
-                  <span className="material-symbols-outlined">assignment</span>
+              <Link href={`/parent/devoirs?child=${child.id}`} className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 group">
+                <div className="w-[48px] h-[48px] sm:w-[52px] sm:h-[52px] bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-purple-100 group-hover:shadow-purple-200 group-hover:bg-purple-100">
+                  <span className="material-symbols-outlined text-[20px] sm:text-[24px]">assignment</span>
                 </div>
                 <span className="text-[10px] font-bold text-gray-600">Devoirs</span>
               </Link>
               
-              <Link href={`/parent/bulletins?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group">
-                <div className="w-[52px] h-[52px] bg-green-50 text-green-600 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-green-100 group-hover:shadow-green-200 group-hover:bg-green-100">
-                  <span className="material-symbols-outlined">workspace_premium</span>
+              <Link href={`/parent/bulletins?child=${child.id}`} className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 group">
+                <div className="w-[48px] h-[48px] sm:w-[52px] sm:h-[52px] bg-green-50 text-green-600 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm border border-green-100 group-hover:shadow-green-200 group-hover:bg-green-100">
+                  <span className="material-symbols-outlined text-[20px] sm:text-[24px]">workspace_premium</span>
                 </div>
                 <span className="text-[10px] font-bold text-gray-600">Bulletins</span>
               </Link>
