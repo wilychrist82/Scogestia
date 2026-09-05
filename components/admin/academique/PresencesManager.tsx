@@ -167,8 +167,10 @@ export function PresencesManager({ classes, students }: Props) {
     let total = 0
     days.forEach(d => {
       const status = gridData[`${studentId}_${d.dateStr}`]
-      if (status === 'retard' || status === 'absent') {
-        total += 1
+      if (status === 'absent') {
+        total += 2 // '+' compte pour 2
+      } else if (status === 'retard') {
+        total += 1 // '-' compte pour 1
       }
     })
     return total
@@ -225,12 +227,27 @@ export function PresencesManager({ classes, students }: Props) {
       }
     }
 
+    // Total des absences de la classe
+    let totalAbsencesClasse = 0
+    filteredStudents.forEach(student => {
+      totalAbsencesClasse += getTotalAbsences(student.id)
+    })
+
+    const totalInscrits = garconsInscrits + fillesInscrites
+    const presencesPossibles = totalDemiJournees * totalInscrits
+    const presencesReelles = presencesPossibles > 0 ? presencesPossibles - totalAbsencesClasse : 0
+    const tauxAssiduite = presencesPossibles > 0 ? ((presencesReelles / presencesPossibles) * 100).toFixed(2) : '0.00'
+
     return {
-      garconsInscrits, fillesInscrites, totalInscrits: garconsInscrits + fillesInscrites,
+      garconsInscrits, fillesInscrites, totalInscrits,
       garconsAbandons, fillesAbandons, totalAbandons: garconsAbandons + fillesAbandons,
       garconsAbsents, fillesAbsentes, totalAbsents: garconsAbsents + fillesAbsentes,
       garconsPresents, fillesPresentes, totalPresents: garconsPresents + fillesPresentes,
-      totalDemiJournees
+      totalDemiJournees,
+      totalAbsencesClasse,
+      presencesPossibles,
+      presencesReelles,
+      tauxAssiduite
     }
   }
 
@@ -326,7 +343,7 @@ export function PresencesManager({ classes, students }: Props) {
                 
                 <button 
                   onClick={() => setIsRecapOpen(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  className="hidden md:flex bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors items-center gap-2"
                 >
                   <span className="material-symbols-outlined text-sm">summarize</span>
                   Récapitulation
@@ -425,6 +442,17 @@ export function PresencesManager({ classes, students }: Props) {
                 </tbody>
               </table>
             </div>
+
+            {/* Bouton récapitulation en bas pour mobile */}
+            <div className="p-4 border-t border-gray-200 bg-gray-50 flex md:hidden justify-center">
+              <button 
+                onClick={() => setIsRecapOpen(true)}
+                className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-sm">summarize</span>
+                Récapitulation du mois
+              </button>
+            </div>
           </div>
         ) : (
           <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] min-h-[400px]">
@@ -507,13 +535,13 @@ export function PresencesManager({ classes, students }: Props) {
                         <td className="p-3 text-center font-bold text-blue-700 bg-blue-50/50">{recap.totalInscrits}</td>
                       </tr>
                       <tr className="hover:bg-gray-50">
-                        <td className="p-3 font-semibold text-emerald-600">Présents (0 absence)</td>
+                        <td className="p-3 font-semibold text-emerald-600">Présents</td>
                         <td className="p-3 text-center font-medium">{recap.garconsPresents}</td>
                         <td className="p-3 text-center font-medium text-red-600">{recap.fillesPresentes}</td>
                         <td className="p-3 text-center font-bold text-blue-700 bg-blue-50/50">{recap.totalPresents}</td>
                       </tr>
                       <tr className="hover:bg-gray-50">
-                        <td className="p-3 font-semibold text-orange-600">Absents (au moins 1)</td>
+                        <td className="p-3 font-semibold text-orange-600">Absents</td>
                         <td className="p-3 text-center font-medium">{recap.garconsAbsents}</td>
                         <td className="p-3 text-center font-medium text-red-600">{recap.fillesAbsentes}</td>
                         <td className="p-3 text-center font-bold text-blue-700 bg-blue-50/50">{recap.totalAbsents}</td>
@@ -526,6 +554,32 @@ export function PresencesManager({ classes, students }: Props) {
                       </tr>
                     </tbody>
                   </table>
+                </div>
+              </div>
+
+              {/* Indicateurs de performance */}
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">analytics</span>
+                  Statistiques d'assiduité de la classe
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <span className="text-xs text-gray-500 block mb-1">Présences possibles</span>
+                    <span className="text-xl font-bold text-gray-800">{recap.presencesPossibles}</span>
+                  </div>
+                  <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
+                    <span className="text-xs text-orange-600 block mb-1">Total des absences</span>
+                    <span className="text-xl font-bold text-orange-700">{recap.totalAbsencesClasse}</span>
+                  </div>
+                  <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                    <span className="text-xs text-emerald-600 block mb-1">Présences réelles</span>
+                    <span className="text-xl font-bold text-emerald-700">{recap.presencesReelles}</span>
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <span className="text-xs text-blue-600 block mb-1">Taux d'assiduité</span>
+                    <span className="text-xl font-bold text-blue-700">{recap.tauxAssiduite} %</span>
+                  </div>
                 </div>
               </div>
 
