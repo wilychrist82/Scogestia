@@ -5,7 +5,7 @@ import { fetchMonthlyAttendance, saveMonthlyAttendanceGrid } from '@/app/actions
 import Link from 'next/link'
 
 type ClassItem = { id: string; name: string }
-type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string }
+type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string; gender: string; status: string }
 
 type Props = {
   classes: ClassItem[]
@@ -35,10 +35,14 @@ export function PresencesManager({ classes, students }: Props) {
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear())
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth() + 1)
   
-  // State pour la grille: "studentId_YYYY-MM-DD" -> "retard" (-) | "absent" (+) | "present" (vide)
+  // State pour la grille
   const [gridData, setGridData] = useState<Record<string, string>>({})
-  // Pour garder une trace des modifications non sauvegardées
   const [modifiedCells, setModifiedCells] = useState<Set<string>>(new Set())
+
+  // State pour la modale de récapitulation
+  const [isRecapOpen, setIsRecapOpen] = useState(false)
+  const [recapPeriodStart, setRecapPeriodStart] = useState<string>('')
+  const [recapPeriodEnd, setRecapPeriodEnd] = useState<string>('')
 
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -46,6 +50,15 @@ export function PresencesManager({ classes, students }: Props) {
   const [success, setSuccess] = useState<boolean>(false)
 
   const filteredStudents = selectedClass ? students.filter(s => s.class_id === selectedClass) : []
+
+  // Initialiser les dates de période par défaut quand le mois change
+  useEffect(() => {
+    const start = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`
+    const lastDay = new Date(selectedYear, selectedMonth, 0).getDate()
+    const end = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+    setRecapPeriodStart(start)
+    setRecapPeriodEnd(end)
+  }, [selectedYear, selectedMonth])
 
   // Calcul des jours du mois
   const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate()
@@ -150,8 +163,81 @@ export function PresencesManager({ classes, students }: Props) {
     return ''
   }
 
+  const getTotalAbsences = (studentId: string) => {
+    let total = 0
+    days.forEach(d => {
+      const status = gridData[`${studentId}_${d.dateStr}`]
+      if (status === 'retard' || status === 'absent') {
+        total += 1
+      }
+    })
+    return total
+  }
+
+  // Calculs pour la récapitulation
+  const calculateRecap = () => {
+    let garconsInscrits = 0, fillesInscrites = 0
+    let garconsAbandons = 0, fillesAbandons = 0
+    let garconsAbsents = 0, fillesAbsentes = 0
+    let garconsPresents = 0, fillesPresentes = 0
+
+    filteredStudents.forEach(student => {
+      const isFille = student.gender?.toLowerCase().startsWith('f')
+      
+      // Inscrits
+      if (isFille) fillesInscrites++
+      else garconsInscrits++
+
+      // Abandons
+      if (student.status === 'abandon' || student.status === 'inactif') {
+        if (isFille) fillesAbandons++
+        else garconsAbandons++
+      }
+
+      // Absences sur le mois
+      const absences = getTotalAbsences(student.id)
+      if (absences > 0) {
+        if (isFille) fillesAbsentes++
+        else garconsAbsents++
+      } else {
+        if (isFille) fillesPresentes++
+        else garconsPresents++
+      }
+    })
+
+    // Calcul des demi-journées ouvrables
+    let totalDemiJournees = 0
+    if (recapPeriodStart && recapPeriodEnd) {
+      const start = new Date(recapPeriodStart)
+      const end = new Date(recapPeriodEnd)
+      let current = new Date(start)
+
+      while (current <= end) {
+        const dayOfWeek = current.getDay() // 0 = Dimanche, 3 = Mercredi
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+          if (dayOfWeek === 3) {
+            totalDemiJournees += 1 // Mercredi
+          } else {
+            totalDemiJournees += 2 // Autres jours
+          }
+        }
+        current.setDate(current.getDate() + 1)
+      }
+    }
+
+    return {
+      garconsInscrits, fillesInscrites, totalInscrits: garconsInscrits + fillesInscrites,
+      garconsAbandons, fillesAbandons, totalAbandons: garconsAbandons + fillesAbandons,
+      garconsAbsents, fillesAbsentes, totalAbsents: garconsAbsents + fillesAbsentes,
+      garconsPresents, fillesPresentes, totalPresents: garconsPresents + fillesPresentes,
+      totalDemiJournees
+    }
+  }
+
+  const recap = calculateRecap()
+
   return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
+    <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)] relative">
       <div className="max-w-[1400px] mx-auto space-y-6">
         
         {/* Top Header */}
@@ -237,6 +323,15 @@ export function PresencesManager({ classes, students }: Props) {
                   <div className="flex items-center gap-1"><span className="w-4 h-4 flex items-center justify-center bg-gray-100 rounded text-gray-800 font-bold border border-gray-200">-</span> Absent Matin</div>
                   <div className="flex items-center gap-1"><span className="w-4 h-4 flex items-center justify-center bg-gray-100 rounded text-gray-800 font-bold border border-gray-200">+</span> Absent Journée</div>
                 </div>
+                
+                <button 
+                  onClick={() => setIsRecapOpen(true)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-sm">summarize</span>
+                  Récapitulation
+                </button>
+
                 <button 
                   onClick={handleSave}
                   disabled={isPending || modifiedCells.size === 0}
@@ -259,8 +354,14 @@ export function PresencesManager({ classes, students }: Props) {
                     <th rowSpan={2} className="border border-gray-400 py-2 px-4 font-semibold w-64 bg-gray-100 text-gray-700 text-sm z-30 sticky left-[48px]">
                       Nom et prénom
                     </th>
+                    <th rowSpan={2} className="border border-gray-400 py-2 px-3 font-semibold text-center w-16 bg-gray-100 text-gray-700 text-sm z-30 sticky left-[304px]">
+                      Sexe
+                    </th>
                     <th colSpan={daysInMonth} className="border border-gray-400 py-1 font-bold text-center bg-indigo-50/50 text-gray-700 text-sm tracking-wide">
                       Indication des absences
+                    </th>
+                    <th rowSpan={2} className="border border-gray-400 py-2 px-3 font-semibold text-center w-24 bg-gray-100 text-gray-700 text-sm z-20">
+                      Total Abs.
                     </th>
                   </tr>
                   {/* Second header row: Day numbers and initials */}
@@ -281,36 +382,46 @@ export function PresencesManager({ classes, students }: Props) {
                   </tr>
                 </thead>
                 <tbody className="text-sm">
-                  {filteredStudents.map((student, index) => (
-                    <tr key={student.id} className="hover:bg-gray-50 group">
-                      <td className="border border-gray-400 py-2 px-2 text-center text-gray-600 font-semibold sticky left-0 bg-white z-10 group-hover:bg-gray-50">
-                        {String(index + 1).padStart(2, '0')}
-                      </td>
-                      <td className="border border-gray-400 py-2 px-3 font-semibold text-gray-800 sticky left-[48px] bg-white z-10 whitespace-nowrap overflow-hidden text-ellipsis group-hover:bg-gray-50 text-xs">
-                        {student.last_name} {student.first_name}
-                      </td>
-                      {days.map(d => {
-                        const key = `${student.id}_${d.dateStr}`
-                        const status = gridData[key]
-                        const isModified = modifiedCells.has(key)
-                        return (
-                          <td 
-                            key={d.dayNum} 
-                            onClick={() => handleCellClick(student.id, d.dateStr, d.isWeekend)}
-                            className={`
-                              border border-gray-400 p-0 text-center text-sm font-bold transition-colors
-                              ${d.isWeekend ? 'bg-blue-100/30 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100'}
-                              ${isModified ? 'text-indigo-600 bg-indigo-50/50' : 'text-gray-800'}
-                            `}
-                          >
-                            <div className="w-full h-8 flex items-center justify-center">
-                              {!d.isWeekend && getCellDisplay(status)}
-                            </div>
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  ))}
+                  {filteredStudents.map((student, index) => {
+                    const isFille = student.gender?.toLowerCase().startsWith('f')
+                    const textColor = isFille ? 'text-red-600' : 'text-gray-800'
+                    return (
+                      <tr key={student.id} className="hover:bg-gray-50 group">
+                        <td className="border border-gray-400 py-2 px-2 text-center text-gray-600 font-semibold sticky left-0 bg-white z-10 group-hover:bg-gray-50">
+                          {String(index + 1).padStart(2, '0')}
+                        </td>
+                        <td className={`border border-gray-400 py-2 px-3 font-semibold sticky left-[48px] bg-white z-10 whitespace-nowrap overflow-hidden text-ellipsis group-hover:bg-gray-50 text-xs ${textColor}`}>
+                          {student.last_name} {student.first_name}
+                        </td>
+                        <td className={`border border-gray-400 py-2 px-2 font-bold text-center sticky left-[304px] bg-white z-10 group-hover:bg-gray-50 ${textColor}`}>
+                          {isFille ? 'F' : 'M'}
+                        </td>
+                        {days.map(d => {
+                          const key = `${student.id}_${d.dateStr}`
+                          const status = gridData[key]
+                          const isModified = modifiedCells.has(key)
+                          return (
+                            <td 
+                              key={d.dayNum} 
+                              onClick={() => handleCellClick(student.id, d.dateStr, d.isWeekend)}
+                              className={`
+                                border border-gray-400 p-0 text-center text-sm font-bold transition-colors
+                                ${d.isWeekend ? 'bg-blue-100/30 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100'}
+                                ${isModified ? 'text-indigo-600 bg-indigo-50/50' : 'text-gray-800'}
+                              `}
+                            >
+                              <div className="w-full h-8 flex items-center justify-center">
+                                {!d.isWeekend && getCellDisplay(status)}
+                              </div>
+                            </td>
+                          )
+                        })}
+                        <td className="border border-gray-400 py-2 px-2 text-center font-bold text-gray-700 bg-gray-50/50">
+                          {getTotalAbsences(student.id)}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -322,8 +433,123 @@ export function PresencesManager({ classes, students }: Props) {
             <p className="text-sm">La grille d'appel du mois apparaîtra ici.</p>
           </div>
         )}
-
       </div>
+
+      {/* Modal de Récapitulation */}
+      {isRecapOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-blue-600">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <span className="material-symbols-outlined">summarize</span>
+                Récapitulation du mois - {MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}
+              </h3>
+              <button onClick={() => setIsRecapOpen(false)} className="text-blue-100 hover:text-white transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-8 flex-1">
+              
+              {/* Paramètres de la période */}
+              <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                <h4 className="font-semibold text-blue-900 mb-4 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">date_range</span>
+                  Définir la période du cours
+                </h4>
+                <div className="flex flex-wrap items-end gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-gray-600">Date de début</label>
+                    <input 
+                      type="date" 
+                      value={recapPeriodStart}
+                      onChange={e => setRecapPeriodStart(e.target.value)}
+                      className="h-10 px-3 border border-gray-300 rounded-lg text-sm focus:border-blue-500 outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-gray-600">Date de fin</label>
+                    <input 
+                      type="date" 
+                      value={recapPeriodEnd}
+                      onChange={e => setRecapPeriodEnd(e.target.value)}
+                      className="h-10 px-3 border border-gray-300 rounded-lg text-sm focus:border-blue-500 outline-none"
+                    />
+                  </div>
+                  <div className="ml-auto bg-white border border-gray-200 px-4 py-2 rounded-lg shadow-sm">
+                    <span className="text-xs text-gray-500 block mb-0.5">Nombre de demi-journées</span>
+                    <span className="text-lg font-bold text-blue-600">{recap.totalDemiJournees}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tableau croisé */}
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">table_view</span>
+                  Tableau Croisé (Effectifs et Présences)
+                </h4>
+                <div className="overflow-hidden rounded-xl border border-gray-200">
+                  <table className="w-full text-left border-collapse bg-white">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="border-b border-gray-200 p-3 font-semibold text-gray-600 text-sm">Catégorie</th>
+                        <th className="border-b border-gray-200 p-3 font-bold text-gray-800 text-center w-32">G (Garçons)</th>
+                        <th className="border-b border-gray-200 p-3 font-bold text-red-600 text-center w-32">F (Filles)</th>
+                        <th className="border-b border-gray-200 p-3 font-bold text-blue-700 text-center w-32 bg-blue-50">T (Total)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 text-sm">
+                      <tr className="hover:bg-gray-50">
+                        <td className="p-3 font-semibold text-gray-700">Inscrits</td>
+                        <td className="p-3 text-center font-medium">{recap.garconsInscrits}</td>
+                        <td className="p-3 text-center font-medium text-red-600">{recap.fillesInscrites}</td>
+                        <td className="p-3 text-center font-bold text-blue-700 bg-blue-50/50">{recap.totalInscrits}</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="p-3 font-semibold text-emerald-600">Présents (0 absence)</td>
+                        <td className="p-3 text-center font-medium">{recap.garconsPresents}</td>
+                        <td className="p-3 text-center font-medium text-red-600">{recap.fillesPresentes}</td>
+                        <td className="p-3 text-center font-bold text-blue-700 bg-blue-50/50">{recap.totalPresents}</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="p-3 font-semibold text-orange-600">Absents (au moins 1)</td>
+                        <td className="p-3 text-center font-medium">{recap.garconsAbsents}</td>
+                        <td className="p-3 text-center font-medium text-red-600">{recap.fillesAbsentes}</td>
+                        <td className="p-3 text-center font-bold text-blue-700 bg-blue-50/50">{recap.totalAbsents}</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="p-3 font-semibold text-gray-500">Abandons</td>
+                        <td className="p-3 text-center font-medium">{recap.garconsAbandons}</td>
+                        <td className="p-3 text-center font-medium text-red-600">{recap.fillesAbandons}</td>
+                        <td className="p-3 text-center font-bold text-blue-700 bg-blue-50/50">{recap.totalAbandons}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+              <button 
+                onClick={() => setIsRecapOpen(false)}
+                className="px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Fermer
+              </button>
+              {/* Optional: un bouton pour imprimer le PDF */}
+              <button 
+                onClick={() => window.print()}
+                className="px-6 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-sm">print</span>
+                Imprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
