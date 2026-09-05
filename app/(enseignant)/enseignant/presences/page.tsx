@@ -49,20 +49,10 @@ export default async function EnseignantPresencesPage() {
     .eq('status', 'actif')
     .order('last_name', { ascending: true })
 
-  // 3. Présences du jour
-  const today = new Date().toISOString().split('T')[0]
-  const { data: attendances } = await supabase
-    .from('attendance')
-    .select('student_id, class_id, status, justification')
-    .eq('school_id', schoolId)
-    .eq('date', today)
-    .in('class_id', classIds)
-
   return (
     <PresencesManager 
       classes={classes}
       students={students as any || []}
-      existingAttendance={attendances as any || []}
     />
   )
 }

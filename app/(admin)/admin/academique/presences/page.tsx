@@ -35,20 +35,10 @@ export default async function PresencesPage() {
     .eq('status', 'actif')
     .order('last_name')
     
-  // Fetch existing attendance for today by default to populate the grid.
-  // In a robust app, we'd fetch this via API on date change.
-  const today = new Date().toISOString().split('T')[0]
-  const { data: attendance } = await supabase
-    .from('attendance')
-    .select('student_id, status')
-    .eq('school_id', schoolId)
-    .eq('date', today)
-
   return (
     <PresencesManager 
       classes={classes || []} 
       students={students || []} 
-      existingAttendance={attendance || []}
     />
   )
 }

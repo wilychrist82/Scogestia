@@ -502,3 +502,87 @@ export async function publishBulletinPDF(studentId: string, termOrMonth: string,
     return { success: false, error: "Erreur inattendue" }
   }
 }
+
+export async function fetchMonthlyAttendance(classId: string, year: number, month: number) {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+
+    // month est 1-indexé (1 = Janvier, 12 = Décembre)
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    // Calculer le dernier jour du mois
+    const lastDay = new Date(year, month, 0).getDate();
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`;
+
+    const { data, error } = await supabase
+      .from("attendance")
+      .select("student_id, date, status")
+      .eq("school_id", school_id)
+      .eq("class_id", classId)
+      .gte("date", startDate)
+      .lte("date", endDate);
+
+    if (error) throw error;
+    return { data };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
+export async function saveMonthlyAttendanceGrid(
+  classId: string,
+  year: number,
+  month: number,
+  updates: { student_id: string; date: string; status: string }[]
+) {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    // Séparer les présences ('present' ou vide) des absences/retards
+    const toUpsert = updates
+      .filter((u) => u.status === "absent" || u.status === "retard")
+      .map((u) => ({
+        school_id,
+        student_id: u.student_id,
+        class_id: classId,
+        date: u.date,
+        status: u.status,
+        recorded_by: user?.id,
+      }));
+
+    const toDelete = updates.filter((u) => u.status === "present" || !u.status);
+
+    if (toUpsert.length > 0) {
+      const { error } = await supabase
+        .from("attendance")
+        .upsert(toUpsert, { onConflict: "student_id, date" });
+      if (error) throw error;
+    }
+
+    if (toDelete.length > 0) {
+      // Suppression par lots
+      for (const record of toDelete) {
+        await supabase
+          .from("attendance")
+          .delete()
+          .match({
+            school_id,
+            student_id: record.student_id,
+            date: record.date,
+          });
+      }
+    }
+
+    // On revalide les deux routes possibles
+    revalidatePath("/admin/academique/presences");
+    revalidatePath("/enseignant/presences");
+    
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
