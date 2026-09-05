@@ -237,6 +237,7 @@ export function PresencesManager({ classes, students }: Props) {
     const presencesPossibles = totalDemiJournees * totalInscrits
     const presencesReelles = presencesPossibles > 0 ? presencesPossibles - totalAbsencesClasse : 0
     const tauxAssiduite = presencesPossibles > 0 ? ((presencesReelles / presencesPossibles) * 100).toFixed(2) : '0.00'
+    const tauxAbsence = presencesPossibles > 0 ? ((totalAbsencesClasse / presencesPossibles) * 100).toFixed(2) : '0.00'
 
     return {
       garconsInscrits, fillesInscrites, totalInscrits,
@@ -247,7 +248,8 @@ export function PresencesManager({ classes, students }: Props) {
       totalAbsencesClasse,
       presencesPossibles,
       presencesReelles,
-      tauxAssiduite
+      tauxAssiduite,
+      tauxAbsence
     }
   }
 
@@ -504,10 +506,7 @@ export function PresencesManager({ classes, students }: Props) {
                       className="h-10 px-3 border border-gray-300 rounded-lg text-sm focus:border-blue-500 outline-none"
                     />
                   </div>
-                  <div className="ml-auto bg-white border border-gray-200 px-4 py-2 rounded-lg shadow-sm">
-                    <span className="text-xs text-gray-500 block mb-0.5">Nombre de demi-journées</span>
-                    <span className="text-lg font-bold text-blue-600">{recap.totalDemiJournees}</span>
-                  </div>
+
                 </div>
               </div>
 
@@ -517,40 +516,40 @@ export function PresencesManager({ classes, students }: Props) {
                   <span className="material-symbols-outlined text-sm">table_view</span>
                   Tableau Croisé (Effectifs et Présences)
                 </h4>
-                <div className="overflow-hidden rounded-xl border border-gray-200">
-                  <table className="w-full text-left border-collapse bg-white">
+                <div className="overflow-x-auto rounded-xl border border-gray-200">
+                  <table className="w-full min-w-[300px] text-left border-collapse bg-white text-xs sm:text-sm">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="border-b border-gray-200 p-3 font-semibold text-gray-600 text-sm">Catégorie</th>
-                        <th className="border-b border-gray-200 p-3 font-bold text-gray-800 text-center w-32">G (Garçons)</th>
-                        <th className="border-b border-gray-200 p-3 font-bold text-red-600 text-center w-32">F (Filles)</th>
-                        <th className="border-b border-gray-200 p-3 font-bold text-blue-700 text-center w-32 bg-blue-50">T (Total)</th>
+                        <th className="border-b border-gray-200 p-2 sm:p-3 font-semibold text-gray-800">Catégorie</th>
+                        <th className="border-b border-gray-200 p-2 sm:p-3 font-bold text-gray-800 text-center">G (Garçons)</th>
+                        <th className="border-b border-gray-200 p-2 sm:p-3 font-bold text-gray-800 text-center">F (Filles)</th>
+                        <th className="border-b border-gray-200 p-2 sm:p-3 font-bold text-gray-800 text-center bg-gray-100">T (Total)</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 text-sm">
+                    <tbody className="divide-y divide-gray-200">
                       <tr className="hover:bg-gray-50">
-                        <td className="p-3 font-semibold text-gray-700">Inscrits</td>
-                        <td className="p-3 text-center font-medium">{recap.garconsInscrits}</td>
-                        <td className="p-3 text-center font-medium text-red-600">{recap.fillesInscrites}</td>
-                        <td className="p-3 text-center font-bold text-blue-700 bg-blue-50/50">{recap.totalInscrits}</td>
+                        <td className="p-2 sm:p-3 font-semibold text-gray-800">Inscrits</td>
+                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.garconsInscrits || '0'}</td>
+                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.fillesInscrites || '0'}</td>
+                        <td className="p-2 sm:p-3 text-center font-bold text-gray-800 bg-gray-50">{recap.totalInscrits || '0'}</td>
                       </tr>
                       <tr className="hover:bg-gray-50">
-                        <td className="p-3 font-semibold text-emerald-600">Présents</td>
-                        <td className="p-3 text-center font-medium">{recap.garconsPresents}</td>
-                        <td className="p-3 text-center font-medium text-red-600">{recap.fillesPresentes}</td>
-                        <td className="p-3 text-center font-bold text-blue-700 bg-blue-50/50">{recap.totalPresents}</td>
+                        <td className="p-2 sm:p-3 font-semibold text-gray-800">Présents</td>
+                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.garconsPresents || '0'}</td>
+                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.fillesPresentes || '0'}</td>
+                        <td className="p-2 sm:p-3 text-center font-bold text-gray-800 bg-gray-50">{recap.totalPresents || '0'}</td>
                       </tr>
                       <tr className="hover:bg-gray-50">
-                        <td className="p-3 font-semibold text-orange-600">Absents</td>
-                        <td className="p-3 text-center font-medium">{recap.garconsAbsents}</td>
-                        <td className="p-3 text-center font-medium text-red-600">{recap.fillesAbsentes}</td>
-                        <td className="p-3 text-center font-bold text-blue-700 bg-blue-50/50">{recap.totalAbsents}</td>
+                        <td className="p-2 sm:p-3 font-semibold text-gray-800">Absents</td>
+                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.garconsAbsents || '0'}</td>
+                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.fillesAbsentes || '0'}</td>
+                        <td className="p-2 sm:p-3 text-center font-bold text-gray-800 bg-gray-50">{recap.totalAbsents || '0'}</td>
                       </tr>
                       <tr className="hover:bg-gray-50">
-                        <td className="p-3 font-semibold text-gray-500">Abandons</td>
-                        <td className="p-3 text-center font-medium">{recap.garconsAbandons}</td>
-                        <td className="p-3 text-center font-medium text-red-600">{recap.fillesAbandons}</td>
-                        <td className="p-3 text-center font-bold text-blue-700 bg-blue-50/50">{recap.totalAbandons}</td>
+                        <td className="p-2 sm:p-3 font-semibold text-gray-800">Abandons</td>
+                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.garconsAbandons || '0'}</td>
+                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.fillesAbandons || '0'}</td>
+                        <td className="p-2 sm:p-3 text-center font-bold text-gray-800 bg-gray-50">{recap.totalAbandons || '0'}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -561,25 +560,35 @@ export function PresencesManager({ classes, students }: Props) {
               <div>
                 <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   <span className="material-symbols-outlined text-sm">analytics</span>
-                  Statistiques d'assiduité de la classe
+                  Récapitulatif du mois de {MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}
                 </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    <span className="text-xs text-gray-500 block mb-1">Présences possibles</span>
-                    <span className="text-xl font-bold text-gray-800">{recap.presencesPossibles}</span>
-                  </div>
-                  <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
-                    <span className="text-xs text-orange-600 block mb-1">Total des absences</span>
-                    <span className="text-xl font-bold text-orange-700">{recap.totalAbsencesClasse}</span>
-                  </div>
-                  <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
-                    <span className="text-xs text-emerald-600 block mb-1">Présences réelles</span>
-                    <span className="text-xl font-bold text-emerald-700">{recap.presencesReelles}</span>
-                  </div>
-                  <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                    <span className="text-xs text-blue-600 block mb-1">Taux d'assiduité</span>
-                    <span className="text-xl font-bold text-blue-700">{recap.tauxAssiduite} %</span>
-                  </div>
+                <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 sm:p-6">
+                  <ul className="space-y-3 text-sm sm:text-base text-gray-800">
+                    <li className="flex justify-between items-center py-1 border-b border-gray-200">
+                      <span className="font-medium">Nombre de demi-journées</span>
+                      <span className="font-bold">{recap.totalDemiJournees || '0'}</span>
+                    </li>
+                    <li className="flex justify-between items-center py-1 border-b border-gray-200">
+                      <span className="font-medium">Nombre de présences possibles</span>
+                      <span className="font-bold">{recap.presencesPossibles || '0'}</span>
+                    </li>
+                    <li className="flex justify-between items-center py-1 border-b border-gray-200">
+                      <span className="font-medium">Nombre total d'absences</span>
+                      <span className="font-bold">{recap.totalAbsencesClasse || '0'}</span>
+                    </li>
+                    <li className="flex justify-between items-center py-1 border-b border-gray-200">
+                      <span className="font-medium">Nombre de présences effectives</span>
+                      <span className="font-bold">{recap.presencesReelles || '0'}</span>
+                    </li>
+                    <li className="flex justify-between items-center py-1 border-b border-gray-200">
+                      <span className="font-medium">Pourcentage des présences effectives</span>
+                      <span className="font-bold">{recap.tauxAssiduite} %</span>
+                    </li>
+                    <li className="flex justify-between items-center py-1">
+                      <span className="font-medium">Pourcentage des absences</span>
+                      <span className="font-bold">{recap.tauxAbsence} %</span>
+                    </li>
+                  </ul>
                 </div>
               </div>
 
