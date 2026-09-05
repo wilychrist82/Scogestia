@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { importStudents } from '@/app/actions/students'
 import toast from 'react-hot-toast'
 import Papa from 'papaparse'
+import * as XLSX from 'xlsx'
 
 type Props = {
   isOpen: boolean
@@ -25,58 +26,74 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
 
   const handleImport = async () => {
     if (!file) {
-      toast.error('Veuillez sélectionner un fichier CSV.')
+      toast.error('Veuillez sélectionner un fichier Excel ou CSV.')
       return
     }
 
     setIsUploading(true)
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (results) => {
-        try {
-          const data = results.data as any[]
-          if (data.length === 0) {
-            toast.error('Le fichier est vide.')
-            setIsUploading(false)
-            return
-          }
+    try {
+      const fileExt = file.name.split('.').pop()?.toLowerCase()
+      
+      let parsedData: any[] = []
 
-          const response = await importStudents(data)
-
-          if (response?.error) {
-            toast.error(response.error)
-          } else if (response?.success) {
-            toast.success(`${response.count} élèves importés avec succès !`)
-            onClose()
-            setFile(null)
-          }
-        } catch (error: any) {
-          toast.error('Erreur lors de l\'importation: ' + error.message)
-        } finally {
-          setIsUploading(false)
-        }
-      },
-      error: (error) => {
-        toast.error('Erreur de lecture du fichier CSV.')
+      if (fileExt === 'csv') {
+        const text = await file.text()
+        const result = Papa.parse(text, { header: true, skipEmptyLines: true })
+        parsedData = result.data as any[]
+      } else if (fileExt === 'xlsx' || fileExt === 'xls') {
+        const data = await file.arrayBuffer()
+        const workbook = XLSX.read(data, { type: 'array' })
+        const firstSheetName = workbook.SheetNames[0]
+        const worksheet = workbook.Sheets[firstSheetName]
+        parsedData = XLSX.utils.sheet_to_json(worksheet)
+      } else {
+        toast.error('Format de fichier non supporté. Utilisez .xlsx, .xls ou .csv')
         setIsUploading(false)
+        return
       }
-    })
+
+      if (parsedData.length === 0) {
+        toast.error('Le fichier est vide.')
+        setIsUploading(false)
+        return
+      }
+
+      const response = await importStudents(parsedData)
+
+      if (response?.error) {
+        toast.error(response.error)
+      } else if (response?.success) {
+        toast.success(`${response.count} élèves importés avec succès !`)
+        onClose()
+        setFile(null)
+      }
+    } catch (error: any) {
+      toast.error('Erreur lors de l\'importation: ' + error.message)
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   const generateTemplate = () => {
+    // Generate an Excel file template instead of CSV
     const headers = ['Prénom', 'Nom', 'Genre', 'Date de Naissance', 'Classe', 'Matricule', 'Téléphone Parent']
-    const csvContent = headers.join(',') + '\n' + 
-      'Jean,Dupont,M,2010-05-14,6eme A,1001,90123456\n' +
-      'Marie,Curie,F,2011-09-22,6eme A,1002,90123456'
+    const data = [
+      { 'Prénom': 'Jean', 'Nom': 'Dupont', 'Genre': 'M', 'Date de Naissance': '2010-05-14', 'Classe': '6eme A', 'Matricule': '1001', 'Téléphone Parent': '90123456' },
+      { 'Prénom': 'Marie', 'Nom': 'Curie', 'Genre': 'F', 'Date de Naissance': '2011-09-22', 'Classe': '6eme A', 'Matricule': '1002', 'Téléphone Parent': '90123456' }
+    ]
     
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
+    const worksheet = XLSX.utils.json_to_sheet(data, { header: headers })
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Eleves')
+    
+    // Write and trigger download
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', 'template_eleves.csv')
-    link.style.visibility = 'hidden'
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'template_eleves.xlsx'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -105,7 +122,7 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
               Instructions
             </p>
             <ul className="list-disc pl-5 space-y-1 opacity-90">
-              <li>Le fichier doit être au format <strong>.csv</strong></li>
+              <li>Le fichier doit être au format <strong>Excel (.xlsx, .xls)</strong> ou <strong>CSV</strong>.</li>
               <li>Les colonnes obligatoires sont: <strong>Prénom, Nom, Classe</strong>.</li>
               <li>La colonne <strong>Classe</strong> doit correspondre exactement au nom d'une classe existante.</li>
               <li><strong>Matricule</strong> et <strong>Téléphone Parent</strong> sont optionnels.</li>
@@ -115,7 +132,7 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
               className="mt-3 text-blue-700 font-semibold hover:text-blue-900 underline underline-offset-2 flex items-center gap-1 transition-colors"
             >
               <span className="material-symbols-outlined text-sm">download</span>
-              Télécharger le modèle CSV
+              Télécharger le modèle Excel
             </button>
           </div>
 
@@ -125,7 +142,7 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
           >
             <input 
               type="file" 
-              accept=".csv" 
+              accept=".xlsx,.xls,.csv" 
               className="hidden" 
               ref={fileInputRef}
               onChange={handleFileChange}
@@ -136,12 +153,12 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
             {file ? (
               <div>
                 <p className="font-semibold text-slate-800">{file.name}</p>
-                <p className="text-xs text-slate-500 mt-1">{(file.size / 1024).toFixed(1)} KB</p>
+                <p className="text-xs text-slate-500 mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
               </div>
             ) : (
               <div>
-                <p className="font-semibold text-slate-700">Cliquez pour sélectionner un fichier CSV</p>
-                <p className="text-xs text-slate-500 mt-1">Taille maximale : 5 MB</p>
+                <p className="font-semibold text-slate-700">Cliquez pour sélectionner un fichier (Excel ou CSV)</p>
+                <p className="text-xs text-slate-500 mt-1">Taille maximale recommandée : 50 MB</p>
               </div>
             )}
           </div>

@@ -33,6 +33,7 @@
     "recharts": "^3.10.1",
     "resend": "^6.25.0",
     "uuid": "^14.0.1",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {

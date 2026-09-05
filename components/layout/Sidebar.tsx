@@ -44,7 +44,7 @@ export type SidebarProps = {
 
 const mainNavItems: NavItem[] = [
   { label: 'Tableau de bord', href: '/admin', icon: LayoutDashboard },
-  { label: 'Élèves', href: '/admin/eleves', icon: Users, hasDropdown: true },
+  { label: 'Élèves', href: '/admin/eleves', icon: Users },
   { label: 'Classes', href: '/admin/classes', icon: Presentation },
   { label: 'Personnel', href: '/admin/personnel', icon: UserCircle },
   { 
