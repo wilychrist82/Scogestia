@@ -43,7 +43,7 @@ export default async function EnseignantPresencesPage() {
   // 2. Élèves
   const { data: students } = await supabase
     .from('students')
-    .select('id, last_name, first_name, matricule, class_id')
+    .select('id, last_name, first_name, matricule, class_id, gender, status')
     .eq('school_id', schoolId)
     .in('class_id', classIds)
     .eq('status', 'actif')

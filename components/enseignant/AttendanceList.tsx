@@ -10,6 +10,7 @@ type Student = {
   first_name: string
   last_name: string
   photo_url: string | null
+  gender?: string
 }
 
 type Props = {
@@ -117,6 +118,11 @@ export function AttendanceList({ classId, className, date, students, initialAtte
               rowClass += "hover:bg-[var(--color-surface-container-lowest)]"
             }
 
+            // Déterminer le genre et la couleur
+            const isFille = student.gender?.toLowerCase().startsWith('f')
+            const nameColor = isFille ? 'text-red-600' : 'text-[var(--color-on-surface)]'
+            const sexLabel = isFille ? 'F' : 'M'
+
             // Initiale Avatar
             const initials = student.first_name[0] + student.last_name[0]
 
@@ -138,7 +144,12 @@ export function AttendanceList({ classId, className, date, students, initialAtte
                     {(status === 'absent' || status === 'absent_justifie') && <div className="absolute bottom-0 right-0 w-3 h-3 bg-[var(--color-error)] rounded-full border-2 border-[var(--color-surface-container-lowest)]"></div>}
                   </div>
                   <div>
-                    <p className="font-semibold text-base text-[var(--color-on-surface)]">{student.first_name} {student.last_name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className={`font-semibold text-base ${nameColor}`}>{student.first_name} {student.last_name}</p>
+                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded bg-gray-100 ${nameColor}`}>
+                        {sexLabel}
+                      </span>
+                    </div>
                     <p className="text-sm text-[var(--color-on-surface-variant)]">ID: {student.matricule}</p>
                   </div>
                 </div>
