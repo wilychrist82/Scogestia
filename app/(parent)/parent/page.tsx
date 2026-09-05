@@ -72,7 +72,7 @@ export default async function ParentDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6 mb-6">
         
         {/* Carte Héro (Bannière) */}
-        <div className="lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-violet-950 via-slate-900 to-[#006039] rounded-[2rem] p-5 sm:p-8 min-h-[200px] sm:min-h-[280px] shadow-[0_15px_40px_rgba(124,58,237,0.15)] flex flex-col justify-start group">
+        <div className="-mx-4 -mt-4 sm:mx-0 sm:mt-0 lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-[var(--color-primary)] via-violet-950 to-slate-900 rounded-b-[2rem] sm:rounded-[2rem] p-5 sm:p-8 pt-6 min-h-[220px] sm:min-h-[280px] shadow-[0_15px_40px_rgba(124,58,237,0.15)] flex flex-col justify-start group">
           <div className="relative z-20 w-[70%] sm:w-3/5">
             <p className="text-white/70 text-[9px] sm:text-xs font-bold uppercase tracking-widest mb-1.5 sm:mb-2">Bonjour,</p>
             <h1 className="text-lg sm:text-4xl font-black text-white leading-tight mb-2 sm:mb-3 line-clamp-2">{displayName}</h1>

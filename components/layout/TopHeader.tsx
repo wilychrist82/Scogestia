@@ -11,19 +11,23 @@ export function TopHeader({
   userRoleLabel, 
   onMenuClick,
   schoolName,
-  schoolCity
+  schoolCity,
+  navVariant = 'admin'
 }: { 
   userFullName: string, 
   userRoleLabel: string, 
   onMenuClick?: () => void,
   schoolName?: string,
-  schoolCity?: string
+  schoolCity?: string,
+  navVariant?: 'admin' | 'enseignant' | 'super_admin'
 }) {
   const pathname = usePathname()
   const router = useRouter()
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
   const [showNotifs, setShowNotifs] = useState(false)
   const notifRef = useRef<HTMLDivElement>(null)
+
+  const isEnseignant = navVariant === 'enseignant'
 
   const handleNotificationClick = async (notif: any) => {
     if (!notif.is_read) {
@@ -67,43 +71,43 @@ export function TopHeader({
   const { title, subtitle } = getPageInfo()
 
   return (
-    <header className="bg-white h-[72px] border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-10 w-full shadow-sm">
+    <header className={`${isEnseignant ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-gray-900 border-gray-200'} h-[72px] border-b flex items-center justify-between px-6 sticky top-0 z-10 w-full shadow-sm`}>
       <div className="flex items-center gap-4">
-        <button onClick={onMenuClick} className="text-gray-400 hover:text-gray-700 transition-colors md:hidden">
+        <button onClick={onMenuClick} className={`${isEnseignant ? 'text-white/90 hover:text-white' : 'text-gray-400 hover:text-gray-700'} transition-colors md:hidden`}>
           <Menu size={24} />
         </button>
         <div className="hidden md:flex items-start gap-4">
-          <button className="text-gray-400 hover:text-gray-700 transition-colors mt-1">
+          <button className={`${isEnseignant ? 'text-white/90 hover:text-white' : 'text-gray-400 hover:text-gray-700'} transition-colors mt-1`}>
             <Menu size={20} />
           </button>
           <div>
-            <h2 className="text-xl font-bold text-gray-900 leading-none">{title}</h2>
-            <p className="text-sm text-gray-500 mt-1.5">{subtitle}</p>
+            <h2 className={`text-xl font-bold ${isEnseignant ? 'text-white' : 'text-gray-900'} leading-none`}>{title}</h2>
+            <p className={`text-sm ${isEnseignant ? 'text-white/80' : 'text-gray-500'} mt-1.5`}>{subtitle}</p>
           </div>
         </div>
       </div>
 
       <div className="flex items-center gap-6">
         {/* School Selector */}
-        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+        <div className={`hidden lg:flex items-center gap-2 px-3 py-1.5 border ${isEnseignant ? 'border-white/20 hover:bg-white/10' : 'border-gray-200 hover:bg-gray-50'} rounded-lg cursor-pointer`}>
           <div className="text-right">
-            <p className="text-sm font-semibold text-gray-900 leading-tight">{schoolName || 'École inconnue'}</p>
-            <p className="text-[11px] text-gray-500">{schoolCity || ''}</p>
+            <p className={`text-sm font-semibold ${isEnseignant ? 'text-white' : 'text-gray-900'} leading-tight`}>{schoolName || 'École inconnue'}</p>
+            <p className={`text-[11px] ${isEnseignant ? 'text-white/70' : 'text-gray-500'}`}>{schoolCity || ''}</p>
           </div>
-          <ChevronDown size={14} className="text-gray-400 ml-1" />
+          <ChevronDown size={14} className={`${isEnseignant ? 'text-white/70' : 'text-gray-400'} ml-1`} />
         </div>
 
-        <div className="h-8 w-px bg-gray-200 hidden lg:block"></div>
+        <div className={`h-8 w-px ${isEnseignant ? 'bg-white/20' : 'bg-gray-200'} hidden lg:block`}></div>
 
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button 
             onClick={() => setShowNotifs(!showNotifs)}
-            className="relative p-2 text-gray-500 hover:text-[var(--color-primary)] transition-colors rounded-full hover:bg-gray-100"
+            className={`relative p-2 ${isEnseignant ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:text-[var(--color-primary)] hover:bg-gray-100'} transition-colors rounded-full`}
           >
             <Bell size={20} />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white leading-none">
+              <span className={`absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 ${isEnseignant ? 'border-[var(--color-primary)]' : 'border-white'} leading-none`}>
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -147,15 +151,15 @@ export function TopHeader({
 
         {/* Profile */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-[var(--color-sidebar-bg)] flex items-center justify-center text-white font-bold overflow-hidden border border-gray-200">
+          <div className={`w-9 h-9 rounded-full ${isEnseignant ? 'bg-white/20 text-white border-white/20' : 'bg-[var(--color-sidebar-bg)] text-white border-gray-200'} flex items-center justify-center font-bold overflow-hidden border`}>
             {userFullName.charAt(0).toUpperCase()}
           </div>
           <div className="hidden sm:block">
-            <p className="text-sm font-bold text-gray-900 leading-tight">{userFullName}</p>
-            <p className="text-[11px] text-gray-500">{userRoleLabel}</p>
+            <p className={`text-sm font-bold ${isEnseignant ? 'text-white' : 'text-gray-900'} leading-tight`}>{userFullName}</p>
+            <p className={`text-[11px] ${isEnseignant ? 'text-white/80' : 'text-gray-500'}`}>{userRoleLabel}</p>
           </div>
           <form action={logout}>
-            <button title="Se déconnecter" type="submit" className="ml-2 p-2 text-gray-500 hover:text-red-600 transition-colors rounded-full hover:bg-red-50">
+            <button title="Se déconnecter" type="submit" className={`ml-2 p-2 ${isEnseignant ? 'text-white/70 hover:text-red-400 hover:bg-white/10' : 'text-gray-500 hover:text-red-600 hover:bg-red-50'} transition-colors rounded-full`}>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             </button>
           </form>

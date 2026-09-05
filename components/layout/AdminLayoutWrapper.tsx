@@ -41,8 +41,9 @@ export function AdminLayoutWrapper({
           onMenuClick={() => setIsSidebarOpen(true)}
           schoolName={schoolName}
           schoolCity={schoolCity}
+          navVariant={navVariant}
         />
-          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto custom-scrollbar relative">
+          <main className={`flex-1 ${navVariant === 'enseignant' ? 'pb-8 lg:p-8' : 'p-4 md:p-6 lg:p-8'} overflow-y-auto custom-scrollbar relative`}>
             {children}
           </main>
         </div>

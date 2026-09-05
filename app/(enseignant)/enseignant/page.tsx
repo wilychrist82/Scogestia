@@ -59,7 +59,7 @@ export default async function EnseignantDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6 mb-6">
         
         {/* Carte Héro (Bannière) */}
-        <div className="lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-slate-900 via-violet-950 to-[#006039] rounded-[2rem] p-5 sm:p-8 min-h-[200px] sm:min-h-[280px] shadow-[0_15px_40px_rgba(124,58,237,0.15)] flex flex-col justify-start group">
+        <div className="-mx-4 -mt-4 sm:mx-0 sm:mt-0 lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-[var(--color-primary)] via-violet-950 to-slate-900 rounded-b-[2rem] sm:rounded-[2rem] p-5 sm:p-8 pt-6 min-h-[220px] sm:min-h-[280px] shadow-[0_15px_40px_rgba(124,58,237,0.15)] flex flex-col justify-start group">
           <div className="relative z-20 w-[70%] sm:w-3/5">
             <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
                <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white font-bold shadow-inner border border-white/10 text-xs sm:text-base">
