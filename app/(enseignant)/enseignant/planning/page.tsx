@@ -19,7 +19,15 @@ export default async function EnseignantPlanningPage() {
 
   if (!roleData) redirect('/')
 
-  // Récupérer les emplois du temps de l'enseignant
+  // Récupérer la classe principale dont il est titulaire (pour le primaire/maternelle)
+  const { data: mainClass } = await supabase
+    .from('classes')
+    .select('id, name, level')
+    .eq('school_id', roleData.school_id)
+    .eq('main_teacher_id', user.id)
+    .limit(1).maybeSingle()
+
+  // Récupérer les emplois du temps de l'enseignant (pour le secondaire - Bientôt dispo/dynamique)
   const { data: timetables, error } = await supabase
     .from('timetables')
     .select(`
@@ -43,6 +51,6 @@ export default async function EnseignantPlanningPage() {
   const safeTimetables = error ? [] : (timetables || [])
 
   return (
-    <PlanningDashboard timetables={safeTimetables as any} />
+    <PlanningDashboard timetables={safeTimetables as any} mainClass={mainClass} />
   )
 }

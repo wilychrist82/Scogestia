@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react'
 
+import { StaticTimetable } from '@/components/ui/StaticTimetable'
+
 type TimetableEntry = {
   id: string
   day_of_week: number
@@ -16,6 +18,7 @@ type TimetableEntry = {
 
 type Props = {
   timetables: TimetableEntry[]
+  mainClass?: { id: string; name: string; level: string } | null
 }
 
 const DAYS = [
@@ -29,7 +32,7 @@ const DAYS = [
 
 const HOURS = Array.from({ length: 11 }, (_, i) => i + 7) // 7h à 17h
 
-export function PlanningDashboard({ timetables }: Props) {
+export function PlanningDashboard({ timetables, mainClass }: Props) {
   // Grouper les cours par jour
   const scheduleByDay = useMemo(() => {
     const grouped = new Map<number, TimetableEntry[]>()
@@ -84,6 +87,19 @@ export function PlanningDashboard({ timetables }: Props) {
     return colors[Math.abs(hash) % colors.length]
   }
 
+  const getTimetableLevel = (levelStr: string | undefined): 'maternelle' | 'cp' | 'ce' | 'cm' | null => {
+    if (!levelStr) return null
+    const l = levelStr.toLowerCase()
+    if (['s1', 's2', 'section1', 'section2', 'maternelle'].includes(l)) return 'maternelle'
+    if (['cp1', 'cp2', 'cp'].includes(l)) return 'cp'
+    if (['ce1', 'ce2', 'ce'].includes(l)) return 'ce'
+    if (['cm1', 'cm2', 'cm'].includes(l)) return 'cm'
+    return null
+  }
+
+  const staticLevel = getTimetableLevel(mainClass?.level)
+  const isPrimaryOrMaternal = staticLevel !== null
+
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-[1280px] mx-auto space-y-6">
@@ -94,83 +110,90 @@ export function PlanningDashboard({ timetables }: Props) {
             <div className="flex items-center gap-2 text-[var(--color-on-surface-variant)] mb-2">
               <span className="text-sm font-semibold text-[var(--color-on-surface)]">Espace Enseignant</span>
             </div>
-            <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Emploi du temps</h2>
+            <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">
+              Emploi du temps {mainClass ? `- ${mainClass.name}` : ''}
+            </h2>
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Consultez votre planning hebdomadaire de cours.</p>
           </div>
         </div>
 
-        {timetables.length === 0 && (
-          <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-md">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <span className="material-symbols-outlined text-amber-500">info</span>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-amber-700 font-medium">
-                  Aucun emploi du temps n'a été configuré pour vous actuellement.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Grille du planning */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-[800px]">
-          {/* Jours de la semaine (Header) */}
-          <div className="flex border-b border-gray-200 bg-gray-50">
-            <div className="w-16 flex-shrink-0 border-r border-gray-200"></div>
-            {DAYS.map(day => (
-              <div key={day.id} className="flex-1 text-center py-3 border-r border-gray-200 last:border-r-0 font-semibold text-gray-700">
-                {day.name}
-              </div>
-            ))}
-          </div>
-
-          {/* Grille des heures */}
-          <div className="flex flex-1 overflow-y-auto relative custom-scrollbar">
-            {/* Colonne des heures */}
-            <div className="w-16 flex-shrink-0 border-r border-gray-200 bg-white z-10 relative">
-              {HOURS.map(hour => (
-                <div key={hour} className="h-[60px] border-b border-gray-100 flex items-start justify-center text-xs text-gray-500 pt-2 font-medium">
-                  {hour}h00
+        {isPrimaryOrMaternal ? (
+          <StaticTimetable level={staticLevel} />
+        ) : (
+          <>
+            {timetables.length === 0 && (
+              <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-md">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <span className="material-symbols-outlined text-amber-500">info</span>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-amber-700 font-medium">
+                      Bientôt disponible. Votre emploi du temps n'est pas encore configuré.
+                    </p>
+                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
 
-            {/* Conteneur des jours */}
-            <div className="flex flex-1 relative bg-[linear-gradient(to_bottom,transparent_59px,#f3f4f6_60px)]" style={{ backgroundSize: '100% 60px' }}>
-              {DAYS.map(day => (
-                <div key={day.id} className="flex-1 border-r border-gray-200 last:border-r-0 relative">
-                  {scheduleByDay.get(day.id)?.map(slot => {
-                    const pos = getSlotPosition(slot.start_time, slot.end_time)
-                    return (
-                      <div 
-                        key={slot.id} 
-                        className={`absolute left-1 right-1 rounded-md border p-2 overflow-hidden shadow-sm transition-transform hover:scale-[1.02] cursor-pointer ${getColorForSubject(slot.subject_name)}`}
-                        style={{ top: `${pos.top}px`, height: `${pos.height}px` }}
-                      >
-                        <div className="font-bold text-sm truncate">{slot.subject_name}</div>
-                        <div className="text-xs mt-1 font-medium truncate opacity-90">
-                          {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
-                        </div>
-                        <div className="text-xs mt-1 truncate font-semibold">
-                          {slot.classes?.name || 'Classe inconnue'}
-                        </div>
-                        {slot.room_name && (
-                          <div className="text-[10px] mt-0.5 truncate flex items-center gap-1 opacity-80">
-                            <span className="material-symbols-outlined text-[12px]">meeting_room</span>
-                            {slot.room_name}
+            {/* Grille du planning pour le secondaire */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-[800px]">
+              {/* Jours de la semaine (Header) */}
+              <div className="flex border-b border-gray-200 bg-gray-50">
+                <div className="w-16 flex-shrink-0 border-r border-gray-200"></div>
+                {DAYS.map(day => (
+                  <div key={day.id} className="flex-1 text-center py-3 border-r border-gray-200 last:border-r-0 font-semibold text-gray-700">
+                    {day.name}
+                  </div>
+                ))}
+              </div>
+
+              {/* Grille des heures */}
+              <div className="flex flex-1 overflow-y-auto relative custom-scrollbar">
+                {/* Colonne des heures */}
+                <div className="w-16 flex-shrink-0 border-r border-gray-200 bg-white z-10 relative">
+                  {HOURS.map(hour => (
+                    <div key={hour} className="h-[60px] border-b border-gray-100 flex items-start justify-center text-xs text-gray-500 pt-2 font-medium">
+                      {hour}h00
+                    </div>
+                  ))}
+                </div>
+
+                {/* Conteneur des jours */}
+                <div className="flex flex-1 relative bg-[linear-gradient(to_bottom,transparent_59px,#f3f4f6_60px)]" style={{ backgroundSize: '100% 60px' }}>
+                  {DAYS.map(day => (
+                    <div key={day.id} className="flex-1 border-r border-gray-200 last:border-r-0 relative">
+                      {scheduleByDay.get(day.id)?.map(slot => {
+                        const pos = getSlotPosition(slot.start_time, slot.end_time)
+                        return (
+                          <div 
+                            key={slot.id} 
+                            className={`absolute left-1 right-1 rounded-md border p-2 overflow-hidden shadow-sm transition-transform hover:scale-[1.02] cursor-pointer ${getColorForSubject(slot.subject_name)}`}
+                            style={{ top: `${pos.top}px`, height: `${pos.height}px` }}
+                          >
+                            <div className="font-bold text-sm truncate">{slot.subject_name}</div>
+                            <div className="text-xs mt-1 font-medium truncate opacity-90">
+                              {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
+                            </div>
+                            <div className="text-xs mt-1 truncate font-semibold">
+                              {slot.classes?.name || 'Classe inconnue'}
+                            </div>
+                            {slot.room_name && (
+                              <div className="text-[10px] mt-0.5 truncate flex items-center gap-1 opacity-80">
+                                <span className="material-symbols-outlined text-[12px]">meeting_room</span>
+                                {slot.room_name}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    )
-                  })}
+                        )
+                      })}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
-        </div>
-
+          </>
+        )}
       </div>
     </div>
   )
