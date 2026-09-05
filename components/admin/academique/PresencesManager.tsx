@@ -344,20 +344,20 @@ export function PresencesManager({ classes, students }: Props) {
                 </div>
                 
                 <button 
+                  onClick={handleSave}
+                  disabled={isPending || modifiedCells.size === 0}
+                  className="bg-[var(--color-primary)] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isPending ? 'Enregistrement...' : "Enregistrer"}
+                  {modifiedCells.size > 0 && !isPending && <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs">{modifiedCells.size}</span>}
+                </button>
+
+                <button 
                   onClick={() => setIsRecapOpen(true)}
                   className="hidden md:flex bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors items-center gap-2"
                 >
                   <span className="material-symbols-outlined text-sm">summarize</span>
                   Récapitulation
-                </button>
-
-                <button 
-                  onClick={handleSave}
-                  disabled={isPending || modifiedCells.size === 0}
-                  className="bg-[var(--color-primary)] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {isPending ? 'Sauvegarde...' : "Sauvegarder"}
-                  {modifiedCells.size > 0 && !isPending && <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs">{modifiedCells.size}</span>}
                 </button>
               </div>
             </div>
@@ -520,36 +520,36 @@ export function PresencesManager({ classes, students }: Props) {
                   <table className="w-full min-w-[300px] text-left border-collapse bg-white text-xs sm:text-sm">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="border-b border-gray-200 p-2 sm:p-3 font-semibold text-gray-800">Catégorie</th>
-                        <th className="border-b border-gray-200 p-2 sm:p-3 font-bold text-gray-800 text-center">G (Garçons)</th>
-                        <th className="border-b border-gray-200 p-2 sm:p-3 font-bold text-gray-800 text-center">F (Filles)</th>
-                        <th className="border-b border-gray-200 p-2 sm:p-3 font-bold text-gray-800 text-center bg-gray-100">T (Total)</th>
+                        <th className="border border-gray-300 p-2 sm:p-3 font-semibold text-gray-800">Catégorie</th>
+                        <th className="border border-gray-300 p-2 sm:p-3 font-bold text-gray-800 text-center">G</th>
+                        <th className="border border-gray-300 p-2 sm:p-3 font-bold text-gray-800 text-center">F</th>
+                        <th className="border border-gray-300 p-2 sm:p-3 font-bold text-gray-800 text-center bg-gray-100">T</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
+                    <tbody>
                       <tr className="hover:bg-gray-50">
-                        <td className="p-2 sm:p-3 font-semibold text-gray-800">Inscrits</td>
-                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.garconsInscrits || '0'}</td>
-                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.fillesInscrites || '0'}</td>
-                        <td className="p-2 sm:p-3 text-center font-bold text-gray-800 bg-gray-50">{recap.totalInscrits || '0'}</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 font-semibold text-gray-800">Inscrits</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 text-center font-medium text-gray-800">{recap.garconsInscrits || '0'}</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 text-center font-medium text-gray-800">{recap.fillesInscrites || '0'}</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 text-center font-bold text-gray-800 bg-gray-50">{recap.totalInscrits || '0'}</td>
                       </tr>
                       <tr className="hover:bg-gray-50">
-                        <td className="p-2 sm:p-3 font-semibold text-gray-800">Présents</td>
-                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.garconsPresents || '0'}</td>
-                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.fillesPresentes || '0'}</td>
-                        <td className="p-2 sm:p-3 text-center font-bold text-gray-800 bg-gray-50">{recap.totalPresents || '0'}</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 font-semibold text-gray-800">Présents</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 text-center font-medium text-gray-800">{recap.garconsPresents || '0'}</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 text-center font-medium text-gray-800">{recap.fillesPresentes || '0'}</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 text-center font-bold text-gray-800 bg-gray-50">{recap.totalPresents || '0'}</td>
                       </tr>
                       <tr className="hover:bg-gray-50">
-                        <td className="p-2 sm:p-3 font-semibold text-gray-800">Absents</td>
-                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.garconsAbsents || '0'}</td>
-                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.fillesAbsentes || '0'}</td>
-                        <td className="p-2 sm:p-3 text-center font-bold text-gray-800 bg-gray-50">{recap.totalAbsents || '0'}</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 font-semibold text-gray-800">Absents</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 text-center font-medium text-gray-800">{recap.garconsAbsents || '0'}</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 text-center font-medium text-gray-800">{recap.fillesAbsentes || '0'}</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 text-center font-bold text-gray-800 bg-gray-50">{recap.totalAbsents || '0'}</td>
                       </tr>
                       <tr className="hover:bg-gray-50">
-                        <td className="p-2 sm:p-3 font-semibold text-gray-800">Abandons</td>
-                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.garconsAbandons || '0'}</td>
-                        <td className="p-2 sm:p-3 text-center font-medium text-gray-800">{recap.fillesAbandons || '0'}</td>
-                        <td className="p-2 sm:p-3 text-center font-bold text-gray-800 bg-gray-50">{recap.totalAbandons || '0'}</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 font-semibold text-gray-800">Abandons</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 text-center font-medium text-gray-800">{recap.garconsAbandons || '0'}</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 text-center font-medium text-gray-800">{recap.fillesAbandons || '0'}</td>
+                        <td className="border border-gray-300 p-2 sm:p-3 text-center font-bold text-gray-800 bg-gray-50">{recap.totalAbandons || '0'}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -589,6 +589,24 @@ export function PresencesManager({ classes, students }: Props) {
                       <span className="font-bold">{recap.tauxAbsence} %</span>
                     </li>
                   </ul>
+                </div>
+              </div>
+
+              {/* Signatures */}
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <p className="text-right text-sm text-gray-700 mb-6">Fermé le {new Date().toLocaleDateString('fr-FR')}</p>
+                <div className="flex justify-between items-start text-sm font-semibold text-gray-800">
+                  <div className="text-center w-1/3">
+                    <p className="mb-16">Le titulaire</p>
+                    <p className="font-normal text-gray-600 border-t border-gray-400 pt-1 w-32 mx-auto"></p>
+                  </div>
+                  <div className="text-center text-gray-400 text-xs mt-10 w-1/3">
+                    (Cachet de l'établissement)
+                  </div>
+                  <div className="text-center w-1/3">
+                    <p className="mb-16">Le directeur</p>
+                    <p className="font-normal text-gray-600 border-t border-gray-400 pt-1 w-32 mx-auto"></p>
+                  </div>
                 </div>
               </div>
 
