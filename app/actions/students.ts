@@ -37,6 +37,15 @@ async function generateUniqueMatricule(supabase: any, school_id: string): Promis
     return '1000';
   }
 
+  // Extraire uniquement les matricules qui sont des nombres
+  const numericMatricules = data
+    .map((s: any) => parseInt(s.matricule, 10))
+    .filter((n: number) => !isNaN(n));
+    
+  const maxMatricule = numericMatricules.length > 0 ? Math.max(...numericMatricules) : 999;
+  return (maxMatricule + 1).toString();
+}
+
 async function checkStudentLimit(supabase: any, school_id: string, incomingCount: number = 1): Promise<void> {
   const { data: sub } = await supabase
     .from('saas_subscriptions')
@@ -52,7 +61,7 @@ async function checkStudentLimit(supabase: any, school_id: string, incomingCount
     .select('*', { count: 'exact', head: true })
     .eq('school_id', school_id);
 
-  if (error) throw new Error('Erreur lors de la vérification de la limite d\'élèves.');
+  if (error) throw new Error('Erreur lors de la vérification de la limite d\\'élèves.');
 
   const currentCount = count || 0;
   if (currentCount + incomingCount > limit) {
@@ -62,16 +71,6 @@ async function checkStudentLimit(supabase: any, school_id: string, incomingCount
        throw new Error(`Limite atteinte : Vous essayez d'ajouter ${incomingCount} élèves, mais il ne vous reste que ${limit - currentCount} places disponibles sur votre plan (${limit} max).`);
     }
   }
-}
-
-  
-  // Extraire uniquement les matricules qui sont des nombres
-  const numericMatricules = data
-    .map((s: any) => parseInt(s.matricule, 10))
-    .filter((n: number) => !isNaN(n));
-    
-  const maxMatricule = numericMatricules.length > 0 ? Math.max(...numericMatricules) : 999;
-  return (maxMatricule + 1).toString();
 }
 
 import { studentSchema, updateStudentSchema } from '@/lib/validations';
