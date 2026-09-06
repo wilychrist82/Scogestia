@@ -2,6 +2,7 @@
 
 import { useState, useTransition, FormEvent } from 'react'
 import { updateSchoolSettings } from '@/app/actions/parametres'
+import { ImageUpload } from '@/components/shared/ImageUpload'
 
 type School = {
   id: string
@@ -24,6 +25,10 @@ export function ParametresManager({ school, userAvatar }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<boolean>(false)
+
+  const [logoUrl, setLogoUrl] = useState(school.logo_url || '')
+  const [signatureUrl, setSignatureUrl] = useState(school.signature_url || '')
+  const [stampUrl, setStampUrl] = useState(school.stamp_url || '')
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -130,13 +135,13 @@ export function ParametresManager({ school, userAvatar }: Props) {
               </div>
 
               <div className="flex flex-col gap-1.5 md:col-span-2">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">URL de votre Photo de Profil (Avatar)</label>
-                <input 
-                  type="url" 
-                  name="profilePhotoUrl"
-                  defaultValue={userAvatar || ''}
-                  className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
-                  placeholder="https://..."
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Photo de Profil (Avatar)</label>
+                <ImageUpload 
+                  name="profilePhotoUrl" 
+                  bucket="avatars" 
+                  folder={`admin_${school.id}`} 
+                  defaultUrl={userAvatar || null} 
+                  label="Choisir une photo (Depuis la galerie ou le PC)"
                 />
               </div>
 
@@ -156,36 +161,68 @@ export function ParametresManager({ school, userAvatar }: Props) {
               </div>
 
               <div className="flex flex-col gap-1.5 md:col-span-2">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">URL du Logo de l'École (affiché sur le reçu)</label>
-                <input 
-                  type="url" 
-                  name="logoUrl"
-                  defaultValue={school.logo_url || ''}
-                  className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
-                  placeholder="https://..."
-                />
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Logo de l'École (affiché sur le reçu)</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2 justify-center">
+                    <p className="text-xs text-gray-500">Option 1 : Télécharger une image</p>
+                    <ImageUpload 
+                      bucket="avatars" 
+                      folder={`school_${school.id}/logo`} 
+                      defaultUrl={logoUrl} 
+                      onUploadSuccess={setLogoUrl}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2 justify-center">
+                    <p className="text-xs text-gray-500">Option 2 : Coller un lien (URL)</p>
+                    <input 
+                      type="url" 
+                      name="logoUrl"
+                      value={logoUrl}
+                      onChange={(e) => setLogoUrl(e.target.value)}
+                      className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">URL de la Signature Numérique</label>
-                <input 
-                  type="url" 
-                  name="signatureUrl"
-                  defaultValue={school.signature_url || ''}
-                  className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
-                  placeholder="https://..."
-                />
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Signature Numérique</label>
+                <div className="flex flex-col gap-3">
+                  <ImageUpload 
+                    bucket="avatars" 
+                    folder={`school_${school.id}/signature`} 
+                    defaultUrl={signatureUrl} 
+                    onUploadSuccess={setSignatureUrl}
+                  />
+                  <input 
+                    type="url" 
+                    name="signatureUrl"
+                    value={signatureUrl}
+                    onChange={(e) => setSignatureUrl(e.target.value)}
+                    className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                    placeholder="Ou collez un lien HTTP..."
+                  />
+                </div>
               </div>
-
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">URL du Cachet de l'École</label>
-                <input 
-                  type="url" 
-                  name="stampUrl"
-                  defaultValue={school.stamp_url || ''}
-                  className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
-                  placeholder="https://..."
-                />
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Cachet de l'École</label>
+                <div className="flex flex-col gap-3">
+                  <ImageUpload 
+                    bucket="avatars" 
+                    folder={`school_${school.id}/stamp`} 
+                    defaultUrl={stampUrl} 
+                    onUploadSuccess={setStampUrl}
+                  />
+                  <input 
+                    type="url" 
+                    name="stampUrl"
+                    value={stampUrl}
+                    onChange={(e) => setStampUrl(e.target.value)}
+                    className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                    placeholder="Ou collez un lien HTTP..."
+                  />
+                </div>
               </div>
             </div>
 
