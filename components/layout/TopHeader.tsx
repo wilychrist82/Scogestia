@@ -1,7 +1,8 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, Bell, ChevronDown, CheckCheck } from 'lucide-react'
+import Link from 'next/link'
+import { Menu, Bell, ChevronDown, CheckCheck, Settings, LogOut } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useNotifications } from '@/components/providers/NotificationProvider'
 import { useState, useRef, useEffect } from 'react'
@@ -25,7 +26,9 @@ export function TopHeader({
   const router = useRouter()
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
   const [showNotifs, setShowNotifs] = useState(false)
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
   const notifRef = useRef<HTMLDivElement>(null)
+  const profileRef = useRef<HTMLDivElement>(null)
 
   const isEnseignant = navVariant === 'enseignant'
 
@@ -50,6 +53,9 @@ export function TopHeader({
     function handleClickOutside(event: MouseEvent) {
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
         setShowNotifs(false)
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -150,19 +156,48 @@ export function TopHeader({
         </div>
 
         {/* Profile */}
-        <div className="flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-full ${isEnseignant ? 'bg-white/20 text-white border-white/20' : 'bg-[var(--color-sidebar-bg)] text-white border-gray-200'} flex items-center justify-center font-bold overflow-hidden border`}>
-            {userFullName.charAt(0).toUpperCase()}
-          </div>
-          <div className="hidden sm:block">
-            <p className={`text-sm font-bold ${isEnseignant ? 'text-white' : 'text-gray-900'} leading-tight`}>{userFullName}</p>
-            <p className={`text-[11px] ${isEnseignant ? 'text-white/80' : 'text-gray-500'}`}>{userRoleLabel}</p>
-          </div>
-          <form action={logout}>
-            <button title="Se déconnecter" type="submit" className={`ml-2 p-2 ${isEnseignant ? 'text-white/70 hover:text-red-400 hover:bg-white/10' : 'text-gray-500 hover:text-red-600 hover:bg-red-50'} transition-colors rounded-full`}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-            </button>
-          </form>
+        <div className="relative" ref={profileRef}>
+          <button 
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className={`flex items-center gap-3 p-1 pr-2 rounded-full transition-colors ${isEnseignant ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
+          >
+            <div className={`w-9 h-9 rounded-full ${isEnseignant ? 'bg-white/20 text-white border-white/20' : 'bg-[var(--color-sidebar-bg)] text-white border-gray-200'} flex items-center justify-center font-bold overflow-hidden border`}>
+              {userFullName.charAt(0).toUpperCase()}
+            </div>
+            <div className="hidden sm:block text-left">
+              <p className={`text-sm font-bold ${isEnseignant ? 'text-white' : 'text-gray-900'} leading-tight`}>{userFullName}</p>
+              <p className={`text-[11px] ${isEnseignant ? 'text-white/80' : 'text-gray-500'}`}>{userRoleLabel}</p>
+            </div>
+            <ChevronDown size={16} className={isEnseignant ? 'text-white/70' : 'text-gray-400'} />
+          </button>
+
+          {showProfileMenu && (
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
+              <div className="p-3 border-b border-gray-100 bg-gray-50">
+                <p className="text-sm font-bold text-gray-900 truncate">{userFullName}</p>
+                <p className="text-xs text-gray-500 truncate">{userRoleLabel}</p>
+              </div>
+              <div className="py-1">
+                <Link 
+                  href={isEnseignant ? "/enseignant/parametres" : "/admin/parametres"}
+                  onClick={() => setShowProfileMenu(false)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <Settings size={16} className="text-gray-400" />
+                  Paramètres du profil
+                </Link>
+                <form action={logout}>
+                  <button 
+                    type="submit" 
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
+                  >
+                    <LogOut size={16} />
+                    Se déconnecter
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>
