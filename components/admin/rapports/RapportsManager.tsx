@@ -12,7 +12,21 @@ type Props = {
   studentsByClass: { name: string; count: number }[]
 }
 
-const COLORS = ['#0C4A3E', '#147a63', '#1e8e3e', '#34a853', '#81c995', '#b3e5fc', '#81d4fa', '#4fc3f7', '#29b6f6', '#03a9f4']
+// Une palette de couleurs agréables et variées (Google Material Design colors)
+const COLORS = [
+  '#4285F4', // Bleu
+  '#DB4437', // Rouge
+  '#F4B400', // Jaune/Orange
+  '#0F9D58', // Vert
+  '#AB47BC', // Violet
+  '#00ACC1', // Cyan
+  '#FF7043', // Corail
+  '#9E9D24', // Vert olive
+  '#5C6BC0', // Indigo
+  '#F06292', // Rose
+  '#00897B', // Sarcelle
+  '#8D6E63'  // Marron
+]
 
 export function RapportsManager({ totalStudents, totalClasses, totalExpected, totalCollected, attendanceRate, studentsByClass }: Props) {
   
@@ -97,7 +111,11 @@ export function RapportsManager({ totalStudents, totalClasses, totalExpected, to
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
                   <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                  <Bar dataKey="count" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                    {studentsByClass.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
