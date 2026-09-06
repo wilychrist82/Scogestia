@@ -33,7 +33,7 @@ export function AbonnementManager({ plans }: Props) {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto pt-4">
         {sortedPlans.map((plan) => {
           const isPro = plan.name?.toLowerCase().includes('pro')
           const price = plan.price != null && plan.price > 0 ? Number(plan.price).toLocaleString('fr-FR') : (isPro ? '9 900' : '7 000')
@@ -51,7 +51,7 @@ export function AbonnementManager({ plans }: Props) {
                    <span className="text-emerald-200 font-medium"> / mois</span>
                 </div>
                 <ul className="space-y-4 mb-10 flex-1 relative z-10 text-sm md:text-base">
-                   <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Élèves et classes illimités</span></li>
+                   <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Jusqu'à 400 élèves</span></li>
                    <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Toutes les fonctionnalités Standard</span></li>
                    <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Gestion multi-campus / multi-sites</span></li>
                    <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Gestion des Ressources Humaines (Paie)</span></li>
@@ -83,7 +83,7 @@ export function AbonnementManager({ plans }: Props) {
                   <span className="text-slate-500 font-medium"> / mois</span>
                </div>
                <ul className="space-y-4 mb-10 flex-1 relative z-10 text-sm md:text-base">
-                  <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Jusqu'à 500 élèves</span></li>
+                  <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Jusqu'à 200 élèves</span></li>
                   <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Gestion des inscriptions et classes</span></li>
                   <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Suivi de la comptabilité et paiements</span></li>
                   <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Génération des reçus automatisée</span></li>

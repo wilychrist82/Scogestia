@@ -36,6 +36,34 @@ async function generateUniqueMatricule(supabase: any, school_id: string): Promis
   if (!data || data.length === 0) {
     return '1000';
   }
+
+async function checkStudentLimit(supabase: any, school_id: string, incomingCount: number = 1): Promise<void> {
+  const { data: sub } = await supabase
+    .from('saas_subscriptions')
+    .select('plan_name, status')
+    .eq('school_id', school_id)
+    .maybeSingle();
+
+  const isPro = sub?.plan_name?.toLowerCase().includes('pro');
+  const limit = isPro ? 400 : 200;
+
+  const { count, error } = await supabase
+    .from('students')
+    .select('*', { count: 'exact', head: true })
+    .eq('school_id', school_id);
+
+  if (error) throw new Error('Erreur lors de la vérification de la limite d\'élèves.');
+
+  const currentCount = count || 0;
+  if (currentCount + incomingCount > limit) {
+    if (incomingCount === 1) {
+       throw new Error(`Limite atteinte : Votre plan actuel vous limite à ${limit} élèves.`);
+    } else {
+       throw new Error(`Limite atteinte : Vous essayez d'ajouter ${incomingCount} élèves, mais il ne vous reste que ${limit - currentCount} places disponibles sur votre plan (${limit} max).`);
+    }
+  }
+}
+
   
   // Extraire uniquement les matricules qui sont des nombres
   const numericMatricules = data
@@ -66,6 +94,7 @@ export async function createStudent(prevState: ActionState, formData: FormData):
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
     
+    await checkStudentLimit(supabase, school_id, 1);
     const matricule = await generateUniqueMatricule(supabase, school_id);
 
     const { error } = await supabase
@@ -234,6 +263,8 @@ export async function importStudents(studentsList: any[]): Promise<ActionState &
       return { error: 'Aucun élève valide à importer.' };
     }
 
+    await checkStudentLimit(supabase, school_id, insertData.length);
+    
     // 3. Bulk Insert
     const { error: insertError } = await supabase
       .from('students')
