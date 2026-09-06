@@ -56,6 +56,14 @@ export async function updateSchoolSettings(prevState: ActionState, formData: For
 
     if (error) throw error;
 
+    const profilePhotoUrl = formData.get('profilePhotoUrl') as string
+
+    if (profilePhotoUrl !== null) {
+      await supabase.auth.updateUser({
+        data: { avatar_url: profilePhotoUrl }
+      });
+    }
+
     revalidatePath('/admin/parametres');
     return { success: true };
   } catch (err: any) {

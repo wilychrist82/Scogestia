@@ -43,7 +43,9 @@ export default async function ParametresPage() {
     return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable dans la base. (ID: {roleData.school_id})</div>
   }
 
+  const userAvatar = user?.user_metadata?.avatar_url || ''
+
   return (
-    <ParametresManager school={school as any} />
+    <ParametresManager school={school as any} userAvatar={userAvatar} />
   )
 }

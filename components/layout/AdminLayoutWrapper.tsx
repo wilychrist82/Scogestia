@@ -8,6 +8,7 @@ export function AdminLayoutWrapper({
   children, 
   userFullName, 
   userRoleLabel,
+  userAvatar,
   navVariant = 'admin',
   banner,
   schoolName,
@@ -16,6 +17,7 @@ export function AdminLayoutWrapper({
   children: React.ReactNode, 
   userFullName: string, 
   userRoleLabel: string,
+  userAvatar?: string | null,
   navVariant?: 'admin' | 'enseignant' | 'super_admin',
   banner?: React.ReactNode,
   schoolName?: string,
@@ -28,6 +30,7 @@ export function AdminLayoutWrapper({
       <Sidebar 
         userFullName={userFullName} 
         userRoleLabel={userRoleLabel} 
+        userAvatar={userAvatar}
         navVariant={navVariant}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
@@ -38,6 +41,7 @@ export function AdminLayoutWrapper({
           <TopHeader 
           userFullName={userFullName} 
           userRoleLabel={userRoleLabel} 
+          userAvatar={userAvatar}
           onMenuClick={() => setIsSidebarOpen(true)}
           schoolName={schoolName}
           schoolCity={schoolCity}

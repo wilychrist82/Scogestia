@@ -42,6 +42,7 @@ export default async function AdminLayout({
 
   const userFullName = roleData?.full_name || 'Admin User'
   const userRoleLabel = 'Administrateur'
+  const userAvatar = user?.user_metadata?.avatar_url || null
 
   // Vérification de l'abonnement
   let showBanner = false
@@ -83,6 +84,7 @@ export default async function AdminLayout({
       <AdminLayoutWrapper 
         userFullName={userFullName} 
         userRoleLabel={userRoleLabel}
+        userAvatar={userAvatar}
         schoolName={schoolName}
         schoolCity={schoolCity}
         banner={showBanner ? (

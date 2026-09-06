@@ -10,6 +10,7 @@ import { useState, useRef, useEffect } from 'react'
 export function TopHeader({ 
   userFullName, 
   userRoleLabel, 
+  userAvatar,
   onMenuClick,
   schoolName,
   schoolCity,
@@ -17,6 +18,7 @@ export function TopHeader({
 }: { 
   userFullName: string, 
   userRoleLabel: string, 
+  userAvatar?: string | null,
   onMenuClick?: () => void,
   schoolName?: string,
   schoolCity?: string,
@@ -161,9 +163,13 @@ export function TopHeader({
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className={`flex items-center gap-3 p-1 pr-2 rounded-full transition-colors ${isEnseignant ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
           >
-            <div className={`w-9 h-9 rounded-full ${isEnseignant ? 'bg-white/20 text-white border-white/20' : 'bg-[var(--color-sidebar-bg)] text-white border-gray-200'} flex items-center justify-center font-bold overflow-hidden border`}>
-              {userFullName.charAt(0).toUpperCase()}
-            </div>
+            {userAvatar ? (
+              <img src={userAvatar} alt={userFullName} className={`w-9 h-9 rounded-full object-cover border ${isEnseignant ? 'border-white/20' : 'border-gray-200'}`} />
+            ) : (
+              <div className={`w-9 h-9 rounded-full ${isEnseignant ? 'bg-white/20 text-white border-white/20' : 'bg-[var(--color-sidebar-bg)] text-white border-gray-200'} flex items-center justify-center font-bold overflow-hidden border`}>
+                {userFullName.charAt(0).toUpperCase()}
+              </div>
+            )}
             <div className="hidden sm:block text-left">
               <p className={`text-sm font-bold ${isEnseignant ? 'text-white' : 'text-gray-900'} leading-tight`}>{userFullName}</p>
               <p className={`text-[11px] ${isEnseignant ? 'text-white/80' : 'text-gray-500'}`}>{userRoleLabel}</p>

@@ -17,9 +17,10 @@ type School = {
 
 type Props = {
   school: School
+  userAvatar?: string
 }
 
-export function ParametresManager({ school }: Props) {
+export function ParametresManager({ school, userAvatar }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<boolean>(false)
@@ -124,6 +125,21 @@ export function ParametresManager({ school }: Props) {
                   placeholder="contact@ecole.com"
                 />
               </div>
+              <div className="flex flex-col gap-1.5 md:col-span-2 mt-4 pt-4 border-t border-[var(--color-outline-variant)]">
+                <h4 className="font-bold text-[var(--color-on-surface)] text-sm mb-2">Profil Administrateur</h4>
+              </div>
+
+              <div className="flex flex-col gap-1.5 md:col-span-2">
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">URL de votre Photo de Profil (Avatar)</label>
+                <input 
+                  type="url" 
+                  name="profilePhotoUrl"
+                  defaultValue={userAvatar || ''}
+                  className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                  placeholder="https://..."
+                />
+              </div>
+
               <div className="flex flex-col gap-1.5 md:col-span-2 mt-4 pt-4 border-t border-[var(--color-outline-variant)]">
                 <h4 className="font-bold text-[var(--color-on-surface)] text-sm mb-2">Signatures & Cachets Officiels (Pour les bulletins et reçus)</h4>
               </div>
