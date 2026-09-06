@@ -44,8 +44,8 @@ export type SidebarProps = {
 
 const mainNavItems: NavItem[] = [
   { label: 'Tableau de bord', href: '/admin', icon: LayoutDashboard },
-  { label: 'Élèves', href: '/admin/eleves', icon: Users },
   { label: 'Classes', href: '/admin/classes', icon: Presentation },
+  { label: 'Élèves', href: '/admin/eleves', icon: Users },
   { label: 'Personnel', href: '/admin/personnel', icon: UserCircle },
   { 
     label: 'Finance', 
@@ -54,11 +54,11 @@ const mainNavItems: NavItem[] = [
     hasDropdown: true,
     subItems: [
       { label: 'Tableau de bord', href: '/admin/finance' },
-      { label: 'Caisse (Encaissement)', href: '/admin/finance/caisse' },
+      { label: 'Frais scolaires', href: '/admin/finance/frais' },
       { label: 'Échéances', href: '/admin/finance/echeances' },
+      { label: 'Caisse (Encaissements)', href: '/admin/finance/caisse' },
       { label: 'Paiements', href: '/admin/finance/paiements' },
       { label: 'Impayés', href: '/admin/finance/impayes' },
-      { label: 'Frais scolaires', href: '/admin/finance/frais' },
       { label: 'Rapports financiers', href: '/admin/finance/rapports' },
     ]
   },
@@ -68,12 +68,12 @@ const mainNavItems: NavItem[] = [
     icon: BookOpen, 
     hasDropdown: true,
     subItems: [
+      { label: 'Matières', href: '/admin/academique/matieres' },
+      { label: 'Emplois du temps', href: '/admin/academique/emplois' },
       { label: 'Présences', href: '/admin/academique/presences' },
       { label: 'Devoirs', href: '/admin/academique/devoirs' },
       { label: 'Saisie des notes', href: '/admin/academique/notes' },
       { label: 'Bulletins & Livrets', href: '/admin/academique/bulletins' },
-      { label: 'Matières', href: '/admin/academique/matieres' },
-      { label: 'Emplois du temps', href: '/admin/academique/emplois' },
     ]
   },
   { label: 'Communication', href: '/admin/communication', icon: MessageSquare },
