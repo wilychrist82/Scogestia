@@ -61,7 +61,7 @@ async function checkStudentLimit(supabase: any, school_id: string, incomingCount
     .select('*', { count: 'exact', head: true })
     .eq('school_id', school_id);
 
-  if (error) throw new Error('Erreur lors de la vérification de la limite d\\'élèves.');
+  if (error) throw new Error("Erreur lors de la vérification de la limite d'élèves.");
 
   const currentCount = count || 0;
   if (currentCount + incomingCount > limit) {
