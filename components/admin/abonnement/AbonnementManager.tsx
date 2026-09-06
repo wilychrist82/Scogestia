@@ -99,6 +99,25 @@ export function AbonnementManager({ plans }: Props) {
             </div>
           )
         })}
+        {/* Plan Devis / Entreprise */}
+        <div className="bg-slate-800 rounded-3xl shadow-2xl border border-slate-700 p-8 flex flex-col relative overflow-hidden md:col-span-2 lg:col-span-1">
+           <div className="mb-6 relative z-10">
+              <h3 className="text-2xl font-bold text-white mb-2">Grandes Écoles</h3>
+              <p className="text-slate-400">Plus de 400 élèves</p>
+           </div>
+           <div className="mb-6 relative z-10 whitespace-nowrap">
+              <span className="text-3xl font-extrabold text-white">Sur Devis</span>
+              <span className="text-slate-500 font-medium block mt-1">Abonnement Annuel</span>
+           </div>
+           <ul className="space-y-4 mb-8 flex-1 relative z-10 text-sm md:text-base">
+              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Nombre d'élèves illimité</span></li>
+              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Déploiement sur serveur dédié</span></li>
+              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Personnalisation sur mesure</span></li>
+           </ul>
+           <a href="mailto:contact@scogestia.com" className="w-full py-4 rounded-xl bg-slate-700 font-bold text-white hover:bg-slate-600 transition-colors text-center relative z-10 shadow-md block mt-auto">
+              Nous contacter
+           </a>
+        </div>
       </div>
 
       {selectedPlan && (
