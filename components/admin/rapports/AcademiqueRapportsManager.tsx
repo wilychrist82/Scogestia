@@ -54,17 +54,24 @@ export function AcademiqueRapportsManager({ classStats }: Props) {
         {/* Charts */}
         <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] p-6 shadow-sm min-h-[400px] flex flex-col">
           <h3 className="font-bold text-[var(--color-on-surface)] mb-6 text-lg">Taux de Réussite par Classe (%)</h3>
-          <div className="flex-1 min-h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={classStats}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} domain={[0, 100]} />
-                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Bar dataKey="successRate" name="Taux de réussite (%)" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+            <div className="flex-1 min-h-[300px] flex items-center justify-center">
+              {classStats && classStats.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={classStats}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} domain={[0, 100]} />
+                    <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                    <Bar dataKey="successRate" name="Taux de réussite (%)" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center text-[var(--color-on-surface-variant)] opacity-60 flex flex-col items-center">
+                  <span className="material-symbols-outlined text-4xl mb-2">analytics</span>
+                  <p className="text-sm font-medium">Aucune donnée académique disponible</p>
+                </div>
+              )}
+            </div>
         </div>
 
         {/* Data Table */}
