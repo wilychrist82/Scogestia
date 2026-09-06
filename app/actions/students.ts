@@ -121,8 +121,15 @@ export async function createStudent(prevState: ActionState, formData: FormData):
     return { error: err.message };
   }
 
-  revalidatePath('/admin/eleves');
-  redirect('/admin/eleves');
+  const stayOnPage = formData.get('stay_on_page') === 'true';
+
+  if (!stayOnPage) {
+    revalidatePath('/admin/eleves');
+    redirect('/admin/eleves');
+  } else {
+    revalidatePath('/admin/eleves/nouveau');
+    return { success: true };
+  }
 }
 
 export async function deleteStudent(studentId: string): Promise<ActionState> {

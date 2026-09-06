@@ -111,11 +111,15 @@ export function AbonnementManager({ plans }: Props) {
            </div>
            <ul className="space-y-4 mb-8 flex-1 relative z-10 text-sm md:text-base">
               <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Nombre d'élèves illimité</span></li>
-              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Déploiement sur serveur dédié</span></li>
-              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Personnalisation sur mesure</span></li>
+              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Toutes les fonctionnalités Pro incluses</span></li>
+              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Déploiement sécurisé sur serveur dédié</span></li>
+              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Personnalisation avancée de l'interface</span></li>
+              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Accès API pour intégration externe</span></li>
+              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Formation continue de l'équipe sur site</span></li>
+              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Support technique dédié (réponse rapide)</span></li>
            </ul>
-           <a href="mailto:contact@scogestia.com" className="w-full py-4 rounded-xl bg-slate-700 font-bold text-white hover:bg-slate-600 transition-colors text-center relative z-10 shadow-md block mt-auto">
-              Nous contacter
+           <a href="https://wa.me/22890000000" target="_blank" rel="noopener noreferrer" className="w-full py-4 rounded-xl bg-slate-700 font-bold text-white hover:bg-slate-600 transition-colors text-center relative z-10 shadow-md block mt-auto flex items-center justify-center gap-2">
+              <span className="material-symbols-outlined text-[20px]">chat</span> Nous contacter sur WhatsApp
            </a>
         </div>
       </div>

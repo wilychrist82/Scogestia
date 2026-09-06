@@ -29,10 +29,14 @@ export function StudentForm({ classes }: Props) {
   ]
   const days = Array.from({length: 31}, (_, i) => (i + 1).toString().padStart(2, '0'))
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: any) => {
     e.preventDefault()
     setError(null)
     const formData = new FormData(e.currentTarget)
+    const submitter = e.nativeEvent.submitter;
+    if (submitter && submitter.name === 'stay_on_page') {
+      formData.append('stay_on_page', 'true');
+    }
     
     startTransition(async () => {
       const result = await createStudent(null, formData)
@@ -41,8 +45,13 @@ export function StudentForm({ classes }: Props) {
         toast.error(result.error)
       } else {
         toast.success("Élève inscrit avec succès !")
+        if (submitter && submitter.name === 'stay_on_page') {
+          e.target.reset();
+          setBDay('');
+          setBMonth('');
+          setBYear('');
+        }
       }
-      // If success, the action redirects automatically
     })
   }
 
@@ -220,8 +229,19 @@ export function StudentForm({ classes }: Props) {
             href="/admin/eleves"
             className="w-full sm:w-auto h-[48px] px-6 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors flex items-center justify-center gap-2"
           >
-            Annuler
+            <span className="material-symbols-outlined text-sm">arrow_back</span>
+            Retour
           </Link>
+          <button 
+            disabled={isPending}
+            name="stay_on_page"
+            value="true"
+            className="w-full sm:w-auto h-[48px] px-6 rounded-lg bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[var(--color-surface-container-highest)] transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 border border-[var(--color-outline-variant)]" 
+            type="submit"
+          >
+            <span className="material-symbols-outlined text-sm">{isPending ? 'hourglass_empty' : 'add'}</span>
+            Enregistrer et Nouveau
+          </button>
           <button 
             disabled={isPending}
             className="w-full sm:w-auto h-[48px] px-6 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-50" 
