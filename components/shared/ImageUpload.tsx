@@ -73,7 +73,7 @@ export function ImageUpload({ bucket, folder = 'uploads', defaultUrl, onUploadSu
       <div className="flex items-center gap-4">
         {preview ? (
           <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 shrink-0">
-            <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+            <img src={preview} alt="Preview" className="w-full h-full object-cover object-top" />
           </div>
         ) : (
           <div className="w-16 h-16 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 shrink-0">
