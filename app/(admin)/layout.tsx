@@ -91,9 +91,9 @@ export default async function AdminLayout({
               <AlertTriangle className="w-5 h-5 flex-shrink-0" />
               <span>{bannerMessage}</span>
             </div>
-            <Link href="/admin/abonnement" className="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded transition-colors whitespace-nowrap ml-4">
+            <a href="/admin/abonnement" className="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded transition-colors whitespace-nowrap ml-4">
               Renouveler
-            </Link>
+            </a>
           </div>
         ) : null}
       >
