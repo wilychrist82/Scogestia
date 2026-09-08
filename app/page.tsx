@@ -822,19 +822,14 @@ export default function Home() {
             
             {/* Conteneur Vidéo */}
             <div className="relative pt-[56.25%] w-full bg-slate-800">
-              {/* Remplacer cette div par une vraie iframe YouTube/Vimeo plus tard */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center">
-                <div className="w-20 h-20 rounded-full bg-[#006039]/20 flex items-center justify-center mb-6">
-                  <Play className="w-10 h-10 text-[#006039] ml-1" />
-                </div>
-                <h3 className="text-2xl font-bold mb-2">Vidéo de présentation</h3>
-                <p className="text-slate-300 max-w-md">
-                  Ici, vous pourrez insérer votre vidéo de présentation (Youtube ou Loom) montrant les fonctionnalités principales de Scogestia.
-                </p>
-                <div className="mt-8 px-4 py-2 bg-slate-900 rounded-lg font-mono text-sm text-slate-400 border border-slate-700">
-                  {`<iframe src="https://www.youtube.com/embed/VOTRE_VIDEO" ...></iframe>`}
-                </div>
-              </div>
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src="https://www.youtube.com/embed/njLnsD5tGz0?autoplay=1"
+                title="Présentation Scogestia"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              ></iframe>
             </div>
           </div>
         </div>
