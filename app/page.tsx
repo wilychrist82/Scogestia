@@ -499,7 +499,7 @@ export default function Home() {
                      <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Portail Parents (Notes & Absences)</span></li>
                   </ul>
                   <Link href="/inscription-ecole" className="w-full py-4 rounded-2xl bg-emerald-600 font-bold text-white hover:bg-emerald-500 transition-colors text-center relative z-10 shadow-md block mt-auto">
-                     Commencer l'essai de 14 jours
+                     S'abonner au Plan Standard
                   </Link>
                   <div className="absolute -bottom-24 -left-24 w-40 h-40 bg-emerald-900 rounded-full blur-3xl opacity-30 pointer-events-none"></div>
                </motion.div>
@@ -526,7 +526,7 @@ export default function Home() {
                      <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Tableaux de bord et analytics poussés</span></li>
                   </ul>
                   <Link href="/inscription-ecole" className="w-full py-4 rounded-2xl bg-white font-bold text-[#006039] hover:bg-slate-50 transition-colors text-center relative z-10 shadow-lg block mt-auto">
-                     Commencer l'essai de 14 jours
+                     S'abonner au Plan Pro
                   </Link>
                   <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-emerald-600 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
                   <div className="absolute -top-24 -left-24 w-40 h-40 bg-emerald-500 rounded-full blur-3xl opacity-40 pointer-events-none"></div>
@@ -551,7 +551,7 @@ export default function Home() {
                      <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Accès API pour intégration externe</span></li>
                   </ul>
                   <a href="https://wa.me/22892102868" target="_blank" rel="noopener noreferrer" className="w-full py-4 rounded-2xl bg-slate-700 font-bold text-white hover:bg-slate-600 transition-colors text-center flex items-center justify-center gap-2 mt-auto relative z-10 shadow-lg">
-                     <span>Contacter sur WhatsApp</span>
+                     <span>Nous contacter sur WhatsApp</span>
                   </a>
                </motion.div>
             </motion.div>
