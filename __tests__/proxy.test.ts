@@ -71,7 +71,7 @@ vi.mock('@supabase/ssr', () => {
   }
 })
 
-import { middleware } from '../middleware'
+import { proxy } from '../proxy'
 
 describe('Middleware Route Protection', () => {
   beforeEach(() => {
@@ -82,14 +82,14 @@ describe('Middleware Route Protection', () => {
 
   it('devrait laisser passer un utilisateur non authentifié vers /connexion', async () => {
     const req = new NextRequest('http://localhost:3000/connexion') as any
-    const res = await middleware(req)
+    const res = await proxy(req)
     expect(mockNext).toHaveBeenCalled()
     expect(mockRedirect).not.toHaveBeenCalled()
   })
 
   it('devrait rediriger un utilisateur non authentifié depuis /admin vers /connexion', async () => {
     const req = new NextRequest('http://localhost:3000/admin') as any
-    const res = await middleware(req)
+    const res = await proxy(req)
     expect(mockRedirect).toHaveBeenCalled()
     const redirectUrl = mockRedirect.mock.calls[0][0]
     expect(redirectUrl.pathname).toBe('/connexion')
@@ -100,7 +100,7 @@ describe('Middleware Route Protection', () => {
     supabaseMockState.mockRole = 'comptable'
 
     const req = new NextRequest('http://localhost:3000/admin/dashboard') as any
-    const res = await middleware(req)
+    const res = await proxy(req)
     
     expect(mockRedirect).toHaveBeenCalled()
     const redirectUrl = mockRedirect.mock.calls[0][0]
@@ -112,7 +112,7 @@ describe('Middleware Route Protection', () => {
     supabaseMockState.mockRole = 'comptable'
 
     const req = new NextRequest('http://localhost:3000/comptable/factures') as any
-    const res = await middleware(req)
+    const res = await proxy(req)
     
     // Le NextResponse.next() a dû être retourné
     expect(res).toBeDefined()
