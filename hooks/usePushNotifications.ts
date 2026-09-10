@@ -58,6 +58,15 @@ export const usePushNotifications = () => {
       // Écouter les notifications reçues lorsque l'app est au premier plan
       PushNotifications.addListener('pushNotificationReceived', (notification) => {
         console.log('Notification reçue:', notification);
+        
+        // Jouer un son manuellement au premier plan
+        try {
+          const audio = new Audio('/notification.mp3');
+          audio.play().catch(e => console.error("Erreur lecture audio:", e));
+        } catch (e) {
+          console.error("Audio non supporté:", e);
+        }
+
         toast.success(`${notification.title} : ${notification.body}`, {
             duration: 4000,
             position: 'top-center'
