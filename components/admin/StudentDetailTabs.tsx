@@ -8,6 +8,7 @@ import { FileEdit, CalendarDays, Banknote, Camera } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { AudioRecorder } from '@/components/ui/AudioRecorder'
 
 type Student = {
   id: string
@@ -45,6 +46,37 @@ export function StudentDetailTabs({ student }: Props) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
+
+  const [activeContactView, setActiveContactView] = useState<'list' | 'vocal'>('list')
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  
+  const handleVoiceMessageSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!audioUrl) {
+      toast.error("Veuillez enregistrer un message vocal.")
+      return
+    }
+    
+    const formData = new FormData()
+    formData.append('recipientType', 'parent')
+    formData.append('selectedParent', student.id)
+    formData.append('subject', 'Message vocal')
+    formData.append('message', 'Vous avez reçu un nouveau message vocal.')
+    formData.append('audioUrl', audioUrl)
+    
+    startTransition(async () => {
+      const { sendCommunication } = await import('@/app/actions/communication')
+      const result = await sendCommunication(formData)
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success("Message vocal envoyé avec succès !")
+        setIsContactModalOpen(false)
+        setActiveContactView('list')
+        setAudioUrl(null)
+      }
+    })
+  }
 
   const handleGenerateCode = () => {
     setError(null)
@@ -169,7 +201,7 @@ export function StudentDetailTabs({ student }: Props) {
                 Modifier
               </button>
               <button 
-                onClick={() => setIsContactModalOpen(true)}
+                onClick={() => { setIsContactModalOpen(true); setActiveContactView('list'); }}
                 className="h-12 px-4 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors flex items-center gap-2"
               >
                 <span className="material-symbols-outlined text-sm">mail</span>
@@ -449,32 +481,33 @@ export function StudentDetailTabs({ student }: Props) {
                 <span className="material-symbols-outlined text-[var(--color-primary)]">contact_mail</span>
                 Contacter le parent
               </h2>
-              <button onClick={() => setIsContactModalOpen(false)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
+              <button onClick={() => { setIsContactModalOpen(false); setActiveContactView('list'); }} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
             
-            <div className="p-6 space-y-4">
-              <p className="text-sm text-[var(--color-on-surface-variant)]">
-                Sélectionnez un moyen de communication pour contacter le parent ou tuteur de <span className="font-semibold text-[var(--color-on-surface)]">{student.first_name}</span>.
-              </p>
-              
-              <div className="grid grid-cols-1 gap-3 mt-4">
-                <Link 
-                  href={`/admin/communication?student_id=${student.id}&type=vocal`}
-                  className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
-                      <span className="material-symbols-outlined">mic</span>
+            {activeContactView === 'list' ? (
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-[var(--color-on-surface-variant)]">
+                  Sélectionnez un moyen de communication pour contacter le parent ou tuteur de <span className="font-semibold text-[var(--color-on-surface)]">{student.first_name}</span>.
+                </p>
+                
+                <div className="grid grid-cols-1 gap-3 mt-4">
+                  <button 
+                    onClick={() => setActiveContactView('vocal')}
+                    className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
+                        <span className="material-symbols-outlined">mic</span>
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-[var(--color-on-surface)] text-sm">Message Vocal</p>
+                        <p className="text-xs text-[var(--color-on-surface-variant)]">Message vocal via l'application</p>
+                      </div>
                     </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-[var(--color-on-surface)] text-sm">Message Vocal</p>
-                      <p className="text-xs text-[var(--color-on-surface-variant)]">Message vocal via l'application</p>
-                    </div>
-                  </div>
-                  <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
-                </Link>
+                    <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
+                  </button>
 
                 <a 
                   href={student.parent_phone ? `sms:${student.parent_phone}` : '#'}
@@ -536,7 +569,34 @@ export function StudentDetailTabs({ student }: Props) {
                   Ces options utiliseront les coordonnées renseignées par le parent une fois son compte activé (voir section <b>Contact Parent</b>).
                 </p>
               </div>
-            </div>
+            ) : (
+              <div className="p-6 space-y-4">
+                <button 
+                  onClick={() => setActiveContactView('list')}
+                  className="flex items-center gap-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors text-sm font-semibold mb-2"
+                >
+                  <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                  Retour aux options
+                </button>
+                <h3 className="font-semibold text-[var(--color-on-surface)]">Enregistrer un message vocal pour le parent de {student.first_name}</h3>
+                
+                <form onSubmit={handleVoiceMessageSubmit} className="flex flex-col gap-4">
+                  <div className="p-4 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl flex flex-col gap-4">
+                    <AudioRecorder onAudioReady={(url) => setAudioUrl(url)} />
+                  </div>
+                  <div className="flex justify-end gap-3 mt-2">
+                    <button 
+                      type="submit" 
+                      disabled={isPending || !audioUrl}
+                      className="bg-[var(--color-primary)] text-white px-6 py-2.5 rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">send</span>
+                      {isPending ? 'Envoi en cours...' : 'Envoyer le message vocal'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       )}
