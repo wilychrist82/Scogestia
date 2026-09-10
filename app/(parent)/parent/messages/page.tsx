@@ -45,68 +45,64 @@ export default async function ParentMessagesPage() {
     .order('created_at', { ascending: false })
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-[#f0f2f5]">
       <AutoRefresh />
-      <div className="max-w-[1000px] mx-auto space-y-6">
-        
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)]">
-          <div>
-            <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Messages</h2>
-            <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Consultez les communications de l'école et contactez l'administration.</p>
-          </div>
-          <div>
-            <ParentMessageForm />
-          </div>
+      
+      {/* Header */}
+      <div className="shrink-0 bg-[var(--color-surface)] px-4 py-3 flex items-center shadow-sm z-10 border-b border-[var(--color-outline-variant)]">
+        <div>
+          <h2 className="text-xl font-bold text-[var(--color-on-surface)]">Messages</h2>
+          <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">Contactez l'administration de l'école.</p>
         </div>
+      </div>
 
-        <div className="space-y-4">
+      {/* Messages List */}
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col-reverse custom-scrollbar">
+        <div className="space-y-4 max-w-3xl mx-auto w-full">
           {!messages || messages.length === 0 ? (
-            <div className="bg-[var(--color-surface-container-lowest)] p-12 rounded-xl border border-[var(--color-outline-variant)] text-center">
+            <div className="bg-[var(--color-surface-container-lowest)] p-12 rounded-xl border border-[var(--color-outline-variant)] text-center my-auto">
               <span className="material-symbols-outlined text-5xl text-[var(--color-on-surface-variant)] mb-4 opacity-50">drafts</span>
               <h3 className="text-xl font-bold text-[var(--color-on-surface)]">Aucun message</h3>
               <p className="text-[var(--color-on-surface-variant)] mt-2">Vous n'avez reçu aucun message pour le moment.</p>
             </div>
           ) : (
-            messages.map(msg => {
+            [...messages].reverse().map(msg => {
               const isSentByMe = msg.sender_id === user.id
-
               let senderText = isSentByMe ? 'Vous' : 'Administration'
 
               return (
                 <div key={msg.id} className={`flex w-full ${isSentByMe ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] sm:max-w-[70%] flex flex-col gap-1 ${isSentByMe ? 'items-end' : 'items-start'}`}>
                     {/* Bubble */}
-                    <div className={`p-4 rounded-2xl ${isSentByMe ? 'bg-[#dcf8c6] text-[#0b1c30] rounded-tr-sm' : 'bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] text-[#0b1c30] rounded-tl-sm shadow-sm'}`}>
-                      {msg.subject && msg.subject !== 'Message vocal' && (
+                    <div className={`p-3 rounded-2xl ${isSentByMe ? 'bg-[#dcf8c6] text-[#0b1c30] rounded-tr-sm shadow-sm' : 'bg-white border border-[var(--color-outline-variant)] text-[#0b1c30] rounded-tl-sm shadow-sm'}`}>
+                      {msg.subject && msg.subject !== 'Message vocal' && msg.subject !== 'Message parent' && (
                         <h3 className="text-sm font-bold mb-1">{msg.subject}</h3>
                       )}
                       
                       {msg.content && msg.content !== 'Message vocal' && (
-                        <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                        <div className="text-[15px] whitespace-pre-wrap leading-relaxed">
                           {msg.content}
                         </div>
                       )}
                       
                       {msg.audio_url && (
-                        <div className="mt-2 min-w-[200px]">
+                        <div className="mt-1 min-w-[200px]">
                           <audio controls src={msg.audio_url} className="w-full h-10" />
                         </div>
                       )}
                     </div>
                     {/* Metadata */}
-                    <div className="text-xs text-[var(--color-on-surface-variant)] flex items-center gap-1 mt-1">
+                    <div className="text-[11px] text-[var(--color-on-surface-variant)] flex items-center gap-1 mt-0.5 px-1">
                       {isSentByMe ? (
                         <>
-                          <span>À: {msg.recipient_type === 'admin' ? 'Administration' : 'Enseignant'}</span>
-                          <span>•</span>
-                          <span>{format(new Date(msg.created_at), 'dd MMM à HH:mm', { locale: fr })}</span>
+                          <span>{format(new Date(msg.created_at), 'HH:mm', { locale: fr })}</span>
                           <span className="material-symbols-outlined text-[14px] text-blue-500">done_all</span>
                         </>
                       ) : (
                         <>
-                          <span>{format(new Date(msg.created_at), 'dd MMM à HH:mm', { locale: fr })}</span>
+                          <span>{senderText}</span>
                           <span>•</span>
-                          <span>De: {senderText}</span>
+                          <span>{format(new Date(msg.created_at), 'HH:mm', { locale: fr })}</span>
                         </>
                       )}
                     </div>
@@ -115,6 +111,13 @@ export default async function ParentMessagesPage() {
               )
             })
           )}
+        </div>
+      </div>
+
+      {/* Input Area */}
+      <div className="shrink-0 bg-[var(--color-surface)]">
+        <div className="max-w-3xl mx-auto w-full">
+          <ParentMessageForm />
         </div>
       </div>
     </div>

@@ -160,13 +160,14 @@ export async function updateStudent(prevState: ActionState, formData: FormData):
     gender: formData.get('gender') || undefined,
     blood_group: formData.get('blood_group') || undefined,
     address: formData.get('address') || undefined,
+    parent_phone: formData.get('parent_phone') || undefined,
   });
 
   if (!validatedFields.success) {
     return { error: validatedFields.error.errors[0].message };
   }
 
-  const { student_id, birth_place, gender, blood_group, address } = validatedFields.data;
+  const { student_id, birth_place, gender, blood_group, address, parent_phone } = validatedFields.data;
 
   try {
     const school_id = await getActiveSchoolId();
@@ -178,7 +179,8 @@ export async function updateStudent(prevState: ActionState, formData: FormData):
         birth_place: birth_place || null,
         gender: gender || null,
         blood_group: blood_group || null,
-        address: address || null
+        address: address || null,
+        parent_phone: parent_phone || null
       })
       .eq('id', student_id)
       .eq('school_id', school_id);

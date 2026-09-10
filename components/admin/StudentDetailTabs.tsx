@@ -47,7 +47,7 @@ export function StudentDetailTabs({ student }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
 
-  const [activeContactView, setActiveContactView] = useState<'list' | 'vocal'>('list')
+  const [activeContactView, setActiveContactView] = useState<'list' | 'vocal' | 'sms' | 'email' | 'whatsapp'>('list')
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   
   const handleVoiceMessageSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -74,6 +74,39 @@ export function StudentDetailTabs({ student }: Props) {
         setIsContactModalOpen(false)
         setActiveContactView('list')
         setAudioUrl(null)
+      }
+    })
+  }
+
+  const handleTextSubmit = async (e: React.FormEvent<HTMLFormElement>, channel: 'sms' | 'email' | 'whatsapp') => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const textMessage = formData.get('message') as string
+
+    if (!textMessage || textMessage.trim() === '') {
+      toast.error("Veuillez saisir un message.")
+      return
+    }
+
+    const payload = new FormData()
+    payload.append('recipientType', 'parent')
+    payload.append('selectedParent', student.id)
+    payload.append('subject', `Message ${channel.toUpperCase()}`)
+    payload.append('message', textMessage)
+
+    if (channel === 'sms') payload.append('sendSms', 'true')
+    if (channel === 'email') payload.append('sendEmail', 'true')
+    if (channel === 'whatsapp') payload.append('sendWhatsapp', 'true')
+
+    startTransition(async () => {
+      const { sendCommunication } = await import('@/app/actions/communication')
+      const result = await sendCommunication(payload)
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success(`Message envoyé avec succès !`)
+        setIsContactModalOpen(false)
+        setActiveContactView('list')
       }
     })
   }
@@ -449,6 +482,19 @@ export function StudentDetailTabs({ student }: Props) {
                     defaultValue={student.address || ''}
                   ></textarea>
                 </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="parent_phone">
+                    Téléphone du parent
+                  </label>
+                  <input 
+                    type="tel"
+                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all" 
+                    id="parent_phone" name="parent_phone" 
+                    placeholder="Ex: +228 90 00 00 00" 
+                    defaultValue={student.parent_phone || ''}
+                  />
+                </div>
               </div>
               
               <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end gap-3 shrink-0">
@@ -525,11 +571,8 @@ export function StudentDetailTabs({ student }: Props) {
                   <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
                 </button>
 
-                <a 
-                  href={student.parent_phone ? `https://wa.me/${student.parent_phone.replace(/[^0-9]/g, '')}` : '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => { if (!student.parent_phone) { e.preventDefault(); alert("Le numéro de téléphone du parent n'est pas encore renseigné."); } }}
+                <button 
+                  onClick={() => setActiveContactView('whatsapp')}
                   className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[#25D366] hover:bg-[#dcf8c6]/30 transition-all group cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
@@ -542,11 +585,10 @@ export function StudentDetailTabs({ student }: Props) {
                     </div>
                   </div>
                   <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[#25D366]">chevron_right</span>
-                </a>
+                </button>
 
-                <a 
-                  href={student.parent_email ? `mailto:${student.parent_email}` : '#'}
-                  onClick={(e) => { if (!student.parent_email) { e.preventDefault(); alert("L'email du parent n'est pas encore renseigné."); } }}
+                <button 
+                  onClick={() => setActiveContactView('email')}
                   className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
@@ -555,11 +597,11 @@ export function StudentDetailTabs({ student }: Props) {
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-[var(--color-on-surface)] text-sm">Envoyer un Email</p>
-                      <p className="text-xs text-[var(--color-on-surface-variant)]">Ouvre votre boîte mail</p>
+                      <p className="text-xs text-[var(--color-on-surface-variant)]">Message Email direct</p>
                     </div>
                   </div>
                   <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
-                </a>
+                </button>
               </div>
               
               <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
@@ -596,7 +638,7 @@ export function StudentDetailTabs({ student }: Props) {
                   </div>
                 </form>
               </div>
-            ) : (
+            ) : activeContactView === 'sms' || activeContactView === 'whatsapp' || activeContactView === 'email' ? (
               <div className="p-6 space-y-4">
                 <button 
                   onClick={() => setActiveContactView('list')}
@@ -605,17 +647,21 @@ export function StudentDetailTabs({ student }: Props) {
                   <span className="material-symbols-outlined text-[18px]">arrow_back</span>
                   Retour aux options
                 </button>
-                <h3 className="font-semibold text-[var(--color-on-surface)]">Envoyer un SMS au parent de {student.first_name}</h3>
+                <h3 className="font-semibold text-[var(--color-on-surface)]">
+                  Envoyer un {activeContactView === 'sms' ? 'SMS' : activeContactView === 'whatsapp' ? 'message WhatsApp' : 'Email'} au parent de {student.first_name}
+                </h3>
                 
-                <form onSubmit={handleSmsSubmit} className="flex flex-col gap-4">
+                <form onSubmit={(e) => handleTextSubmit(e, activeContactView as 'sms' | 'email' | 'whatsapp')} className="flex flex-col gap-4">
                   <div className="flex flex-col gap-2">
                     <textarea 
-                      name="smsMessage"
+                      name="message"
                       rows={4}
                       placeholder="Tapez votre message ici..."
                       className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all resize-y"
                     ></textarea>
-                    <p className="text-xs text-[var(--color-on-surface-variant)]">Ce message sera envoyé directement sur le téléphone du parent si son numéro est enregistré.</p>
+                    <p className="text-xs text-[var(--color-on-surface-variant)]">
+                      Ce message sera envoyé directement sur {activeContactView === 'email' ? "l'email" : "le téléphone"} du parent si ses coordonnées sont enregistrées.
+                    </p>
                   </div>
                   <div className="flex justify-end gap-3 mt-2">
                     <button 
@@ -624,7 +670,7 @@ export function StudentDetailTabs({ student }: Props) {
                       className="bg-[var(--color-primary)] text-white px-6 py-2.5 rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
                     >
                       <span className="material-symbols-outlined text-[18px]">send</span>
-                      {isPending ? 'Envoi en cours...' : 'Envoyer le SMS'}
+                      {isPending ? 'Envoi en cours...' : 'Envoyer le message'}
                     </button>
                   </div>
                 </form>

@@ -15,6 +15,7 @@ export const updateStudentSchema = z.object({
   gender: z.enum(['M', 'F', 'autre', '']).optional(),
   blood_group: z.string().optional(),
   address: z.string().optional(),
+  parent_phone: z.string().optional(),
 });
 
 export const feeTypeSchema = z.object({

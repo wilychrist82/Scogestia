@@ -39,92 +39,50 @@ export function ParentMessageForm() {
   }
 
   return (
-    <>
-      <button 
-        onClick={() => setIsOpen(true)}
-        className="bg-[var(--color-primary)] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm"
-      >
-        <span className="material-symbols-outlined text-[20px]">add_comment</span>
-        Nouveau Message
-      </button>
-
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0b1c30]/40  transition-opacity p-4">
-          <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-lg rounded-xl shadow-lg border border-[var(--color-outline-variant)] flex flex-col overflow-hidden">
-            <div className="px-6 py-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
-              <h2 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[var(--color-primary)]">chat</span>
-                Contacter l'administration
-              </h2>
-              <button onClick={() => setIsOpen(false)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="flex flex-col">
-              <div className="p-6 space-y-5">
-                {error && (
-                  <div className="bg-[var(--color-status-retard-bg)] text-[var(--color-status-retard-text)] p-3 rounded text-sm font-medium">
-                    {error}
-                  </div>
-                )}
-                {success && (
-                  <div className="bg-[#e6f4ea] text-[#1e8e3e] p-3 rounded text-sm font-medium flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[20px]">check_circle</span>
-                    Message envoyé avec succès à l'administration.
-                  </div>
-                )}
-                
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]">Objet</label>
-                  <input 
-                    type="text" 
-                    name="subject"
-                    placeholder="Sujet du message (ex: Retard, Absence, Question...)" 
-                    className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
-                    required
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]">Message texte (Optionnel si vocal)</label>
-                  <textarea 
-                    name="message"
-                    placeholder="Rédigez votre message ici..." 
-                    className="w-full p-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] min-h-[120px]"
-                  ></textarea>
-                </div>
-
-                <div className="flex flex-col gap-1.5 border-t border-[var(--color-outline-variant)] pt-4 mt-2">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)] flex justify-between items-center">
-                    Message vocal
-                  </label>
-                  <AudioRecorder onAudioReady={(url) => setAudioUrl(url)} />
-                </div>
-              </div>
-              
-              <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end gap-3 shrink-0">
-                <button 
-                  type="button"
-                  onClick={() => setIsOpen(false)} 
-                  className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors" 
-                  disabled={isPending}
-                >
-                  Annuler
-                </button>
-                <button 
-                  type="submit"
-                  className="px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2" 
-                  disabled={isPending}
-                >
-                  <span className="material-symbols-outlined text-[18px]">send</span>
-                  {isPending ? 'Envoi...' : 'Envoyer'}
-                </button>
-              </div>
-            </form>
-          </div>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3 bg-[var(--color-surface)] border-t border-[var(--color-outline-variant)] p-4">
+      {error && (
+        <div className="bg-[var(--color-status-retard-bg)] text-[var(--color-status-retard-text)] p-2 rounded text-xs font-medium">
+          {error}
         </div>
       )}
-    </>
+      {success && (
+        <div className="bg-[#e6f4ea] text-[#1e8e3e] p-2 rounded text-xs font-medium flex items-center gap-1">
+          <span className="material-symbols-outlined text-[16px]">check_circle</span>
+          Message envoyé avec succès.
+        </div>
+      )}
+      
+      <div className="flex items-end gap-2">
+        <div className="flex-1 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-2xl flex flex-col p-1 focus-within:border-[var(--color-primary)] transition-colors">
+          <textarea 
+            name="message"
+            placeholder="Écrire un message..." 
+            className="w-full bg-transparent p-3 text-base outline-none resize-none min-h-[44px] max-h-[120px]"
+            rows={1}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement;
+              target.style.height = 'auto';
+              target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
+            }}
+          ></textarea>
+          
+          <div className="flex justify-between items-center px-2 pb-1 border-t border-transparent mt-1">
+            <div className="scale-90 origin-left">
+              <AudioRecorder onAudioReady={(url) => setAudioUrl(url)} />
+            </div>
+            
+            <button 
+              type="submit"
+              className="w-10 h-10 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50 shrink-0 shadow-sm" 
+              disabled={isPending}
+            >
+              <span className="material-symbols-outlined text-[20px] ml-1">send</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      {/* Hidden subject field since it's a chat-like interface now */}
+      <input type="hidden" name="subject" value="Message parent" />
+    </form>
   )
 }
