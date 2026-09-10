@@ -31,45 +31,71 @@ export function useNotifications() {
   return context
 }
 
-// ─── Web Audio API ────────────────────────────────────────────────────────────
-// C'est la SEULE API qui fonctionne de manière fiable dans un WebView Android.
-// new Audio().play() est bloqué par la politique autoplay d'Android WebView.
-// On pré-charge le buffer une fois après la 1ère interaction, puis on joue sans restriction.
+// ─── Système Audio Robuste ────────────────────────────────────────────────────
+// Problème Android WebView : l'AudioContext passe en état "suspended" après
+// quelques secondes d'inactivité. Il faut TOUJOURS appeler resume() avant play().
+// On met en cache l'ArrayBuffer brut (pas le AudioBuffer décodé) pour éviter
+// les problèmes de mismatch quand le contexte est recréé.
+let _audioArrayBuffer: ArrayBuffer | null = null
 let _audioCtx: AudioContext | null = null
-let _audioBuffer: AudioBuffer | null = null
-let _audioReady = false
 
-async function initWebAudio() {
-  if (_audioReady) return
+async function _ensureAudioCtx(): Promise<AudioContext | null> {
   try {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
-    if (!AudioCtx) return
-    _audioCtx = new AudioCtx()
-    if (_audioCtx.state === 'suspended') await _audioCtx.resume()
-    const res = await fetch('/notification.mp3')
-    const buf = await res.arrayBuffer()
-    _audioBuffer = await _audioCtx.decodeAudioData(buf)
-    _audioReady = true
-    console.log('[Scogestia Audio] Prêt ✓')
+    if (!AudioCtx) return null
+    // Recréer le contexte s'il est fermé
+    if (!_audioCtx || _audioCtx.state === 'closed') {
+      _audioCtx = new AudioCtx()
+    }
+    // Toujours reprendre s'il est suspendu (Android suspend après inactivité)
+    if (_audioCtx.state === 'suspended') {
+      await _audioCtx.resume()
+    }
+    return _audioCtx
   } catch (e) {
-    console.error('[Scogestia Audio] Erreur initialisation:', e)
+    return null
   }
 }
 
-function playSound() {
-  if (!_audioReady || !_audioCtx || !_audioBuffer) {
-    // Fallback ultime : tenter HTMLAudio
-    try { new Audio('/notification.mp3').play() } catch (_) {}
-    return
-  }
+async function _loadAudioBuffer(): Promise<ArrayBuffer | null> {
+  if (_audioArrayBuffer) return _audioArrayBuffer
   try {
-    if (_audioCtx.state === 'suspended') _audioCtx.resume()
-    const src = _audioCtx.createBufferSource()
-    src.buffer = _audioBuffer
-    src.connect(_audioCtx.destination)
+    const res = await fetch('/notification.mp3')
+    _audioArrayBuffer = await res.arrayBuffer()
+    console.log('[Scogestia Audio] Buffer chargé ✓')
+    return _audioArrayBuffer
+  } catch (e) {
+    console.error('[Scogestia Audio] Erreur chargement:', e)
+    return null
+  }
+}
+
+// Pré-chargement : appeler au premier événement utilisateur
+async function preloadAudio() {
+  await _loadAudioBuffer()
+  await _ensureAudioCtx()
+  console.log('[Scogestia Audio] Prêt ✓')
+}
+
+async function playSound() {
+  try {
+    const ctx = await _ensureAudioCtx()
+    if (!ctx) { console.warn('[Audio] AudioContext non disponible'); return }
+
+    // Toujours recharger le buffer depuis le cache ArrayBuffer
+    const rawBuffer = await _loadAudioBuffer()
+    if (!rawBuffer) { console.warn('[Audio] Buffer non disponible'); return }
+
+    // Décoder à chaque fois depuis l'ArrayBuffer (évite les erreurs de contexte fermé)
+    const decoded = await ctx.decodeAudioData(rawBuffer.slice(0))
+    const src = ctx.createBufferSource()
+    src.buffer = decoded
+    src.connect(ctx.destination)
     src.start(0)
   } catch (e) {
     console.error('[Scogestia Audio] Erreur lecture:', e)
+    // Fallback ultime HTMLAudio
+    try { new Audio('/notification.mp3').play() } catch (_) {}
   }
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -82,12 +108,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   // Initialiser les notifications push Capacitor (Android natif background)
   usePushNotifications()
 
-  // Initialiser Web Audio à la première interaction utilisateur
+  // Pré-charger le son à la première interaction utilisateur
   useEffect(() => {
     const unlock = () => {
       if (initialized.current) return
       initialized.current = true
-      initWebAudio()
+      preloadAudio() // Pré-charge l'ArrayBuffer + réchauffe l'AudioContext
     }
     const events = ['click', 'touchstart', 'keydown']
     events.forEach(e => document.addEventListener(e, unlock, { passive: true }))
@@ -125,8 +151,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             const newNotif = payload.new as Notification
             setNotifications(prev => [newNotif, ...prev].slice(0, 50))
 
-            // Jouer le son via Web Audio API (bypass autoplay Android)
-            playSound()
+            // Jouer le son via Web Audio API robuste (résume l'AudioContext si suspendu)
+            playSound() // fire-and-forget, async géré en interne
 
             toast(
               () => (
