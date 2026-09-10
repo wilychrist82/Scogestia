@@ -46,7 +46,14 @@ export function ParentHeader({ fullName }: { fullName: string }) {
   }
 
   return (
-    <header className="h-14 bg-[var(--color-primary)] text-white flex items-center justify-between px-4 sticky top-0 z-50 shadow-md">
+    <header 
+      className="bg-[var(--color-primary)] text-white flex items-center justify-between px-4 sticky top-0 z-50 shadow-md"
+      style={{
+        paddingTop: 'max(0.5rem, env(safe-area-inset-top))',
+        paddingBottom: '0.5rem',
+        minHeight: 'calc(3.5rem + env(safe-area-inset-top))'
+      }}
+    >
       <div className="relative" ref={profileRef}>
         <button 
           onClick={() => setShowProfileMenu(!showProfileMenu)}

@@ -35,6 +35,7 @@ serve(async (req) => {
       },
       data: data || {},
       android: {
+        priority: 'high',
         notification: {
           channelId: 'default', // Identifiant de channel critique pour le son personnalisé
           sound: 'notification_sound' // Référence au fichier mp3 ajouté précédemment

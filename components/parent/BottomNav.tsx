@@ -19,7 +19,13 @@ export function BottomNav() {
   const { unreadCount } = useNotifications()
 
   return (
-    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-[var(--color-outline-variant)] pb-safe h-16 flex items-center justify-around z-50">
+    <div 
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-[var(--color-outline-variant)] flex items-center justify-around z-50"
+      style={{
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        height: 'calc(4rem + env(safe-area-inset-bottom))'
+      }}
+    >
       {navItems.map(item => {
         const isActive = pathname === item.href
         return (

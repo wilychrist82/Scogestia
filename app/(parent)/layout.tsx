@@ -33,7 +33,10 @@ export default async function ParentLayout({
         <ParentHeader fullName={roleData.full_name} />
 
         {/* Contenu de la page avec padding bottom pour le nav */}
-        <main className="flex-1 pb-20 bg-[#f4f7f6] overflow-y-auto">
+        <main 
+          className="flex-1 bg-[#f4f7f6] overflow-y-auto"
+          style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
+        >
           {children}
         </main>
 
