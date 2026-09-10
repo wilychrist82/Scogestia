@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import { generateParentCode } from '@/app/actions/invitations'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { FileEdit, CalendarDays, Banknote } from 'lucide-react'
+import { FileEdit, CalendarDays, Banknote, Camera } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 type Student = {
   id: string
@@ -17,6 +20,7 @@ type Student = {
   address?: string | null
   parent_phone?: string | null
   parent_email?: string | null
+  avatar_url?: string | null
   classes: {
     name: string
   } | null
@@ -36,6 +40,10 @@ export function StudentDetailTabs({ student }: Props) {
   const [editError, setEditError] = useState<string | null>(null)
   
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
+  
+  const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   const handleGenerateCode = () => {
     setError(null)
@@ -68,15 +76,80 @@ export function StudentDetailTabs({ student }: Props) {
     })
   }
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("L'image est trop volumineuse (max 5MB).")
+      return
+    }
+
+    try {
+      setIsUploading(true)
+      const supabase = createClient()
+      
+      // Upload to storage
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${student.id}-${Date.now()}.${fileExt}`
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: publicUrlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName)
+
+      const avatarUrl = publicUrlData.publicUrl
+
+      // Update student record
+      const { error: updateError } = await supabase
+        .from('students')
+        .update({ avatar_url: avatarUrl })
+        .eq('id', student.id)
+
+      if (updateError) throw updateError
+
+      toast.success("Photo mise à jour avec succès.")
+      router.refresh()
+    } catch (err: any) {
+      console.error(err)
+      toast.error("Erreur lors de l'upload de l'image.")
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Profile Header Card */}
       <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center gap-6">
-        <div className="relative">
-          <div className="w-24 h-24 rounded-lg bg-[#d5e0f8] flex items-center justify-center text-4xl font-bold text-[#0b1c30]">
-            {student.first_name[0]}{student.last_name[0]}
+        <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+          <input 
+            type="file" 
+            accept="image/*" 
+            className="hidden" 
+            ref={fileInputRef} 
+            onChange={handleAvatarUpload}
+            disabled={isUploading}
+          />
+          <div className="w-24 h-24 rounded-lg bg-[#d5e0f8] overflow-hidden flex items-center justify-center text-4xl font-bold text-[#0b1c30] relative border border-[var(--color-outline-variant)]">
+            {student.avatar_url ? (
+              <img src={student.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <>{student.first_name[0]}{student.last_name[0]}</>
+            )}
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              {isUploading ? (
+                <span className="material-symbols-outlined text-white animate-spin">refresh</span>
+              ) : (
+                <Camera className="text-white" size={28} />
+              )}
+            </div>
           </div>
-          <div className="absolute -bottom-2 -right-2 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-full p-1">
+          <div className="absolute -bottom-2 -right-2 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-full p-1 z-10">
             <span className="w-4 h-4 rounded-full bg-[#10b981] block"></span>
           </div>
         </div>

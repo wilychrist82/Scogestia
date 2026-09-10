@@ -39,6 +39,7 @@ export default async function StudentDetailPage({
       gender,
       blood_group,
       address,
+      avatar_url,
       classes ( name )
     `)
     .eq('id', id)
