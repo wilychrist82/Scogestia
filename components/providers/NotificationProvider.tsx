@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -114,12 +114,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         )
       }
 
+      // Abonnement Realtime
+      // IMPORTANT : on ne met PAS de filtre côté Supabase (user_id=eq.X) car cela
+      // nécessite REPLICA IDENTITY FULL sur la table. On filtre en JavaScript.
       const channel = supabase
         .channel(`notifs-${user.id}`)
         .on(
           'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
-          (payload) => handleNewNotif(payload.new as Notification)
+          { event: 'INSERT', schema: 'public', table: 'notifications' },
+          (payload) => {
+            const newNotif = payload.new as Notification
+            // Filtre JS : ne traiter que les notifications de CET utilisateur
+            if (newNotif.user_id === user.id) {
+              handleNewNotif(newNotif)
+            }
+          }
         )
         .subscribe((status) => console.log('[Realtime] statut:', status))
 
