@@ -37,7 +37,7 @@ serve(async (req) => {
       android: {
         priority: 'high',
         notification: {
-          channelId: 'default', // Identifiant de channel critique pour le son personnalisé
+          channelId: 'scogestia_alerts_v1', // Identifiant de channel critique pour le son personnalisé (nouveau channel pour contourner le cache Android)
           sound: 'notification_sound' // Référence au fichier mp3 ajouté précédemment
         }
       },

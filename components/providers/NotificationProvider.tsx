@@ -36,24 +36,30 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   // Débloquer l'audio sur la première interaction de l'utilisateur (pour contourner le blocage du navigateur)
   useEffect(() => {
-    const unlockAudio = () => {
-      if (audioRef.current) {
-        audioRef.current.play().then(() => {
-          if (audioRef.current) {
-            audioRef.current.pause()
-            audioRef.current.currentTime = 0
-          }
-        }).catch(() => {})
+    const unlockAudio = async () => {
+      if (audioRef.current && !audioRef.current.dataset.unlocked) {
+        try {
+          audioRef.current.muted = true;
+          await audioRef.current.play();
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+          audioRef.current.muted = false;
+          audioRef.current.dataset.unlocked = 'true';
+        } catch (e) {
+          console.log("Audio unlock failed, will try again", e);
+        }
       }
-      document.removeEventListener('click', unlockAudio)
-      document.removeEventListener('touchstart', unlockAudio)
     }
-    document.addEventListener('click', unlockAudio)
-    document.addEventListener('touchstart', unlockAudio)
+    
+    const events = ['click', 'touchstart', 'keydown']
+    events.forEach(event => {
+      document.addEventListener(event, unlockAudio, { passive: true })
+    })
     
     return () => {
-      document.removeEventListener('click', unlockAudio)
-      document.removeEventListener('touchstart', unlockAudio)
+      events.forEach(event => {
+        document.removeEventListener(event, unlockAudio)
+      })
     }
   }, [])
 

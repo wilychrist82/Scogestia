@@ -79,8 +79,8 @@ export const usePushNotifications = () => {
       
       // Configuration du channel (requis pour Android 8+) pour le son
       await PushNotifications.createChannel({
-        id: 'default',
-        name: 'Notifications par défaut',
+        id: 'scogestia_alerts_v1',
+        name: 'Alertes Scogestia',
         description: 'Notifications pour les messages et alertes de l\'application',
         importance: 5,
         visibility: 1,
