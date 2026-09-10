@@ -675,7 +675,7 @@ export function StudentDetailTabs({ student }: Props) {
                   </div>
                 </form>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       )}
