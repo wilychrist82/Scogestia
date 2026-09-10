@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useRef } from 'react'
+import Link from 'next/link'
 import { generateParentCode } from '@/app/actions/invitations'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { FileEdit, CalendarDays, Banknote, Camera } from 'lucide-react'
