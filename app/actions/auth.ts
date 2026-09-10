@@ -65,10 +65,9 @@ export async function loginStaff(prevState: AuthState, formData: FormData): Prom
     return { error: 'Accès refusé. Vous ne faites pas partie du personnel.' };
   }
 
-  // Vérifier si c'est un parent seulement, interdire l'accès au portail staff
+  // Si c'est un parent, on le redirige vers l'espace parent
   if (roles[0].role === 'parent') {
-    await supabase.auth.signOut();
-    return { error: 'Accès réservé au personnel. Les parents ont leur propre portail.' };
+    redirect('/parent');
   }
 
   redirect('/');
