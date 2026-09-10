@@ -57,19 +57,32 @@ export const usePushNotifications = () => {
 
       // Écouter les notifications reçues lorsque l'app est au premier plan
       PushNotifications.addListener('pushNotificationReceived', (notification) => {
-        console.log('Notification reçue:', notification);
-        
-        // Jouer un son manuellement au premier plan
+        console.log('Notification reçue (foreground):', notification);
+
+        // Web Audio API — seule solution fiable dans Android WebView
+        // new Audio().play() est bloqué par la politique autoplay
         try {
-          const audio = new Audio('/notification.mp3');
-          audio.play().catch(e => console.error("Erreur lecture audio:", e));
+          const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioCtx) {
+            const ctx = new AudioCtx();
+            fetch('/notification.mp3')
+              .then(r => r.arrayBuffer())
+              .then(buf => ctx.decodeAudioData(buf))
+              .then(decoded => {
+                const src = ctx.createBufferSource();
+                src.buffer = decoded;
+                src.connect(ctx.destination);
+                src.start(0);
+              })
+              .catch(e => console.error('[Audio] Erreur fetch/decode:', e));
+          }
         } catch (e) {
-          console.error("Audio non supporté:", e);
+          console.error('[Audio] WebAudio non supporté:', e);
         }
 
         toast.success(`${notification.title} : ${notification.body}`, {
-            duration: 4000,
-            position: 'top-center'
+          duration: 4000,
+          position: 'top-center'
         });
       });
 
@@ -86,14 +99,16 @@ export const usePushNotifications = () => {
         }
       );
       
-      // Configuration du channel (requis pour Android 8+) pour le son
+      // ⚠️  IMPORTANT : Android met en cache les channels de notification.
+      // Si on change la config (son, importance...), il FAUT changer l'ID du channel.
+      // Le channel v2 force Android à recréer un channel frais avec le bon son.
       await PushNotifications.createChannel({
-        id: 'scogestia_alerts_v1',
+        id: 'scogestia_alerts_v2',           // Nouvel ID pour bypasser le cache Android
         name: 'Alertes Scogestia',
         description: 'Notifications pour les messages et alertes de l\'application',
         importance: 5,
         visibility: 1,
-        sound: 'notification_sound.mp3', // Nom du fichier dans res/raw
+        sound: 'notification_sound',          // Sans extension .mp3 (Android cherche dans res/raw)
         vibration: true,
       });
 

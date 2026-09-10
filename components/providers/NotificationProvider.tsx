@@ -1,6 +1,7 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
+import React, { createContext, useContext, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast, { Toaster } from 'react-hot-toast'
 import { BellRing } from 'lucide-react'
@@ -30,64 +31,86 @@ export function useNotifications() {
   return context
 }
 
+// ─── Web Audio API ────────────────────────────────────────────────────────────
+// C'est la SEULE API qui fonctionne de manière fiable dans un WebView Android.
+// new Audio().play() est bloqué par la politique autoplay d'Android WebView.
+// On pré-charge le buffer une fois après la 1ère interaction, puis on joue sans restriction.
+let _audioCtx: AudioContext | null = null
+let _audioBuffer: AudioBuffer | null = null
+let _audioReady = false
+
+async function initWebAudio() {
+  if (_audioReady) return
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+    if (!AudioCtx) return
+    _audioCtx = new AudioCtx()
+    if (_audioCtx.state === 'suspended') await _audioCtx.resume()
+    const res = await fetch('/notification.mp3')
+    const buf = await res.arrayBuffer()
+    _audioBuffer = await _audioCtx.decodeAudioData(buf)
+    _audioReady = true
+    console.log('[Scogestia Audio] Prêt ✓')
+  } catch (e) {
+    console.error('[Scogestia Audio] Erreur initialisation:', e)
+  }
+}
+
+function playSound() {
+  if (!_audioReady || !_audioCtx || !_audioBuffer) {
+    // Fallback ultime : tenter HTMLAudio
+    try { new Audio('/notification.mp3').play() } catch (_) {}
+    return
+  }
+  try {
+    if (_audioCtx.state === 'suspended') _audioCtx.resume()
+    const src = _audioCtx.createBufferSource()
+    src.buffer = _audioBuffer
+    src.connect(_audioCtx.destination)
+    src.start(0)
+  } catch (e) {
+    console.error('[Scogestia Audio] Erreur lecture:', e)
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const audioRef = useRef<HTMLAudioElement>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const unreadCount = notifications.filter(n => !n.is_read).length
+  const initialized = useRef(false)
 
-  // Initialiser les notifications push (Capacitor)
+  // Initialiser les notifications push Capacitor (Android natif background)
   usePushNotifications()
 
-  // Débloquer l'audio sur la première interaction de l'utilisateur (pour contourner le blocage du navigateur)
+  // Initialiser Web Audio à la première interaction utilisateur
   useEffect(() => {
-    const unlockAudio = async () => {
-      if (audioRef.current && !audioRef.current.dataset.unlocked) {
-        try {
-          audioRef.current.muted = true;
-          await audioRef.current.play();
-          audioRef.current.pause();
-          audioRef.current.currentTime = 0;
-          audioRef.current.muted = false;
-          audioRef.current.dataset.unlocked = 'true';
-        } catch (e) {
-          console.log("Audio unlock failed, will try again", e);
-        }
-      }
+    const unlock = () => {
+      if (initialized.current) return
+      initialized.current = true
+      initWebAudio()
     }
-    
     const events = ['click', 'touchstart', 'keydown']
-    events.forEach(event => {
-      document.addEventListener(event, unlockAudio, { passive: true })
-    })
-    
-    return () => {
-      events.forEach(event => {
-        document.removeEventListener(event, unlockAudio)
-      })
-    }
+    events.forEach(e => document.addEventListener(e, unlock, { passive: true }))
+    return () => events.forEach(e => document.removeEventListener(e, unlock))
   }, [])
 
+  // Écoute Supabase Realtime — notifications en temps réel (foreground)
   useEffect(() => {
     const supabase = createClient()
-    let userId: string | null = null
 
     const setupRealtime = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      userId = user.id
-
-      // Charger les notifications existantes
       const { data: initialNotifs } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20)
-        
+
       if (initialNotifs) setNotifications(initialNotifs)
 
-      // S'abonner aux insertions dans la table notifications pour cet utilisateur
       const channel = supabase
         .channel('realtime-notifications')
         .on(
@@ -102,15 +125,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             const newNotif = payload.new as Notification
             setNotifications(prev => [newNotif, ...prev].slice(0, 50))
 
-            // 1. Jouer le son
-            if (audioRef.current) {
-              audioRef.current.currentTime = 0
-              audioRef.current.play().catch((e) => console.log('Audio play blocked by browser:', e))
-            }
+            // Jouer le son via Web Audio API (bypass autoplay Android)
+            playSound()
 
-            // 2. Afficher le Toast visuel
             toast(
-              (t) => (
+              () => (
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <BellRing className="h-4 w-4 text-blue-600" />
@@ -127,9 +146,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         )
         .subscribe()
 
-      return () => {
-        supabase.removeChannel(channel)
-      }
+      return () => { supabase.removeChannel(channel) }
     }
 
     setupRealtime()
@@ -151,7 +168,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   return (
     <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead }}>
-      <audio ref={audioRef} src="/notification.mp3" preload="auto" />
       <Toaster position="top-right" />
       {children}
     </NotificationContext.Provider>
