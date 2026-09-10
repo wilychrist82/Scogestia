@@ -3,18 +3,24 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/components/providers/NotificationProvider'
-import { Bell, CheckCheck } from 'lucide-react'
+import { Bell, CheckCheck, LogOut } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 export function ParentHeader({ fullName }: { fullName: string }) {
   const router = useRouter()
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
   const [showNotifs, setShowNotifs] = useState(false)
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
   const notifRef = useRef<HTMLDivElement>(null)
+  const profileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
         setShowNotifs(false)
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -32,14 +38,38 @@ export function ParentHeader({ fullName }: { fullName: string }) {
     }
   }
 
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/connexion')
+    router.refresh()
+  }
+
   return (
     <header className="h-14 bg-[var(--color-primary)] text-white flex items-center justify-between px-4 sticky top-0 z-50 shadow-md">
-      <div className="flex items-center">
-        <span className="material-symbols-outlined text-white mr-3">account_circle</span>
-        <div className="flex flex-col">
-          <span className="text-sm font-bold truncate max-w-[200px]">{fullName}</span>
-          <span className="text-[10px] text-[var(--color-primary-container)]">Espace Parent</span>
-        </div>
+      <div className="relative" ref={profileRef}>
+        <button 
+          onClick={() => setShowProfileMenu(!showProfileMenu)}
+          className="flex items-center text-left focus:outline-none p-1 rounded hover:bg-white/10 transition-colors"
+        >
+          <span className="material-symbols-outlined text-white mr-2 sm:mr-3">account_circle</span>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold truncate max-w-[150px] sm:max-w-[200px]">{fullName}</span>
+            <span className="text-[10px] text-[var(--color-primary-container)]">Espace Parent</span>
+          </div>
+        </button>
+
+        {showProfileMenu && (
+          <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
+            <button 
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 font-medium transition-colors"
+            >
+              <LogOut size={16} />
+              Se déconnecter
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="relative" ref={notifRef}>
