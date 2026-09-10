@@ -39,6 +39,7 @@ export default async function StudentDetailPage({
       gender,
       blood_group,
       address,
+      parent_phone,
       avatar_url,
       classes ( name )
     `)

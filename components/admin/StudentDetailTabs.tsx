@@ -299,11 +299,11 @@ export function StudentDetailTabs({ student }: Props) {
                 <p className="text-sm text-[var(--color-on-surface-variant)] mb-1">Groupe Sanguin</p>
                 <p className="font-medium text-[var(--color-on-surface)]">{student.blood_group || 'Non renseigné'}</p>
               </div>
-              <div className="sm:col-span-2">
+              <div>
                 <p className="text-sm text-[var(--color-on-surface-variant)] mb-1">Adresse Domicile</p>
                 <p className="font-medium text-[var(--color-on-surface)]">{student.address || 'Non renseignée'}</p>
               </div>
-              <div className="sm:col-span-2">
+              <div>
                 <p className="text-sm text-[var(--color-on-surface-variant)] mb-1">Téléphone du parent</p>
                 <p className="font-medium text-[var(--color-on-surface)]">{student.parent_phone || 'Non renseigné'}</p>
               </div>
