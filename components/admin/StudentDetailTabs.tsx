@@ -569,6 +569,7 @@ export function StudentDetailTabs({ student }: Props) {
                   Ces options utiliseront les coordonnées renseignées par le parent une fois son compte activé (voir section <b>Contact Parent</b>).
                 </p>
               </div>
+            </div>
             ) : (
               <div className="p-6 space-y-4">
                 <button 
