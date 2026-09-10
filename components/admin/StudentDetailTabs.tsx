@@ -509,9 +509,8 @@ export function StudentDetailTabs({ student }: Props) {
                     <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
                   </button>
 
-                <a 
-                  href={student.parent_phone ? `sms:${student.parent_phone}` : '#'}
-                  onClick={(e) => { if (!student.parent_phone) { e.preventDefault(); alert("Le numéro de téléphone du parent n'est pas encore renseigné."); } }}
+                <button 
+                  onClick={() => setActiveContactView('sms')}
                   className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
@@ -520,11 +519,11 @@ export function StudentDetailTabs({ student }: Props) {
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-[var(--color-on-surface)] text-sm">Envoyer un SMS</p>
-                      <p className="text-xs text-[var(--color-on-surface-variant)]">SMS via votre forfait mobile</p>
+                      <p className="text-xs text-[var(--color-on-surface-variant)]">Écrire un SMS via la plateforme</p>
                     </div>
                   </div>
                   <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
-                </a>
+                </button>
 
                 <a 
                   href={student.parent_phone ? `https://wa.me/${student.parent_phone.replace(/[^0-9]/g, '')}` : '#'}
@@ -570,7 +569,7 @@ export function StudentDetailTabs({ student }: Props) {
                 </p>
               </div>
             </div>
-            ) : (
+            ) : activeContactView === 'vocal' ? (
               <div className="p-6 space-y-4">
                 <button 
                   onClick={() => setActiveContactView('list')}
@@ -593,6 +592,39 @@ export function StudentDetailTabs({ student }: Props) {
                     >
                       <span className="material-symbols-outlined text-[18px]">send</span>
                       {isPending ? 'Envoi en cours...' : 'Envoyer le message vocal'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              <div className="p-6 space-y-4">
+                <button 
+                  onClick={() => setActiveContactView('list')}
+                  className="flex items-center gap-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors text-sm font-semibold mb-2"
+                >
+                  <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                  Retour aux options
+                </button>
+                <h3 className="font-semibold text-[var(--color-on-surface)]">Envoyer un SMS au parent de {student.first_name}</h3>
+                
+                <form onSubmit={handleSmsSubmit} className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
+                    <textarea 
+                      name="smsMessage"
+                      rows={4}
+                      placeholder="Tapez votre message ici..."
+                      className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all resize-y"
+                    ></textarea>
+                    <p className="text-xs text-[var(--color-on-surface-variant)]">Ce message sera envoyé directement sur le téléphone du parent si son numéro est enregistré.</p>
+                  </div>
+                  <div className="flex justify-end gap-3 mt-2">
+                    <button 
+                      type="submit" 
+                      disabled={isPending}
+                      className="bg-[var(--color-primary)] text-white px-6 py-2.5 rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">send</span>
+                      {isPending ? 'Envoi en cours...' : 'Envoyer le SMS'}
                     </button>
                   </div>
                 </form>
