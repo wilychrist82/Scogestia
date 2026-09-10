@@ -196,10 +196,16 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-10 text-center">
+          <div className="mt-10 flex flex-col gap-3 text-center">
             <p className="text-sm text-slate-600 font-medium">
-              Vous n'avez pas de compte ?{' '}
-              <Link className="font-bold text-emerald-600 hover:text-emerald-500 transition-colors ml-1" href="/inscription-ecole">
+              Vous êtes un parent avec un code d'invitation ?{' '}
+              <Link className="font-bold text-emerald-600 hover:text-emerald-500 transition-colors" href="/activer-parent">
+                Activer mon compte
+              </Link>
+            </p>
+            <p className="text-sm text-slate-600 font-medium">
+              Vous n'avez pas de compte école ?{' '}
+              <Link className="font-bold text-emerald-600 hover:text-emerald-500 transition-colors" href="/inscription-ecole">
                 Inscrire une école
               </Link>
             </p>
