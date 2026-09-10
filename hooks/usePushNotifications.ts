@@ -59,22 +59,29 @@ export const usePushNotifications = () => {
       PushNotifications.addListener('pushNotificationReceived', (notification) => {
         console.log('Notification reçue (foreground):', notification);
 
-        // Web Audio API — seule solution fiable dans Android WebView
-        // new Audio().play() est bloqué par la politique autoplay
+        // Carillon doux via Web Audio API (même logique que NotificationProvider)
         try {
           const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
           if (AudioCtx) {
             const ctx = new AudioCtx();
-            fetch('/notification.mp3')
-              .then(r => r.arrayBuffer())
-              .then(buf => ctx.decodeAudioData(buf))
-              .then(decoded => {
-                const src = ctx.createBufferSource();
-                src.buffer = decoded;
-                src.connect(ctx.destination);
-                src.start(0);
-              })
-              .catch(e => console.error('[Audio] Erreur fetch/decode:', e));
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            const totalDuration = 5;
+            notes.forEach((freq, i) => {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(freq, ctx.currentTime);
+              const startTime = ctx.currentTime + i * 0.18;
+              const peakVolume = 0.18 - i * 0.02;
+              gain.gain.setValueAtTime(0, startTime);
+              gain.gain.linearRampToValueAtTime(peakVolume, startTime + 0.05);
+              gain.gain.exponentialRampToValueAtTime(0.001, startTime + totalDuration - i * 0.3);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(startTime);
+              osc.stop(startTime + totalDuration);
+            });
+            setTimeout(() => ctx.close().catch(() => {}), (totalDuration + 1) * 1000);
           }
         } catch (e) {
           console.error('[Audio] WebAudio non supporté:', e);
@@ -101,14 +108,14 @@ export const usePushNotifications = () => {
       
       // ⚠️  IMPORTANT : Android met en cache les channels de notification.
       // Si on change la config (son, importance...), il FAUT changer l'ID du channel.
-      // Le channel v2 force Android à recréer un channel frais avec le bon son.
+      // Le channel v3 force Android à recréer un channel frais avec le nouveau son doux.
       await PushNotifications.createChannel({
-        id: 'scogestia_alerts_v2',           // Nouvel ID pour bypasser le cache Android
+        id: 'scogestia_alerts_v3',           // Nouveau ID → force Android à recréer le channel
         name: 'Alertes Scogestia',
         description: 'Notifications pour les messages et alertes de l\'application',
         importance: 5,
         visibility: 1,
-        sound: 'notification_sound',          // Sans extension .mp3 (Android cherche dans res/raw)
+        sound: 'notification_sound',          // Sans extension .mp3 (fichier dans res/raw)
         vibration: true,
       });
 
