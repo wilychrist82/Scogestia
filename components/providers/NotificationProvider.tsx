@@ -6,6 +6,45 @@ import toast, { Toaster } from 'react-hot-toast'
 import { BellRing } from 'lucide-react'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 
+// Joue un carillon doux (Web Audio API) — s'arrête automatiquement après ~5s
+function playChime() {
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    if (!AudioCtx) return
+    const ctx = new AudioCtx()
+
+    // Notes du carillon : Do, Mi, Sol, Do (octave sup)
+    const notes = [523.25, 659.25, 783.99, 1046.50]
+    const totalDuration = 5 // secondes
+
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(freq, ctx.currentTime)
+
+      // Enveloppe douce : attaque rapide, longue décroissance
+      const startTime = ctx.currentTime + i * 0.18
+      const peakVolume = 0.18 - i * 0.02 // chaque note un peu plus douce
+      gain.gain.setValueAtTime(0, startTime)
+      gain.gain.linearRampToValueAtTime(peakVolume, startTime + 0.05)
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + totalDuration - i * 0.3)
+
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+
+      osc.start(startTime)
+      osc.stop(startTime + totalDuration)
+    })
+
+    // Ferme le contexte proprement après la durée totale
+    setTimeout(() => ctx.close().catch(() => {}), (totalDuration + 1) * 1000)
+  } catch (err) {
+    console.warn('[Chime] Web Audio API non disponible:', err)
+  }
+}
+
 export type Notification = {
   id: string
   title: string
@@ -33,42 +72,17 @@ export function useNotifications() {
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const unreadCount = notifications.filter(n => !n.is_read).length
-  const audioRef = useRef<HTMLAudioElement | null>(null)
   const lastNotifTimestamp = useRef<string | null>(null)
 
   usePushNotifications()
 
-  useEffect(() => {
-    const audio = new Audio('/notification.mp3')
-    audio.preload = 'auto'
-    audio.volume = 1
-    audioRef.current = audio
-
-    const keepWarm = () => {
-      const a = audioRef.current
-      if (!a) return
-      const vol = a.volume
-      a.volume = 0
-      a.play()
-        .then(() => { a.pause(); a.currentTime = 0; a.volume = vol })
-        .catch(() => { a.volume = vol })
-    }
-
-    const events = ['click', 'touchstart', 'touchend', 'keydown']
-    events.forEach(e => document.addEventListener(e, keepWarm, { passive: true }))
-    return () => events.forEach(e => document.removeEventListener(e, keepWarm))
-  }, [])
-
   const triggerAlert = () => {
+    // Vibration légère
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate([300, 100, 300])
+      navigator.vibrate([100, 50, 100])
     }
-    const a = audioRef.current
-    if (a) {
-      a.currentTime = 0
-      a.volume = 1
-      a.play().catch(err => console.warn('[Audio] play() bloque:', err))
-    }
+    // Carillon doux généré par Web Audio API (s'arrête après 5s)
+    playChime()
   }
 
   useEffect(() => {
