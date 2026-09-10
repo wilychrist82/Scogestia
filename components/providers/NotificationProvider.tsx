@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { createClient } from '@/lib/supabase/client'
 import toast, { Toaster } from 'react-hot-toast'
 import { BellRing } from 'lucide-react'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
 
 export type Notification = {
   id: string
@@ -33,6 +34,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const audioRef = useRef<HTMLAudioElement>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const unreadCount = notifications.filter(n => !n.is_read).length
+
+  // Initialiser les notifications push (Capacitor)
+  usePushNotifications()
 
   // Débloquer l'audio sur la première interaction de l'utilisateur (pour contourner le blocage du navigateur)
   useEffect(() => {
