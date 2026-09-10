@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { sendCommunication } from '@/app/actions/communication'
 import { formatDistanceToNow } from 'date-fns'
@@ -20,15 +20,19 @@ type Props = {
 }
 
 export function CommunicationManager({ currentUserId, classes, students, recentCommunications = [] }: Props) {
-  const [recipientType, setRecipientType] = useState('all') // all, class, parent
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  const initialStudentId = searchParams.get('student_id')
+  
+  const [recipientType, setRecipientType] = useState(initialStudentId ? 'parent' : 'all') // all, class, parent
   const [selectedClass, setSelectedClass] = useState('')
-  const [selectedParent, setSelectedParent] = useState('')
+  const [selectedParent, setSelectedParent] = useState(initialStudentId || '')
   const [sendSmsOption, setSendSmsOption] = useState(false)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   
   const [isPending, startTransition] = useTransition()
   const [success, setSuccess] = useState(false)
-  const router = useRouter()
 
   // Auto-refresh the page data every 10 seconds to get new messages without a hard reload
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { CommunicationManager } from '@/components/admin/communication/CommunicationManager'
+import { Suspense } from 'react'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,11 +43,13 @@ export default async function CommunicationPage() {
     .limit(10)
 
   return (
-    <CommunicationManager 
-      currentUserId={user.id}
-      classes={classes || []} 
-      students={students || []} 
-      recentCommunications={communications || []}
-    />
+    <Suspense fallback={<div className="p-8">Chargement...</div>}>
+      <CommunicationManager 
+        currentUserId={user.id}
+        classes={classes || []} 
+        students={students || []} 
+        recentCommunications={communications || []}
+      />
+    </Suspense>
   )
 }

@@ -459,22 +459,21 @@ export function StudentDetailTabs({ student }: Props) {
               </p>
               
               <div className="grid grid-cols-1 gap-3 mt-4">
-                <a 
-                  href={student.parent_phone ? `tel:${student.parent_phone}` : '#'}
-                  onClick={(e) => { if (!student.parent_phone) { e.preventDefault(); alert("Le numéro de téléphone du parent n'est pas encore renseigné."); } }}
+                <Link 
+                  href={`/admin/communication?student_id=${student.id}&type=vocal`}
                   className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
-                      <span className="material-symbols-outlined">call</span>
+                      <span className="material-symbols-outlined">mic</span>
                     </div>
                     <div className="text-left">
-                      <p className="font-semibold text-[var(--color-on-surface)] text-sm">Appel vocal</p>
-                      <p className="text-xs text-[var(--color-on-surface-variant)]">Appel via votre téléphone</p>
+                      <p className="font-semibold text-[var(--color-on-surface)] text-sm">Message Vocal</p>
+                      <p className="text-xs text-[var(--color-on-surface-variant)]">Message vocal via l'application</p>
                     </div>
                   </div>
                   <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
-                </a>
+                </Link>
 
                 <a 
                   href={student.parent_phone ? `sms:${student.parent_phone}` : '#'}
