@@ -473,6 +473,34 @@ export async function publishHomework(
   }
 }
 
+export async function deleteHomework(homeworkId: string): Promise<ActionState> {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+
+    // Vérifier si le devoir appartient bien à l'école
+    const { data: hw, error: fetchError } = await supabase
+      .from("homework")
+      .select("id")
+      .eq("id", homeworkId)
+      .eq("school_id", school_id)
+      .single();
+
+    if (fetchError || !hw) {
+      return { error: "Devoir introuvable ou accès non autorisé." };
+    }
+
+    const { error } = await supabase.from("homework").delete().eq("id", homeworkId);
+    if (error) throw error;
+
+    revalidatePath("/admin/academique/devoirs");
+    revalidatePath("/enseignant/devoirs");
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
 export async function publishBulletinPDF(studentId: string, termOrMonth: string, academicYear: string, fileUrl: string) {
   try {
     const supabase = await createClient()

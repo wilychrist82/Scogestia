@@ -83,7 +83,7 @@ export default async function ParentDevoirsPage({
       try {
         targets = JSON.parse(targets);
       } catch {
-        targets = targets.replace(/[{}]/g, '').split(',').map((s: string) => s.trim());
+        targets = targets.replace(/[{}"']/g, '').split(',').map((s: string) => s.trim());
       }
     }
     

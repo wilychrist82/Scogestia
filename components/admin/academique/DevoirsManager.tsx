@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, FormEvent } from 'react'
-import { publishHomework } from '@/app/actions/academique'
+import { publishHomework, deleteHomework } from '@/app/actions/academique'
 import Link from 'next/link'
 
 type ClassItem = { id: string; name: string; level: string }
@@ -13,6 +13,7 @@ type HomeworkItem = {
   subject_name: string
   due_date: string
   created_at: string
+  description?: string
   attachment_url?: string
   target_students?: string[]
   class: { name: string } | null
@@ -29,7 +30,10 @@ type Props = {
 export function DevoirsManager({ homeworks, classes, subjects, students = [] }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [isDeleting, startDeleteTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [selectedHomework, setSelectedHomework] = useState<HomeworkItem | null>(null)
 
   const [selectedClassId, setSelectedClassId] = useState<string>('')
   const [assignmentMode, setAssignmentMode] = useState<'all' | 'selective'>('all')
@@ -62,6 +66,22 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
         setError(result.error)
       } else {
         setIsModalOpen(false)
+        setSuccessMsg("Devoir publié avec succès !")
+        setTimeout(() => setSuccessMsg(null), 5000)
+      }
+    })
+  }
+
+  const handleDelete = (id: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer ce devoir ?")) return;
+    
+    startDeleteTransition(async () => {
+      const result = await deleteHomework(id)
+      if (result?.error) {
+        alert(result.error)
+      } else {
+        setSuccessMsg("Devoir supprimé avec succès !")
+        setTimeout(() => setSuccessMsg(null), 5000)
       }
     })
   }
@@ -89,6 +109,12 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
           </button>
         </div>
 
+        {successMsg && (
+          <div className="bg-[#e0f7fa] text-[#006064] p-4 rounded-xl border border-[#b2ebf2] flex items-center gap-3">
+            <span className="material-symbols-outlined">check_circle</span>
+            <span className="font-medium text-sm">{successMsg}</span>
+          </div>
+        )}
 
         {/* Data Table Container */}
         <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] overflow-hidden shadow-sm flex flex-col min-h-[500px]">
@@ -129,10 +155,15 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                         <span className="material-symbols-outlined text-[18px]">attachment</span> Pièce jointe
                       </a>
                     )}
-                    <button className="flex-1 bg-[var(--color-surface-bright)] text-[var(--color-on-surface)] border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] py-2 rounded-lg text-sm font-semibold transition-colors">
+                    <button 
+                      onClick={() => setSelectedHomework(hw)}
+                      className="flex-1 bg-[var(--color-surface-bright)] text-[var(--color-on-surface)] border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] py-2 rounded-lg text-sm font-semibold transition-colors">
                       Voir
                     </button>
-                    <button className="px-3 bg-[var(--color-surface-bright)] text-[var(--color-status-retard-text)] border border-[var(--color-outline-variant)] hover:border-[var(--color-status-retard-text)] hover:bg-[#fff0f0] rounded-lg transition-colors flex items-center justify-center">
+                    <button 
+                      onClick={() => handleDelete(hw.id)}
+                      disabled={isDeleting}
+                      className="px-3 bg-[var(--color-surface-bright)] text-[var(--color-status-retard-text)] border border-[var(--color-outline-variant)] hover:border-[var(--color-status-retard-text)] hover:bg-[#fff0f0] rounded-lg transition-colors flex items-center justify-center disabled:opacity-50">
                       <span className="material-symbols-outlined text-[18px]">delete</span>
                     </button>
                   </div>
@@ -330,6 +361,65 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Modal: Voir un devoir */}
+      {selectedHomework && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0b1c30]/40 transition-opacity p-4">
+          <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-lg rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[var(--color-outline-variant)] flex flex-col overflow-hidden">
+            <div className="px-6 py-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
+              <h2 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2">
+                <span className="material-symbols-outlined text-[var(--color-primary)]">assignment</span>
+                Détails du devoir
+              </h2>
+              <button onClick={() => setSelectedHomework(null)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar space-y-4">
+              <div>
+                <h3 className="text-lg font-bold text-[var(--color-on-surface)]">{selectedHomework.title}</h3>
+                <div className="flex gap-2 mt-2">
+                  <span className="px-2.5 py-1 bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] rounded text-xs font-semibold uppercase tracking-wider">
+                    {selectedHomework.subject_name}
+                  </span>
+                  <span className="px-2.5 py-1 bg-[#fff8e1] text-[#f57f17] rounded-full text-xs font-bold border border-[#ffe082]">
+                    À rendre le {new Date(selectedHomework.due_date).toLocaleDateString('fr-FR')}
+                  </span>
+                </div>
+              </div>
+
+              {selectedHomework.description && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-semibold text-[var(--color-on-surface-variant)] mb-1">Description / Consignes</h4>
+                  <div className="bg-[var(--color-surface-bright)] p-4 rounded-lg border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-sm whitespace-pre-wrap">
+                    {selectedHomework.description}
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-4 text-sm text-[var(--color-on-surface-variant)]">
+                <p><strong>Classe :</strong> {selectedHomework.class?.name || '-'}</p>
+                <p><strong>Ciblage :</strong> {selectedHomework.target_students ? `${selectedHomework.target_students.length} élève(s) spécifique(s)` : 'Toute la classe'}</p>
+                <p><strong>Publié le :</strong> {new Date(selectedHomework.created_at).toLocaleDateString('fr-FR')} par {selectedHomework.creator?.full_name || 'Admin'}</p>
+              </div>
+
+              {selectedHomework.attachment_url && (
+                <div className="mt-4 pt-4 border-t border-[var(--color-outline-variant)]">
+                  <a href={selectedHomework.attachment_url.startsWith('http') ? selectedHomework.attachment_url : `https://mxttnddswkntrryshqzl.supabase.co/storage/v1/object/public/homework-attachments/${selectedHomework.attachment_url}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 w-full bg-[#f0f4ff] text-[var(--color-primary)] border border-[#cce0ff] hover:bg-[#e0edff] py-2.5 rounded-lg text-sm font-semibold transition-colors">
+                    <span className="material-symbols-outlined text-[18px]">download</span> Télécharger la pièce jointe
+                  </a>
+                </div>
+              )}
+            </div>
+            
+            <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end">
+              <button onClick={() => setSelectedHomework(null)} className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors">
+                Fermer
+              </button>
+            </div>
           </div>
         </div>
       )}
