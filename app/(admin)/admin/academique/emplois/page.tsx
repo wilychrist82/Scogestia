@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { EmploisManager } from '@/components/admin/academique/EmploisManager'
+import { EmploisManagerClient } from '@/components/admin/academique/EmploisManagerClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +12,7 @@ export default async function EmploisDuTempsPage() {
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('school_id')
+    .select('school_id, role')
     .eq('user_id', user.id)
     .limit(1).maybeSingle()
 
@@ -21,6 +21,7 @@ export default async function EmploisDuTempsPage() {
   }
 
   const schoolId = roleData.school_id
+  const isReadOnly = !['admin', 'comptable'].includes(roleData.role || '')
 
   const { data: classes } = await supabase
     .from('classes')
@@ -28,5 +29,11 @@ export default async function EmploisDuTempsPage() {
     .eq('school_id', schoolId)
     .order('name')
 
-  return <EmploisManager classes={classes || []} />
+  return (
+    <EmploisManagerClient
+      classes={classes || []}
+      schoolId={schoolId}
+      readOnly={isReadOnly}
+    />
+  )
 }

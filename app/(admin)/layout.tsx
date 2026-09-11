@@ -1,4 +1,5 @@
 import { AdminLayoutWrapper } from '@/components/layout/AdminLayoutWrapper'
+import { SupportWidget } from '@/components/layout/SupportWidget'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -101,6 +102,12 @@ export default async function AdminLayout({
       >
         {children}
       </AdminLayoutWrapper>
+      <SupportWidget
+        userFullName={userFullName}
+        userEmail={user.email}
+        tawkPropertyId={process.env.NEXT_PUBLIC_TAWK_PROPERTY_ID}
+        tawkWidgetId={process.env.NEXT_PUBLIC_TAWK_WIDGET_ID}
+      />
     </div>
   )
 }

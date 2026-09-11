@@ -5,6 +5,8 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { authRateLimit, checkRateLimit } from '@/lib/ratelimit'
+import { sendEmail } from '@/lib/emails/send'
+import { welcomeEmailHtml } from '@/lib/emails/templates/welcome'
 
 export type AuthState = {
   error?: string;
@@ -144,6 +146,18 @@ export async function registerSchool(prevState: AuthState, formData: FormData): 
       plan_name: 'Essai Gratuit',
       current_period_end: trialEndDate.toISOString(),
     });
+
+    // 4. Email de bienvenue (non-bloquant)
+    await sendEmail({
+      to: email,
+      subject: `Bienvenue sur Scogestia — ${schoolName} est prête !`,
+      html: welcomeEmailHtml({
+        adminName,
+        schoolName,
+        loginUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://app.scogestia.com'}/connexion`,
+        trialDays: 14,
+      }),
+    }).catch(err => console.error('[Welcome Email Error]', err))
   }
 
   redirect('/connexion');

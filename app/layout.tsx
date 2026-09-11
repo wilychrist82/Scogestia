@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
+import { CookieBanner } from "@/components/layout/CookieBanner";
 
 export const viewport: Viewport = {
   themeColor: '#005841',
@@ -39,6 +40,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <NotificationProvider>
           {children}
+          <CookieBanner />
         </NotificationProvider>
       </body>
     </html>

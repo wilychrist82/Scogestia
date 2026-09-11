@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { sendSms } from '@/lib/sms'
+import { sendEmail } from '@/lib/emails/send'
 
 export async function sendCommunication(formData: FormData) {
   const supabase = await createClient()
@@ -222,6 +223,84 @@ export async function sendCommunication(formData: FormData) {
       }
     } catch (smsError) {
       console.error('Error in SMS logic:', smsError)
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Envoi Email groupé (pour les annonces 'all' et 'class')
+  // ─────────────────────────────────────────────────────────────────────────
+  const shouldSendGroupEmail = ['all', 'class'].includes(recipientType) && !audioUrl
+  if (shouldSendGroupEmail) {
+    try {
+      let parentUserIds: string[] = []
+
+      if (recipientType === 'all') {
+        const { data } = await adminClient
+          .from('user_school_roles')
+          .select('user_id')
+          .eq('school_id', roleData.school_id)
+          .eq('role', 'parent')
+        if (data) parentUserIds = data.map(d => d.user_id)
+
+      } else if (recipientType === 'class' && selectedClass) {
+        const { data: studentsInClass } = await adminClient
+          .from('students').select('id').eq('class_id', selectedClass)
+        if (studentsInClass?.length) {
+          const { data: links } = await adminClient
+            .from('parent_student_links')
+            .select('parent_user_id')
+            .in('student_id', studentsInClass.map(s => s.id))
+          if (links) parentUserIds = links.map(l => l.parent_user_id)
+        }
+      }
+
+      if (parentUserIds.length > 0) {
+        // Récupérer les emails des parents depuis auth.users via adminClient
+        const emailsToSend: string[] = []
+        for (const uid of Array.from(new Set(parentUserIds))) {
+          try {
+            const { data: u } = await adminClient.auth.admin.getUserById(uid)
+            if (u?.user?.email) emailsToSend.push(u.user.email)
+          } catch {}
+        }
+
+        if (emailsToSend.length > 0) {
+          // Envoi par batch de 50 (limite Resend)
+          const batches = []
+          for (let i = 0; i < emailsToSend.length; i += 50) {
+            batches.push(emailsToSend.slice(i, i + 50))
+          }
+
+          const { data: schoolData } = await adminClient
+            .from('schools').select('name').eq('id', roleData.school_id).maybeSingle()
+          const schoolName = (schoolData as any)?.name || 'Scogestia'
+
+          const emailHtml = `
+            <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
+              <div style="background:#065F46;color:#fff;padding:16px 24px;border-radius:12px 12px 0 0;">
+                <h2 style="margin:0;font-size:18px;">📢 Annonce — ${schoolName}</h2>
+              </div>
+              <div style="background:#f8f9ff;padding:24px;border:1px solid #e2e8f0;border-radius:0 0 12px 12px;">
+                <h3 style="color:#0b1c30;margin-top:0;">${subject}</h3>
+                <p style="color:#3f4944;line-height:1.7;">${message.replace(/\n/g, '<br/>')}</p>
+                <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;"/>
+                <p style="color:#94a3b8;font-size:12px;margin:0;">
+                  Ce message vous a été envoyé par ${schoolName} via Scogestia.
+                  <a href="${process.env.NEXT_PUBLIC_SITE_URL || ''}/parent" style="color:#065F46;">Voir dans l'application →</a>
+                </p>
+              </div>
+            </div>
+          `
+
+          Promise.all(
+            batches.map(batch =>
+              sendEmail({ to: batch, subject: `[${schoolName}] ${subject}`, html: emailHtml })
+            )
+          ).catch(err => console.error('[Group Email Error]', err))
+        }
+      }
+    } catch (emailErr) {
+      console.error('Error in group email logic:', emailErr)
     }
   }
 
