@@ -103,7 +103,9 @@ const enseignantNavItems: NavItem[] = [
   { label: 'Notes', href: '/enseignant/notes', icon: GraduationCap },
   { label: 'Présences', href: '/enseignant/presences', icon: ShieldCheck },
   { label: 'Devoirs', href: '/enseignant/devoirs', icon: BookOpen },
+  { label: 'Messages', href: '/enseignant/messages', icon: MessageSquare },
 ]
+
 
 const superAdminNavItems: NavItem[] = [
   { label: 'Tableau de bord SaaS', href: '/super_admin', icon: LayoutDashboard },

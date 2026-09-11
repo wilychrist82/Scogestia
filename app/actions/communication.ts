@@ -13,7 +13,7 @@ export async function sendCommunication(formData: FormData) {
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('school_id')
+    .select('school_id, role')
     .eq('user_id', user.id)
     .single()
 
@@ -22,25 +22,31 @@ export async function sendCommunication(formData: FormData) {
   const recipientType = formData.get('recipientType') as string
   const selectedClass = formData.get('selectedClass') as string
   const selectedParent = formData.get('selectedParent') as string
+  const selectedEnseignant = formData.get('selectedEnseignant') as string
   const subject = formData.get('subject') as string || 'Message vocal'
   const message = formData.get('message') as string || 'Message vocal'
   const shouldSendSms = formData.get('sendSms') === 'true'
   const audioUrl = formData.get('audioUrl') as string | null
 
-  // If there's an audio URL but no text message, we still allow it
   if (!subject && !audioUrl) {
     return { error: 'L\'objet ou l\'audio est requis' }
   }
 
-  let recipientId = null
+  const adminClient = createAdminClient()
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Résolution du recipient_id selon le type
+  // ─────────────────────────────────────────────────────────────────────────
+  let recipientId: string | null = null
+
   if (recipientType === 'class') {
     if (!selectedClass) return { error: 'La classe est requise' }
     recipientId = selectedClass
+
   } else if (recipientType === 'parent') {
     if (!selectedParent) return { error: 'L\'élève/parent est requis' }
     
-    // selectedParent is actually the student_id from the UI.
-    // Let's find the parent_user_id linked to this student.
+    // selectedParent est un student_id → on trouve le parent lié
     const { data: linkData } = await supabase
       .from('parent_student_links')
       .select('parent_user_id')
@@ -48,13 +54,32 @@ export async function sendCommunication(formData: FormData) {
       .maybeSingle()
 
     if (!linkData?.parent_user_id) {
-      return { error: 'Aucun compte parent n\'est encore activé pour cet élève. Vous ne pouvez pas lui envoyer de notification interne pour le moment.' }
+      return { error: 'Aucun compte parent n\'est encore activé pour cet élève.' }
     }
-    
     recipientId = linkData.parent_user_id
+
+  } else if (recipientType === 'enseignant') {
+    // selectedEnseignant est directement un user_id d'enseignant
+    if (!selectedEnseignant) return { error: 'L\'enseignant est requis' }
+    recipientId = selectedEnseignant
+
+  } else if (recipientType === 'admin') {
+    // Pas de recipient_id unique, on notifie tous les admins de l'école
+    recipientId = null
+
+  } else if (recipientType === 'all') {
+    // Tous les parents
+    recipientId = null
+
+  } else if (recipientType === 'all_teachers') {
+    // Tous les enseignants
+    recipientId = null
   }
 
-  const { error } = await supabase.from('communications').insert({
+  // ─────────────────────────────────────────────────────────────────────────
+  // Insertion en base
+  // ─────────────────────────────────────────────────────────────────────────
+  const { error: insertError } = await supabase.from('communications').insert({
     school_id: roleData.school_id,
     sender_id: user.id,
     recipient_type: recipientType,
@@ -64,33 +89,54 @@ export async function sendCommunication(formData: FormData) {
     audio_url: audioUrl
   })
 
-  if (error) {
-    console.error('Error inserting communication:', error)
+  if (insertError) {
+    console.error('Error inserting communication:', insertError)
     return { error: 'Erreur lors de l\'envoi du message' }
   }
 
-  // --- Trigger Notifications (Bell icon) ---
+  // ─────────────────────────────────────────────────────────────────────────
+  // Résolution des utilisateurs à notifier
+  // ─────────────────────────────────────────────────────────────────────────
   try {
-    const adminClient = createAdminClient()
     let usersToNotify: string[] = []
 
     if (recipientType === 'parent' && recipientId) {
+      // Notifier le parent spécifique
       usersToNotify = [recipientId]
+
+    } else if (recipientType === 'enseignant' && recipientId) {
+      // Notifier l'enseignant spécifique
+      usersToNotify = [recipientId]
+
     } else if (recipientType === 'admin') {
+      // Notifier tous les admins de l'école
       const { data: adminUsers } = await adminClient
         .from('user_school_roles')
         .select('user_id')
         .eq('school_id', roleData.school_id)
         .eq('role', 'admin')
       if (adminUsers) usersToNotify = adminUsers.map(u => u.user_id)
+
     } else if (recipientType === 'all') {
+      // Notifier tous les parents de l'école
       const { data: parentUsers } = await adminClient
         .from('user_school_roles')
         .select('user_id')
         .eq('school_id', roleData.school_id)
         .eq('role', 'parent')
       if (parentUsers) usersToNotify = parentUsers.map(u => u.user_id)
+
+    } else if (recipientType === 'all_teachers') {
+      // Notifier tous les enseignants de l'école
+      const { data: teacherUsers } = await adminClient
+        .from('user_school_roles')
+        .select('user_id')
+        .eq('school_id', roleData.school_id)
+        .eq('role', 'enseignant')
+      if (teacherUsers) usersToNotify = teacherUsers.map(u => u.user_id)
+
     } else if (recipientType === 'class') {
+      // Notifier les parents des élèves de la classe
       const { data: studentsInClass } = await adminClient
         .from('students')
         .select('id')
@@ -106,10 +152,10 @@ export async function sendCommunication(formData: FormData) {
       }
     }
 
-    // Remove duplicates
-    usersToNotify = Array.from(new Set(usersToNotify))
+    // Exclure l'expéditeur des destinataires
+    usersToNotify = Array.from(new Set(usersToNotify)).filter(uid => uid !== user.id)
 
-    // Insert notifications
+    // Insérer les notifications
     if (usersToNotify.length > 0) {
       const notifTitle = 'Nouveau message'
       const notifMessage = audioUrl ? 'Vous avez reçu un nouveau message vocal.' : subject
@@ -127,9 +173,10 @@ export async function sendCommunication(formData: FormData) {
   } catch (notifErr) {
     console.error('Error creating notifications:', notifErr)
   }
-  // ----------------------------------------
 
-  // Envoi de SMS si demandé
+  // ─────────────────────────────────────────────────────────────────────────
+  // Envoi SMS (si demandé)
+  // ─────────────────────────────────────────────────────────────────────────
   if (shouldSendSms) {
     try {
       let parentIdsToSms: string[] = []
@@ -141,20 +188,23 @@ export async function sendCommunication(formData: FormData) {
           .eq('school_id', roleData.school_id)
           .eq('role', 'parent')
         if (data) parentIdsToSms = data.map(d => d.user_id)
+
       } else if (recipientType === 'class') {
-        const { data } = await supabase
-          .from('parent_student_links')
-          .select('parent_user_id')
-          .in('student_id', (
-            await supabase.from('students').select('id').eq('class_id', selectedClass)
-          ).data?.map(s => s.id) || [])
-        if (data) parentIdsToSms = data.map(d => d.parent_user_id)
-      } else if (recipientType === 'parent') {
-        parentIdsToSms = [selectedParent]
+        const studentsRes = await supabase.from('students').select('id').eq('class_id', selectedClass)
+        const studentIds = studentsRes.data?.map(s => s.id) || []
+        if (studentIds.length > 0) {
+          const { data } = await supabase
+            .from('parent_student_links')
+            .select('parent_user_id')
+            .in('student_id', studentIds)
+          if (data) parentIdsToSms = data.map(d => d.parent_user_id)
+        }
+
+      } else if (recipientType === 'parent' && recipientId) {
+        parentIdsToSms = [recipientId]
       }
 
       if (parentIdsToSms.length > 0) {
-        // Remove duplicates
         parentIdsToSms = Array.from(new Set(parentIdsToSms))
 
         const { data: parentsData } = await supabase
@@ -165,19 +215,20 @@ export async function sendCommunication(formData: FormData) {
 
         const phones = parentsData?.map(p => p.phone).filter(Boolean) as string[] || []
         
-        // Envoi SMS en background (ne pas bloquer l'UI trop longtemps)
-        // Pour un système en prod, cela devrait être via un job queue.
         Promise.all(phones.map(phone => sendSms(phone, `[${subject}] ${message}`)))
-          .catch(err => console.error("Erreur lors de l'envoi en masse des SMS:", err))
+          .catch(err => console.error("Erreur SMS:", err))
       }
     } catch (smsError) {
       console.error('Error in SMS logic:', smsError)
     }
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Revalidation des pages concernées
+  // ─────────────────────────────────────────────────────────────────────────
   revalidatePath('/admin/communication')
   revalidatePath('/parent/messages')
+  revalidatePath('/enseignant/messages')
 
   return { success: true }
 }
-

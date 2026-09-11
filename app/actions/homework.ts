@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export type HomeworkState = {
@@ -32,7 +33,7 @@ export async function createHomework(prevState: HomeworkState, formData: FormDat
   // Verify that the user has a role in the school, to get the school_id
   const { data: roles } = await supabase
     .from('user_school_roles')
-    .select('school_id')
+    .select('school_id, full_name')
     .eq('user_id', user.id)
     .limit(1);
 
@@ -40,6 +41,7 @@ export async function createHomework(prevState: HomeworkState, formData: FormDat
     return { error: "École introuvable pour cet utilisateur." };
   }
   const schoolId = roles[0].school_id;
+  const teacherName = roles[0].full_name || 'L\'enseignant';
 
   // Combine date and time
   let due_date = dateLimite;
@@ -97,6 +99,76 @@ export async function createHomework(prevState: HomeworkState, formData: FormDat
     return { error: `Erreur lors de la création du devoir : ${insertError.message}` };
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Notifications : parents des élèves de la classe + admins de l'école
+  // ─────────────────────────────────────────────────────────────────────────
+  try {
+    const adminClient = createAdminClient();
+    const usersToNotify: string[] = [];
+
+    const notifTitle = `Nouveau devoir — ${subjectName}`;
+    const notifMessage = `${teacherName} a publié un devoir "${title}" pour le ${new Date(dateLimite).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}.`;
+
+    // 1. Récupérer les élèves de la classe
+    const { data: studentsInClass } = await adminClient
+      .from('students')
+      .select('id')
+      .eq('class_id', classId);
+
+    if (studentsInClass && studentsInClass.length > 0) {
+      const studentIds = studentsInClass.map(s => s.id);
+
+      // 2. Récupérer les parents liés à ces élèves
+      const { data: parentLinks } = await adminClient
+        .from('parent_student_links')
+        .select('parent_user_id')
+        .in('student_id', studentIds);
+
+      if (parentLinks) {
+        parentLinks.forEach(link => {
+          if (link.parent_user_id && !usersToNotify.includes(link.parent_user_id)) {
+            usersToNotify.push(link.parent_user_id);
+          }
+        });
+      }
+    }
+
+    // 3. Récupérer les admins de l'école
+    const { data: adminUsers } = await adminClient
+      .from('user_school_roles')
+      .select('user_id')
+      .eq('school_id', schoolId)
+      .eq('role', 'admin');
+
+    if (adminUsers) {
+      adminUsers.forEach(admin => {
+        if (admin.user_id && !usersToNotify.includes(admin.user_id) && admin.user_id !== user.id) {
+          usersToNotify.push(admin.user_id);
+        }
+      });
+    }
+
+    // 4. Insérer les notifications
+    if (usersToNotify.length > 0) {
+      const notificationsToInsert = usersToNotify.map(uid => ({
+        user_id: uid,
+        school_id: schoolId,
+        title: notifTitle,
+        message: notifMessage,
+        type: 'academique',
+        action_url: '/parent/devoirs'
+      }));
+
+      await adminClient.from('notifications').insert(notificationsToInsert);
+    }
+  } catch (notifErr) {
+    // Ne pas bloquer l'UI si la notification échoue
+    console.error('Erreur lors des notifications devoir:', notifErr);
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   revalidatePath('/enseignant/devoirs');
+  revalidatePath('/parent/devoirs');
+  revalidatePath('/admin');
   return { success: true };
 }

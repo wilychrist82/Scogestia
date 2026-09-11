@@ -47,12 +47,14 @@ function playChime() {
 
 export type Notification = {
   id: string
+  user_id: string
   title: string
   message: string
   type: string
   is_read: boolean
   created_at: string
 }
+
 
 type NotificationContextType = {
   notifications: Notification[]
