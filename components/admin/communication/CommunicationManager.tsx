@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { AudioRecorder } from '@/components/ui/AudioRecorder'
 import { SearchableSelect } from '@/components/ui/SearchableSelect'
+import toast from 'react-hot-toast'
 
 type ClassItem = { id: string; name: string }
 type StudentItem = { id: string; first_name: string; last_name: string; classes: { name: string } | null }
@@ -63,9 +64,13 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
       const result = await sendCommunication(formData)
       if (result.error) {
         setError(result.error)
+        toast.error(result.error, { duration: 4000, position: 'top-center' })
       } else {
-        setSuccess(true)
-        setTimeout(() => setSuccess(false), 3000)
+        toast.success('✅ Message envoyé avec succès !', {
+          duration: 4000,
+          position: 'top-center',
+          style: { background: '#1e8e3e', color: '#fff', fontWeight: '600', fontSize: '14px', borderRadius: '12px', padding: '12px 16px' }
+        })
         form.reset()
         setSelectedParent('')
         setSelectedEnseignant('')

@@ -7,6 +7,7 @@ import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 type Student = {
   id: string
@@ -66,11 +67,13 @@ export function EnseignantCommunication({ currentUserId, students, communication
       const result = await sendCommunication(formData)
       if (result.error) {
         setError(result.error)
+        toast.error(result.error, { duration: 4000, position: 'top-center' })
       } else {
-        setSuccess(true)
-        setTimeout(() => {
-          setSuccess(false)
-        }, 3000)
+        toast.success('✅ Message envoyé avec succès !', {
+          duration: 4000,
+          position: 'top-center',
+          style: { background: '#1e8e3e', color: '#fff', fontWeight: '600', fontSize: '14px', borderRadius: '12px', padding: '12px 16px' }
+        })
         form.reset()
         setAudioUrl(null)
         setSelectedParent('')

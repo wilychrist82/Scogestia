@@ -3,13 +3,13 @@
 import { useState, useTransition, FormEvent } from 'react'
 import { sendCommunication } from '@/app/actions/communication'
 import { AudioRecorder } from '@/components/ui/AudioRecorder'
+import toast from 'react-hot-toast'
 
 export function ParentMessageForm() {
   const [isOpen, setIsOpen] = useState(false)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   
   const [isPending, startTransition] = useTransition()
-  const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -26,12 +26,20 @@ export function ParentMessageForm() {
       const result = await sendCommunication(formData)
       if (result.error) {
         setError(result.error)
+        toast.error(result.error, { duration: 4000, position: 'top-center' })
       } else {
-        setSuccess(true)
-        setTimeout(() => {
-          setSuccess(false)
-          setIsOpen(false)
-        }, 3000)
+        toast.success('✅ Message envoyé avec succès !', {
+          duration: 4000,
+          position: 'top-center',
+          style: {
+            background: '#1e8e3e',
+            color: '#fff',
+            fontWeight: '600',
+            fontSize: '14px',
+            borderRadius: '12px',
+            padding: '12px 16px',
+          }
+        })
         form.reset()
         setAudioUrl(null)
       }
@@ -43,12 +51,6 @@ export function ParentMessageForm() {
       {error && (
         <div className="bg-[var(--color-status-retard-bg)] text-[var(--color-status-retard-text)] p-2 rounded text-xs font-medium">
           {error}
-        </div>
-      )}
-      {success && (
-        <div className="bg-[#e6f4ea] text-[#1e8e3e] p-2 rounded text-xs font-medium flex items-center gap-1">
-          <span className="material-symbols-outlined text-[16px]">check_circle</span>
-          Message envoyé avec succès.
         </div>
       )}
       
