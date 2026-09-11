@@ -397,10 +397,9 @@ export async function publishHomework(
   const targetStudentsStr = formData.get("targetStudents") as string;
   const attachment = formData.get("attachment") as File | null;
 
-  if (!classId || !subjectName || !title || !dueDate) {
+  if (!classId) {
     return {
-      error:
-        "Veuillez remplir les champs obligatoires (classe, matière, titre, date limite).",
+      error: "Veuillez au moins sélectionner une classe.",
     };
   }
 
@@ -452,10 +451,10 @@ export async function publishHomework(
     const { error } = await supabase.from("homework").insert({
       school_id,
       class_id: classId,
-      subject_name: subjectName,
-      title,
+      subject_name: subjectName || 'Général',
+      title: title || 'Devoir',
       description,
-      due_date: dueDate,
+      due_date: dueDate ? dueDate : null,
       attachment_url: attachmentUrl,
       target_students,
       created_by: user?.id,

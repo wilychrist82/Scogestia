@@ -35,13 +35,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
   const [assignmentMode, setAssignmentMode] = useState<'all' | 'selective'>('all')
   const [selectedStudents, setSelectedStudents] = useState<string[]>([])
   
-  const selectedClass = classes.find(c => c.id === selectedClassId)
-  let classCycle = ''
-  if (selectedClass) {
-    if (selectedClass.level.toLowerCase().match(/cp|ce|cm/)) classCycle = 'primaire'
-    else classCycle = 'secondaire'
-  }
-  const availableSubjects = classCycle ? subjects.filter(s => s.cycle === classCycle) : subjects
+  const availableSubjects = subjects;
   const availableStudents = students.filter(s => s.class_id === selectedClassId)
 
   const openAddModal = () => {
@@ -190,13 +184,12 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="subjectName">
-                    Matière <span className="text-[var(--color-status-retard-text)]">*</span>
+                    Matière (Optionnel)
                   </label>
                   <select 
                     className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]" 
                     id="subjectName" 
                     name="subjectName" 
-                    required
                     disabled={!selectedClassId}
                   >
                     <option value="">Sélectionner une matière</option>
@@ -267,9 +260,9 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="title">
-                    Titre du devoir <span className="text-[var(--color-status-retard-text)]">*</span>
+                    Titre du devoir (Optionnel)
                   </label>
-                  <input className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]" id="title" name="title" type="text" placeholder="Ex: Exercices sur les fractions" required />
+                  <input className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]" id="title" name="title" type="text" placeholder="Ex: Exercices sur les fractions" />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -281,9 +274,9 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="dueDate">
-                    Date limite de rendu <span className="text-[var(--color-status-retard-text)]">*</span>
+                    Date limite de rendu (Optionnel)
                   </label>
-                  <input className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]" id="dueDate" name="dueDate" type="date" required />
+                  <input className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]" id="dueDate" name="dueDate" type="date" />
                 </div>
 
                 {selectedClassId && (
