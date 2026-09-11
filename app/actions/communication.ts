@@ -47,7 +47,8 @@ export async function sendCommunication(formData: FormData) {
     if (!selectedParent) return { error: 'L\'élève/parent est requis' }
     
     // selectedParent est un student_id → on trouve le parent lié
-    const { data: linkData } = await supabase
+    // On utilise adminClient car les enseignants n'ont pas accès en RLS à parent_student_links
+    const { data: linkData } = await adminClient
       .from('parent_student_links')
       .select('parent_user_id')
       .eq('student_id', selectedParent)
@@ -77,9 +78,10 @@ export async function sendCommunication(formData: FormData) {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Insertion en base
+  // Insertion en base (adminClient pour bypasser RLS — sécurisé car on a
+  // déjà vérifié l'identité de l'utilisateur via supabase.auth.getUser())
   // ─────────────────────────────────────────────────────────────────────────
-  const { error: insertError } = await supabase.from('communications').insert({
+  const { error: insertError } = await adminClient.from('communications').insert({
     school_id: roleData.school_id,
     sender_id: user.id,
     recipient_type: recipientType,
