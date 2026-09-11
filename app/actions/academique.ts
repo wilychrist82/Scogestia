@@ -454,15 +454,19 @@ export async function publishHomework(
       subject_name: subjectName || 'Général',
       title: title || 'Devoir',
       description,
-      due_date: dueDate ? dueDate : null,
+      due_date: dueDate ? dueDate : new Date().toISOString().split('T')[0],
       attachment_url: attachmentUrl,
       target_students,
       created_by: user?.id,
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("DB Insert Error:", error);
+      throw error;
+    }
 
     revalidatePath("/admin/academique/devoirs");
+    revalidatePath("/enseignant/devoirs");
     return { success: true };
   } catch (err: any) {
     return { error: err.message };

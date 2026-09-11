@@ -89,11 +89,6 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
           </button>
         </div>
 
-        {error && (
-          <div className="bg-[var(--color-status-retard-bg)] text-[var(--color-status-retard-text)] p-3 rounded text-sm font-medium">
-            {error}
-          </div>
-        )}
 
         {/* Data Table Container */}
         <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] overflow-hidden shadow-sm flex flex-col min-h-[500px]">
@@ -164,6 +159,12 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
             
             <form onSubmit={handleSubmit} className="flex flex-col">
               <div className="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar space-y-4">
+                
+                {error && (
+                  <div className="bg-[#fff0f0] text-[var(--color-status-retard-text)] p-3 rounded-lg text-sm font-medium border border-[var(--color-status-retard-text)]/20">
+                    {error}
+                  </div>
+                )}
                 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="classId">
