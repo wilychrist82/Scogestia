@@ -64,12 +64,28 @@ export default async function EnseignantDevoirsPage() {
   const classIds = classes.map(c => c.id)
 
   // 2. Devoirs existants
-  const { data: homeworks } = await supabase
+  const { data: usersData } = await supabase
+    .from('user_school_roles')
+    .select('user_id, full_name')
+    .eq('school_id', schoolId)
+
+  const { data: homeworksRaw } = await supabase
     .from('homework')
-    .select('*')
+    .select(`
+      *,
+      class:classes(name)
+    `)
     .eq('school_id', schoolId)
     .in('class_id', classIds)
     .order('due_date', { ascending: false })
+
+  const homeworks = homeworksRaw?.map(hw => {
+    const creator = usersData?.find(u => u.user_id === hw.created_by)
+    return {
+      ...hw,
+      creator: creator ? { full_name: creator.full_name } : null
+    }
+  })
 
   // 3. Élèves des classes assignées
   const { data: students } = await supabase

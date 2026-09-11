@@ -75,15 +75,40 @@ export default async function ParentDevoirsPage({
 
   // Filtrer les devoirs (Ciblage)
   const homeworks = allHomeworks?.filter((hw: any) => {
-    // Si la cible est vide/nulle, c'est pour toute la classe
-    if (!hw.target_students || hw.target_students.length === 0) return true;
-    // Sinon, vérifier si l'enfant est dans la liste
-    return hw.target_students.includes(childId);
+    let targets = hw.target_students;
+    if (!targets) return true; // Toute la classe
+    
+    // Si la bdd renvoie une chaîne au lieu d'un tableau (Postgres array string)
+    if (typeof targets === 'string') {
+      try {
+        targets = JSON.parse(targets);
+      } catch {
+        targets = targets.replace(/[{}]/g, '').split(',').map((s: string) => s.trim());
+      }
+    }
+    
+    if (Array.isArray(targets)) {
+      if (targets.length === 0) return true;
+      return targets.includes(childId);
+    }
+    
+    return true; // Fallback
   }) || [];
 
-  const now = new Date();
-  const upcomingHomeworks = homeworks.filter(hw => new Date(hw.due_date) >= now);
-  const pastHomeworks = homeworks.filter(hw => new Date(hw.due_date) < now);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Comparer uniquement la date
+
+  const upcomingHomeworks = homeworks.filter(hw => {
+    const dueDate = new Date(hw.due_date);
+    dueDate.setHours(0, 0, 0, 0);
+    return dueDate >= today;
+  });
+  
+  const pastHomeworks = homeworks.filter(hw => {
+    const dueDate = new Date(hw.due_date);
+    dueDate.setHours(0, 0, 0, 0);
+    return dueDate < today;
+  });
 
   return (
     <div className="p-4 space-y-6 pb-20">
