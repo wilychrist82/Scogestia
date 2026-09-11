@@ -29,15 +29,32 @@ export async function loginStaff(prevState: AuthState, formData: FormData): Prom
 
   const supabase = await createClient();
 
-  const isEmail = identifier.includes('@');
+  const cleanIdentifier = identifier.trim().replace(/\s+/g, '');
+  const isEmail = cleanIdentifier.includes('@');
+  
+  // Dans Supabase Auth, les numéros de téléphone doivent être au format E.164 (avec le +)
+  // Si le numéro commence par +, on le garde tel quel
+  // Sinon, on tente de le nettoyer (parfois les gens oublient le + ou le code pays, on va utiliser la valeur telle quelle pour l'instant et voir l'erreur exacte)
   const credentials = isEmail 
-    ? { email: identifier, password }
-    : { phone: identifier, password };
+    ? { email: cleanIdentifier, password }
+    : { phone: cleanIdentifier.startsWith('+') ? cleanIdentifier : `+${cleanIdentifier}`, password };
 
   const { data, error } = await supabase.auth.signInWithPassword(credentials);
 
-  if (error || !data.session) {
-    return { error: 'Identifiants invalides. Si vous vous êtes inscrit avec Google, utilisez le bouton Google.' };
+  // Fallback si le format avec "+" échoue (au cas où il a été enregistré différemment)
+  let finalError = error;
+  let finalData = data;
+
+  if (error && !isEmail && credentials.phone?.startsWith('+')) {
+     const fallbackCredentials = { phone: cleanIdentifier, password };
+     const retry = await supabase.auth.signInWithPassword(fallbackCredentials);
+     finalData = retry.data;
+     finalError = retry.error;
+  }
+
+  if (finalError || !finalData.session) {
+    console.error('Login error details:', finalError);
+    return { error: `Erreur de connexion : ${finalError?.message || 'Identifiants invalides.'}` };
   }
 
   // Utiliser le token de la session utilisateur pour vérifier son rôle
@@ -47,7 +64,7 @@ export async function loginStaff(prevState: AuthState, formData: FormData): Prom
     {
       global: {
         headers: {
-          Authorization: `Bearer ${data.session.access_token}`
+          Authorization: `Bearer ${finalData.session.access_token}`
         }
       }
     }
@@ -56,7 +73,7 @@ export async function loginStaff(prevState: AuthState, formData: FormData): Prom
   const { data: roles, error: rolesError } = await userSupabase
     .from('user_school_roles')
     .select('role')
-    .eq('user_id', data.user.id)
+    .eq('user_id', finalData.user.id)
     .limit(1);
 
   if (rolesError || !roles || roles.length === 0) {
