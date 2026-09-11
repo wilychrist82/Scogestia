@@ -71,11 +71,20 @@ export default async function EnseignantDevoirsPage() {
     .in('class_id', classIds)
     .order('due_date', { ascending: false })
 
+  // 3. Élèves des classes assignées
+  const { data: students } = await supabase
+    .from('students')
+    .select('id, first_name, last_name, class_id')
+    .eq('school_id', schoolId)
+    .in('class_id', classIds)
+    .order('last_name', { ascending: true })
+
   return (
     <DevoirsManager 
       classes={classes}
       subjects={subjects}
       homeworks={homeworks as any || []}
+      students={students || []}
     />
   )
 }
