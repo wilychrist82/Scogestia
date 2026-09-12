@@ -6,8 +6,17 @@ import toast, { Toaster } from 'react-hot-toast'
 import { BellRing } from 'lucide-react'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 
-// Joue un carillon doux (Web Audio API) — s'arrête automatiquement après ~5s
+// Joue un carillon doux
 function playChime() {
+  // 1. Tenter de jouer le fichier mp3 qui est dans public/
+  try {
+    const audio = new Audio('/notification.mp3')
+    audio.play().catch(e => console.warn('[Audio] HTML5 Audio bloqué par le navigateur:', e))
+  } catch (err) {
+    console.warn('[Audio] Erreur de lecture du fichier:', err)
+  }
+
+  // 2. Fallback Web Audio API (s'arrête automatiquement après ~5s)
   try {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
     if (!AudioCtx) return
