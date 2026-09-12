@@ -14,7 +14,6 @@ export function ParentMessageForm() {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setSuccess(false)
     setError(null)
     
     const form = e.currentTarget
