@@ -109,7 +109,7 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
   const endItem = Math.min(currentPage * itemsPerPage, totalCount)
 
   return (
-    <div className="flex-1 flex flex-col min-h-[calc(100vh-4rem)]">
+    <div className="flex-1 flex flex-col min-h-[calc(100vh-4rem)] animate-in fade-in slide-in-from-bottom-2">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>

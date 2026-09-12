@@ -36,9 +36,12 @@ const statusLabels = {
   'partiel': 'Partiel'
 }
 
+import { generatePaymentReceipt } from '@/lib/pdf/receipt'
+
 export function DuesList({ dues, classes }: Props) {
   const [classFilter, setClassFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [openActionId, setOpenActionId] = useState<string | null>(null)
 
   const filteredDues = dues.filter(due => {
     if (classFilter && due.student?.class?.name !== classFilter) return false
@@ -46,8 +49,22 @@ export function DuesList({ dues, classes }: Props) {
     return true
   })
 
+  const handleDownloadReceipt = (due: Due) => {
+    generatePaymentReceipt({
+      schoolName: 'Scogestia', // Ideally passed as prop, fallback
+      schoolCity: '',
+      studentName: `${due.student?.first_name} ${due.student?.last_name}`,
+      studentClass: due.student?.class?.name || 'N/A',
+      paymentMethod: 'Paiement (Validation)',
+      amount: due.amount,
+      date: new Date().toLocaleDateString('fr-FR'),
+      reference: `REC-DUE-${due.id.substring(0,6).toUpperCase()}`
+    })
+    setOpenActionId(null)
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
       {/* Page Header & Filters */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -56,26 +73,26 @@ export function DuesList({ dues, classes }: Props) {
         </div>
         
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-auto">
             <select 
               value={classFilter}
               onChange={(e) => setClassFilter(e.target.value)}
-              className="appearance-none w-full sm:w-48 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-sm font-semibold py-2 pl-3 pr-10 rounded-md focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)] transition-colors cursor-pointer"
+              className="appearance-none w-full sm:w-48 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-sm font-semibold py-3 h-12 pl-4 pr-10 rounded-lg focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors cursor-pointer"
             >
               <option value="">Toutes les classes</option>
               {classes.map(c => (
                 <option key={c.id} value={c.name}>{c.name}</option>
               ))}
             </select>
-            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none text-sm">expand_more</span>
+            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none text-[20px]">expand_more</span>
           </div>
           
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <select 
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none w-full sm:w-48 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-sm font-semibold py-2 pl-3 pr-10 rounded-md focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)] transition-colors cursor-pointer"
+              className="appearance-none w-full sm:w-48 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-sm font-semibold py-3 h-12 pl-4 pr-10 rounded-lg focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors cursor-pointer"
             >
               <option value="">Tous les statuts</option>
               <option value="paye">Payé</option>
@@ -83,50 +100,75 @@ export function DuesList({ dues, classes }: Props) {
               <option value="en_retard">En retard</option>
               <option value="partiel">Partiel</option>
             </select>
-            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none text-sm">expand_more</span>
+            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none text-[20px]">expand_more</span>
           </div>
         </div>
       </div>
 
       {/* Data Table Card */}
-      <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
+      <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl overflow-hidden shadow-sm flex-1 flex flex-col">
+        <div className="overflow-x-auto min-h-[300px] pb-32">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-[var(--color-surface)] border-b border-[var(--color-outline-variant)]">
-                <th className="py-3 px-4 text-sm font-semibold text-[var(--color-on-surface-variant)] w-32">Échéance</th>
-                <th className="py-3 px-4 text-sm font-semibold text-[var(--color-on-surface-variant)]">Élève</th>
-                <th className="py-3 px-4 text-sm font-semibold text-[var(--color-on-surface-variant)] w-24">Classe</th>
-                <th className="py-3 px-4 text-sm font-semibold text-[var(--color-on-surface-variant)]">Libellé</th>
-                <th className="py-3 px-4 text-sm font-semibold text-[var(--color-on-surface-variant)] text-right w-32">Montant</th>
-                <th className="py-3 px-4 text-sm font-semibold text-[var(--color-on-surface-variant)] w-40 text-center">Statut</th>
-                <th className="py-3 px-4 w-12"></th>
+              <tr className="bg-[#eff4ff] border-b border-[var(--color-outline-variant)]">
+                <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider w-32">Échéance</th>
+                <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider">Élève</th>
+                <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider w-24">Classe</th>
+                <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider">Libellé</th>
+                <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider text-right w-32">Montant</th>
+                <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider w-40 text-center">Statut</th>
+                <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider text-right w-20">Actions</th>
               </tr>
             </thead>
-            <tbody className="text-base text-[var(--color-on-background)]">
+            <tbody className="text-base text-[var(--color-on-surface)]">
               {filteredDues.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-[var(--color-on-surface-variant)]">
+                  <td colSpan={7} className="py-12 text-center text-[var(--color-on-surface-variant)]">
+                    <span className="material-symbols-outlined text-4xl text-gray-300 mb-2 block">receipt_long</span>
                     Aucune échéance trouvée.
                   </td>
                 </tr>
               ) : (
                 filteredDues.map((due) => (
-                  <tr key={due.id} className="border-b border-[var(--color-outline-variant)] hover:bg-[var(--color-surface-container-low)] transition-colors even:bg-[var(--color-surface)]">
-                    <td className="py-3 px-4">{format(new Date(due.due_date), 'dd MMM yyyy', { locale: fr })}</td>
-                    <td className="py-3 px-4 font-medium">{due.student?.first_name} {due.student?.last_name}</td>
-                    <td className="py-3 px-4">{due.student?.class?.name || '-'}</td>
-                    <td className="py-3 px-4 text-[var(--color-on-surface-variant)]">{due.label}</td>
-                    <td className="py-3 px-4 text-right">{due.amount.toLocaleString('fr-FR')} FCFA</td>
-                    <td className="py-3 px-4 text-center">
-                      <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold ${statusColors[due.status]}`}>
+                  <tr key={due.id} className="border-b border-[var(--color-outline-variant)] hover:bg-[#eff4ff]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
+                    <td className="py-3 px-6 text-sm text-[var(--color-on-surface-variant)]">{format(new Date(due.due_date), 'dd MMM yyyy', { locale: fr })}</td>
+                    <td className="py-3 px-6 font-medium">{due.student?.first_name} {due.student?.last_name}</td>
+                    <td className="py-3 px-6">{due.student?.class?.name || '-'}</td>
+                    <td className="py-3 px-6 text-[var(--color-on-surface-variant)]">{due.label}</td>
+                    <td className="py-3 px-6 text-right font-medium">{due.amount.toLocaleString('fr-FR')} FCFA</td>
+                    <td className="py-3 px-6 text-center">
+                      <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${statusColors[due.status]}`}>
                         {statusLabels[due.status]}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-center">
-                      <button className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors p-1 rounded-full hover:bg-[var(--color-surface-container-high)]">
+                    <td className="py-3 px-6 text-right relative">
+                      <button 
+                        onClick={() => setOpenActionId(openActionId === due.id ? null : due.id)}
+                        className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[#eff4ff] rounded-full transition-all duration-300 hover:rotate-90 inline-block"
+                      >
                         <span className="material-symbols-outlined text-[20px]">more_vert</span>
                       </button>
+                      
+                      {openActionId === due.id && (
+                        <div className="absolute right-6 top-10 w-48 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg shadow-lg z-10 flex flex-col overflow-hidden text-left py-1 animate-[fadeIn_0.1s_ease-out]">
+                          {due.status === 'paye' && (
+                            <button 
+                              onClick={() => handleDownloadReceipt(due)}
+                              className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors text-left"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">download</span>
+                              Télécharger Reçu
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => setOpenActionId(null)}
+                            className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors text-left"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                            Modifier le statut
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -136,8 +178,10 @@ export function DuesList({ dues, classes }: Props) {
         </div>
         
         {/* Table Footer */}
-        <div className="bg-[var(--color-surface-container-lowest)] px-4 py-3 border-t border-[var(--color-outline-variant)] flex items-center justify-between">
-          <span className="text-base text-[var(--color-on-surface-variant)]">Affichage de {filteredDues.length} échéances</span>
+        <div className="bg-[var(--color-surface-container-lowest)] px-6 py-4 border-t border-[var(--color-outline-variant)] flex items-center justify-between mt-auto">
+          <span className="text-sm font-medium text-[var(--color-on-surface-variant)]">
+            Affichage de {filteredDues.length} échéances
+          </span>
           {/* <div className="flex gap-2">
             <button className="px-3 py-1 border border-[var(--color-outline-variant)] rounded text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-low)] disabled:opacity-50 transition-colors text-sm font-semibold" disabled>Précédent</button>
             <button className="px-3 py-1 border border-[var(--color-outline-variant)] rounded text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-low)] transition-colors text-sm font-semibold">Suivant</button>

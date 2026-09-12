@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { DownloadReceiptButton } from '@/components/parent/DownloadReceiptButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,7 +20,7 @@ export default async function ParentPaiementsPage({
 
   if (!childId) {
     return (
-      <div className="p-6 text-center flex flex-col items-center justify-center min-h-[70vh]">
+      <div className="p-6 text-center flex flex-col items-center justify-center min-h-[70vh] animate-in fade-in slide-in-from-bottom-2">
         <span className="material-symbols-outlined text-5xl text-gray-300 mb-4">person_search</span>
         <h2 className="text-xl font-bold text-[var(--color-on-surface)] mb-2">Élève non spécifié</h2>
         <p className="text-[var(--color-on-surface-variant)] mb-6">Veuillez sélectionner un enfant depuis le tableau de bord pour voir ses paiements.</p>
@@ -30,17 +31,17 @@ export default async function ParentPaiementsPage({
     )
   }
 
-  // Vérifier le lien parent-enfant
+  // Vérifier le lien parent-enfant et obtenir l'école
   const { data: link } = await supabase
     .from('parent_student_links')
-    .select('student_id')
+    .select('student_id, school_id')
     .eq('parent_user_id', user.id)
     .eq('student_id', childId)
     .single()
 
   if (!link) {
     return (
-      <div className="p-6 text-center flex flex-col items-center justify-center min-h-[70vh]">
+      <div className="p-6 text-center flex flex-col items-center justify-center min-h-[70vh] animate-in fade-in slide-in-from-bottom-2">
         <span className="material-symbols-outlined text-5xl text-red-300 mb-4">error</span>
         <h2 className="text-xl font-bold text-red-600 mb-2">Accès refusé</h2>
         <p className="text-[var(--color-on-surface-variant)] mb-6">Vous n'avez pas l'autorisation de voir les informations de cet élève.</p>
@@ -50,6 +51,13 @@ export default async function ParentPaiementsPage({
       </div>
     )
   }
+
+  // Récupérer le nom de l'école
+  const { data: school } = await supabase
+    .from('schools')
+    .select('name, city')
+    .eq('id', link.school_id)
+    .single()
 
   // Récupérer les informations de l'élève
   const { data: student } = await supabase
@@ -86,14 +94,12 @@ export default async function ParentPaiementsPage({
   const totalDue = safeSchedules.reduce((acc, curr) => acc + Number(curr.amount_due), 0);
   const totalPaid = safePayments.reduce((acc, curr) => acc + Number(curr.amount), 0);
   
-  // Note: On assume que les paiements ne sont pas directement liés à un schedule pour le solde,
-  // Le solde global est Total Dû - Total Payé
   const balance = totalDue - totalPaid;
 
   const now = new Date();
   
   return (
-    <div className="p-4 space-y-6 pb-20">
+    <div className="p-4 space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-2">
       <div className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm border border-[var(--color-outline-variant)]">
         <Link href="/parent" className="text-[var(--color-on-surface-variant)]">
           <span className="material-symbols-outlined">arrow_back</span>
@@ -208,8 +214,18 @@ export default async function ParentPaiementsPage({
                       )}
                     </div>
                   </div>
-                  <div className="font-bold text-[#2e7d32] text-lg whitespace-nowrap">
-                    +{Number(payment.amount).toLocaleString('fr-FR')}
+                  <div className="flex items-center gap-4">
+                    <div className="font-bold text-[#2e7d32] text-lg whitespace-nowrap">
+                      +{Number(payment.amount).toLocaleString('fr-FR')}
+                    </div>
+                    <DownloadReceiptButton 
+                      payment={payment}
+                      student={student}
+                      schoolName={school?.name || 'Scogestia'}
+                      schoolCity={school?.city || ''}
+                      totalDue={totalDue}
+                      totalPaid={totalPaid}
+                    />
                   </div>
                 </div>
               ))}
