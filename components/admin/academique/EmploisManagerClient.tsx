@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { TimetableGrid } from '@/components/admin/academique/TimetableGrid'
+import { StaticTimetable } from '@/components/ui/StaticTimetable'
 import { getTimetableSlots } from '@/app/actions/timetable'
 import type { TimetableSlot } from '@/app/actions/timetable'
 import { Calendar, ChevronDown } from 'lucide-react'
@@ -42,6 +43,26 @@ export function EmploisManagerClient({ classes, schoolId, readOnly }: Props) {
     }
   }
 
+  const getTimetableLevel = (classId: string): 'maternelle' | 'cp' | 'ce' | 'cm' | null => {
+    const cls = classes.find(c => c.id === classId)
+    if (!cls) return null
+    const match = `${cls.level} ${cls.name}`.toLowerCase()
+    
+    // Si la classe est explicitement secondaire, on force null
+    if (match.includes('6ème') || match.includes('6eme') || match.includes('6e') || match.includes('secondaire') || match.includes('college') || match.includes('lycee')) {
+      return null
+    }
+
+    if (match.includes('s1') || match.includes('s2') || match.includes('section') || match.includes('maternelle')) return 'maternelle'
+    if (match.includes('cp1') || match.includes('cp2') || match.includes('cp')) return 'cp'
+    if (match.includes('ce1') || match.includes('ce2') || match.includes('ce')) return 'ce'
+    if (match.includes('cm1') || match.includes('cm2') || match.includes('cm')) return 'cm'
+    
+    return null
+  }
+
+  const staticLevel = selectedClassId ? getTimetableLevel(selectedClassId) : null
+
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)] relative">
       <div className="max-w-[1400px] mx-auto space-y-6">
@@ -60,7 +81,7 @@ export function EmploisManagerClient({ classes, schoolId, readOnly }: Props) {
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">
               {readOnly
                 ? 'Consultez les emplois du temps par classe.'
-                : 'Créez et modifiez les emplois du temps. Cliquez sur une cellule pour ajouter un créneau.'}
+                : 'Consultez ou modifiez les emplois du temps.'}
             </p>
           </div>
         </div>
@@ -93,12 +114,16 @@ export function EmploisManagerClient({ classes, schoolId, readOnly }: Props) {
           </div>
         ) : selectedClassId ? (
           <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] p-4 md:p-6 shadow-sm">
-            <TimetableGrid
-              classId={selectedClassId}
-              className={selectedClassName}
-              initialSlots={slots}
-              readOnly={readOnly}
-            />
+            {staticLevel ? (
+              <StaticTimetable level={staticLevel} />
+            ) : (
+              <TimetableGrid
+                classId={selectedClassId}
+                className={selectedClassName}
+                initialSlots={slots}
+                readOnly={readOnly}
+              />
+            )}
           </div>
         ) : (
           <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] min-h-[400px]">
