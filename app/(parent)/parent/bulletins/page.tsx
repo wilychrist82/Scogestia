@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { ResultatsTabs } from '@/components/parent/ResultatsTabs'
 
 export const dynamic = 'force-dynamic'
 
@@ -129,18 +130,20 @@ export default async function ParentBulletinsPage({
   const sortedTerms = Object.keys(termData).sort();
 
   return (
-    <div className="p-4 space-y-6 pb-20">
+    <div className="p-4 space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-2">
       <div className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm border border-[var(--color-outline-variant)]">
         <Link href="/parent" className="text-[var(--color-on-surface-variant)]">
           <span className="material-symbols-outlined">arrow_back</span>
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-[var(--color-on-surface)]">Bulletins</h1>
+          <h1 className="text-xl font-bold text-[var(--color-on-surface)]">Résultats Scolaires</h1>
           <p className="text-sm text-[var(--color-primary)] font-medium">
             {student.first_name} {student.last_name} • {(student.classes as any)?.name}
           </p>
         </div>
       </div>
+
+      <ResultatsTabs />
 
       {publishedBulletins && publishedBulletins.length > 0 && (
         <div className="bg-white p-5 rounded-xl shadow-sm border border-[var(--color-outline-variant)]">

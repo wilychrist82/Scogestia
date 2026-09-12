@@ -7,7 +7,7 @@ import { useNotifications } from '@/components/providers/NotificationProvider'
 const navItems = [
   { label: 'Accueil', href: '/parent', icon: 'home' },
   { label: 'Messages', href: '/parent/messages', icon: 'forum' },
-  { label: 'Notes', href: '/parent/notes', icon: 'grading' },
+  { label: 'Résultats', href: '/parent/bulletins', icon: 'workspace_premium' },
   { label: 'Présences', href: '/parent/presences', icon: 'fact_check' },
   { label: 'Devoirs', href: '/parent/devoirs', icon: 'assignment' },
 ]
