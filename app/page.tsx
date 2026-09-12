@@ -532,27 +532,28 @@ export default function Home() {
                   <div className="absolute -top-24 -left-24 w-40 h-40 bg-emerald-500 rounded-full blur-3xl opacity-40 pointer-events-none"></div>
                </motion.div>
 
-               {/* Grandes Écoles (Right) */}
+               {/* Plan Annuel (Right) */}
                <motion.div variants={fadeIn} className="bg-slate-800 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-slate-700 p-10 flex flex-col relative overflow-hidden transition-all z-10 md:col-span-2 lg:col-span-1">
-                  <div className="absolute top-0 right-0 bg-slate-600 text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl z-20 uppercase tracking-wider shadow-sm">Premium</div>
+                  <div className="absolute top-0 right-0 bg-slate-600 text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl z-20 uppercase tracking-wider shadow-sm">Annuel</div>
                   <div className="mb-8 mt-2 relative z-10">
-                     <h3 className="text-2xl font-bold text-white mb-2">Grandes Écoles</h3>
-                     <p className="text-slate-400">Plus de 400 élèves</p>
+                     <h3 className="text-2xl font-bold text-white mb-2">Plan Annuel</h3>
+                     <p className="text-slate-400">Pour une tranquillité totale</p>
                   </div>
-                  <div className="mb-8 flex flex-col gap-1 relative z-10">
-                     <span className="text-4xl font-extrabold text-white tracking-tight">Sur Devis</span>
-                     <span className="text-slate-500 font-medium">Abonnement Annuel</span>
+                  <div className="mb-8 flex items-baseline gap-2 relative z-10">
+                     <span className="text-4xl font-extrabold text-white tracking-tight">80 900</span>
+                     <span className="text-xl font-bold text-white">FCFA</span>
+                     <span className="text-slate-500 font-medium">/ an</span>
                   </div>
                   <ul className="space-y-5 mb-10 flex-1 relative z-10">
                      <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span className="font-medium">Nombre d'élèves illimité</span></li>
                      <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Toutes les fonctionnalités Pro incluses</span></li>
                      <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Déploiement sécurisé sur serveur dédié</span></li>
                      <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Personnalisation avancée de l'interface</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Accès API pour intégration externe</span></li>
+                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Support technique prioritaire 24/7</span></li>
                   </ul>
-                  <a href="https://wa.me/22892102868" target="_blank" rel="noopener noreferrer" className="w-full py-4 rounded-2xl bg-slate-700 font-bold text-white hover:bg-slate-600 transition-colors text-center flex items-center justify-center gap-2 mt-auto relative z-10 shadow-lg">
-                     <span>Nous contacter sur WhatsApp</span>
-                  </a>
+                  <Link href="/inscription-ecole" className="w-full py-4 rounded-2xl bg-blue-600 font-bold text-white hover:bg-blue-500 transition-colors text-center relative z-10 shadow-lg block mt-auto">
+                     S'abonner au Plan Annuel
+                  </Link>
                </motion.div>
             </motion.div>
            </div>

@@ -99,34 +99,29 @@ export function AbonnementManager({ plans }: Props) {
             </div>
           )
         })}
-        {/* Plan Devis / Entreprise */}
+        {/* Plan Annuel */}
         <div className="bg-slate-800 rounded-3xl shadow-2xl border border-slate-700 p-8 flex flex-col relative overflow-hidden md:col-span-2 lg:col-span-1">
            <div className="absolute top-0 right-0 bg-slate-600 text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl z-20 uppercase tracking-wider">
-             Premium
+             Annuel
            </div>
            <div className="mb-6 relative z-10">
-              <h3 className="text-2xl font-bold text-white mb-2">Grandes Écoles</h3>
-              <p className="text-slate-400">Plus de 400 élèves</p>
+              <h3 className="text-2xl font-bold text-white mb-2">Plan Annuel</h3>
+              <p className="text-slate-400">Pour une tranquillité totale</p>
            </div>
            <div className="mb-6 relative z-10 whitespace-nowrap">
-              <span className="text-3xl font-extrabold text-white">Sur Devis</span>
-              <span className="text-slate-500 font-medium block mt-1">Abonnement Annuel</span>
+              <span className="text-3xl font-extrabold text-white">80 900 FCFA</span>
+              <span className="text-slate-500 font-medium block mt-1">/ an</span>
            </div>
            <ul className="space-y-4 mb-8 flex-1 relative z-10 text-sm md:text-base">
-              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Nombre d'élèves illimité</span></li>
+              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span className="font-medium">Nombre d'élèves illimité</span></li>
               <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Toutes les fonctionnalités Pro incluses</span></li>
               <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Déploiement sécurisé sur serveur dédié</span></li>
               <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Personnalisation avancée de l'interface</span></li>
-              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Accès API pour intégration externe</span></li>
-              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Formation continue de l'équipe sur site</span></li>
-              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Support technique dédié (réponse rapide)</span></li>
+              <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Support technique prioritaire 24/7</span></li>
            </ul>
-           <a href="https://wa.me/22892102868" target="_blank" rel="noopener noreferrer" className="w-full py-4 rounded-xl bg-slate-700 font-bold text-white hover:bg-slate-600 transition-colors text-center relative z-10 shadow-md flex items-center justify-center gap-2 mt-auto">
-              <span>Nous contacter sur WhatsApp</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#25D366" viewBox="0 0 16 16">
-                <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
-              </svg>
-           </a>
+           <button onClick={() => setSelectedPlan({ id: 'plan_annuel', name: 'Plan Annuel', price: 80900, currency: 'XOF', status: 'active' })} className="w-full py-4 rounded-xl bg-blue-600 font-bold text-white hover:bg-blue-500 transition-colors text-center relative z-10 shadow-md block mt-auto">
+              S'abonner au Plan Annuel
+           </button>
         </div>
       </div>
 
