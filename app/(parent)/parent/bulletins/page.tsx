@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ResultatsTabs } from '@/components/parent/ResultatsTabs'
 
+import { resolveStudentId } from '@/lib/parent-utils'
+
 export const dynamic = 'force-dynamic'
 
 export default async function ParentBulletinsPage({
@@ -16,14 +18,14 @@ export default async function ParentBulletinsPage({
   if (!user) redirect('/connexion')
 
   const resolvedSearchParams = await searchParams;
-  const childId = resolvedSearchParams.child
+  const { childrenList, selectedChild, selectedChildId } = await resolveStudentId(supabase, user.id, resolvedSearchParams)
 
-  if (!childId) {
+  if (!selectedChildId) {
     return (
       <div className="p-6 text-center flex flex-col items-center justify-center min-h-[70vh]">
         <span className="material-symbols-outlined text-5xl text-gray-300 mb-4">person_search</span>
-        <h2 className="text-xl font-bold text-[var(--color-on-surface)] mb-2">Élève non spécifié</h2>
-        <p className="text-[var(--color-on-surface-variant)] mb-6">Veuillez sélectionner un enfant depuis le tableau de bord pour voir ses bulletins.</p>
+        <h2 className="text-xl font-bold text-[var(--color-on-surface)] mb-2">Aucun élève lié</h2>
+        <p className="text-[var(--color-on-surface-variant)] mb-6">Vous n'avez aucun enfant lié à votre compte.</p>
         <Link href="/parent" className="bg-[var(--color-primary)] text-white px-6 py-2 rounded-full font-semibold">
           Retour à l'accueil
         </Link>
@@ -31,35 +33,18 @@ export default async function ParentBulletinsPage({
     )
   }
 
-  // Vérifier le lien parent-enfant
-  const { data: link } = await supabase
-    .from('parent_student_links')
-    .select('student_id')
-    .eq('parent_user_id', user.id)
-    .eq('student_id', childId)
-    .single()
+  const childId = selectedChildId
+  const student = selectedChild
 
-  if (!link) {
-    return (
-      <div className="p-6 text-center flex flex-col items-center justify-center min-h-[70vh]">
-        <span className="material-symbols-outlined text-5xl text-red-300 mb-4">error</span>
-        <h2 className="text-xl font-bold text-red-600 mb-2">Accès refusé</h2>
-        <p className="text-[var(--color-on-surface-variant)] mb-6">Vous n'avez pas l'autorisation de voir les informations de cet élève.</p>
-        <Link href="/parent" className="bg-[var(--color-primary)] text-white px-6 py-2 rounded-full font-semibold">
-          Retour à l'accueil
-        </Link>
-      </div>
-    )
-  }
-
-  // Récupérer les informations de l'élève
-  const { data: student } = await supabase
+  // Si on veut être sûr que le student complet existe (pour classes, etc.)
+  // On le récupère s'il manque des infos dans selectedChild
+  const { data: fullStudent } = await supabase
     .from('students')
     .select('first_name, last_name, class_id, classes(name)')
     .eq('id', childId)
     .single()
 
-  if (!student) {
+  if (!fullStudent) {
     return (
       <div className="p-6 text-center">
         <p>Informations de l'élève introuvables.</p>
@@ -138,7 +123,7 @@ export default async function ParentBulletinsPage({
         <div>
           <h1 className="text-xl font-bold text-[var(--color-on-surface)]">Résultats Scolaires</h1>
           <p className="text-sm text-[var(--color-primary)] font-medium">
-            {student.first_name} {student.last_name} • {(student.classes as any)?.name}
+            {fullStudent.first_name} {fullStudent.last_name} • {(fullStudent.classes as any)?.name}
           </p>
         </div>
       </div>

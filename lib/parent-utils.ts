@@ -5,7 +5,7 @@ export async function resolveStudentId(
   userId: string, 
   searchParams: { [key: string]: string | string[] | undefined }
 ) {
-  const student_id_param = searchParams.student_id as string | undefined
+  const student_id_param = (searchParams.child || searchParams.student_id) as string | undefined
 
   // Récupérer les enfants de ce parent
   // La RLS parent_student_ids() filtrera automatiquement si on requêtait students directement

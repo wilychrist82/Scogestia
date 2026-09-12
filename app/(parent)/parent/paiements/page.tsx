@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { DownloadReceiptButton } from '@/components/parent/DownloadReceiptButton'
 
+import { resolveStudentId } from '@/lib/parent-utils'
+
 export const dynamic = 'force-dynamic'
 
 export default async function ParentPaiementsPage({
@@ -16,20 +18,22 @@ export default async function ParentPaiementsPage({
   if (!user) redirect('/connexion')
 
   const resolvedSearchParams = await searchParams;
-  const childId = resolvedSearchParams.child
+  const { childrenList, selectedChild, selectedChildId } = await resolveStudentId(supabase, user.id, resolvedSearchParams)
 
-  if (!childId) {
+  if (!selectedChildId) {
     return (
       <div className="p-6 text-center flex flex-col items-center justify-center min-h-[70vh] animate-in fade-in slide-in-from-bottom-2">
         <span className="material-symbols-outlined text-5xl text-gray-300 mb-4">person_search</span>
-        <h2 className="text-xl font-bold text-[var(--color-on-surface)] mb-2">Élève non spécifié</h2>
-        <p className="text-[var(--color-on-surface-variant)] mb-6">Veuillez sélectionner un enfant depuis le tableau de bord pour voir ses paiements.</p>
+        <h2 className="text-xl font-bold text-[var(--color-on-surface)] mb-2">Aucun élève lié</h2>
+        <p className="text-[var(--color-on-surface-variant)] mb-6">Vous n'avez aucun enfant lié à votre compte.</p>
         <Link href="/parent" className="bg-[var(--color-primary)] text-white px-6 py-2 rounded-full font-semibold">
           Retour à l'accueil
         </Link>
       </div>
     )
   }
+
+  const childId = selectedChildId
 
   // Vérifier le lien parent-enfant et obtenir l'école
   const { data: link } = await supabase
@@ -59,7 +63,7 @@ export default async function ParentPaiementsPage({
     .eq('id', link.school_id)
     .single()
 
-  // Récupérer les informations de l'élève
+  // Récupérer les informations complètes de l'élève
   const { data: student } = await supabase
     .from('students')
     .select('first_name, last_name, class_id, classes(name)')
