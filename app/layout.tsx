@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
 import { CookieBanner } from "@/components/layout/CookieBanner";
+import { Toaster } from "react-hot-toast";
 
 export const viewport: Viewport = {
   themeColor: '#005841',
@@ -41,6 +42,25 @@ export default function RootLayout({
         <NotificationProvider>
           {children}
           <CookieBanner />
+          <Toaster
+            position="bottom-right"
+            gutter={8}
+            toastOptions={{
+              duration: 4000,
+              style: {
+                borderRadius: '12px',
+                fontSize: '13.5px',
+                fontWeight: '500',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+              },
+              success: {
+                iconTheme: { primary: '#059669', secondary: '#fff' },
+              },
+              error: {
+                iconTheme: { primary: '#ef4444', secondary: '#fff' },
+              },
+            }}
+          />
         </NotificationProvider>
       </body>
     </html>

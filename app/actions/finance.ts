@@ -117,7 +117,7 @@ export async function recordPayment(prevState: ActionState, formData: FormData):
   });
 
   if (!validatedFields.success) {
-    return { error: validatedFields.error.errors[0].message };
+    return { error: validatedFields.error.issues[0].message };
   }
 
   const { schedule_id: scheduleId, amount, payment_method: paymentMethod, transaction_reference: transactionRef } = validatedFields.data;
@@ -304,7 +304,7 @@ export async function addFeeType(prevState: ActionState, formData: FormData): Pr
   });
 
   if (!validatedFields.success) {
-    return { error: validatedFields.error.errors[0].message };
+    return { error: validatedFields.error.issues[0].message };
   }
 
   const { label, amount, periodicity, target } = validatedFields.data;

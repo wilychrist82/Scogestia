@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/components/providers/NotificationProvider'
-import { Bell, CheckCheck, LogOut } from 'lucide-react'
+import { Bell, CheckCheck, LogOut, Settings } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 export function ParentHeader({ fullName }: { fullName: string }) {
   const router = useRouter()
@@ -67,14 +68,29 @@ export function ParentHeader({ fullName }: { fullName: string }) {
         </button>
 
         {showProfileMenu && (
-          <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
-            <button 
-              onClick={handleSignOut}
-              className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 font-medium transition-colors"
-            >
-              <LogOut size={16} />
-              Se déconnecter
-            </button>
+          <div className="absolute left-0 mt-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-dropdown">
+            <div className="p-3 border-b border-gray-100 bg-gray-50/80">
+              <p className="text-sm font-bold text-gray-900 truncate">{fullName}</p>
+              <p className="text-xs text-gray-500">Espace Parent</p>
+            </div>
+            <div className="py-1.5">
+              <Link
+                href="/parent/parametres"
+                onClick={() => setShowProfileMenu(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <Settings size={15} className="text-gray-400" />
+                Mon profil
+              </Link>
+              <div className="mx-3 my-1 h-px bg-gray-100" />
+              <button 
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-medium transition-colors text-left"
+              >
+                <LogOut size={15} />
+                Se déconnecter
+              </button>
+            </div>
           </div>
         )}
       </div>

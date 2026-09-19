@@ -3,6 +3,7 @@
 import { useState, useTransition, FormEvent } from 'react'
 import { inviteStaff, deleteStaff, editStaff } from '@/app/actions/staff'
 import { TeacherAssignmentModal } from '@/components/admin/TeacherAssignmentModal'
+import toast from 'react-hot-toast'
 
 export type StaffItem = {
   id: string
@@ -38,14 +39,40 @@ export function PersonnelManager({ staffList }: Props) {
   }
 
   const handleDelete = (id: string, name: string) => {
-    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer ${name} ?`)) return
-    
-    startTransition(async () => {
-      const result = await deleteStaff(id)
-      if (result?.error) {
-        alert(result.error)
-      }
-    })
+    // Toast de confirmation en lieu et place de window.confirm()
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-semibold text-gray-900">Supprimer {name} ?</p>
+          <p className="text-xs text-gray-500">Cette action est irréversible.</p>
+          <div className="flex gap-2 mt-1">
+            <button
+              onClick={() => {
+                toast.dismiss(t.id)
+                startTransition(async () => {
+                  const result = await deleteStaff(id)
+                  if (result?.error) {
+                    toast.error(result.error)
+                  } else {
+                    toast.success(`${name} a été supprimé avec succès.`)
+                  }
+                })
+              }}
+              className="flex-1 bg-red-600 text-white text-xs font-bold py-1.5 px-3 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Supprimer
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="flex-1 bg-gray-100 text-gray-700 text-xs font-bold py-1.5 px-3 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 8000, style: { maxWidth: '300px' } }
+    )
   }
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -294,8 +321,9 @@ export function PersonnelManager({ staffList }: Props) {
                   <button 
                     onClick={() => {
                       const link = `${window.location.origin}/activer-personnel?code=${generatedCode}`;
-                      navigator.clipboard.writeText(`Bonjour ! Voici ton lien d'activation pour ton espace Scogestia : ${link}`);
-                      alert("Lien copié dans le presse-papier !");
+                      navigator.clipboard.writeText(`Bonjour ! Voici ton lien d'activation pour ton espace Scogestia : ${link}`)
+                        .then(() => toast.success('Lien copié dans le presse-papier !'))
+                        .catch(() => toast.error('Impossible de copier le lien.'))
                     }}
                     className="flex items-center gap-2 bg-white text-[var(--color-primary)] px-3 py-2 rounded-lg border border-[var(--color-primary)] text-sm font-bold hover:bg-[#eff4ff]"
                   >

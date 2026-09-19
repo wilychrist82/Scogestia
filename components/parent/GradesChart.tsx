@@ -34,7 +34,7 @@ export function GradesChart({ data, studentName }: { data: any[], studentName: s
               domain={[0, 20]}
             />
             <Tooltip 
-              formatter={(value: number) => [`${value} / 20`, 'Moyenne']}
+              formatter={(value) => [`${Number(value ?? 0)} / 20`, 'Moyenne']}
               cursor={{stroke: '#e2e8f0', strokeWidth: 2}}
               contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
             />

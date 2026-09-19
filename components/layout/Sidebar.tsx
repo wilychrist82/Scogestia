@@ -13,7 +13,6 @@ import {
   MessageSquare, 
   FileText, 
   Settings,
-  Calculator,
   GraduationCap,
   Headset,
   ChevronDown,
@@ -41,6 +40,8 @@ export type SidebarProps = {
   isOpen?: boolean
   onClose?: () => void
 }
+
+// ── Nav items définis HORS du composant (évite re-création à chaque render) ──
 
 const mainNavItems: NavItem[] = [
   { label: 'Tableau de bord', href: '/admin', icon: LayoutDashboard },
@@ -106,49 +107,89 @@ const enseignantNavItems: NavItem[] = [
   { label: 'Messages', href: '/enseignant/messages', icon: MessageSquare },
 ]
 
-
 const superAdminNavItems: NavItem[] = [
   { label: 'Tableau de bord SaaS', href: '/super_admin', icon: LayoutDashboard },
   { label: 'Écoles (Clients)', href: '/super_admin/ecoles', icon: Users },
 ]
 
-export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isOpen, onClose }: SidebarProps) {
-  const pathname = usePathname()
-  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
+// ── Composant NavGroup défini HORS de Sidebar ──
 
-  const NavGroup = ({ title, items }: { title: string, items: NavItem[] }) => (
+type NavGroupProps = {
+  title: string
+  items: NavItem[]
+  pathname: string
+  openDropdowns: Record<string, boolean>
+  onToggleDropdown: (href: string) => void
+  onClose?: () => void
+}
+
+function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onClose }: NavGroupProps) {
+  return (
     <div className="mb-4">
-      <h3 className="px-4 text-[11px] font-bold text-[var(--color-sidebar-muted)] mb-2 uppercase tracking-wider">
+      <h3 className="px-4 text-[10px] font-bold text-[var(--color-sidebar-muted)] mb-2 uppercase tracking-[0.12em]">
         {title}
       </h3>
-      <nav className="space-y-1">
+      <nav className="space-y-0.5">
         {items.map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(`${item.href}/`))
+          const isActive = pathname === item.href || (item.href !== '/admin' && item.href !== '/enseignant' && item.href !== '/super_admin' && pathname.startsWith(`${item.href}/`))
+          const isOpen = openDropdowns[item.href] ?? isActive
           const Icon = item.icon
+
           return (
             <div key={item.href}>
-              <Link 
-                href={item.href}
-                onClick={onClose}
-                className={`flex items-center justify-between px-4 py-2.5 rounded-lg transition-colors duration-200 mx-2 ${
-                  isActive 
-                    ? 'bg-[var(--color-sidebar-active)] text-white font-semibold' 
-                    : 'text-[var(--color-sidebar-text)] hover:bg-[var(--color-sidebar-hover)]'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon size={20} className={isActive ? 'text-white' : 'text-[var(--color-sidebar-muted)]'} />
-                  <span className="text-sm">{item.label}</span>
-                </div>
-                {item.hasDropdown && (
-                  <ChevronDown size={16} className={isActive ? 'text-white' : 'text-[var(--color-sidebar-muted)]'} />
-                )}
-              </Link>
-              {item.subItems && isActive && (
-                <div className="ml-10 mt-1 space-y-1 border-l-2 border-[var(--color-sidebar-hover)] pl-2">
+              {item.hasDropdown ? (
+                /* Pour les items avec dropdown : bouton pour toggle + link */
+                <button
+                  onClick={() => onToggleDropdown(item.href)}
+                  className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200 mx-2 text-left group ${
+                    isActive 
+                      ? 'bg-[var(--color-sidebar-active)] text-white font-semibold' 
+                      : 'text-[var(--color-sidebar-text)] hover:bg-[var(--color-sidebar-hover)]'
+                  }`}
+                  style={{ width: 'calc(100% - 1rem)' }}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon 
+                      size={18} 
+                      className={`flex-shrink-0 transition-colors ${isActive ? 'text-white' : 'text-[var(--color-sidebar-muted)] group-hover:text-white/70'}`} 
+                    />
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </div>
+                  <ChevronDown 
+                    size={14} 
+                    className={`flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'} ${isActive ? 'text-white' : 'text-[var(--color-sidebar-muted)]'}`} 
+                  />
+                </button>
+              ) : (
+                <Link 
+                  href={item.href}
+                  onClick={onClose}
+                  className={`flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200 mx-2 group ${
+                    isActive 
+                      ? 'bg-[var(--color-sidebar-active)] text-white font-semibold' 
+                      : 'text-[var(--color-sidebar-text)] hover:bg-[var(--color-sidebar-hover)]'
+                  }`}
+                  style={{ display: 'flex', marginLeft: '0.5rem', marginRight: '0.5rem', borderRadius: '0.5rem' }}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon 
+                      size={18} 
+                      className={`flex-shrink-0 transition-colors ${isActive ? 'text-white' : 'text-[var(--color-sidebar-muted)] group-hover:text-white/70'}`} 
+                    />
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </div>
+                  {/* Indicateur actif */}
+                  {isActive && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/70 flex-shrink-0" />
+                  )}
+                </Link>
+              )}
+
+              {/* Sous-menu */}
+              {item.subItems && isOpen && (
+                <div className="ml-9 mt-0.5 mb-1 space-y-0.5 border-l border-white/8 pl-3">
                   {item.subItems.map((subItem) => {
-                    // For subitems, we need an exact match for the dashboard, and a startswith for the others
-                    const isSubActive = (subItem.href === '/admin/finance' || subItem.href === '/admin/academique')
+                    const isSubActive = (subItem.href === '/admin/finance' || subItem.href === '/admin/academique' || subItem.href === '/admin/rapports')
                       ? pathname === subItem.href 
                       : pathname.startsWith(subItem.href)
                     
@@ -157,13 +198,16 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
                         key={subItem.href}
                         href={subItem.href}
                         onClick={onClose}
-                        className={`block px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[12.5px] font-medium transition-all duration-150 ${
                           isSubActive
-                            ? 'text-white bg-[var(--color-sidebar-hover)]'
-                            : 'text-[var(--color-sidebar-muted)] hover:text-white hover:bg-[var(--color-sidebar-hover)]/50'
+                            ? 'text-white bg-white/10'
+                            : 'text-[var(--color-sidebar-muted)] hover:text-white hover:bg-white/5'
                         }`}
                       >
-                        {subItem.label}
+                        {isSubActive && (
+                          <span className="w-1 h-1 rounded-full bg-[var(--color-sidebar-active)] flex-shrink-0" />
+                        )}
+                        <span className={isSubActive ? '' : 'ml-3'}>{subItem.label}</span>
                       </Link>
                     )
                   })}
@@ -175,72 +219,159 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
       </nav>
     </div>
   )
+}
+
+// ── Composant principal Sidebar ──
+
+export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isOpen, onClose }: SidebarProps) {
+  const pathname = usePathname()
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
+
+  // État indépendant pour chaque dropdown (permet l'ouverture manuelle)
+  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>(() => {
+    // Initialise les dropdowns ouverts selon la route courante
+    const initial: Record<string, boolean> = {}
+    const allItems = [...mainNavItems, ...enseignantNavItems, ...superAdminNavItems]
+    allItems.forEach(item => {
+      if (item.hasDropdown && item.href !== '/admin' && pathname.startsWith(item.href)) {
+        initial[item.href] = true
+      }
+    })
+    return initial
+  })
+
+  const handleToggleDropdown = (href: string) => {
+    setOpenDropdowns(prev => ({ ...prev, [href]: !prev[href] }))
+  }
+
+  // Initiales utilisateur pour l'avatar
+  const getInitials = (name?: string) => {
+    if (!name) return '?'
+    const parts = name.trim().split(' ')
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    return name.substring(0, 2).toUpperCase()
+  }
+
+  const initials = getInitials(userFullName)
 
   return (
     <>
+      {/* Overlay mobile */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
           onClick={onClose}
         />
       )}
-      <aside className={`bg-[var(--color-sidebar-bg)] h-screen w-64 fixed left-0 top-0 flex flex-col py-4 z-50 shadow-2xl overflow-hidden transition-transform duration-300 md:translate-x-0 bg-floating-waves ${isOpen ? 'translate-x-0' : 'max-md:-translate-x-full'}`}>
-        {/* Logo */}
-        <div className="mb-4 px-6 flex items-center justify-between">
+
+      <aside className={`bg-[var(--color-sidebar-bg)] h-screen w-64 fixed left-0 top-0 flex flex-col py-4 z-50 shadow-2xl overflow-hidden transition-transform duration-300 ease-in-out md:translate-x-0 bg-floating-waves ${isOpen ? 'translate-x-0' : 'max-md:-translate-x-full'}`}>
+        
+        {/* ── Logo ── */}
+        <div className="mb-5 px-5 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-16 h-16 flex items-center justify-center overflow-hidden rounded-md p-0">
+            <div className="w-12 h-12 flex items-center justify-center overflow-hidden rounded-xl p-0 bg-white/5 border border-white/10">
               <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="w-full h-full object-contain" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white tracking-wide">Scogestia</h1>
-              <p className="text-[9px] text-[var(--color-sidebar-muted)] font-semibold tracking-widest uppercase">La gestion scolaire simplifiée</p>
+              <h1 className="text-[17px] font-bold text-white tracking-wide leading-tight">Scogestia</h1>
+              <p className="text-[9px] text-[var(--color-sidebar-muted)] font-semibold tracking-widest uppercase leading-tight mt-0.5">Gestion scolaire</p>
             </div>
           </div>
-          <button onClick={onClose} className="md:hidden text-white/70 hover:text-white">
-            <X size={24} />
+          <button 
+            onClick={onClose} 
+            className="md:hidden text-white/50 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
+          >
+            <X size={20} />
           </button>
         </div>
-      
-      {/* Navigation */}
-      <div className="flex-1 relative z-10 overflow-y-auto custom-scrollbar pb-4">
-        {navVariant === 'super_admin' ? (
-          <NavGroup title="Menu Super Admin" items={superAdminNavItems} />
-        ) : navVariant === 'enseignant' ? (
-          <NavGroup title="Menu Enseignant" items={enseignantNavItems} />
-        ) : (
-          <>
-            <NavGroup title="Menu Principal" items={mainNavItems} />
-            <NavGroup title="Espaces par rôle" items={roleNavItems} />
-          </>
-        )}
-      </div>
 
-      {/* Footer Block */}
-      <div className="px-4 mt-auto pt-4 pb-6 space-y-1 relative z-10 shrink-0 border-t border-white/5 bg-[var(--color-sidebar-bg)]">
-        <button 
-          onClick={() => setIsSupportModalOpen(true)}
-          className="w-full flex items-center justify-start gap-3 px-4 py-2.5 rounded-lg text-blue-400/90 hover:text-blue-400 hover:bg-blue-500/10 transition-colors font-medium text-sm border border-transparent hover:border-blue-500/20"
-        >
-          <Headset size={20} />
-          Centre d'aide
-        </button>
+        {/* ── Navigation ── */}
+        <div className="flex-1 relative z-10 overflow-y-auto custom-scrollbar pb-2 px-1">
+          {navVariant === 'super_admin' ? (
+            <NavGroup 
+              title="Menu Super Admin" 
+              items={superAdminNavItems}
+              pathname={pathname}
+              openDropdowns={openDropdowns}
+              onToggleDropdown={handleToggleDropdown}
+              onClose={onClose}
+            />
+          ) : navVariant === 'enseignant' ? (
+            <NavGroup 
+              title="Menu Enseignant" 
+              items={enseignantNavItems}
+              pathname={pathname}
+              openDropdowns={openDropdowns}
+              onToggleDropdown={handleToggleDropdown}
+              onClose={onClose}
+            />
+          ) : (
+            <>
+              <NavGroup 
+                title="Menu Principal" 
+                items={mainNavItems}
+                pathname={pathname}
+                openDropdowns={openDropdowns}
+                onToggleDropdown={handleToggleDropdown}
+                onClose={onClose}
+              />
+              <NavGroup 
+                title="Espaces par rôle" 
+                items={roleNavItems}
+                pathname={pathname}
+                openDropdowns={openDropdowns}
+                onToggleDropdown={handleToggleDropdown}
+                onClose={onClose}
+              />
+            </>
+          )}
+        </div>
 
-        <form action={logout}>
-          <button 
-            type="submit" 
-            className="w-full flex items-center justify-start gap-3 px-4 py-2.5 rounded-lg text-red-400/80 hover:text-red-400 hover:bg-red-500/10 transition-colors font-medium text-sm border border-transparent hover:border-red-500/20"
-          >
-            <LogOut size={20} />
-            Déconnexion
-          </button>
-        </form>
-      </div>
-    </aside>
+        {/* ── Footer : Utilisateur + Actions ── */}
+        <div className="mt-auto pt-3 flex-shrink-0 relative z-10">
+          {/* Séparateur */}
+          <div className="mx-4 mb-3 h-px bg-white/8" />
+
+          {/* Profil utilisateur */}
+          {userFullName && (
+            <div className="mx-3 mb-2 px-3 py-2.5 rounded-xl bg-white/5 border border-white/8 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[var(--color-sidebar-active)]/30 border border-[var(--color-sidebar-active)]/40 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-bold text-emerald-300">{initials}</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-white truncate leading-tight">{userFullName}</p>
+                <p className="text-[10px] text-[var(--color-sidebar-muted)] truncate leading-tight">{userRoleLabel}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Boutons action */}
+          <div className="px-3 space-y-0.5 pb-4">
+            <button 
+              onClick={() => setIsSupportModalOpen(true)}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-blue-400/80 hover:text-blue-300 hover:bg-blue-500/10 transition-all duration-200 text-sm font-medium group"
+            >
+              <Headset size={16} className="flex-shrink-0 group-hover:scale-110 transition-transform" />
+              Centre d'aide
+            </button>
+
+            <form action={logout}>
+              <button 
+                type="submit" 
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 text-sm font-medium group"
+              >
+                <LogOut size={16} className="flex-shrink-0 group-hover:scale-110 transition-transform" />
+                Déconnexion
+              </button>
+            </form>
+          </div>
+        </div>
+      </aside>
     
-    <ContactSupportModal 
-      isOpen={isSupportModalOpen} 
-      onClose={() => setIsSupportModalOpen(false)} 
-    />
+      <ContactSupportModal 
+        isOpen={isSupportModalOpen} 
+        onClose={() => setIsSupportModalOpen(false)} 
+      />
     </>
   )
 }

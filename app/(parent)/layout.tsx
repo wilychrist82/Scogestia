@@ -30,13 +30,19 @@ export default async function ParentLayout({
 
   return (
     <NotificationProvider>
-      <div className="min-h-screen bg-[#f8f9fa] flex justify-center">
-        <div className="w-full max-w-md bg-white min-h-screen relative shadow-2xl flex flex-col">
+      {/* Fond neutre unifié */}
+      <div className="min-h-screen bg-[#f0f4f3] flex justify-center">
+        {/*
+          Mobile (< md) : centré, max-w-md, effet "app dans un téléphone"
+          Tablet (md-lg) : max-w-2xl, plus d'espace
+          Desktop (> lg) : max-w-3xl, layout plus large
+        */}
+        <div className="w-full max-w-md md:max-w-2xl lg:max-w-3xl bg-white min-h-screen relative md:shadow-2xl flex flex-col">
           <ParentHeader fullName={roleData.full_name} />
 
-          {/* Contenu de la page avec padding bottom pour le nav */}
+          {/* Contenu principal avec padding bottom pour la nav fixe */}
           <main 
-            className="flex-1 bg-[#f4f7f6] overflow-y-auto"
+            className="flex-1 bg-[#f4f7f6] overflow-y-auto scrollbar-light"
             style={{ paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
           >
             {children}

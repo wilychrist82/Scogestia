@@ -114,6 +114,6 @@ export function generatePaymentReceipt(data: ReceiptData) {
   doc.text(`Généré le ${new Date().toLocaleString('fr-FR')} par Scogestia`, 105, 276, { align: 'center' })
 
   // Sauvegarder le PDF
-  const filename = `Reçu_${data.studentName.replace(/\\s+/g, '_')}_${data.date.replace(/\\//g, '-')}.pdf`
+  const filename = `Reçu_${data.studentName.replace(/\s+/g, '_')}_${data.date.replace(/\//g, '-')}.pdf`
   doc.save(filename)
 }

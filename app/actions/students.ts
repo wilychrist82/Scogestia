@@ -84,7 +84,7 @@ export async function createStudent(prevState: ActionState, formData: FormData):
   });
 
   if (!validatedFields.success) {
-    return { error: validatedFields.error.errors[0].message };
+    return { error: validatedFields.error.issues[0].message };
   }
 
   const { first_name, last_name, date_of_birth, class_id } = validatedFields.data;
@@ -164,7 +164,7 @@ export async function updateStudent(prevState: ActionState, formData: FormData):
   });
 
   if (!validatedFields.success) {
-    return { error: validatedFields.error.errors[0].message };
+    return { error: validatedFields.error.issues[0].message };
   }
 
   const { student_id, birth_place, gender, blood_group, address, parent_phone } = validatedFields.data;

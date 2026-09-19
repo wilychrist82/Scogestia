@@ -45,13 +45,13 @@ export function PaiementsManager({ payments, pendingSchedules, basePath = "/admi
 
   const handleExportCSV = () => {
     if (!payments || payments.length === 0) return
-    const headers = ['Date', 'Eleve', 'Motif', 'Montant', 'Statut']
+    const headers = ['Date', 'Eleve', 'Motif', 'Montant (FCFA)', 'Méthode']
     const rows = payments.map(p => [
-      new Date(p.payment_date).toLocaleDateString('fr-FR'),
+      new Date(p.paid_at).toLocaleDateString('fr-FR'),
       `${p.student?.first_name || ''} ${p.student?.last_name || ''}`,
-      p.reason,
+      p.schedule?.label || 'N/A',
       p.amount,
-      p.status
+      p.payment_method
     ])
     
     const csvContent = [

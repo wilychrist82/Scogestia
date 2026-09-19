@@ -12,6 +12,7 @@ type School = {
   email: string | null
   current_academic_year: string
   director_name?: string | null
+  logo_url?: string | null
   signature_url?: string | null
   stamp_url?: string | null
 }

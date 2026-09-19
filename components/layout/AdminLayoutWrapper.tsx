@@ -29,8 +29,7 @@ export function AdminLayoutWrapper({
     <>
       <Sidebar 
         userFullName={userFullName} 
-        userRoleLabel={userRoleLabel} 
-        userAvatar={userAvatar}
+        userRoleLabel={userRoleLabel}
         navVariant={navVariant}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
@@ -39,15 +38,15 @@ export function AdminLayoutWrapper({
         <div className="flex-1 ml-0 md:ml-64 flex flex-col h-screen overflow-hidden relative">
           {banner}
           <TopHeader 
-          userFullName={userFullName} 
-          userRoleLabel={userRoleLabel} 
-          userAvatar={userAvatar}
-          onMenuClick={() => setIsSidebarOpen(true)}
-          schoolName={schoolName}
-          schoolCity={schoolCity}
-          navVariant={navVariant}
-        />
-          <main className={`flex-1 ${navVariant === 'enseignant' ? 'pb-8 lg:p-8' : 'p-4 md:p-6 lg:p-8'} overflow-y-auto custom-scrollbar relative`}>
+            userFullName={userFullName} 
+            userRoleLabel={userRoleLabel} 
+            userAvatar={userAvatar}
+            onMenuClick={() => setIsSidebarOpen(prev => !prev)}
+            schoolName={schoolName}
+            schoolCity={schoolCity}
+            navVariant={navVariant}
+          />
+          <main className={`flex-1 ${navVariant === 'enseignant' ? 'pb-8 lg:p-8' : 'p-4 md:p-6 lg:p-8'} overflow-y-auto scrollbar-light relative`}>
             {children}
           </main>
         </div>

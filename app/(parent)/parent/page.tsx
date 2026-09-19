@@ -36,7 +36,16 @@ export default async function ParentDashboardPage() {
     `)
     .eq('parent_user_id', user.id)
 
-  const children = links?.map(l => l.students).filter(Boolean) || []
+  // Supabase retourne students comme un tableau (jointure), on aplatit et filtre
+  const children = (links
+    ?.flatMap(l => Array.isArray(l.students) ? l.students : (l.students ? [l.students] : []))
+    .filter(Boolean) || []) as unknown as Array<{
+      id: string;
+      first_name: string;
+      last_name: string;
+      class_id: string;
+      classes: { name: string } | null;
+    }>
 
   // Déterminer le nom à afficher
   let displayName = roleData.full_name

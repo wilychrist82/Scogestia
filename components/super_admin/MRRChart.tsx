@@ -46,7 +46,7 @@ export function MRRChart() {
               tickFormatter={(value) => `${value / 1000}k`}
             />
             <Tooltip 
-              formatter={(value: number) => [`${value.toLocaleString()} FCFA`, 'MRR']}
+              formatter={(value) => [`${Number(value ?? 0).toLocaleString()} FCFA`, 'MRR']}
               cursor={{fill: '#f8fafc'}}
               contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
             />
