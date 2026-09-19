@@ -26,6 +26,7 @@ export function AbonnementManager({ plans }: Props) {
   // On prend le premier produit dont le nom contient "standard" et le premier "pro"
   const standardPlan = plans.find(p => p.name?.toLowerCase().includes('standard'))
   const proPlan = plans.find(p => p.name?.toLowerCase().includes('pro'))
+  const annuelPlan = plans.find(p => p.name?.toLowerCase().includes('annuel') || p.name?.toLowerCase().includes('annual'))
 
   // Prix avec fallback
   const standardPrice = standardPlan && standardPlan.price != null && standardPlan.price > 0
@@ -34,6 +35,9 @@ export function AbonnementManager({ plans }: Props) {
   const proPrice = proPlan && proPlan.price != null && proPlan.price > 0
     ? Number(proPlan.price).toLocaleString('fr-FR')
     : '9 900'
+  const annuelPrice = annuelPlan && annuelPlan.price != null && annuelPlan.price > 0
+    ? Number(annuelPlan.price).toLocaleString('fr-FR')
+    : '80 900'
 
   return (
     <>
@@ -116,7 +120,7 @@ export function AbonnementManager({ plans }: Props) {
             <p className="text-slate-400">Pour une tranquillité totale</p>
           </div>
           <div className="mb-8 relative z-10">
-            <span className="text-4xl font-extrabold text-white">80 900 FCFA</span>
+            <span className="text-4xl font-extrabold text-white">{annuelPrice} FCFA</span>
             <span className="text-slate-500 font-medium"> / an</span>
           </div>
           <ul className="space-y-4 mb-10 flex-1 relative z-10 text-sm md:text-base">
@@ -127,7 +131,13 @@ export function AbonnementManager({ plans }: Props) {
             <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Support technique prioritaire 24/7</span></li>
           </ul>
           <button
-            onClick={() => setSelectedPlan({ id: 'plan_annuel', name: 'Plan Annuel', price: 80900, currency: 'XOF', status: 'active' })}
+            onClick={() => {
+              if (annuelPlan) {
+                setSelectedPlan(annuelPlan)
+              } else {
+                alert("Le Plan Annuel n'a pas été trouvé dans votre catalogue de produits Chariow. Veuillez le créer dans votre tableau de bord Chariow.")
+              }
+            }}
             className="w-full py-4 rounded-xl bg-blue-600 font-bold text-white hover:bg-blue-500 transition-colors text-center relative z-10 shadow-md block mt-auto"
           >
             S'abonner au Plan Annuel
