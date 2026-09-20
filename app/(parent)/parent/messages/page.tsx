@@ -68,44 +68,82 @@ export default async function ParentMessagesPage() {
           ) : (
             [...messages].reverse().map(msg => {
               const isSentByMe = msg.sender_id === user.id
-              let senderText = isSentByMe ? 'Vous' : 'Administration'
+              const senderText = isSentByMe ? 'Vous' : 'Administration'
+              // Coches WhatsApp : is_read=true → bleu, sinon gris
+              const isRead = (msg as any).is_read === true
 
               return (
                 <div key={msg.id} className={`flex w-full ${isSentByMe ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] sm:max-w-[70%] flex flex-col gap-1 ${isSentByMe ? 'items-end' : 'items-start'}`}>
+
                     {/* Bubble */}
-                    <div className={`p-3 rounded-2xl ${isSentByMe ? 'bg-[#dcf8c6] text-[#0b1c30] rounded-tr-sm shadow-sm' : 'bg-white border border-[var(--color-outline-variant)] text-[#0b1c30] rounded-tl-sm shadow-sm'}`}>
-                      {msg.subject && msg.subject !== 'Message vocal' && msg.subject !== 'Message parent' && (
-                        <h3 className="text-sm font-bold mb-1">{msg.subject}</h3>
-                      )}
-                      
-                      {msg.content && msg.content !== 'Message vocal' && (
-                        <div className="text-[15px] whitespace-pre-wrap leading-relaxed">
-                          {msg.content}
+                    <div className={`rounded-2xl shadow-sm overflow-hidden ${
+                      isSentByMe
+                        ? 'bg-[#dcf8c6] text-[#0b1c30] rounded-tr-sm'
+                        : 'bg-white border border-[var(--color-outline-variant)] text-[#0b1c30] rounded-tl-sm'
+                    }`}>
+
+                      {/* Texte */}
+                      {(msg.content && msg.content !== 'Message vocal') && (
+                        <div className="px-3 pt-2.5 pb-1">
+                          {msg.subject && msg.subject !== 'Message vocal' && msg.subject !== 'Message parent' && (
+                            <p className="text-[13px] font-bold mb-0.5">{msg.subject}</p>
+                          )}
+                          <p className="text-[15px] whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                         </div>
                       )}
-                      
+
+                      {/* Message vocal – style WhatsApp */}
                       {msg.audio_url && (
-                        <div className="mt-1 min-w-[200px]">
-                          <audio controls src={msg.audio_url} className="w-full h-10" />
+                        <div className={`flex items-center gap-2 px-3 py-2 min-w-[200px] ${
+                          msg.content && msg.content !== 'Message vocal' ? 'border-t border-black/5' : ''
+                        }`}>
+                          <span className="material-symbols-outlined text-[22px] text-[var(--color-primary)] shrink-0">mic</span>
+                          <audio
+                            src={msg.audio_url}
+                            controls
+                            className="h-8 w-full flex-1"
+                            style={{ colorScheme: 'light' }}
+                          />
                         </div>
                       )}
+
+                      {/* Heure + coches DANS la bulle, alignés à droite en bas */}
+                      <div className={`flex items-center justify-end gap-1 pr-2 pb-1.5 ${
+                        (!msg.content || msg.content === 'Message vocal') && !msg.audio_url ? 'pt-1' : ''
+                      }`}>
+                        <span className="text-[11px] text-[var(--color-on-surface-variant)]">
+                          {format(new Date(msg.created_at), 'HH:mm', { locale: fr })}
+                        </span>
+                        {isSentByMe && (
+                          // Double coche SVG – gris si non lu, bleu si lu
+                          <svg
+                            width="16" height="11" viewBox="0 0 16 11"
+                            fill="none" xmlns="http://www.w3.org/2000/svg"
+                            className="shrink-0"
+                            aria-label={isRead ? 'Lu' : 'Envoyé'}
+                          >
+                            {/* Première coche (fond) */}
+                            <path
+                              d="M1 5.5L4.5 9L11 2"
+                              stroke={isRead ? '#53bdeb' : '#8696a0'}
+                              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                            />
+                            {/* Deuxième coche (décalée) */}
+                            <path
+                              d="M5 5.5L8.5 9L15 2"
+                              stroke={isRead ? '#53bdeb' : '#8696a0'}
+                              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
+                      </div>
                     </div>
-                    {/* Metadata */}
-                    <div className="text-[11px] text-[var(--color-on-surface-variant)] flex items-center gap-1 mt-0.5 px-1">
-                      {isSentByMe ? (
-                        <>
-                          <span>{format(new Date(msg.created_at), 'HH:mm', { locale: fr })}</span>
-                          <span className="material-symbols-outlined text-[14px] text-blue-500">done_all</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>{senderText}</span>
-                          <span>•</span>
-                          <span>{format(new Date(msg.created_at), 'HH:mm', { locale: fr })}</span>
-                        </>
-                      )}
-                    </div>
+
+                    {/* Expéditeur sous la bulle (messages reçus seulement) */}
+                    {!isSentByMe && (
+                      <span className="text-[11px] text-[var(--color-on-surface-variant)] px-1">{senderText}</span>
+                    )}
                   </div>
                 </div>
               )

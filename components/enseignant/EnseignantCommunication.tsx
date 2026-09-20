@@ -228,45 +228,68 @@ export function EnseignantCommunication({ currentUserId, students, communication
               ) : (
                 [...communications].reverse().map(comm => {
                   const isSentByMe = comm.sender_id === currentUserId
+                  const isRead = (comm as any).is_read === true
 
                   let recipientText = ''
                   if (comm.recipient_type === 'admin') recipientText = 'Administration'
-                  else if (comm.recipient_type === 'parent') recipientText = 'Parent d\'un élève'
+                  else if (comm.recipient_type === 'parent') recipientText = "Parent d'un élève"
                   else if (comm.recipient_type === 'all') recipientText = 'Tous les parents'
                   else if (comm.recipient_type === 'enseignant') recipientText = 'Enseignant'
 
                   return (
                     <div key={comm.id} className={`flex w-full ${isSentByMe ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[85%] flex flex-col gap-1 ${isSentByMe ? 'items-end' : 'items-start'}`}>
-                        <div className={`p-3 rounded-2xl ${isSentByMe ? 'bg-[#dcf8c6] text-[#0b1c30] rounded-tr-sm' : 'bg-white border border-[var(--color-outline-variant)] text-[#0b1c30] rounded-tl-sm shadow-sm'}`}>
+
+                        {/* Bulle */}
+                        <div className={`rounded-2xl overflow-hidden shadow-sm ${
+                          isSentByMe
+                            ? 'bg-[#dcf8c6] text-[#0b1c30] rounded-tr-sm'
+                            : 'bg-white border border-[var(--color-outline-variant)] text-[#0b1c30] rounded-tl-sm'
+                        }`}>
                           {comm.subject && comm.subject !== 'Message vocal' && (
-                            <h4 className="font-bold text-sm mb-1">{comm.subject}</h4>
+                            <p className="px-3 pt-2.5 text-[13px] font-bold">{comm.subject}</p>
                           )}
                           {comm.content && comm.content !== 'Message vocal' && (
-                            <p className="text-sm whitespace-pre-wrap">{comm.content}</p>
+                            <p className="px-3 pt-1 pb-1 text-sm whitespace-pre-wrap">{comm.content}</p>
                           )}
                           {comm.audio_url && (
-                            <div className="mt-2 min-w-[200px]">
-                              <audio controls src={comm.audio_url} className="w-full h-8" />
+                            <div className={`flex items-center gap-2 px-3 py-2 min-w-[180px] ${
+                              comm.content && comm.content !== 'Message vocal' ? 'border-t border-black/5' : ''
+                            }`}>
+                              <span className="material-symbols-outlined text-[20px] text-[var(--color-primary)] shrink-0">mic</span>
+                              <audio src={comm.audio_url} controls className="h-7 w-full flex-1" style={{ colorScheme: 'light' }} />
                             </div>
                           )}
+
+                          {/* Heure + coches dans la bulle */}
+                          <div className="flex items-center justify-end gap-1 pr-2 pb-1.5">
+                            {isSentByMe && (
+                              <span className="text-[10px] text-[var(--color-on-surface-variant)]">
+                                À: {recipientText} •
+                              </span>
+                            )}
+                            <span className="text-[10px] text-[var(--color-on-surface-variant)]">
+                              {format(new Date(comm.created_at), 'HH:mm', { locale: fr })}
+                            </span>
+                            {isSentByMe && (
+                              <svg
+                                width="16" height="11" viewBox="0 0 16 11"
+                                fill="none" xmlns="http://www.w3.org/2000/svg"
+                                className="shrink-0"
+                                aria-label={isRead ? 'Lu' : 'Envoyé'}
+                              >
+                                <path d="M1 5.5L4.5 9L11 2" stroke={isRead ? '#53bdeb' : '#8696a0'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M5 5.5L8.5 9L15 2" stroke={isRead ? '#53bdeb' : '#8696a0'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-[10px] text-[var(--color-on-surface-variant)] flex items-center gap-1">
-                          {isSentByMe ? (
-                            <>
-                              <span>À: {recipientText}</span>
-                              <span>•</span>
-                              <span>{format(new Date(comm.created_at), 'HH:mm', { locale: fr })}</span>
-                              <span className="material-symbols-outlined text-[12px] text-blue-500">done_all</span>
-                            </>
-                          ) : (
-                            <>
-                              <span>{format(new Date(comm.created_at), 'HH:mm', { locale: fr })}</span>
-                              <span>•</span>
-                              <span>De: {isSentByMe ? 'Vous' : 'Administration / Parent'}</span>
-                            </>
-                          )}
-                        </div>
+
+                        {!isSentByMe && (
+                          <span className="text-[10px] text-[var(--color-on-surface-variant)] px-1">
+                            De: Administration / Parent
+                          </span>
+                        )}
                       </div>
                     </div>
                   )
