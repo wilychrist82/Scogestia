@@ -1,135 +1,409 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link'
-import { motion, AnimatePresence, type Variants } from 'framer-motion'
-import { ShieldCheck, Cloud, Zap, CheckCircle2, LayoutDashboard, CreditCard, Users, ArrowRight, BarChart, Smartphone, Globe, Mail, Phone, MapPin, Star, PlayCircle, Lock, X, Play, Wallet, TrendingUp, Building2, Settings, MessageSquare, GraduationCap } from 'lucide-react'
+import Link from 'next/link';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import {
+  ShieldCheck, Cloud, Zap, CheckCircle2, LayoutDashboard, CreditCard, Users,
+  ArrowRight, BarChart3, Smartphone, Globe, Mail, Phone, MapPin, Star,
+  PlayCircle, Lock, X, Play, Wallet, TrendingUp, Building2, Settings,
+  MessageSquare, GraduationCap, BookOpen, Calendar, Bell, ChevronRight, Menu
+} from 'lucide-react';
 
-// Animation Variants
-const fadeIn: Variants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] } }
+// ─── Animation variants ──────────────────────────────────────────────────────
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] } },
 };
 
-const staggerContainer: Variants = {
+const stagger: Variants = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
 };
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface Feature {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}
+
+interface Testimonial {
+  quote: string;
+  name: string;
+  role: string;
+  school: string;
+  city: string;
+  stars: number;
+}
+
+interface PricingPlan {
+  name: string;
+  price: string;
+  period: string;
+  desc: string;
+  features: string[];
+  cta: string;
+  highlighted: boolean;
+}
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
+const FEATURES: Feature[] = [
+  {
+    icon: <Users className="w-6 h-6" />,
+    title: "Gestion des élèves",
+    desc: "Fiches complètes, matricules automatiques, historique scolaire centralisé.",
+  },
+  {
+    icon: <Wallet className="w-6 h-6" />,
+    title: "Finance & Paiements",
+    desc: "Suivi FCFA en temps réel, relances SMS automatiques, taux de recouvrement.",
+  },
+  {
+    icon: <BookOpen className="w-6 h-6" />,
+    title: "Bulletins scolaires",
+    desc: "Génération automatique des bulletins trimestriels avec signature.",
+  },
+  {
+    icon: <Calendar className="w-6 h-6" />,
+    title: "Présences & Absences",
+    desc: "Appel numérique quotidien, alertes parents, statistiques par classe.",
+  },
+  {
+    icon: <MessageSquare className="w-6 h-6" />,
+    title: "Communication parents",
+    desc: "SMS, email, WhatsApp. Envoyez à toute l'école en un clic.",
+  },
+  {
+    icon: <BarChart3 className="w-6 h-6" />,
+    title: "Rapports & Statistiques",
+    desc: "Tableaux de bord, exports PDF, analyses de performance par période.",
+  },
+];
+
+const TESTIMONIALS: Testimonial[] = [
+  {
+    quote: "La gestion des inscriptions était un vrai casse-tête avant Scogestia. Aujourd'hui tout est centralisé, fluide et nos parents reçoivent les informations instantanément.",
+    name: "M. Koffi AMEGBOR",
+    role: "Directeur",
+    school: "École La Réussite",
+    city: "Lomé, Togo",
+    stars: 5,
+  },
+  {
+    quote: "Nous avons gagné un temps précieux dans la communication avec les parents et le suivi des paiements. Un outil indispensable pour notre établissement.",
+    name: "Mme. ADOBOE Séraphine",
+    role: "Directrice",
+    school: "Institut Sainte-Marie",
+    city: "Abidjan, Côte d'Ivoire",
+    stars: 5,
+  },
+  {
+    quote: "Scogestia a transformé notre administration. La génération des bulletins et l'analyse des performances sont devenues extrêmement simples.",
+    name: "M. AZONDEKON Romuald",
+    role: "Directeur",
+    school: "Lycée Privé HORIZON",
+    city: "Cotonou, Bénin",
+    stars: 5,
+  },
+];
+
+const PRICING: PricingPlan[] = [
+  {
+    name: "Starter",
+    price: "15 000",
+    period: "FCFA / mois",
+    desc: "Pour les petits établissements qui démarrent.",
+    features: [
+      "1 école",
+      "Jusqu'à 200 élèves",
+      "Gestion des élèves & classes",
+      "Finance & paiements",
+      "Support par email",
+    ],
+    cta: "Commencer gratuitement",
+    highlighted: false,
+  },
+  {
+    name: "Pro",
+    price: "35 000",
+    period: "FCFA / mois",
+    desc: "La solution complète pour gérer votre école efficacement.",
+    features: [
+      "Élèves illimités",
+      "Notifications SMS incluses",
+      "Bulletins automatiques",
+      "Rapports avancés",
+      "Espace parents & enseignants",
+      "Support prioritaire",
+    ],
+    cta: "Démarrer l'essai Pro",
+    highlighted: true,
+  },
+  {
+    name: "Établissement",
+    price: "Sur mesure",
+    period: "",
+    desc: "Pour les réseaux scolaires et groupes multi-établissements.",
+    features: [
+      "Multi-établissements",
+      "Tableau de bord consolidé",
+      "Accès API & intégrations",
+      "Gestionnaire dédié",
+      "Formation personnalisée",
+    ],
+    cta: "Contacter l'équipe",
+    highlighted: false,
+  },
+];
+
+const NAV_LINKS = [
+  { href: "#accueil", label: "Accueil" },
+  { href: "#fonctionnalites", label: "Fonctionnalités" },
+  { href: "#comment-ca-marche", label: "Comment ça marche" },
+  { href: "#tarifs", label: "Tarifs" },
+  { href: "#temoignages", label: "Témoignages" },
+];
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function Home() {
-  const [demoModalOpen, setDemoModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const testimonialsScrollRef = useRef<HTMLDivElement>(null);
+  const [demoOpen, setDemoOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (testimonialsScrollRef.current && window.innerWidth < 768) {
-        const { scrollLeft, scrollWidth, clientWidth } = testimonialsScrollRef.current;
-        // If we reached the end (with a small margin of error)
-        if (Math.ceil(scrollLeft + clientWidth) >= scrollWidth - 10) {
-          testimonialsScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
-        } else {
-          // Scroll by one item's width plus gap
-          const itemWidth = testimonialsScrollRef.current.children[0]?.clientWidth || 0;
-          testimonialsScrollRef.current.scrollBy({ left: itemWidth + 32, behavior: 'smooth' });
-        }
-      }
-    }, 4000); // Change slide every 4 seconds
-
-    return () => clearInterval(interval);
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-[#006039]/20 selection:text-[#006039]">
-      {/* Navigation Sticky */}
-      <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/90 backdrop-blur-md shadow-sm">
-        <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Link href="#accueil" className="flex items-center gap-2">
-              <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="h-14 w-auto object-contain drop-shadow-sm" />
-            </Link>
-          </div>
-          
-          {/* Menu Principal */}
-          <nav className="hidden lg:flex items-center gap-8">
-            <Link href="#accueil" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
-              Accueil
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
-            </Link>
-            <Link href="#fonctionnalites" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
-              Fonctionnalités
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
-            </Link>
-            <Link href="#comment-ca-marche" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
-              Comment ça marche
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
-            </Link>
-            <Link href="#tarifs" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
-              Tarifs
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
-            </Link>
-            <Link href="#temoignages" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
-              Témoignages
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
-            </Link>
-            <Link href="#contact" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
-              Contact
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
-            </Link>
+    <div className="min-h-screen" style={{ background: '#0D1117', color: '#F0EDE8', fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif" }}>
+
+      {/* ── GOOGLE FONTS ───────────────────────────────────────────────────── */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+          --emerald: #006039;
+          --emerald-light: #00875A;
+          --emerald-glow: rgba(0,96,57,0.25);
+          --surface: #1A1F2E;
+          --surface-hover: #222838;
+          --border: rgba(255,255,255,0.07);
+          --cream: #F0EDE8;
+          --muted: rgba(240,237,232,0.55);
+          --gold: #C8A84B;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
+
+        .sg-nav-link {
+          position: relative;
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--muted);
+          text-decoration: none;
+          transition: color .2s;
+          padding-bottom: 2px;
+        }
+        .sg-nav-link::after {
+          content: '';
+          position: absolute;
+          bottom: 0; left: 0;
+          height: 1.5px; width: 0;
+          background: var(--emerald-light);
+          transition: width .25s ease;
+        }
+        .sg-nav-link:hover { color: var(--cream); }
+        .sg-nav-link:hover::after { width: 100%; }
+
+        .sg-btn-primary {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 12px 28px;
+          background: var(--emerald);
+          color: #fff;
+          border-radius: 9999px;
+          font-size: 15px; font-weight: 600;
+          text-decoration: none;
+          transition: background .2s, transform .2s, box-shadow .2s;
+          white-space: nowrap;
+        }
+        .sg-btn-primary:hover {
+          background: var(--emerald-light);
+          transform: translateY(-1px);
+          box-shadow: 0 8px 24px var(--emerald-glow);
+        }
+
+        .sg-btn-ghost {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 12px 28px;
+          background: transparent;
+          color: var(--cream);
+          border: 1.5px solid rgba(240,237,232,0.2);
+          border-radius: 9999px;
+          font-size: 15px; font-weight: 500;
+          text-decoration: none;
+          transition: border-color .2s, background .2s;
+          cursor: pointer;
+        }
+        .sg-btn-ghost:hover {
+          border-color: rgba(240,237,232,0.45);
+          background: rgba(240,237,232,0.05);
+        }
+
+        .sg-card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 16px;
+          transition: border-color .25s, transform .25s;
+        }
+        .sg-card:hover {
+          border-color: rgba(0,96,57,0.35);
+          transform: translateY(-2px);
+        }
+
+        .sg-icon-wrap {
+          width: 48px; height: 48px;
+          border-radius: 12px;
+          background: rgba(0,96,57,0.15);
+          border: 1px solid rgba(0,96,57,0.3);
+          display: flex; align-items: center; justify-content: center;
+          color: #00875A;
+          flex-shrink: 0;
+        }
+
+        .sg-badge {
+          display: inline-block;
+          padding: 4px 12px;
+          background: rgba(0,96,57,0.15);
+          border: 1px solid rgba(0,96,57,0.35);
+          border-radius: 9999px;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+          color: #00C57A;
+        }
+
+        .sg-stat-num {
+          font-size: clamp(2.5rem, 5vw, 4rem);
+          font-weight: 700;
+          color: #00875A;
+          line-height: 1;
+          letter-spacing: -0.02em;
+        }
+
+        .sg-hairline {
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(0,96,57,0.4), transparent);
+        }
+
+        .sg-pricing-card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 20px;
+          padding: 40px 36px;
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+          transition: border-color .25s, transform .25s;
+        }
+        .sg-pricing-card:hover { transform: translateY(-3px); }
+        .sg-pricing-card.highlighted {
+          border-color: rgba(0,96,57,0.6);
+          background: #0A1F15;
+          box-shadow: 0 0 40px rgba(0,96,57,0.15);
+        }
+
+        .sg-check { color: #00875A; margin-top: 1px; flex-shrink: 0; }
+
+        .footer-link {
+          color: var(--muted);
+          text-decoration: none;
+          font-size: 14px;
+          transition: color .2s;
+          display: block;
+          padding: 3px 0;
+        }
+        .footer-link:hover { color: var(--cream); }
+
+        @media (max-width: 768px) {
+          .sg-btn-primary, .sg-btn-ghost { padding: 11px 22px; font-size: 14px; }
+        }
+      `}</style>
+
+      {/* ── HEADER ─────────────────────────────────────────────────────────── */}
+      <header
+        className="sticky top-0 z-50 w-full transition-all duration-300"
+        style={{
+          background: scrolled ? 'rgba(13,17,23,0.92)' : 'transparent',
+          backdropFilter: scrolled ? 'blur(12px)' : 'none',
+          borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
+        }}
+      >
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 72, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          {/* Logo */}
+          <Link href="#accueil" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <img src="/logo-scogestia-transparent.png" alt="Scogestia" style={{ height: 48, width: 'auto', objectFit: 'contain' }} />
+          </Link>
+
+          {/* Desktop nav */}
+          <nav style={{ display: 'flex', alignItems: 'center', gap: 36 }} className="hidden lg:flex">
+            {NAV_LINKS.map(l => (
+              <a key={l.href} href={l.href} className="sg-nav-link">{l.label}</a>
+            ))}
           </nav>
 
-          <div className="flex items-center gap-3 sm:gap-4">
-            <Link 
-              href="/connexion" 
-              className="hidden sm:inline-flex items-center justify-center h-10 px-4 sm:px-6 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 hover:text-[#006039] rounded-full transition-colors"
-            >
+          {/* CTA */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Link href="/connexion" className="sg-nav-link hidden sm:block" style={{ color: 'var(--muted)' }}>
               Se connecter
             </Link>
-            <Link 
-              href="/inscription-ecole"
-              className="inline-flex items-center justify-center h-10 px-4 sm:px-6 text-sm font-medium text-white bg-[#006039] hover:bg-[#004d2e] rounded-full transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 whitespace-nowrap"
-            >
+            <Link href="/inscription-ecole" className="sg-btn-primary hidden sm:inline-flex">
               Créer mon école
             </Link>
-            <button 
-              className="lg:hidden p-2 text-slate-600 hover:text-[#006039] hover:bg-slate-100 rounded-lg transition-colors"
+            <button
+              className="lg:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Menu"
+              style={{ background: 'none', border: 'none', color: 'var(--cream)', cursor: 'pointer', padding: 8 }}
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>}
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile menu */}
         <AnimatePresence>
           {mobileMenuOpen && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden bg-white border-b border-slate-200 shadow-xl overflow-hidden"
+              style={{ background: '#131920', borderTop: '1px solid var(--border)', overflow: 'hidden' }}
             >
-              <div className="flex flex-col p-4 gap-4">
-                <Link href="#accueil" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Accueil</Link>
-                <Link href="#fonctionnalites" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Fonctionnalités</Link>
-                <Link href="#comment-ca-marche" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Comment ça marche</Link>
-                <Link href="#tarifs" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Tarifs</Link>
-                <Link href="#temoignages" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Témoignages</Link>
-                <Link href="#contact" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Contact</Link>
-                <hr className="border-slate-100 my-2" />
-                <Link 
-                  href="/connexion" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="sm:hidden flex items-center justify-center h-12 text-base font-medium text-slate-700 bg-white border border-slate-300 rounded-xl"
-                >
-                  Se connecter
-                </Link>
+              <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {NAV_LINKS.map(l => (
+                  <a
+                    key={l.href}
+                    href={l.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{ color: 'var(--muted)', textDecoration: 'none', padding: '10px 8px', fontSize: 15, fontWeight: 500, borderRadius: 8, transition: 'background .15s' }}
+                  >
+                    {l.label}
+                  </a>
+                ))}
+                <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <Link href="/connexion" onClick={() => setMobileMenuOpen(false)}
+                    style={{ padding: '11px 24px', textAlign: 'center', border: '1.5px solid var(--border)', borderRadius: 9999, color: 'var(--cream)', textDecoration: 'none', fontSize: 15 }}>
+                    Se connecter
+                  </Link>
+                  <Link href="/inscription-ecole" onClick={() => setMobileMenuOpen(false)} className="sg-btn-primary" style={{ justifyContent: 'center' }}>
+                    Créer mon école
+                  </Link>
+                </div>
               </div>
             </motion.div>
           )}
@@ -137,489 +411,404 @@ export default function Home() {
       </header>
 
       <main>
-        {/* Section Héro (#accueil) */}
-        <section id="accueil" className="relative pt-20 pb-20 lg:pt-32 lg:pb-24 overflow-hidden bg-floating-waves">
-          
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-              <motion.div 
-                className="w-full lg:w-5/12 flex flex-col items-center lg:items-start text-center lg:text-left"
-                initial="hidden"
-                animate="visible"
-                variants={staggerContainer}
+        {/* ── HERO ────────────────────────────────────────────────────────── */}
+        <section
+          id="accueil"
+          style={{ position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}
+        >
+          {/* Background image */}
+          <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+            <img
+              src="/images/gestion_scolaire_african.jpg"
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+            />
+            {/* Gradient overlay: deep emerald-to-charcoal */}
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(to bottom, rgba(13,17,23,0.35) 0%, rgba(0,30,18,0.6) 45%, rgba(13,17,23,0.95) 80%, #0D1117 100%)',
+            }} />
+          </div>
+
+          {/* Hero content – centered-low */}
+          <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '0 24px 96px' }}>
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={stagger}
+              style={{ textAlign: 'center', maxWidth: 820, margin: '0 auto' }}
+            >
+              <motion.div variants={fadeUp}>
+                <span className="sg-badge" style={{ marginBottom: 24, display: 'inline-block' }}>
+                  🎓 Conçu pour l'Afrique francophone
+                </span>
+              </motion.div>
+
+              <motion.h1
+                variants={fadeUp}
+                style={{
+                  fontSize: 'clamp(2.5rem, 7vw, 5.5rem)',
+                  fontWeight: 700,
+                  lineHeight: 1.06,
+                  letterSpacing: '-0.03em',
+                  color: '#F0EDE8',
+                  marginBottom: 24,
+                }}
               >
-                <motion.h1 variants={fadeIn} className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.05] mb-6 font-sans">
-                  Gérez votre école
-                  <br />
-                  <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">
-                    en toute simplicité.
-                  </span>
-                </motion.h1>
-                
-                <motion.p variants={fadeIn} className="text-lg text-slate-400 mb-10 max-w-xl leading-relaxed">
-                  Le premier ERP scolaire nouvelle génération en Afrique. Gagnez du temps, maîtrisez vos finances et rassurez les parents.
-                </motion.p>
-                
-                <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-                  <Link 
-                    href="/inscription-ecole"
-                    className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-base font-medium text-slate-900 bg-white hover:bg-slate-100 rounded-full transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
-                  >
-                    Essai gratuit de 14 jours
-                  </Link>
-                  <button 
-                    onClick={() => setDemoModalOpen(true)}
-                    className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-base font-medium text-white bg-white/5 border-2 border-slate-700 hover:border-emerald-500/50 hover:bg-emerald-900/20 rounded-full transition-all"
-                  >
-                    <PlayCircle className="w-5 h-5 mr-2 text-emerald-400" />
-                    Voir la démo
-                  </button>
-                </motion.div>
-                
-                <motion.div variants={fadeIn} className="mt-10 flex flex-wrap justify-center lg:justify-start gap-6 text-sm text-slate-300 font-medium">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    Aucune carte requise
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    Installation immédiate
-                  </div>
-                </motion.div>
-              </motion.div>
-              
-              <motion.div 
-                className="w-full lg:w-7/12 relative"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
+                Gérez votre école.
+                <br />
+                <span style={{ color: '#00C57A' }}>Simplement.</span>
+              </motion.h1>
+
+              <motion.p
+                variants={fadeUp}
+                style={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)', color: 'rgba(240,237,232,0.65)', maxWidth: 560, margin: '0 auto 40px', lineHeight: 1.7 }}
               >
-                <div className="relative overflow-visible group flex justify-center lg:justify-end perspective-1000">
-                    <div className="relative w-full lg:max-w-[110%] transform transition-all duration-700 group-hover:-translate-y-4 group-hover:scale-[1.02] hover-3d">
-                      <img 
-                        src="/image_landing_page1.png" 
-                        alt="Scogestia - Gestion scolaire intuitive" 
-                        className="w-full h-auto object-contain relative z-10 rounded-b-2xl"
-                      />
-                    </div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
+                La plateforme de gestion scolaire conçue pour les établissements
+                d'Afrique francophone. Élèves, finance, notes, parents — tout en un.
+              </motion.p>
 
-          {/* Vagues dynamiques animées (iziSAAS style) - Forme de 8 restaurée avec overshoot */}
-          <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-0 h-[80px] md:h-[120px]">
-            {/* Vague Violet Clair (descend en premier) */}
-            <svg className="block absolute bottom-0 w-[200%] h-full animate-wave-continuous-left" viewBox="0 0 2400 120" preserveAspectRatio="none">
-              <path d="M0,60 C300,280 300,-160 600,60 C900,280 900,-160 1200,60 C1500,280 1500,-160 1800,60 C2100,280 2100,-160 2400,60 L2400,120 L0,120 Z" className="fill-violet-600/90" />
-            </svg>
-            {/* Vague Violet Foncé (monte en premier) */}
-            <svg className="block absolute bottom-0 w-[200%] h-full animate-wave-continuous-right" viewBox="0 0 2400 120" preserveAspectRatio="none">
-              <path d="M0,60 C300,-160 300,280 600,60 C900,-160 900,280 1200,60 C1500,-160 1500,280 1800,60 C2100,-160 2100,280 2400,60 L2400,120 L0,120 Z" className="fill-violet-800" />
-            </svg>
-          </div>
-        </section>
-
-        {/* Section Fonctionnalités & Réassurance (#fonctionnalites) */}
-        <section id="fonctionnalites" className="py-20 lg:py-32 bg-slate-50 relative z-10">
-          <div className="container mx-auto px-4 max-w-6xl">
-            {/* EN-TÊTE DE SECTION */}
-            <motion.div 
-              className="mb-16 lg:mb-20 flex flex-col items-center text-center"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeIn}
-            >
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 tracking-tight max-w-4xl leading-tight">
-                Un contrôle total sur l'ensemble de <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-[#006039]">votre établissement.</span>
-              </h2>
-              <p className="text-xl text-slate-600 max-w-2xl leading-relaxed">
-                Des outils financiers puissants aux carnets de notes automatisés, chaque module est conçu pour être invisible et efficace.
-              </p>
-            </motion.div>
-
-            {/* CARTES DE RÉASSURANCE (BENTO) */}
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20 max-w-5xl mx-auto"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-50px" }}
-              variants={staggerContainer}
-            >
-              <motion.div variants={fadeIn} className="flex flex-col items-start p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#006039] mb-6">
-                  <ShieldCheck className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Données 100% sécurisées</h3>
-                <p className="text-slate-600 leading-relaxed text-sm">Chaque école dispose d'une base de données totalement isolée et cryptée. Vos informations ne fuient jamais.</p>
+              <motion.div variants={fadeUp} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
+                <Link href="/inscription-ecole" className="sg-btn-primary" style={{ fontSize: 16, padding: '14px 36px' }}>
+                  Démarrer gratuitement
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <button
+                  onClick={() => setDemoOpen(true)}
+                  className="sg-btn-ghost"
+                  style={{ fontSize: 16, padding: '14px 36px' }}
+                >
+                  <PlayCircle className="w-5 h-5" />
+                  Voir la démo
+                </button>
               </motion.div>
 
-              <motion.div variants={fadeIn} className="flex flex-col items-start p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
-                <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-6">
-                  <Cloud className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Accessible partout</h3>
-                <p className="text-slate-600 leading-relaxed text-sm">Entièrement basé sur le Cloud sécurisé. Accédez à la scolarité de vos élèves depuis n'importe quel appareil.</p>
-              </motion.div>
-
-              <motion.div variants={fadeIn} className="flex flex-col items-start p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
-                <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 mb-6">
-                  <Zap className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Ultra-rapide</h3>
-                <p className="text-slate-600 leading-relaxed text-sm">Une interface ultra-légère et optimisée pour fonctionner parfaitement même avec une connexion internet limitée.</p>
-              </motion.div>
-            </motion.div>
-
-            {/* GRANDES CARTES FONCTIONNALITÉS */}
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-12 gap-6"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={staggerContainer}
-            >
-              {/* Carte 1 : Finance (Image Background) */}
-              <motion.div variants={fadeIn} className="md:col-span-8 h-[400px] rounded-[2rem] p-10 relative overflow-hidden group">
-                <img src="/images/finance.png" alt="Admin Finance" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
-                
-                <div className="relative z-10 h-full flex flex-col justify-end">
-                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
-                    <Wallet className="w-6 h-6 text-emerald-400" />
-                  </div>
-                  <h3 className="text-3xl font-bold text-white mb-2 font-sans tracking-tight">Suivi Financier & <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Recouvrement</span></h3>
-                  <p className="text-slate-300 text-lg max-w-lg leading-relaxed">
-                    Visualisez instantanément les impayés, relancez les parents par SMS, et automatisez toute votre comptabilité sans tableaux croisés.
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Carte 2 : Parents (Image Background) */}
-              <motion.div variants={fadeIn} className="md:col-span-4 h-[300px] md:h-[400px] rounded-[2rem] p-6 md:p-10 relative overflow-hidden group">
-                <img src="/images/parents.png" alt="Portail Parent" className="absolute inset-0 w-full h-full object-cover object-top md:object-right transition-transform duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/70 to-slate-900/20"></div>
-                
-                <div className="relative z-10 h-full flex flex-col justify-end">
-                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
-                    <Smartphone className="w-6 h-6 text-violet-400" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-2 font-sans tracking-tight"><span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Portail</span> Parents</h3>
-                  <p className="text-slate-300 text-sm md:text-base">
-                    Transparence totale sur le téléphone des parents : notes, absences, et paiements.
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Carte 3 : Administration (Image Background) */}
-              <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] rounded-[2rem] p-10 relative overflow-hidden group">
-                <img src="/images/gestion_scolaire_african.jpg" alt="Gestion Scolaire" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
-                
-                <div className="relative z-10 h-full flex flex-col justify-end">
-                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
-                    <Building2 className="w-6 h-6 text-blue-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight">Gestion <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Scolaire</span></h3>
-                  <p className="text-slate-300">
-                    Classes, enseignants, emplois du temps. Une architecture claire pour gérer des milliers d'élèves.
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Carte 4 : Académique / Enseignant (Image Background) */}
-              <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] rounded-[2rem] p-10 relative overflow-hidden group">
-                <img src="/images/academie.png" alt="Enseignant" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
-                
-                <div className="relative z-10 h-full flex flex-col justify-end">
-                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
-                    <GraduationCap className="w-6 h-6 text-amber-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight"><span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Académique</span></h3>
-                  <p className="text-slate-300">
-                    Saisie fluide des notes, bulletins automatisés et statistiques en temps réel.
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Carte 5 : Espace Élève / Sécurité (Image Background) */}
-              <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] rounded-[2rem] p-10 relative overflow-hidden group">
-                <img src="/images/securite.png" alt="Sécurité et Contrôle" className="absolute inset-0 w-full h-full object-cover object-right transition-transform duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
-                
-                <div className="relative z-10 h-full flex flex-col justify-end">
-                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
-                    <ShieldCheck className="w-6 h-6 text-emerald-400" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight">Sécurité & <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Contrôle</span></h3>
-                  <p className="text-slate-300">
-                    Vos données sensibles sont cryptées. Personne d'autre que vous n'y a accès. Fiabilité 99.9%.
-                  </p>
-                </div>
-              </motion.div>
-
-            </motion.div>
-          </div>
-        </section>
-
-        {/* Section Comment ça marche (#comment-ca-marche) */}
-        <section id="comment-ca-marche" className="py-24 bg-white relative overflow-hidden">
-          {/* Subtle background decoration */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-violet-50/50 rounded-full blur-[100px] -z-10"></div>
-          
-          <div className="container mx-auto px-4 max-w-6xl relative z-10">
-            <motion.div 
-              className="text-center mb-24"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeIn}
-            >
-              <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-violet-50 border border-violet-100 text-violet-600 font-semibold text-sm tracking-wide uppercase shadow-sm">
-                Déploiement Facile
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">Prêt à l'emploi en <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-emerald-500">3 étapes simples</span></h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">Pas besoin de connaissances techniques. Notre processus d'installation est conçu pour être aussi rapide que possible.</p>
-            </motion.div>
-
-            <div className="relative">
-              {/* Ligne connectrice (Desktop) avec un beau dégradé */}
-              <div className="hidden md:block absolute top-[2.5rem] left-[15%] right-[15%] h-[3px] bg-gradient-to-r from-transparent via-slate-200 to-transparent z-0"></div>
-              
-              <motion.div 
-                className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-16 relative z-10"
-                variants={staggerContainer}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
+              {/* Trust signals */}
+              <motion.div
+                variants={fadeUp}
+                style={{ display: 'flex', flexWrap: 'wrap', gap: 24, justifyContent: 'center', marginTop: 48 }}
               >
                 {[
-                  { 
-                    step: '1', 
-                    title: 'Créez votre compte', 
-                    desc: 'Inscrivez votre établissement en 2 minutes. Aucune carte bancaire requise pour commencer l\'essai gratuit.',
-                    styles: {
-                      blur: 'bg-violet-400/20',
-                      border: 'border-violet-50',
-                      text: 'text-violet-600',
-                      hoverBg: 'group-hover:bg-violet-600',
-                      hoverBorder: 'group-hover:border-violet-100'
-                    }
-                  },
-                  { 
-                    step: '2', 
-                    title: 'Importez vos élèves', 
-                    desc: 'Utilisez notre modèle Excel ultra-simple pour importer toute votre liste d\'élèves et de classes en un seul clic.',
-                    styles: {
-                      blur: 'bg-emerald-400/20',
-                      border: 'border-emerald-50',
-                      text: 'text-emerald-600',
-                      hoverBg: 'group-hover:bg-emerald-600',
-                      hoverBorder: 'group-hover:border-emerald-100'
-                    }
-                  },
-                  { 
-                    step: '3', 
-                    title: 'Invitez votre équipe', 
-                    desc: 'Ajoutez vos enseignants et comptables, et laissez la plateforme automatiser toutes vos tâches quotidiennes.',
-                    styles: {
-                      blur: 'bg-blue-400/20',
-                      border: 'border-blue-50',
-                      text: 'text-blue-600',
-                      hoverBg: 'group-hover:bg-blue-600',
-                      hoverBorder: 'group-hover:border-blue-100'
-                    }
-                  }
-                ].map((item, index) => (
-                  <motion.div key={index} variants={fadeIn} className="flex flex-col items-center text-center group">
-                    <div className="relative mb-8">
-                      <div className={`absolute inset-0 ${item.styles.blur} rounded-full blur-xl transform group-hover:scale-110 transition-transform duration-500`}></div>
-                      <div className={`relative w-20 h-20 rounded-full bg-white border-4 ${item.styles.border} ${item.styles.text} flex items-center justify-center text-2xl font-black shadow-[0_8px_30px_rgb(0,0,0,0.08)] ${item.styles.hoverBg} group-hover:text-white ${item.styles.hoverBorder} transition-all duration-300 z-10`}>
-                        {item.step}
-                      </div>
-                    </div>
-                    <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 w-full h-full">
-                      <h3 className="text-xl font-bold text-slate-900 mb-4 tracking-tight">{item.title}</h3>
-                      <p className="text-slate-600 leading-relaxed">{item.desc}</p>
-                    </div>
-                  </motion.div>
+                  { icon: <Lock className="w-4 h-4" />, text: "Données sécurisées" },
+                  { icon: <Cloud className="w-4 h-4" />, text: "Hébergé en France" },
+                  { icon: <Zap className="w-4 h-4" />, text: "Rapide sur mobile" },
+                  { icon: <ShieldCheck className="w-4 h-4" />, text: "Sans engagement" },
+                ].map((item, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(240,237,232,0.5)', fontSize: 13, fontWeight: 500 }}>
+                    <span style={{ color: '#00875A' }}>{item.icon}</span>
+                    {item.text}
+                  </div>
                 ))}
               </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ── TRUST BAR ──────────────────────────────────────────────────── */}
+        <section style={{ padding: '64px 24px', background: '#0D1117', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 40 }}>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8 }}>
+                Ils font confiance à Scogestia
+              </p>
+              <p style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.8rem)', fontWeight: 700, color: 'var(--cream)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                150+ écoles gèrent leur<br />établissement avec nous.
+              </p>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 48 }}>
+              {[
+                { num: "12 000+", label: "Élèves gérés" },
+                { num: "98%", label: "Satisfaction" },
+                { num: "3 pays", label: "Togo · Bénin · Côte d'Ivoire" },
+              ].map((stat, i) => (
+                <div key={i}>
+                  <div className="sg-stat-num">{stat.num}</div>
+                  <div style={{ fontSize: 14, color: 'var(--muted)', marginTop: 4 }}>{stat.label}</div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* Section Tarifs (#tarifs) */}
-        <section id="tarifs" className="py-24 bg-slate-50 relative overflow-hidden">
-          {/* Subtle background blur */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-100/40 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
-
-          <div className="container mx-auto px-4 max-w-6xl relative z-10">
-            <motion.div 
-              className="text-center mb-20"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeIn}
+        {/* ── FEATURES ────────────────────────────────────────────────────── */}
+        <section id="fonctionnalites" style={{ padding: 'clamp(64px,8vw,120px) 24px', background: '#0D1117' }}>
+          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+            <motion.div
+              initial="hidden" whileInView="visible" viewport={{ once: true }}
+              variants={fadeUp}
+              style={{ marginBottom: 64 }}
             >
-              <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-semibold text-sm tracking-wide uppercase shadow-sm">
-                Tarification
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">Des tarifs simples, <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-400">sans surprise</span></h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">Commencez gratuitement, puis choisissez le plan qui correspond parfaitement à la taille de votre établissement.</p>
+              <span className="sg-badge" style={{ marginBottom: 16, display: 'inline-block' }}>FONCTIONNALITÉS</span>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--cream)', maxWidth: 600, lineHeight: 1.15 }}>
+                Tout ce dont votre école a besoin.
+              </h2>
             </motion.div>
 
-            <motion.div 
-              className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={staggerContainer}
+            {/* Bento grid */}
+            <motion.div
+              initial="hidden" whileInView="visible" viewport={{ once: true }}
+              variants={stagger}
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}
             >
-               {/* Plan Standard (Left) */}
-               <motion.div variants={fadeIn} className="bg-slate-900 rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.2)] border border-slate-700 p-10 flex flex-col relative overflow-hidden z-10">
-                  <div className="absolute top-0 right-0 bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider z-20">Populaire</div>
-                  <div className="mb-8 relative z-10 mt-2">
-                     <h3 className="text-2xl font-bold text-white mb-2">Plan Standard</h3>
-                     <p className="text-slate-400">Pour les petites écoles</p>
+              {/* Wide card – Finance */}
+              <motion.div
+                variants={fadeUp}
+                className="sg-card"
+                style={{ gridColumn: 'span 2', padding: 40, display: 'flex', gap: 40, alignItems: 'flex-start', flexWrap: 'wrap' }}
+              >
+                <div style={{ flex: '1 1 220px' }}>
+                  <div className="sg-icon-wrap" style={{ marginBottom: 20 }}>
+                    <Wallet className="w-6 h-6" />
                   </div>
-                  <div className="mb-8 flex items-baseline gap-2 relative z-10">
-                     <span className="text-5xl font-extrabold text-white tracking-tight">7 000</span>
-                     <span className="text-xl font-bold text-white">FCFA</span>
-                     <span className="text-slate-400 font-medium">/ mois</span>
+                  <h3 style={{ fontSize: 22, fontWeight: 700, color: 'var(--cream)', marginBottom: 10 }}>Finance & Paiements</h3>
+                  <p style={{ color: 'var(--muted)', lineHeight: 1.7, fontSize: 15 }}>
+                    Suivi FCFA en temps réel, relances SMS automatiques, taux de recouvrement, échéances impayées.
+                    Votre comptabilité scolaire sans tableaux croisés.
+                  </p>
+                  <a href="#tarifs" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#00C57A', textDecoration: 'none', fontSize: 14, fontWeight: 600, marginTop: 20 }}>
+                    Voir les tarifs <ChevronRight className="w-4 h-4" />
+                  </a>
+                </div>
+                {/* Mini screenshot placeholder */}
+                <div style={{ flex: '1 1 280px', background: '#131920', borderRadius: 12, border: '1px solid var(--border)', padding: '20px 24px', minHeight: 160 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <span style={{ fontSize: 12, color: 'var(--muted)' }}>Recouvrement — 2025-2026</span>
+                    <span style={{ fontSize: 12, color: '#00C57A', fontWeight: 600 }}>82%</span>
                   </div>
-                  <ul className="space-y-5 mb-10 flex-1 relative z-10">
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Jusqu'à 200 élèves</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Gestion des inscriptions et classes</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Suivi de la comptabilité et paiements</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Génération des reçus automatisée</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Saisie des notes et bulletins scolaires</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" /> <span>Portail Parents (Notes & Absences)</span></li>
-                  </ul>
-                  <Link href="/inscription-ecole" className="w-full py-4 rounded-2xl bg-emerald-600 font-bold text-white hover:bg-emerald-500 transition-colors text-center relative z-10 shadow-md block mt-auto">
-                     S'abonner au Plan Standard
-                  </Link>
-                  <div className="absolute -bottom-24 -left-24 w-40 h-40 bg-emerald-900 rounded-full blur-3xl opacity-30 pointer-events-none"></div>
-               </motion.div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 80 }}>
+                    {[55, 78, 65, 90, 70, 82, 68, 74, 88, 60, 72, 82].map((h, i) => (
+                      <div key={i} style={{ flex: 1, background: i % 3 === 0 ? '#006039' : 'rgba(0,96,57,0.3)', borderRadius: 3, height: `${h}%` }} />
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 16, marginTop: 12 }}>
+                    <span style={{ fontSize: 11, color: 'var(--muted)' }}>● Attendu</span>
+                    <span style={{ fontSize: 11, color: '#00875A' }}>● Encaissé</span>
+                  </div>
+                </div>
+              </motion.div>
 
-               {/* Plan Pro (Center - Highlighted) */}
-               <motion.div variants={fadeIn} className="bg-[#006039] rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.25)] p-10 flex flex-col relative overflow-hidden z-20">
-                  <div className="absolute top-0 right-0 bg-emerald-100 text-[#006039] text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider z-20">Recommandé</div>
-                  
-                  <div className="mb-8 relative z-10 mt-2">
-                     <h3 className="text-2xl font-bold text-white mb-2">Plan Pro</h3>
-                     <p className="text-emerald-100/80">Pour les grands établissements</p>
+              {/* Normal cards */}
+              {FEATURES.filter(f => f.title !== "Finance & Paiements").map((feat, i) => (
+                <motion.div key={i} variants={fadeUp} className="sg-card" style={{ padding: 32 }}>
+                  <div className="sg-icon-wrap" style={{ marginBottom: 18 }}>
+                    {feat.icon}
                   </div>
-                  <div className="mb-8 relative z-10 flex items-baseline gap-2">
-                     <span className="text-5xl font-extrabold text-white tracking-tight">9 900</span>
-                     <span className="text-xl font-bold text-white">FCFA</span>
-                     <span className="text-emerald-200/80 font-medium">/ mois</span>
-                  </div>
-                  <ul className="space-y-5 mb-10 flex-1 relative z-10">
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Jusqu'à 400 élèves</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Toutes les fonctionnalités Standard</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Gestion multi-campus / multi-sites</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Gestion des Ressources Humaines (Paie)</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Envoi de SMS et Emails aux parents</span></li>
-                     <li className="flex items-start gap-3 text-emerald-50"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" /> <span>Tableaux de bord et analytics poussés</span></li>
-                  </ul>
-                  <Link href="/inscription-ecole" className="w-full py-4 rounded-2xl bg-white font-bold text-[#006039] hover:bg-slate-50 transition-colors text-center relative z-10 shadow-lg block mt-auto">
-                     S'abonner au Plan Pro
-                  </Link>
-                  <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-emerald-600 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
-                  <div className="absolute -top-24 -left-24 w-40 h-40 bg-emerald-500 rounded-full blur-3xl opacity-40 pointer-events-none"></div>
-               </motion.div>
-
-               {/* Plan Annuel (Right) */}
-               <motion.div variants={fadeIn} className="bg-slate-800 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-slate-700 p-10 flex flex-col relative overflow-hidden transition-all z-10 md:col-span-2 lg:col-span-1">
-                  <div className="absolute top-0 right-0 bg-slate-600 text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl z-20 uppercase tracking-wider shadow-sm">Annuel</div>
-                  <div className="mb-8 mt-2 relative z-10">
-                     <h3 className="text-2xl font-bold text-white mb-2">Plan Annuel</h3>
-                     <p className="text-slate-400">Pour une tranquillité totale</p>
-                  </div>
-                  <div className="mb-8 flex items-baseline gap-2 relative z-10">
-                     <span className="text-4xl font-extrabold text-white tracking-tight">80 900</span>
-                     <span className="text-xl font-bold text-white">FCFA</span>
-                     <span className="text-slate-500 font-medium">/ an</span>
-                  </div>
-                  <ul className="space-y-5 mb-10 flex-1 relative z-10">
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span className="font-medium">Nombre d'élèves illimité</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Toutes les fonctionnalités Pro incluses</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Déploiement sécurisé sur serveur dédié</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Personnalisation avancée de l'interface</span></li>
-                     <li className="flex items-start gap-3 text-slate-300"><CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" /> <span>Support technique prioritaire 24/7</span></li>
-                  </ul>
-                  <Link href="/inscription-ecole" className="w-full py-4 rounded-2xl bg-blue-600 font-bold text-white hover:bg-blue-500 transition-colors text-center relative z-10 shadow-lg block mt-auto">
-                     S'abonner au Plan Annuel
-                  </Link>
-               </motion.div>
+                  <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--cream)', marginBottom: 8 }}>{feat.title}</h3>
+                  <p style={{ color: 'var(--muted)', fontSize: 14, lineHeight: 1.65 }}>{feat.desc}</p>
+                </motion.div>
+              ))}
             </motion.div>
-           </div>
+          </div>
         </section>
 
-        {/* Section Témoignages (#temoignages) */}
-        <section id="temoignages" className="py-24 bg-[#0b0f19] relative overflow-hidden">
-          {/* Decorative background gradients */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none"></div>
-          
-          <div className="container mx-auto px-4 max-w-6xl relative z-10">
-            <motion.div 
-              className="text-center mb-20"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeIn}
+        {/* ── HOW IT WORKS ──────────────────────────────────────────────── */}
+        <section id="comment-ca-marche" style={{ padding: 'clamp(64px,8vw,120px) 24px', background: '#0D1117' }}>
+          <div className="sg-hairline" style={{ maxWidth: 1200, margin: '0 auto 80px' }} />
+          <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 80, alignItems: 'center' }}>
+            {/* Left: steps */}
+            <motion.div
+              initial="hidden" whileInView="visible" viewport={{ once: true }}
+              variants={stagger}
+              style={{ flex: '1 1 360px' }}
             >
-              <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-sm tracking-wide uppercase shadow-sm backdrop-blur-sm">
-                Témoignages
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">Ils font confiance à <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-200">Scogestia</span></h2>
-              <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">Découvrez ce que les directeurs et comptables pensent de notre plateforme après avoir sauté le pas.</p>
+              <motion.div variants={fadeUp}>
+                <span className="sg-badge" style={{ marginBottom: 16, display: 'inline-block' }}>COMMENT ÇA MARCHE</span>
+                <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--cream)', marginBottom: 48, lineHeight: 1.15 }}>
+                  3 étapes.<br />Votre école gérée.
+                </h2>
+              </motion.div>
+
+              {[
+                { num: "01", title: "Créez votre établissement", desc: "Configurez votre école en moins de 5 minutes. Nom, niveaux, année scolaire — c'est tout." },
+                { num: "02", title: "Invitez votre équipe", desc: "Ajoutez vos administrateurs, enseignants et comptables avec les bonnes permissions." },
+                { num: "03", title: "Gérez en temps réel", desc: "Élèves, notes, finances, présences et communication — tout est centralisé et automatisé." },
+              ].map((step, i) => (
+                <motion.div key={i} variants={fadeUp} style={{ display: 'flex', gap: 24, marginBottom: 40, alignItems: 'flex-start' }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: '50%', background: 'rgba(0,96,57,0.15)',
+                    border: '1.5px solid rgba(0,96,57,0.4)', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#00C57A', flexShrink: 0
+                  }}>
+                    {step.num}
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--cream)', marginBottom: 6 }}>{step.title}</h3>
+                    <p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.65 }}>{step.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+
+              <motion.div variants={fadeUp}>
+                <Link href="/inscription-ecole" className="sg-btn-primary">
+                  Commencer maintenant <ArrowRight className="w-4 h-4" />
+                </Link>
+              </motion.div>
             </motion.div>
 
-            <motion.div 
-              ref={testimonialsScrollRef}
-              className="flex overflow-x-auto snap-x snap-mandatory pb-8 md:grid md:grid-cols-3 gap-8 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              variants={staggerContainer}
+            {/* Right: dashboard mockup */}
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+              style={{ flex: '1 1 420px' }}
             >
-              {[
-                { name: "Kodjo E.", role: "Directeur Fondateur", text: "Scogestia a totalement révolutionné la gestion de notre complexe scolaire. Fini les erreurs de calcul sur les bulletins et le suivi des impayés est devenu un jeu d'enfant absolu." },
-                { name: "Amina T.", role: "Comptable Principale", text: "Avant, je passais des jours à pointer les reçus de scolarité. Maintenant, en quelques clics, j'ai la situation financière exacte de l'école. Un gain de temps monumental." },
-                { name: "Jean-Paul M.", role: "Parent d'élève", text: "Pouvoir consulter les notes de mon fils directement sur mon téléphone me rassure au quotidien. L'école est beaucoup plus transparente grâce à ce portail interactif." }
-              ].map((testimonial, i) => (
-                <motion.div key={i} variants={fadeIn} className="bg-white/[0.03] backdrop-blur-xl p-10 rounded-[2rem] border border-white/[0.08] min-w-[85%] md:min-w-0 snap-center relative overflow-hidden group hover:bg-white/[0.05] hover:border-white/[0.12] transition-all duration-300 flex flex-col justify-between">
-                  {/* Subtle quote icon in background */}
-                  <div className="absolute -top-6 -right-6 text-white/[0.03] group-hover:text-emerald-500/[0.05] transition-colors duration-500">
-                    <svg width="140" height="140" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M14.017 21L16.411 14.504C16.892 13.064 16.924 11.531 16.5 10C16.142 8.711 15.358 7.618 14.269 6.883C13.18 6.148 11.848 5.815 10.5 6L8.5 6L8.5 10L10.5 10C10.963 10 11.411 10.15 11.782 10.428C12.152 10.706 12.427 11.097 12.569 11.545C12.71 11.993 12.71 12.476 12.569 12.924C12.427 13.372 12.152 13.763 11.782 14.041L10.017 14.504L14.017 21ZM5.01697 21L7.41097 14.504C7.89197 13.064 7.92397 11.531 7.49997 10C7.14197 8.711 6.35797 7.618 5.26897 6.883C4.17997 6.148 2.84797 5.815 1.49997 6L-0.500031 6L-0.500031 10L1.49997 10C1.96297 10 2.41097 10.15 2.78197 10.428C3.15297 10.706 3.42797 11.097 3.56997 11.545C3.71197 11.993 3.71197 12.476 3.56997 12.924C3.42797 13.372 3.15297 13.763 2.78197 14.041L1.01697 14.504L5.01697 21Z" />
-                    </svg>
+              <div style={{ background: '#131920', borderRadius: 20, border: '1px solid var(--border)', overflow: 'hidden', boxShadow: '0 40px 80px rgba(0,0,0,0.5)' }}>
+                {/* Browser chrome */}
+                <div style={{ padding: '12px 20px', background: '#0D1117', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FF5F57' }} />
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FFBD2E' }} />
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28CA41' }} />
+                  <div style={{ flex: 1, background: '#1A1F2E', borderRadius: 6, padding: '4px 12px', fontSize: 11, color: 'var(--muted)', marginLeft: 12 }}>
+                    app.scogestia.com/admin/dashboard
                   </div>
-
-                  <div>
-                    <div className="flex gap-1 mb-6 text-amber-400 relative z-10">
-                      <Star className="w-5 h-5 fill-current" />
-                      <Star className="w-5 h-5 fill-current" />
-                      <Star className="w-5 h-5 fill-current" />
-                      <Star className="w-5 h-5 fill-current" />
-                      <Star className="w-5 h-5 fill-current" />
+                </div>
+                {/* Dashboard preview */}
+                <div style={{ padding: '24px 20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 16 }}>
+                    {[
+                      { label: "Élèves", val: "512", color: '#00C57A' },
+                      { label: "Classes", val: "18", color: '#00875A' },
+                      { label: "Recouvrement", val: "82%", color: '#C8A84B' },
+                    ].map((c, i) => (
+                      <div key={i} style={{ background: '#0D1117', borderRadius: 10, padding: '16px 14px', border: '1px solid var(--border)' }}>
+                        <div style={{ fontSize: 22, fontWeight: 700, color: c.color }}>{c.val}</div>
+                        <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>{c.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Chart bars */}
+                  <div style={{ background: '#0D1117', borderRadius: 10, padding: '16px 14px', border: '1px solid var(--border)', marginBottom: 12 }}>
+                    <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 12 }}>Recouvrement des paiements</div>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 56 }}>
+                      {[60, 82, 72, 90, 68, 78, 85, 63, 74, 88, 70, 82].map((h, i) => (
+                        <div key={i} style={{ flex: 1, background: i % 2 === 0 ? 'rgba(0,96,57,0.35)' : '#006039', borderRadius: 3, height: `${h}%` }} />
+                      ))}
                     </div>
-                    <p className="text-slate-300 mb-8 leading-relaxed relative z-10 text-[15px] sm:text-base">
-                      "{testimonial.text}"
-                    </p>
                   </div>
-                  
-                  <div className="flex items-center gap-4 relative z-10 pt-6 border-t border-white/[0.05]">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-[0_0_15px_rgba(52,211,153,0.3)]">
-                      {testimonial.name.charAt(0)}
+                  {/* Table row preview */}
+                  {['AGBODAN Komi', 'MENSAH Esther', 'KPONTON Jules'].map((name, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,96,57,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#00C57A' }}>
+                          {name.charAt(0)}
+                        </div>
+                        <span style={{ fontSize: 12, color: 'var(--cream)' }}>{name}</span>
+                      </div>
+                      <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 9999, background: 'rgba(0,135,90,0.15)', color: '#00C57A', fontWeight: 600 }}>Actif</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ── PRICING ─────────────────────────────────────────────────────── */}
+        <section id="tarifs" style={{ padding: 'clamp(64px,8vw,120px) 24px', background: '#0D1117' }}>
+          <div className="sg-hairline" style={{ maxWidth: 1200, margin: '0 auto 80px' }} />
+          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+            <motion.div
+              initial="hidden" whileInView="visible" viewport={{ once: true }}
+              variants={fadeUp}
+              style={{ textAlign: 'center', marginBottom: 56 }}
+            >
+              <span className="sg-badge" style={{ marginBottom: 16, display: 'inline-block' }}>TARIFS</span>
+              <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--cream)', marginBottom: 12, lineHeight: 1.15 }}>
+                Un tarif clair. Aucune surprise.
+              </h2>
+              <p style={{ color: 'var(--muted)', fontSize: 16 }}>Tous les plans incluent 30 jours d'essai gratuit.</p>
+            </motion.div>
+
+            <motion.div
+              initial="hidden" whileInView="visible" viewport={{ once: true }}
+              variants={stagger}
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, alignItems: 'start' }}
+            >
+              {PRICING.map((plan, i) => (
+                <motion.div key={i} variants={fadeUp} className={`sg-pricing-card ${plan.highlighted ? 'highlighted' : ''}`}>
+                  {plan.highlighted && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+                      <span className="sg-badge">Recommandé</span>
+                    </div>
+                  )}
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
+                    {plan.name}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
+                    <span style={{ fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 700, color: 'var(--cream)', letterSpacing: '-0.02em' }}>
+                      {plan.price}
+                    </span>
+                    {plan.period && (
+                      <span style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 400 }}>&nbsp;{plan.period}</span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 28, lineHeight: 1.5 }}>{plan.desc}</p>
+
+                  <div style={{ height: 1, background: 'var(--border)', marginBottom: 24 }} />
+
+                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 32 }}>
+                    {plan.features.map((f, j) => (
+                      <li key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                        <CheckCircle2 className="w-4 h-4 sg-check" style={{ marginTop: 2 }} />
+                        <span style={{ fontSize: 14, color: 'rgba(240,237,232,0.8)' }}>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Link
+                    href="/inscription-ecole"
+                    className={plan.highlighted ? 'sg-btn-primary' : 'sg-btn-ghost'}
+                    style={{ width: '100%', justifyContent: 'center', marginTop: 'auto' }}
+                  >
+                    {plan.cta}
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ── TESTIMONIALS ────────────────────────────────────────────────── */}
+        <section id="temoignages" style={{ padding: 'clamp(64px,8vw,120px) 24px', background: '#0D1117' }}>
+          <div className="sg-hairline" style={{ maxWidth: 1200, margin: '0 auto 80px' }} />
+          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+            <motion.div
+              initial="hidden" whileInView="visible" viewport={{ once: true }}
+              variants={fadeUp}
+              style={{ display: 'flex', flexWrap: 'wrap', gap: 40, alignItems: 'flex-start', marginBottom: 56 }}
+            >
+              <div style={{ flex: '0 0 auto' }}>
+                <span className="sg-badge" style={{ marginBottom: 16, display: 'inline-block' }}>TÉMOIGNAGES</span>
+                <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--cream)', lineHeight: 1.15 }}>
+                  Ce que disent<br />les directeurs d'école.
+                </h2>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial="hidden" whileInView="visible" viewport={{ once: true }}
+              variants={stagger}
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}
+            >
+              {TESTIMONIALS.map((t, i) => (
+                <motion.div key={i} variants={fadeUp} className="sg-card" style={{ padding: 36 }}>
+                  {/* Stars */}
+                  <div style={{ display: 'flex', gap: 3, marginBottom: 20 }}>
+                    {Array(t.stars).fill(null).map((_, s) => (
+                      <Star key={s} className="w-4 h-4" style={{ color: '#C8A84B', fill: '#C8A84B' }} />
+                    ))}
+                  </div>
+                  {/* Large quote mark */}
+                  <div style={{ fontSize: 64, lineHeight: 0.7, color: 'rgba(0,96,57,0.4)', fontFamily: 'Georgia, serif', marginBottom: 20 }}>"</div>
+                  <p style={{ fontSize: 15, color: 'rgba(240,237,232,0.85)', lineHeight: 1.75, marginBottom: 28 }}>{t.quote}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(0,96,57,0.2)', border: '1.5px solid rgba(0,96,57,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#00C57A' }}>
+                      {t.name.charAt(0)}
                     </div>
                     <div>
-                      <div className="font-bold text-white tracking-wide">{testimonial.name}</div>
-                      <div className="text-sm text-emerald-400/80 font-medium mt-0.5">{testimonial.role}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--cream)' }}>{t.name}</div>
+                      <div style={{ fontSize: 12, color: 'var(--muted)' }}>{t.role} — {t.school}, {t.city}</div>
                     </div>
                   </div>
                 </motion.div>
@@ -628,208 +817,134 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Section FAQ (#faq) */}
-        <section id="faq" className="py-24 bg-white relative overflow-hidden">
-          {/* Subtle background decoration */}
-          <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-emerald-50 rounded-full blur-[100px] opacity-60 pointer-events-none"></div>
-          
-          <div className="container mx-auto px-4 max-w-4xl relative z-10">
-            <motion.div 
-              className="text-center mb-16"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeIn}
-            >
-              <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-semibold text-sm tracking-wide uppercase shadow-sm">
-                F.A.Q
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">Questions <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-400">Fréquentes</span></h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">Tout ce que vous devez savoir sur le déploiement et l'utilisation de Scogestia dans votre établissement.</p>
-            </motion.div>
-
-            <motion.div 
-              className="space-y-6"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-50px" }}
-              variants={staggerContainer}
-            >
-              {[
-                { q: "Faut-il installer un logiciel sur mon ordinateur ?", a: "Absolument pas ! Scogestia est un logiciel 100% web (en nuage). Vous n'avez besoin que d'un navigateur internet (Chrome, Safari, Edge) et d'une connexion internet. Vous pouvez vous connecter depuis n'importe quel ordinateur, tablette ou smartphone en toute simplicité." },
-                { q: "Mes données sont-elles réellement en sécurité ?", a: "Oui, la sécurité est notre priorité absolue. Nous utilisons une architecture moderne qui garantit que vos données sont strictement isolées et cryptées. De plus, des sauvegardes automatiques sont effectuées quotidiennement sur des serveurs sécurisés pour prévenir toute perte." },
-                { q: "Les parents doivent-ils payer pour utiliser l'application ?", a: "Non, l'accès parent est inclus dans votre abonnement. L'école paie la licence, et les parents bénéficient d'un accès totalement gratuit à leur portail dédié pour suivre les notes, l'assiduité et la comptabilité de leurs enfants en temps réel." },
-                { q: "Comment se passe l'intégration de mes listes d'élèves (depuis Excel) ?", a: "C'est extrêmement rapide. Nous vous fournissons un modèle Excel pré-formaté. Il vous suffit d'y coller vos listes actuelles et de l'importer en un clic via notre outil d'importation massive. Notre équipe de support Premium est également là pour le faire à votre place lors de la configuration initiale !" }
-              ].map((faq, i) => (
-                <motion.details key={i} variants={fadeIn} className="group bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 overflow-hidden cursor-pointer hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-emerald-200 transition-all duration-300">
-                   <summary className="flex items-center justify-between p-6 md:p-8 font-bold text-lg text-slate-900 hover:text-emerald-700 transition-colors select-none">
-                      <span className="pr-6">{faq.q}</span>
-                      <span className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-50 border border-slate-100 text-emerald-600 flex items-center justify-center group-open:bg-emerald-600 group-open:border-emerald-600 group-open:text-white transition-all duration-300 shadow-sm">
-                        <svg className="block group-open:hidden" fill="none" height="20" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" viewBox="0 0 24 24" width="20"><path d="M12 5v14M5 12h14"></path></svg>
-                        <svg className="hidden group-open:block" fill="none" height="20" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" viewBox="0 0 24 24" width="20"><path d="M5 12h14"></path></svg>
-                      </span>
-                   </summary>
-                   <div className="p-6 md:p-8 pt-0 text-slate-600 leading-relaxed border-t border-slate-100/50 bg-slate-50/50 text-base md:text-lg">
-                      {faq.a}
-                   </div>
-                </motion.details>
-              ))}
-            </motion.div>
+        {/* ── FINAL CTA ──────────────────────────────────────────────────── */}
+        <section style={{ position: 'relative', overflow: 'hidden', minHeight: 480, display: 'flex', alignItems: 'center' }}>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+            <img
+              src="/images/gestion_scolaire_african.jpg"
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.35) saturate(0.7)' }}
+            />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(13,17,23,0.4), rgba(0,30,18,0.85), rgba(13,17,23,0.9))' }} />
           </div>
-        </section>
-
-        {/* Call to Action Pre-Footer */}
-        <section className="py-20 relative bg-slate-50">
-          <div className="container mx-auto px-4">
-            <div className="bg-slate-900 rounded-[2.5rem] relative overflow-hidden shadow-2xl max-w-5xl mx-auto p-12 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 border border-white/10">
-              
-              {/* Effet lumineux de fond dans la carte CTA */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2"></div>
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2"></div>
-
-              <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeIn}
-                className="relative z-10 flex-1"
-              >
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 font-sans">
-                  Prêt à <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-emerald-300">simplifier</span> la gestion ?
-                </h2>
-                <p className="text-slate-400 text-lg md:text-xl">
-                  Rejoignez les établissements qui utilisent déjà Scogestia.
-                </p>
+          <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 1200, margin: '0 auto', padding: '96px 24px', textAlign: 'center' }}>
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+              <motion.div variants={fadeUp}>
+                <span className="sg-badge" style={{ marginBottom: 20, display: 'inline-block' }}>COMMENCEZ DÈS AUJOURD'HUI</span>
               </motion.div>
-              
-              <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeIn}
-                className="relative z-10"
-              >
-                <Link 
-                  href="/inscription-ecole"
-                  className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-lg font-bold text-slate-900 bg-white hover:bg-slate-100 rounded-full transition-all shadow-xl hover:shadow-2xl hover:scale-105"
-                >
-                  Démarrer mon essai gratuit
+              <motion.h2 variants={fadeUp} style={{ fontSize: 'clamp(2rem, 5vw, 4rem)', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--cream)', marginBottom: 20, lineHeight: 1.1 }}>
+                Votre école mérite mieux.
+              </motion.h2>
+              <motion.p variants={fadeUp} style={{ fontSize: 17, color: 'rgba(240,237,232,0.65)', marginBottom: 40 }}>
+                Rejoignez 150+ établissements qui font confiance à Scogestia.
+              </motion.p>
+              <motion.div variants={fadeUp} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
+                <Link href="/inscription-ecole" className="sg-btn-primary" style={{ fontSize: 16, padding: '14px 36px' }}>
+                  Créer mon compte gratuitement
                 </Link>
+                <a href="mailto:contact@scogestia.com" className="sg-btn-ghost" style={{ fontSize: 16, padding: '14px 36px' }}>
+                  Parler à un expert
+                </a>
               </motion.div>
-            </div>
+            </motion.div>
           </div>
         </section>
-
       </main>
 
-      {/* Footer & Contact (#contact) */}
-      <footer id="contact" className="bg-[#09090b] text-slate-300 pt-16 pb-10 relative overflow-hidden border-t-2 border-violet-900/30">
-
-        {/* Filigrane Géant SCOGESTIA (iziSAAS style) */}
-        <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-full flex justify-center pointer-events-none select-none z-0 overflow-hidden">
-          <h2 className="text-[28vw] sm:text-[180px] font-black leading-none text-white/[0.06] sm:text-white/[0.03] tracking-tighter mix-blend-overlay">
-            SCOGESTIA
-          </h2>
-        </div>
-
-        <div className="container mx-auto px-4 relative z-10 pt-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-            
-            {/* Colonne 1: A propos */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-2">
-                <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="h-12 w-auto object-contain" />
-              </div>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                La gestion scolaire simplifiée. Le système d'information de gestion de l'éducation (SIGE) moderne qui connecte les directeurs, les enseignants et les parents.
+      {/* ── FOOTER ──────────────────────────────────────────────────────── */}
+      <footer style={{ background: '#080C0F', padding: '80px 24px 40px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 48, marginBottom: 64 }}>
+            {/* Brand col */}
+            <div style={{ gridColumn: 'span 1' }}>
+              <img src="/logo-scogestia-transparent.png" alt="Scogestia" style={{ height: 40, marginBottom: 16, objectFit: 'contain' }} />
+              <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.7, marginBottom: 20 }}>
+                La gestion scolaire en Afrique francophone.
               </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                {['f', 'in', 'x'].map((s, i) => (
+                  <div key={i} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--muted)', cursor: 'pointer' }}>
+                    {s}
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Colonne 2: Liens Rapides */}
-            <div>
-              <h4 className="text-white font-semibold mb-6">Liens Rapides</h4>
-              <ul className="space-y-4">
-                <li><Link href="#accueil" className="hover:text-white transition-colors flex items-center gap-2">Accueil</Link></li>
-                <li><Link href="#fonctionnalites" className="hover:text-white transition-colors flex items-center gap-2">Fonctionnalités</Link></li>
-                <li><Link href="#tarifs" className="hover:text-white transition-colors flex items-center gap-2">Tarifs</Link></li>
-                <li><Link href="#temoignages" className="hover:text-white transition-colors flex items-center gap-2">Témoignages</Link></li>
-              </ul>
-            </div>
-
-            {/* Colonne 3: Contact */}
-            <div>
-              <h4 className="text-white font-semibold mb-6">Nous contacter</h4>
-              <ul className="space-y-4">
-                <li className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-[#006039] mt-0.5" />
-                  <span className="text-slate-400">Lomé - Togo</span>
-                </li>
-                <li>
-                  <a href="https://wa.me/22892102868" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group">
-                    <svg className="w-5 h-5 text-[#006039] group-hover:text-emerald-500 transition-colors" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                    </svg>
-                    <span className="text-slate-400 group-hover:text-emerald-500 transition-colors flex items-center gap-1.5">👉 WhatsApp</span>
-                  </a>
-                </li>
-                <li className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-[#006039]" />
-                  <span className="text-slate-400">contact@scogestia.com</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Colonne 4: Newsletter / Inscription */}
-            <div>
-              <h4 className="text-white font-semibold mb-6">Prêt à digitaliser votre école ?</h4>
-              <p className="text-slate-400 text-sm mb-4">Créez votre compte maintenant et profitez de 14 jours d'essai gratuit.</p>
-              <Link href="/inscription-ecole" className="w-full inline-flex justify-center items-center px-4 py-3 bg-[#006039] text-white rounded-lg hover:bg-[#004d2e] transition-colors font-medium">
-                Créer mon école
-              </Link>
-            </div>
-
+            {/* Links */}
+            {[
+              { title: "Produit", links: ["Fonctionnalités", "Tarifs", "Mises à jour", "Sécurité"] },
+              { title: "Ressources", links: ["Guide d'utilisation", "Centre d'aide", "Contact", "Blog"] },
+              {
+                title: "Légal", links: [
+                  { label: "Conditions d'utilisation", href: "/conditions-utilisation" },
+                  { label: "Confidentialité", href: "/confidentialite" },
+                  { label: "Mentions légales", href: "/mentions-legales" },
+                ]
+              },
+            ].map((col, i) => (
+              <div key={i}>
+                <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#00875A', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#006039', display: 'inline-block' }} />
+                  {col.title}
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {col.links.map((l, j) => {
+                    const label = typeof l === 'string' ? l : l.label;
+                    const href = typeof l === 'string' ? '#' : l.href;
+                    return (
+                      <Link key={j} href={href} className="footer-link">{label}</Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Copyrights */}
-          <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
-            <div>
-              © {new Date().getFullYear()} Scogestia. Tous droits réservés.
-            </div>
-            <div className="flex flex-wrap justify-center md:justify-end gap-6 mt-4 md:mt-0">
-              <Link href="/confidentialite" className="hover:text-white transition-colors">Confidentialité</Link>
-              <Link href="/conditions-utilisation" className="hover:text-white transition-colors">Conditions d'utilisation</Link>
-              <Link href="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</Link>
-            </div>
+          <div className="sg-hairline" style={{ marginBottom: 28 }} />
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12 }}>
+            <p style={{ fontSize: 13, color: 'rgba(240,237,232,0.3)' }}>© 2026 Scogestia · Tous droits réservés</p>
+            <p style={{ fontSize: 13, color: 'rgba(240,237,232,0.3)' }}>Made with ❤️ in Togo</p>
           </div>
         </div>
       </footer>
-      {/* Modal de Démo Vidéo */}
-      {demoModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setDemoModalOpen(false)}></div>
-          <div className="relative w-full max-w-4xl bg-black rounded-2xl overflow-hidden shadow-2xl animate-[fadeIn_0.3s_ease-out]">
-            {/* Bouton Fermer */}
-            <button 
-              onClick={() => setDemoModalOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black text-white rounded-full transition-colors"
+
+      {/* ── DEMO MODAL ──────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {demoOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setDemoOpen(false)}
+            style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: '#131920', border: '1px solid var(--border)', borderRadius: 20, overflow: 'hidden', maxWidth: 760, width: '100%' }}
             >
-              <X className="w-6 h-6" />
-            </button>
-            
-            {/* Conteneur Vidéo */}
-            <div className="relative pt-[56.25%] w-full bg-slate-800">
-              <iframe
-                className="absolute inset-0 w-full h-full"
-                src="https://www.youtube.com/embed/njLnsD5tGz0?autoplay=1"
-                title="Présentation Scogestia"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              ></iframe>
-            </div>
-          </div>
-        </div>
-      )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
+                <h3 style={{ fontWeight: 700, color: 'var(--cream)' }}>Démo Scogestia</h3>
+                <button onClick={() => setDemoOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}>
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div style={{ aspectRatio: '16/9', background: '#0D1117', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <PlayCircle className="w-16 h-16" style={{ color: '#006039', margin: '0 auto 12px' }} />
+                  <p style={{ color: 'var(--muted)', fontSize: 14 }}>Vidéo de démonstration à venir</p>
+                  <Link href="/inscription-ecole" className="sg-btn-primary" style={{ marginTop: 20, display: 'inline-flex' }}>
+                    Essayer gratuitement
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
-  )
+  );
 }
