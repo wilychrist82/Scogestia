@@ -4,9 +4,10 @@ import { useState, useTransition, useEffect, FormEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { sendCommunication } from '@/app/actions/communication'
-import { formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow, format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { AudioRecorder } from '@/components/ui/AudioRecorder'
+import { WhatsAppInputBar } from '@/components/ui/WhatsAppInputBar'
 import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import toast from 'react-hot-toast'
 
@@ -47,18 +48,18 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
     return () => clearInterval(interval)
   }, [router])
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const handleSend = (payload: { text: string; audioUrl: string | null }) => {
     setSuccess(false)
     setError(null)
-    const form = e.currentTarget
-    const formData = new FormData(form)
+    const formData = new FormData()
     formData.append('recipientType', recipientType)
+    formData.append('subject', 'Message de l\'administration')
+    formData.append('message', payload.text || 'Message vocal')
     if (recipientType === 'class') formData.append('selectedClass', selectedClass)
     if (recipientType === 'parent') formData.append('selectedParent', selectedParent)
     if (recipientType === 'enseignant') formData.append('selectedEnseignant', selectedEnseignant)
     if (sendSmsOption) formData.append('sendSms', 'true')
-    if (audioUrl) formData.append('audioUrl', audioUrl)
+    if (payload.audioUrl) formData.append('audioUrl', payload.audioUrl)
     
     startTransition(async () => {
       const result = await sendCommunication(formData)
@@ -67,11 +68,10 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
         toast.error(result.error, { duration: 4000, position: 'top-center' })
       } else {
         toast.success('✅ Message envoyé avec succès !', {
-          duration: 4000,
+          duration: 3000,
           position: 'top-center',
           style: { background: '#1e8e3e', color: '#fff', fontWeight: '600', fontSize: '14px', borderRadius: '12px', padding: '12px 16px' }
         })
-        form.reset()
         setSelectedParent('')
         setSelectedEnseignant('')
       }
@@ -110,74 +110,73 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Nouveau Message Form */}
-          <div className="lg:col-span-2 bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
-              <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[var(--color-primary)]">send</span>
-                Nouveau Message
-              </h3>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5">
-              
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Destinataires</label>
-                <select 
-                  value={recipientType}
-                  onChange={(e) => setRecipientType(e.target.value)}
-                  className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
-                >
-                  <optgroup label="Parents">
-                    <option value="all">Tous les parents</option>
-                    <option value="class">Parents d'une classe spécifique</option>
-                    <option value="parent">Parent d'un élève précis</option>
-                  </optgroup>
-                  <optgroup label="Enseignants">
-                    <option value="all_teachers">Tous les enseignants</option>
-                    <option value="enseignant">Un enseignant précis</option>
-                  </optgroup>
-                </select>
+          {/* Nouveau Message Form Style WhatsApp */}
+          <div className="lg:col-span-2 bg-white rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden flex flex-col h-[600px]">
+            {/* Header / Destinataires */}
+            <div className="p-3 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-primary-container)] text-[var(--color-primary)] flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[20px]">
+                    {recipientType === 'all' || recipientType === 'class' || recipientType === 'parent' ? 'family_restroom' : 'school'}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-[var(--color-on-surface)]">
+                    Contacter
+                  </span>
+                  <span className="text-[11px] text-[var(--color-on-surface-variant)]">En ligne</span>
+                </div>
               </div>
+              <select 
+                value={recipientType}
+                onChange={(e) => setRecipientType(e.target.value)}
+                className="text-xs bg-transparent border-none outline-none font-semibold text-[var(--color-primary)] cursor-pointer"
+              >
+                <optgroup label="Parents">
+                  <option value="all">Tous les parents</option>
+                  <option value="class">Parents d'une classe</option>
+                  <option value="parent">Parent d'un élève</option>
+                </optgroup>
+                <optgroup label="Enseignants">
+                  <option value="all_teachers">Tous les enseignants</option>
+                  <option value="enseignant">Un enseignant précis</option>
+                </optgroup>
+              </select>
+            </div>
 
+            {/* Zone de sélection additionnelle (classe, parent, enseignant) */}
+            <div className="flex flex-col border-b border-[var(--color-outline-variant)] bg-[#f0f2f5]">
               {recipientType === 'class' && (
-                <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]">Sélectionnez la classe</label>
+                <div className="px-3 py-2">
                   <select 
                     value={selectedClass}
                     onChange={(e) => setSelectedClass(e.target.value)}
-                    className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
-                    required
+                    className="w-full h-10 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-white"
                   >
-                    <option value="">Sélectionner...</option>
+                    <option value="">Sélectionner une classe...</option>
                     {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
               )}
-
               {recipientType === 'parent' && (
-                <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]">Rechercher un élève (pour contacter son parent)</label>
+                <div className="px-3 py-2">
                   <SearchableSelect 
                     value={selectedParent}
                     onChange={(val) => setSelectedParent(val)}
-                    placeholder="Taper le nom de l'élève..."
-                    required
+                    placeholder="Sélectionner l'élève..."
                     options={students.map(s => ({
                       value: s.id,
-                      label: `Parent de ${s.first_name} ${s.last_name} ${s.classes?.name ? `(${s.classes.name})` : ''}`
+                      label: `${s.first_name} ${s.last_name} ${s.classes?.name ? `(${s.classes.name})` : ''}`
                     }))}
                   />
                 </div>
               )}
-
               {recipientType === 'enseignant' && (
-                <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]">Sélectionnez l'enseignant</label>
+                <div className="px-3 py-2">
                   <SearchableSelect 
                     value={selectedEnseignant}
                     onChange={(val) => setSelectedEnseignant(val)}
-                    placeholder="Taper le nom de l'enseignant..."
-                    required
+                    placeholder="Sélectionner l'enseignant..."
                     options={teachers.map(t => ({
                       value: t.id,
                       label: t.full_name
@@ -186,58 +185,45 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
                 </div>
               )}
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Objet</label>
-                <input 
-                  type="text" 
-                  name="subject"
-                  placeholder="Objet du message..." 
-                  className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
-                  required
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Message texte (Optionnel si vocal)</label>
-                <textarea 
-                  name="message"
-                  placeholder="Rédigez votre message ici..." 
-                  className="w-full p-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] min-h-[120px]"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5 border-t border-[var(--color-outline-variant)] pt-4 mt-2">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Message vocal</label>
-                <AudioRecorder onAudioReady={(url) => setAudioUrl(url)} />
-              </div>
-
               {/* SMS uniquement pour les parents */}
               {(recipientType === 'all' || recipientType === 'class' || recipientType === 'parent') && (
-                <div className="flex items-center gap-2 mt-2">
+                <div className="px-4 py-2 border-t border-[var(--color-outline-variant)] flex items-center gap-2">
                   <input 
                     type="checkbox" 
                     id="sendSms" 
                     checked={sendSmsOption}
                     onChange={(e) => setSendSmsOption(e.target.checked)}
-                    className="w-5 h-5 rounded border-[var(--color-outline-variant)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                    className="w-4 h-4 rounded border-[var(--color-outline-variant)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                   />
-                  <label htmlFor="sendSms" className="text-sm font-semibold text-[var(--color-on-surface)] cursor-pointer">
-                    Envoyer également une notification par SMS (coûts applicables)
+                  <label htmlFor="sendSms" className="text-xs font-semibold text-[var(--color-on-surface-variant)] cursor-pointer">
+                    Envoyer aussi par SMS (coûts applicables)
                   </label>
                 </div>
               )}
+            </div>
 
-              <div className="flex justify-end gap-3 mt-2">
-                <button 
-                  type="submit" 
-                  disabled={isPending}
-                  className="bg-[var(--color-primary)] text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
-                >
-                  <span className="material-symbols-outlined text-[20px]">send</span>
-                  {isPending ? 'Envoi en cours...' : 'Envoyer le message'}
-                </button>
+            {/* Zone centrale (Background WhatsApp) */}
+            <div className="flex-1 bg-[#efeae2] relative overflow-hidden">
+              <div className="absolute inset-0 opacity-40 mix-blend-multiply pointer-events-none" style={{ backgroundImage: 'url("https://web.whatsapp.com/img/bg-chat-tile-dark_a4be512e7195b6b733d9110b408f075d.png")' }}></div>
+              <div className="h-full flex items-center justify-center p-6 text-center z-10 relative">
+                 <span className="bg-white/80 px-4 py-1.5 rounded-lg text-xs font-semibold text-gray-500 shadow-sm backdrop-blur-sm">
+                   Sélectionnez un destinataire et envoyez un message
+                 </span>
               </div>
-            </form>
+            </div>
+
+            {/* WhatsApp Input Bar */}
+            <WhatsAppInputBar 
+              onSend={handleSend} 
+              isPending={isPending} 
+              placeholder={
+                (recipientType === 'class' && !selectedClass) ||
+                (recipientType === 'parent' && !selectedParent) ||
+                (recipientType === 'enseignant' && !selectedEnseignant)
+                  ? "Sélectionnez d'abord un destinataire..."
+                  : "Message"
+              } 
+            />
           </div>
 
           {/* Sidebar Historique */}
@@ -272,40 +258,63 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
                     recipientText = 'Administration'
                   }
 
+                  const isRead = (comm as any).is_read === true
+
                   return (
                     <div key={comm.id} className={`flex w-full ${isSentByMe ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[85%] flex flex-col gap-1 ${isSentByMe ? 'items-end' : 'items-start'}`}>
-                        {/* Bubble */}
-                        <div className={`p-3 rounded-2xl ${isSentByMe ? 'bg-[#dcf8c6] text-[#0b1c30] rounded-tr-sm' : 'bg-white border border-[var(--color-outline-variant)] text-[#0b1c30] rounded-tl-sm shadow-sm'}`}>
-                          {comm.subject && comm.subject !== 'Message vocal' && (
-                            <h4 className="font-bold text-sm mb-1">{comm.subject}</h4>
+                        {/* Bulle WhatsApp */}
+                        <div className={`rounded-2xl shadow-sm overflow-hidden ${
+                          isSentByMe 
+                            ? 'bg-[#dcf8c6] text-[#0b1c30] rounded-tr-sm' 
+                            : 'bg-white border border-[var(--color-outline-variant)] text-[#0b1c30] rounded-tl-sm'
+                        }`}>
+                          {comm.subject && comm.subject !== 'Message vocal' && comm.subject !== 'Message de l\'administration' && (
+                            <p className="px-3 pt-2.5 text-[13px] font-bold">{comm.subject}</p>
                           )}
                           {comm.content && comm.content !== 'Message vocal' && (
-                            <p className="text-sm whitespace-pre-wrap">{comm.content}</p>
+                            <p className="px-3 pt-1 pb-1 text-sm whitespace-pre-wrap leading-relaxed">{comm.content}</p>
                           )}
                           {comm.audio_url && (
-                            <div className="mt-2 min-w-[200px]">
-                              <audio controls src={comm.audio_url} className="w-full h-8" />
+                            <div className={`flex items-center gap-2 px-3 py-2 min-w-[200px] ${
+                              comm.content && comm.content !== 'Message vocal' ? 'border-t border-black/5' : ''
+                            }`}>
+                              <span className="material-symbols-outlined text-[20px] text-[var(--color-primary)] shrink-0">mic</span>
+                              <audio controls src={comm.audio_url} className="w-full h-7 flex-1" style={{ colorScheme: 'light' }} />
                             </div>
                           )}
+
+                          {/* Heure + coches dans la bulle */}
+                          <div className={`flex items-center justify-end gap-1 pr-2 pb-1.5 ${
+                            (!comm.content || comm.content === 'Message vocal') && !comm.audio_url ? 'pt-1' : ''
+                          }`}>
+                            {isSentByMe && (
+                              <span className="text-[10px] text-[var(--color-on-surface-variant)]">
+                                À: {recipientText} •
+                              </span>
+                            )}
+                            <span className="text-[10px] text-[var(--color-on-surface-variant)]">
+                              {format(new Date(comm.created_at), 'HH:mm', { locale: fr })}
+                            </span>
+                            {isSentByMe && (
+                              <svg
+                                width="16" height="11" viewBox="0 0 16 11"
+                                fill="none" xmlns="http://www.w3.org/2000/svg"
+                                className="shrink-0"
+                                aria-label={isRead ? 'Lu' : 'Envoyé'}
+                              >
+                                <path d="M1 5.5L4.5 9L11 2" stroke={isRead ? '#53bdeb' : '#8696a0'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M5 5.5L8.5 9L15 2" stroke={isRead ? '#53bdeb' : '#8696a0'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </div>
                         </div>
-                        {/* Metadata */}
-                        <div className="text-[10px] text-[var(--color-on-surface-variant)] flex items-center gap-1">
-                          {isSentByMe ? (
-                            <>
-                              <span>À: {recipientText}</span>
-                              <span>•</span>
-                              <span>{formatDistanceToNow(new Date(comm.created_at), { locale: fr })}</span>
-                              <span className="material-symbols-outlined text-[12px] text-blue-500">done_all</span>
-                            </>
-                          ) : (
-                            <>
-                              <span>{formatDistanceToNow(new Date(comm.created_at), { locale: fr })}</span>
-                              <span>•</span>
-                              <span>De: {comm.recipient_type === 'admin' ? 'Parent/Enseignant' : recipientText}</span>
-                            </>
-                          )}
-                        </div>
+
+                        {!isSentByMe && (
+                          <span className="text-[10px] text-[var(--color-on-surface-variant)] px-1">
+                            De: Parent/Enseignant
+                          </span>
+                        )}
                       </div>
                     </div>
                   )
