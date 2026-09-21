@@ -3,6 +3,7 @@
 import { useState, useTransition, FormEvent, useEffect } from 'react'
 import { sendCommunication } from '@/app/actions/communication'
 import { AudioRecorder } from '@/components/ui/AudioRecorder'
+import { WhatsAppInputBar } from '@/components/ui/WhatsAppInputBar'
 import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -50,18 +51,20 @@ export function EnseignantCommunication({ currentUserId, students, communication
     return () => clearInterval(interval)
   }, [router])
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const handleSend = (payload: { text: string; audioUrl: string | null }) => {
     setSuccess(false)
     setError(null)
 
-    const form = e.currentTarget
-    const formData = new FormData(form)
+    const formData = new FormData()
     formData.append('recipientType', recipientType)
+    formData.append('subject', 'Message enseignant')
+    formData.append('message', payload.text || 'Message vocal')
     if (recipientType === 'parent') {
       formData.append('selectedParent', selectedParent)
     }
-    if (audioUrl) formData.append('audioUrl', audioUrl)
+    if (payload.audioUrl) {
+      formData.append('audioUrl', payload.audioUrl)
+    }
 
     startTransition(async () => {
       const result = await sendCommunication(formData)
@@ -70,13 +73,11 @@ export function EnseignantCommunication({ currentUserId, students, communication
         toast.error(result.error, { duration: 4000, position: 'top-center' })
       } else {
         toast.success('✅ Message envoyé avec succès !', {
-          duration: 4000,
+          duration: 3000,
           position: 'top-center',
           style: { background: '#1e8e3e', color: '#fff', fontWeight: '600', fontSize: '14px', borderRadius: '12px', padding: '12px 16px' }
         })
-        form.reset()
         setAudioUrl(null)
-        setSelectedParent('')
       }
     })
   }
@@ -115,101 +116,62 @@ export function EnseignantCommunication({ currentUserId, students, communication
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Formulaire d'envoi */}
-          <div className="lg:col-span-2 bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
-              <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[var(--color-primary)]">send</span>
-                Nouveau Message
-              </h3>
+          {/* Formulaire d'envoi style WhatsApp */}
+          <div className="lg:col-span-2 bg-white rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden flex flex-col h-[525px]">
+            {/* Header / Destinataire */}
+            <div className="p-3 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-primary-container)] text-[var(--color-primary)] flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[20px]">{recipientType === 'admin' ? 'admin_panel_settings' : 'family_restroom'}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-[var(--color-on-surface)]">
+                    {recipientType === 'admin' ? 'Administration' : 'Contacter un parent'}
+                  </span>
+                  <span className="text-[11px] text-[var(--color-on-surface-variant)]">En ligne</span>
+                </div>
+              </div>
+              <select
+                value={recipientType}
+                onChange={(e) => setRecipientType(e.target.value as 'admin' | 'parent')}
+                className="text-xs bg-transparent border-none outline-none font-semibold text-[var(--color-primary)] cursor-pointer"
+              >
+                <option value="admin">Admin</option>
+                <option value="parent">Parent</option>
+              </select>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5">
 
-              {/* Destinataire */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Envoyer à</label>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setRecipientType('admin')}
-                    className={`flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm border transition-all ${
-                      recipientType === 'admin'
-                        ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]'
-                        : 'bg-[var(--color-surface)] text-[var(--color-on-surface)] border-[var(--color-outline-variant)] hover:border-[var(--color-primary)]'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[18px] mr-1.5 align-middle">admin_panel_settings</span>
-                    Administration
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRecipientType('parent')}
-                    className={`flex-1 py-2.5 px-4 rounded-lg font-semibold text-sm border transition-all ${
-                      recipientType === 'parent'
-                        ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]'
-                        : 'bg-[var(--color-surface)] text-[var(--color-on-surface)] border-[var(--color-outline-variant)] hover:border-[var(--color-primary)]'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[18px] mr-1.5 align-middle">family_restroom</span>
-                    Un parent
-                  </button>
-                </div>
-              </div>
-
-              {recipientType === 'parent' && (
-                <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]">
-                    Rechercher un élève (pour contacter son parent)
-                  </label>
-                  <SearchableSelect
-                    value={selectedParent}
-                    onChange={(val) => setSelectedParent(val)}
-                    placeholder="Taper le nom de l'élève..."
-                    required
-                    options={students.map(s => ({
-                      value: s.id,
-                      label: `Parent de ${s.first_name} ${s.last_name} ${s.classes?.name ? `(${s.classes.name})` : ''}`
-                    }))}
-                  />
-                </div>
-              )}
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Objet</label>
-                <input
-                  type="text"
-                  name="subject"
-                  placeholder="Objet du message..."
-                  className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
-                  required
+            {/* Zone de sélection du parent si nécessaire */}
+            {recipientType === 'parent' && (
+              <div className="px-3 py-2 bg-[#f0f2f5] border-b border-[var(--color-outline-variant)]">
+                <SearchableSelect
+                  value={selectedParent}
+                  onChange={(val) => setSelectedParent(val)}
+                  placeholder="Sélectionner l'élève..."
+                  options={students.map(s => ({
+                    value: s.id,
+                    label: `${s.first_name} ${s.last_name} ${s.classes?.name ? `(${s.classes.name})` : ''}`
+                  }))}
                 />
               </div>
+            )}
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Message (optionnel si vocal)</label>
-                <textarea
-                  name="message"
-                  placeholder="Rédigez votre message ici..."
-                  className="w-full p-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] min-h-[120px]"
-                />
+            {/* Zone centrale (vide pour le moment ou pourrait afficher le chat actif spécifique) */}
+            <div className="flex-1 bg-[#efeae2] relative overflow-hidden">
+              <div className="absolute inset-0 opacity-40 mix-blend-multiply pointer-events-none" style={{ backgroundImage: 'url("https://web.whatsapp.com/img/bg-chat-tile-dark_a4be512e7195b6b733d9110b408f075d.png")' }}></div>
+              <div className="h-full flex items-center justify-center p-6 text-center z-10 relative">
+                 <span className="bg-white/80 px-4 py-1.5 rounded-lg text-xs font-semibold text-gray-500 shadow-sm backdrop-blur-sm">
+                   Sélectionnez un destinataire et envoyez un message
+                 </span>
               </div>
+            </div>
 
-              <div className="flex flex-col gap-1.5 border-t border-[var(--color-outline-variant)] pt-4 mt-2">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Message vocal</label>
-                <AudioRecorder onAudioReady={(url) => setAudioUrl(url)} />
-              </div>
-
-              <div className="flex justify-end gap-3 mt-2">
-                <button
-                  type="submit"
-                  disabled={isPending || (recipientType === 'parent' && !selectedParent)}
-                  className="bg-[var(--color-primary)] text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
-                >
-                  <span className="material-symbols-outlined text-[20px]">send</span>
-                  {isPending ? 'Envoi en cours...' : 'Envoyer le message'}
-                </button>
-              </div>
-            </form>
+            {/* WhatsApp Input Bar */}
+            <WhatsAppInputBar 
+              onSend={handleSend} 
+              isPending={isPending} 
+              placeholder={recipientType === 'parent' && !selectedParent ? "Sélectionnez un parent d'abord" : "Message"} 
+            />
           </div>
 
           {/* Historique */}
