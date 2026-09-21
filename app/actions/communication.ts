@@ -317,12 +317,12 @@ export async function sendCommunication(formData: FormData) {
 }
 
 export async function deleteCommunication(id: string, type: 'for_me' | 'for_everyone') {
-  const supabase = createServerActionClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autorisé' }
 
   // 1. Récupérer le message pour vérifier s'il existe et si l'utilisateur en est l'auteur
-  const adminClient = getAdminClient()
+  const adminClient = await createAdminClient()
   const { data: message, error: getError } = await adminClient
     .from('communications')
     .select('id, sender_id, deleted_by, is_deleted_for_everyone')
@@ -365,11 +365,11 @@ export async function deleteCommunication(id: string, type: 'for_me' | 'for_ever
 export async function markAsRead(ids: string[]) {
   if (!ids || ids.length === 0) return { success: true }
   
-  const supabase = createServerActionClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autorisé' }
 
-  const adminClient = getAdminClient()
+  const adminClient = await createAdminClient()
   
   // On récupère les messages concernés pour voir la liste `read_by` actuelle
   const { data: messages } = await adminClient

@@ -41,7 +41,7 @@ export function MessageActions({ messageId, isSentByMe }: Props) {
   }
 
   return (
-    <div className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity" ref={menuRef}>
+    <div className="absolute top-0 right-0 p-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity" ref={menuRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className="w-6 h-6 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-gray-500 backdrop-blur-sm"
