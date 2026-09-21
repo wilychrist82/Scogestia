@@ -48,7 +48,7 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
     return () => clearInterval(interval)
   }, [router])
 
-  const handleSend = (payload: { text: string; audioUrl: string | null }) => {
+  const handleSend = (payload: { text: string; audioUrl: string | null; fileUrl?: string | null; fileType?: string | null }) => {
     setSuccess(false)
     setError(null)
     const formData = new FormData()
@@ -60,6 +60,8 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
     if (recipientType === 'enseignant') formData.append('selectedEnseignant', selectedEnseignant)
     if (sendSmsOption) formData.append('sendSms', 'true')
     if (payload.audioUrl) formData.append('audioUrl', payload.audioUrl)
+    if (payload.fileUrl) formData.append('fileUrl', payload.fileUrl)
+    if (payload.fileType) formData.append('fileType', payload.fileType)
     
     startTransition(async () => {
       const result = await sendCommunication(formData)

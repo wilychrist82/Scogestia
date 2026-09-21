@@ -51,7 +51,7 @@ export function EnseignantCommunication({ currentUserId, students, communication
     return () => clearInterval(interval)
   }, [router])
 
-  const handleSend = (payload: { text: string; audioUrl: string | null }) => {
+  const handleSend = (payload: { text: string; audioUrl: string | null; fileUrl?: string | null; fileType?: string | null }) => {
     setSuccess(false)
     setError(null)
 
@@ -64,6 +64,12 @@ export function EnseignantCommunication({ currentUserId, students, communication
     }
     if (payload.audioUrl) {
       formData.append('audioUrl', payload.audioUrl)
+    }
+    if (payload.fileUrl) {
+      formData.append('fileUrl', payload.fileUrl)
+    }
+    if (payload.fileType) {
+      formData.append('fileType', payload.fileType)
     }
 
     startTransition(async () => {

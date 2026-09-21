@@ -9,7 +9,7 @@ export function ParentMessageForm() {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  const handleSend = (payload: { text: string; audioUrl: string | null }) => {
+  const handleSend = (payload: { text: string; audioUrl: string | null; fileUrl?: string | null; fileType?: string | null }) => {
     setError(null)
     const formData = new FormData()
     formData.append('recipientType', 'admin')
@@ -18,6 +18,12 @@ export function ParentMessageForm() {
     
     if (payload.audioUrl) {
       formData.append('audioUrl', payload.audioUrl)
+    }
+    if (payload.fileUrl) {
+      formData.append('fileUrl', payload.fileUrl)
+    }
+    if (payload.fileType) {
+      formData.append('fileType', payload.fileType)
     }
 
     startTransition(async () => {
