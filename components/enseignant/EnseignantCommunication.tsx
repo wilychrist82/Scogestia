@@ -44,6 +44,7 @@ export function EnseignantCommunication({ currentUserId, students, communication
   const router = useRouter()
   const [recipientType, setRecipientType] = useState<'admin' | 'parent'>('admin')
   const [selectedParent, setSelectedParent] = useState('')
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const chatBottomRef = useRef<HTMLDivElement>(null)
@@ -370,14 +371,21 @@ export function EnseignantCommunication({ currentUserId, students, communication
           </div>
 
           {/* Historique complet (tous messages envoyés/reçus) */}
-          <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
+          <div className={`bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden flex flex-col ${isHistoryExpanded ? 'h-full' : ''}`}>
+            <div 
+              className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] cursor-pointer hover:bg-[var(--color-surface)] transition-colors flex items-center justify-between"
+              onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+            >
               <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
                 <span className="material-symbols-outlined text-[var(--color-on-surface-variant)]">history</span>
                 Historique Récent
               </h3>
+              <span className={`material-symbols-outlined text-[var(--color-on-surface-variant)] transition-transform duration-300 ${isHistoryExpanded ? 'rotate-180' : ''}`}>
+                expand_more
+              </span>
             </div>
-            <div className="p-4 flex flex-col gap-4 flex-1 bg-[var(--color-surface)] overflow-y-auto max-h-[480px]">
+            {isHistoryExpanded && (
+              <div className="p-4 flex flex-col gap-4 flex-1 bg-[var(--color-surface)] overflow-y-auto max-h-[480px]">
               {communications.length === 0 ? (
                 <div className="text-center text-sm text-[var(--color-on-surface-variant)] py-8">
                   Aucun message récent.
@@ -499,6 +507,7 @@ export function EnseignantCommunication({ currentUserId, students, communication
                 })
               )}
             </div>
+            )}
           </div>
 
         </div>

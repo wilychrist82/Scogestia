@@ -87,17 +87,24 @@ export function PlanningDashboard({ timetables, mainClass }: Props) {
     return colors[Math.abs(hash) % colors.length]
   }
 
-  const getTimetableLevel = (levelStr: string | undefined): 'maternelle' | 'cp' | 'ce' | 'cm' | null => {
-    if (!levelStr) return null
-    const l = levelStr.toLowerCase()
-    if (['s1', 's2', 'section1', 'section2', 'maternelle'].includes(l)) return 'maternelle'
-    if (['cp1', 'cp2', 'cp'].includes(l)) return 'cp'
-    if (['ce1', 'ce2', 'ce'].includes(l)) return 'ce'
-    if (['cm1', 'cm2', 'cm'].includes(l)) return 'cm'
+  const getTimetableLevel = (cls: { name: string; level: string } | null | undefined): 'maternelle' | 'cp' | 'ce' | 'cm' | null => {
+    if (!cls) return null
+    const match = `${cls.level} ${cls.name}`.toLowerCase()
+    
+    // Si la classe est explicitement secondaire, on force null
+    if (match.includes('6ème') || match.includes('6eme') || match.includes('6e') || match.includes('secondaire') || match.includes('college') || match.includes('lycee')) {
+      return null
+    }
+
+    if (match.includes('s1') || match.includes('s2') || match.includes('section') || match.includes('maternelle')) return 'maternelle'
+    if (match.includes('cp1') || match.includes('cp2') || match.includes('cp')) return 'cp'
+    if (match.includes('ce1') || match.includes('ce2') || match.includes('ce')) return 'ce'
+    if (match.includes('cm1') || match.includes('cm2') || match.includes('cm')) return 'cm'
+    
     return null
   }
 
-  const staticLevel = getTimetableLevel(mainClass?.level)
+  const staticLevel = getTimetableLevel(mainClass)
   const isPrimaryOrMaternal = staticLevel !== null
 
   return (
