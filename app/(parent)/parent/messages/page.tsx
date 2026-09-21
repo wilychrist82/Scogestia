@@ -27,20 +27,20 @@ export default async function ParentMessagesPage() {
 
   const schoolId = roleData.school_id
 
-  // Get parent's children's classes to filter class messages
-  const { data: links } = await supabase
-    .from('parent_student_links')
-    .select(`
-      student_id,
-      students!inner(class_id)
-    `)
-    .eq('parent_user_id', user.id)
+  // Charger les enseignants de l'école pour le sélecteur
+  const { data: teachersRaw } = await supabase
+    .from('user_school_roles')
+    .select('user_id, full_name')
     .eq('school_id', schoolId)
+    .eq('role', 'enseignant')
+    .order('full_name')
 
-  const classIds = links?.map(l => (l.students as any).class_id).filter(Boolean) || []
+  const teachers = teachersRaw?.map(t => ({
+    id: t.user_id,
+    full_name: t.full_name || 'Enseignant'
+  })) || []
 
-  // Build the OR query for RLS or just direct query. RLS is already handling it, but let's be explicit.
-  // Actually, since RLS is enabled, we can just query all communications for this school, and RLS will filter out what the parent shouldn't see!
+  // Charger tous les messages visibles par ce parent (RLS gère les droits)
   const { data: messages } = await supabase
     .from('communications')
     .select('*')
@@ -60,7 +60,7 @@ export default async function ParentMessagesPage() {
       <div className="shrink-0 bg-[var(--color-surface)] px-4 py-3 flex items-center shadow-sm z-10 border-b border-[var(--color-outline-variant)]">
         <div>
           <h2 className="text-xl font-bold text-[var(--color-on-surface)]">Messages</h2>
-          <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">Contactez l'administration de l'école.</p>
+          <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">Contactez l'administration ou un enseignant.</p>
         </div>
       </div>
 
@@ -80,7 +80,14 @@ export default async function ParentMessagesPage() {
               if (deletedBy.includes(user.id)) return null
 
               const isSentByMe = msg.sender_id === user.id
-              const senderText = isSentByMe ? 'Vous' : 'Administration'
+              // Déterminer le nom de l'expéditeur
+              let senderText = 'Administration'
+              if (isSentByMe) {
+                senderText = 'Vous'
+              } else if (msg.recipient_type === 'enseignant' || (msg.sender_id && teachers.some(t => t.id === msg.sender_id))) {
+                const teacher = teachers.find(t => t.id === msg.sender_id)
+                senderText = teacher ? teacher.full_name : 'Enseignant'
+              }
               const readBy = msg.read_by || []
               const isRead = readBy.length > 0 && (!isSentByMe ? readBy.includes(user.id) : true)
               const isDeletedForEveryone = msg.is_deleted_for_everyone === true
@@ -223,7 +230,7 @@ export default async function ParentMessagesPage() {
       {/* Input Area */}
       <div className="shrink-0 bg-[var(--color-surface)]">
         <div className="max-w-3xl mx-auto w-full">
-          <ParentMessageForm />
+          <ParentMessageForm teachers={teachers} />
         </div>
       </div>
     </div>
