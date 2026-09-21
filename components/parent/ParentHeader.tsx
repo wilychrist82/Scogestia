@@ -69,9 +69,9 @@ export function ParentHeader({ fullName, userAvatar }: { fullName: string, userA
           ) : (
             <span className="material-symbols-outlined text-white mr-2 sm:mr-3 text-3xl">account_circle</span>
           )}
-          <div className="flex flex-col">
-            <span className="text-sm font-bold truncate max-w-[150px] sm:max-w-[200px]">{fullName}</span>
-            <span className="text-[10px] text-[var(--color-primary-container)]">Espace Parent</span>
+          <div className="flex flex-col text-left">
+            <span className="text-base sm:text-lg font-black tracking-wide truncate max-w-[150px] sm:max-w-[200px] leading-tight">{fullName}</span>
+            <span className="text-[10px] font-semibold text-white/80 uppercase tracking-widest mt-0.5">Espace Parent</span>
           </div>
         </button>
 

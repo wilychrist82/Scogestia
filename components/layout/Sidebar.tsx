@@ -346,7 +346,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
           )}
 
           {/* Boutons action */}
-          <div className="px-3 space-y-0.5 pb-4">
+          <div className="px-3 space-y-0.5 pb-6 md:pb-4">
             <button 
               onClick={() => setIsSupportModalOpen(true)}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-blue-400/80 hover:text-blue-300 hover:bg-blue-500/10 transition-all duration-200 text-sm font-medium group"
@@ -365,6 +365,9 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
               </button>
             </form>
           </div>
+          
+          {/* Espacement supplémentaire sur mobile pour éviter la barre d'onglets du navigateur */}
+          <div className="h-6 md:hidden"></div>
         </div>
       </aside>
     
