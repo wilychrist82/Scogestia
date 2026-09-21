@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { EnseignantCommunication } from '@/components/enseignant/EnseignantCommunication'
 
 export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const revalidate = 0
 
 export default async function EnseignantMessagesPage() {
   const supabase = await createClient()

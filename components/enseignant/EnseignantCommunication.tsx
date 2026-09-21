@@ -46,12 +46,7 @@ export function EnseignantCommunication({ currentUserId, students, communication
   const [selectedParent, setSelectedParent] = useState('')
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [isHydrated, setIsHydrated] = useState(false)
   const chatBottomRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    setIsHydrated(true)
-  }, [])
 
   // Auto-refresh toutes les 10s pour récupérer les nouveaux messages
   useEffect(() => {
