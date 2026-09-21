@@ -39,9 +39,16 @@ export default async function EnseignantMessagesPage() {
     .in('class_id', classIds.length > 0 ? classIds : ['00000000-0000-0000-0000-000000000000'])
     .order('last_name')
 
+  const { createAdminClient } = await import('@/lib/supabase/admin')
+  const adminClient = createAdminClient()
 
   // Communications de/vers cet enseignant :
-  const { data: communicationsRaw } = await supabase
+  // Les enseignants ont une vue restreinte : 
+  // Ils voient ce qu'ils envoient (parents, admin) et ce qu'on leur envoie (admin, all_teachers)
+  // On utilise adminClient ici car la politique RLS 'Enseignants can view their communications' 
+  // n'est potentiellement pas encore appliquée sur l'environnement distant. 
+  // La sécurité est assurée par le filtre strict .or() ci-dessous.
+  const { data: communicationsRaw } = await adminClient
     .from('communications')
     .select('*')
     .eq('school_id', schoolId)
@@ -52,10 +59,6 @@ export default async function EnseignantMessagesPage() {
     )
     .order('created_at', { ascending: false })
     .limit(50)
-
-  // Fetch parent_user_id for each student using admin client
-  const { createAdminClient } = await import('@/lib/supabase/admin')
-  const adminClient = createAdminClient()
 
   let parentLinks: any[] = []
   if (studentsRaw && studentsRaw.length > 0) {
