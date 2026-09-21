@@ -28,6 +28,8 @@ export default async function ParentLayout({
     return <UnauthorizedAccess role="parent" />
   }
 
+  const userAvatar = user?.user_metadata?.avatar_url || null
+
   return (
     <NotificationProvider>
       {/* Fond neutre unifié */}
@@ -38,7 +40,7 @@ export default async function ParentLayout({
           Desktop (> lg) : max-w-3xl, layout plus large
         */}
         <div className="w-full max-w-md md:max-w-2xl lg:max-w-3xl bg-white min-h-screen relative md:shadow-2xl flex flex-col">
-          <ParentHeader fullName={roleData.full_name} />
+          <ParentHeader fullName={roleData.full_name} userAvatar={userAvatar} />
 
           {/* Contenu principal avec padding bottom pour la nav fixe */}
           <main 

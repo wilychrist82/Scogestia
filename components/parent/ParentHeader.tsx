@@ -7,7 +7,7 @@ import { Bell, CheckCheck, LogOut, Settings } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
-export function ParentHeader({ fullName }: { fullName: string }) {
+export function ParentHeader({ fullName, userAvatar }: { fullName: string, userAvatar?: string | null }) {
   const router = useRouter()
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
   const [showNotifs, setShowNotifs] = useState(false)
@@ -60,7 +60,15 @@ export function ParentHeader({ fullName }: { fullName: string }) {
           onClick={() => setShowProfileMenu(!showProfileMenu)}
           className="flex items-center text-left focus:outline-none p-1 rounded hover:bg-white/10 transition-colors"
         >
-          <span className="material-symbols-outlined text-white mr-2 sm:mr-3">account_circle</span>
+          {userAvatar ? (
+            <img 
+              src={userAvatar} 
+              alt={fullName} 
+              className="w-8 h-8 rounded-full object-cover border border-white/20 mr-2 sm:mr-3" 
+            />
+          ) : (
+            <span className="material-symbols-outlined text-white mr-2 sm:mr-3 text-3xl">account_circle</span>
+          )}
           <div className="flex flex-col">
             <span className="text-sm font-bold truncate max-w-[150px] sm:max-w-[200px]">{fullName}</span>
             <span className="text-[10px] text-[var(--color-primary-container)]">Espace Parent</span>
