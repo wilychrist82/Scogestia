@@ -113,8 +113,12 @@ export default async function EnseignantDashboardPage() {
 
         {/* Gauche : identité */}
         <div className="relative z-10 flex items-center gap-5 p-6 sm:p-8 flex-1">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-700 flex items-center justify-center text-white font-black text-2xl sm:text-3xl shadow-xl flex-shrink-0 border-2 border-white/10">
-            {initials}
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-700 flex items-center justify-center text-white font-black text-2xl sm:text-3xl shadow-xl flex-shrink-0 border-2 border-white/10 overflow-hidden">
+            {user.user_metadata?.avatar_url ? (
+              <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              initials
+            )}
           </div>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-400 mb-1">Espace Enseignant</p>
@@ -176,7 +180,7 @@ export default async function EnseignantDashboardPage() {
                   <div key={assignment.id} className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${style.bg} p-5 shadow-lg flex flex-col gap-4 group hover:-translate-y-1 transition-transform duration-300`}>
                     {/* Blob décoratif */}
                     <div className="absolute -right-6 -bottom-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                      <span className="material-symbols-outlined text-white" style={{ fontSize: '100px' }}>{style.icon.replace('_', '-')}</span>
+                      <span className="material-symbols-outlined text-white" style={{ fontSize: '100px' }}>{style.icon}</span>
                     </div>
 
                     {/* Header */}
@@ -190,7 +194,7 @@ export default async function EnseignantDashboardPage() {
                         </div>
                       </div>
                       <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-white text-[20px]">{style.icon.replace('_', '-')}</span>
+                        <span className="material-symbols-outlined text-white text-[20px]">{style.icon}</span>
                       </div>
                     </div>
 
@@ -278,7 +282,7 @@ export default async function EnseignantDashboardPage() {
                 <Link key={item.href} href={item.href}
                   className={`flex flex-col items-center gap-2 p-3 rounded-xl border ${item.color} transition-all duration-200 active:scale-95 group`}
                 >
-                  <span className="material-symbols-outlined text-[24px]">{item.icon.replace('_', '-')}</span>
+                  <span className="material-symbols-outlined text-[24px]">{item.icon}</span>
                   <span className="text-[11px] font-bold text-center leading-tight">{item.label}</span>
                 </Link>
               ))}
