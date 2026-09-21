@@ -20,12 +20,25 @@ export default async function EnseignantPlanningPage() {
   if (!roleData) redirect('/')
 
   // Récupérer la classe principale dont il est titulaire (pour le primaire/maternelle)
-  const { data: mainClass } = await supabase
+  let { data: mainClass } = await supabase
     .from('classes')
     .select('id, name, level')
     .eq('school_id', roleData.school_id)
     .eq('main_teacher_id', user.id)
     .limit(1).maybeSingle()
+
+  // S'il n'est pas explicitement main_teacher_id, on cherche sa première classe assignée
+  if (!mainClass) {
+    const { data: assignments } = await supabase
+      .from('teacher_class_subjects')
+      .select('classes(id, name, level)')
+      .eq('teacher_id', user.id)
+      .limit(1).maybeSingle()
+      
+    if (assignments && assignments.classes) {
+      mainClass = assignments.classes as any
+    }
+  }
 
   // Récupérer les emplois du temps de l'enseignant (pour le secondaire - Bientôt dispo/dynamique)
   const { data: timetables, error } = await supabase
