@@ -184,27 +184,41 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
     }
   }
 
+  const startXRef = useRef<number | null>(null)
+
   // ── Événements Bouton Micro ────────────────────────────────────────────────
   const handlePointerDown = (e: React.PointerEvent) => {
     if (hasContent) return
     e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    startXRef.current = e.clientX
     startRecording()
+  }
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isRecording || startXRef.current === null) return
+    // Calcul de la distance parcourue vers la gauche
+    const diff = startXRef.current - e.clientX
+    if (diff > 50) {
+      cancelRecording()
+      toast("Enregistrement annulé", { icon: '🗑️', duration: 2000 })
+      startXRef.current = null
+      try { e.currentTarget.releasePointerCapture(e.pointerId) } catch (err) {}
+    }
   }
 
   const handlePointerUp = (e: React.PointerEvent) => {
     if (hasContent) return
     e.preventDefault()
+    try { e.currentTarget.releasePointerCapture(e.pointerId) } catch (err) {}
+    startXRef.current = null
     stopRecordingAndSend()
   }
 
-  // Si on glisse le doigt hors du bouton, on peut soit annuler, soit envoyer.
-  // Pour plus de sûreté, si on quitte la zone du bouton, on annule (comme le "Glisser pour annuler" de WhatsApp)
+  // Si on quitte vraiment la zone du bouton sans glisser
   const handlePointerLeave = (e: React.PointerEvent) => {
-    if (isRecording) {
-      // Glisser le doigt en dehors = annuler (comportement mobile classique)
-      cancelRecording()
-      toast("Enregistrement annulé", { icon: '🗑️', duration: 2000 })
-    }
+    // Optionnel: on le garde comme fallback de sécurité
+    // mais le swipe est maintenant géré par handlePointerMove
   }
 
   // ── Gestion Fichiers ───────────────────────────────────────────────────────
@@ -277,10 +291,19 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
       {isRecording && (
         <div className="flex items-center gap-3 px-3 py-2.5 h-[68px]">
           {/* Info glisser pour annuler */}
-          <div className="flex items-center gap-2 text-gray-500 text-sm animate-pulse ml-2">
+          <button 
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              cancelRecording();
+              toast("Enregistrement annulé", { icon: '🗑️', duration: 2000 });
+            }}
+            className="flex items-center gap-2 text-gray-500 text-sm animate-pulse ml-2 cursor-pointer hover:text-red-500 transition-colors z-10"
+          >
             <span className="material-symbols-outlined text-[20px]">chevron_left</span>
-            Glisser pour annuler
-          </div>
+            Annuler
+          </button>
 
           {/* Waveform + timer aligné à droite */}
           <div className="flex-1 flex justify-end items-center gap-3 pr-4">
@@ -295,6 +318,7 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
           {/* Le bouton micro reste visible pour maintenir l'appui */}
           <button
             type="button"
+            onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerLeave={handlePointerLeave}
             className="shrink-0 w-12 h-12 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shadow-md scale-110 transition-transform cursor-pointer"
