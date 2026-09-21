@@ -63,27 +63,29 @@ export function EnseignantCommunication({ currentUserId, students, communication
   const filteredMessages = communications.filter(comm => {
     const deletedBy = comm.deleted_by || []
     if (deletedBy.includes(currentUserId)) return false
-    if (comm.is_deleted_for_everyone) return false // on garde mais on affiche "supprimé"
 
     if (recipientType === 'admin') {
-      // Je les ai envoyés à l'admin OU l'admin me les a envoyés (recipient_type enseignant ou all_teachers)
+      // Conversation avec l'admin :
+      // - Messages que J'ai envoyés à l'admin (recipient_type = 'admin')
+      // - Messages que l'admin m'a envoyés (recipient_type = 'enseignant' AND recipient_id = moi)
+      // - Annonces à tous les enseignants (recipient_type = 'all_teachers')
+      // EXCLURE explicitement les messages envoyés à des parents
       const iSentToAdmin = comm.sender_id === currentUserId && comm.recipient_type === 'admin'
       const adminSentToMe =
         comm.sender_id !== currentUserId &&
-        (comm.recipient_type === 'enseignant' && comm.recipient_id === currentUserId ||
-          comm.recipient_type === 'all_teachers')
+        (
+          (comm.recipient_type === 'enseignant' && comm.recipient_id === currentUserId) ||
+          comm.recipient_type === 'all_teachers'
+        )
       return iSentToAdmin || adminSentToMe
     }
 
     if (recipientType === 'parent') {
       if (!selectedParent) return false
-      // Messages que j'ai envoyés à ce parent (via selectedParent = student_id)
-      // Ici recipient_id n'est PAS le student_id, c'est le parent_user_id.
-      // On affiche tous les messages de type 'parent' envoyés par moi comme approximation
-      // (l'historique fin par parent_user_id nécessiterait un join côté serveur)
-      return (
-        comm.sender_id === currentUserId && comm.recipient_type === 'parent'
-      )
+      // Messages que J'ai envoyés à un parent (recipient_type = 'parent')
+      // On affiche tous mes messages vers des parents quand un élève est sélectionné
+      // (filtre par recipient_id exact nécessiterait le parent_user_id côté client)
+      return comm.sender_id === currentUserId && comm.recipient_type === 'parent'
     }
 
     return false

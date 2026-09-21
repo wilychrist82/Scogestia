@@ -370,7 +370,8 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
                 t.style.height = `${Math.min(t.scrollHeight, 140)}px`
               }}
               placeholder={placeholder}
-              className="flex-1 bg-transparent text-[15px] outline-none resize-none py-[10px] px-2 leading-relaxed min-h-[44px] max-h-[140px] text-[#111]"
+              className="flex-1 bg-transparent outline-none resize-none py-[10px] px-2 leading-relaxed min-h-[44px] max-h-[140px]"
+              style={{ fontSize: '15px', color: '#111111', caretColor: '#111111' }}
               rows={1}
             />
 
