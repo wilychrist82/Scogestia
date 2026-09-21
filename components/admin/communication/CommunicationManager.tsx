@@ -272,9 +272,35 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
                           {comm.subject && comm.subject !== 'Message vocal' && comm.subject !== 'Message de l\'administration' && (
                             <p className="px-3 pt-2.5 text-[13px] font-bold">{comm.subject}</p>
                           )}
-                          {comm.content && comm.content !== 'Message vocal' && (
-                            <p className="px-3 pt-1 pb-1 text-sm whitespace-pre-wrap leading-relaxed">{comm.content}</p>
-                          )}
+                          {(() => {
+                            const contentStr = comm.content || '';
+                            const parts = contentStr.split('|||FILE|||');
+                            const displayContent = parts[0];
+                            const fileUrl = parts[1];
+                            const fileType = parts[2];
+                            
+                            return (
+                              <>
+                                {displayContent && displayContent !== 'Message vocal' && (
+                                  <p className="px-3 pt-1 pb-1 text-sm whitespace-pre-wrap leading-relaxed">{displayContent}</p>
+                                )}
+                                {fileUrl && (
+                                  <div className="px-2 pt-1 pb-1">
+                                    {fileType?.startsWith('image/') ? (
+                                      <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+                                        <img src={fileUrl} alt="Pièce jointe" className="max-w-full h-auto rounded-lg max-h-48 object-cover border border-black/10" />
+                                      </a>
+                                    ) : (
+                                      <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-black/5 rounded-lg hover:bg-black/10 transition-colors">
+                                        <span className="material-symbols-outlined text-[20px]">description</span>
+                                        <span className="text-sm font-semibold truncate max-w-[150px]">Pièce jointe</span>
+                                      </a>
+                                    )}
+                                  </div>
+                                )}
+                              </>
+                            )
+                          })()}
                           {comm.audio_url && (
                             <div className={`flex items-center gap-2 px-3 py-2 min-w-[200px] ${
                               comm.content && comm.content !== 'Message vocal' ? 'border-t border-black/5' : ''

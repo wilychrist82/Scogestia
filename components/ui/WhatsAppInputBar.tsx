@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useRef, FormEvent } from 'react'
+import { useState, useRef, FormEvent, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
+import EmojiPicker from 'emoji-picker-react'
 
 interface Props {
-  /** Appelé avec { text, audioUrl } lors de la soumission */
-  onSend: (payload: { text: string; audioUrl: string | null }) => void
+  /** Appelé avec { text, audioUrl, fileUrl, fileType } lors de la soumission */
+  onSend: (payload: { text: string; audioUrl: string | null; fileUrl?: string | null; fileType?: string | null }) => void
   isPending?: boolean
   placeholder?: string
 }
@@ -17,6 +18,11 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
   const [isRecording, setIsRecording] = useState(false)
   const [recordingSeconds, setRecordingSeconds] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
+  
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null)
+  const emojiPickerRef = useRef<HTMLDivElement>(null)
 
   const mediaRecorder = useRef<MediaRecorder | null>(null)
   const audioChunks = useRef<Blob[]>([])
@@ -28,8 +34,18 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
   // To track if we should send or cancel on stop
   const shouldCancelRef = useRef<boolean>(false)
 
-  // Le bouton vert affiche la flèche si du texte est saisi
-  const hasContent = text.trim().length > 0
+  // Le bouton vert affiche la flèche si du texte est saisi ou un fichier sélectionné
+  const hasContent = text.trim().length > 0 || selectedFile !== null
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const formatTime = (s: number) =>
     `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
@@ -111,13 +127,53 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
     }
   }
 
-  // ── Envoi Texte ────────────────────────────────────────────────────────────
-  const sendText = () => {
+  // ── Envoi Texte et Fichiers ────────────────────────────────────────────────
+  const sendText = async () => {
     if (!hasContent || isPending || isUploading) return
-    onSend({ text: text.trim(), audioUrl: null })
-    setText('')
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
+    setIsUploading(true)
+
+    try {
+      let fileUrl = null
+      let fileType = null
+
+      if (selectedFile) {
+        const supabase = createClient()
+        const ext = selectedFile.name.split('.').pop()
+        const fileName = `attachment_${Date.now()}.${ext}`
+        
+        const { error } = await supabase.storage
+          .from('communications')
+          .upload(fileName, selectedFile)
+
+        if (error) {
+          toast.error("Erreur lors de l'envoi du fichier.")
+          setIsUploading(false)
+          return
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('communications')
+          .getPublicUrl(fileName)
+
+        fileUrl = publicUrl
+        fileType = selectedFile.type
+      }
+
+      onSend({ text: text.trim(), audioUrl: null, fileUrl, fileType })
+      
+      // Cleanup
+      setText('')
+      setSelectedFile(null)
+      if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl)
+      setFilePreviewUrl(null)
+      setShowEmojiPicker(false)
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto'
+      }
+    } catch(err) {
+      toast.error("Une erreur s'est produite")
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -151,12 +207,72 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
     }
   }
 
+  // ── Gestion Fichiers ───────────────────────────────────────────────────────
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
+      // Si c'est une image, on crée une URL de preview
+      if (file.type.startsWith('image/')) {
+        setFilePreviewUrl(URL.createObjectURL(file))
+      } else {
+        setFilePreviewUrl(null)
+      }
+    }
+    // Reset l'input pour pouvoir resélectionner le même fichier si on l'annule
+    if (e.target) e.target.value = ''
+  }
+
+  const cancelFile = () => {
+    setSelectedFile(null)
+    if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl)
+    setFilePreviewUrl(null)
+  }
+
   // ── Rendu ──────────────────────────────────────────────────────────────────
   return (
     <div
-      className="bg-[#f0f2f5] border-t border-[var(--color-outline-variant)]"
+      className="bg-[#f0f2f5] border-t border-[var(--color-outline-variant)] relative"
       style={{ fontFamily: 'inherit', touchAction: 'none' }} // touchAction: none évite le scroll pendant le maintien du bouton
     >
+      {/* Emoji Picker */}
+      {showEmojiPicker && (
+        <div ref={emojiPickerRef} className="absolute bottom-full left-2 mb-2 z-50 shadow-xl rounded-xl overflow-hidden">
+          <EmojiPicker 
+            onEmojiClick={(emojiData) => setText(prev => prev + emojiData.emoji)}
+            searchDisabled={true}
+            skinTonesDisabled={true}
+            height={350}
+            width={300}
+          />
+        </div>
+      )}
+
+      {/* Preview du fichier sélectionné */}
+      {selectedFile && !isRecording && !isUploading && (
+        <div className="mx-4 mt-3 mb-1 p-2 bg-white rounded-xl shadow-sm border border-[var(--color-outline-variant)] flex items-center justify-between animate-in fade-in slide-in-from-bottom-2">
+          <div className="flex items-center gap-3 overflow-hidden">
+            {filePreviewUrl ? (
+              <img src={filePreviewUrl} alt="Preview" className="w-12 h-12 object-cover rounded-md border" />
+            ) : (
+              <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center">
+                <span className="material-symbols-outlined text-gray-500">description</span>
+              </div>
+            )}
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-semibold text-gray-800 truncate">{selectedFile.name}</span>
+              <span className="text-xs text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
+            </div>
+          </div>
+          <button 
+            type="button"
+            onClick={cancelFile}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500"
+          >
+            <span className="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+      )}
       {/* ── Barre d'enregistrement vocal en cours ── */}
       {isRecording && (
         <div className="flex items-center gap-3 px-3 py-2.5 h-[68px]">
@@ -207,10 +323,13 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
             {/* Emoji */}
             <button
               type="button"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
               className="shrink-0 self-end mb-[10px] ml-2 text-gray-400 hover:text-gray-600 transition-colors"
               title="Émojis"
             >
-              <span className="material-symbols-outlined text-[26px]">sentiment_satisfied</span>
+              <span className="material-symbols-outlined text-[26px]">
+                {showEmojiPicker ? 'keyboard' : 'sentiment_satisfied'}
+              </span>
             </button>
 
             {/* Textarea */}
@@ -243,6 +362,7 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
               type="file"
               className="hidden"
               accept="*/*"
+              onChange={handleFileSelect}
             />
 
             {/* Caméra */}
@@ -260,6 +380,7 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
               className="hidden"
               accept="image/*"
               capture="environment"
+              onChange={handleFileSelect}
             />
           </div>
 

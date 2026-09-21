@@ -28,9 +28,11 @@ export async function sendCommunication(formData: FormData) {
   const message = formData.get('message') as string || 'Message vocal'
   const shouldSendSms = formData.get('sendSms') === 'true'
   const audioUrl = formData.get('audioUrl') as string | null
+  const fileUrl = formData.get('fileUrl') as string | null
+  const fileType = formData.get('fileType') as string | null
 
-  if (!subject && !audioUrl) {
-    return { error: 'L\'objet ou l\'audio est requis' }
+  if (!subject && !audioUrl && !fileUrl) {
+    return { error: 'L\'objet, l\'audio ou un fichier est requis' }
   }
 
   const adminClient = createAdminClient()
@@ -88,7 +90,7 @@ export async function sendCommunication(formData: FormData) {
     recipient_type: recipientType,
     recipient_id: recipientId,
     subject,
-    content: message,
+    content: fileUrl ? `${message}|||FILE|||${fileUrl}|||${fileType}` : message,
     audio_url: audioUrl
   })
 

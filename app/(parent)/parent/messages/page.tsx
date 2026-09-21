@@ -83,15 +83,41 @@ export default async function ParentMessagesPage() {
                         : 'bg-white border border-[var(--color-outline-variant)] text-[#0b1c30] rounded-tl-sm'
                     }`}>
 
-                      {/* Texte */}
-                      {(msg.content && msg.content !== 'Message vocal') && (
-                        <div className="px-3 pt-2.5 pb-1">
-                          {msg.subject && msg.subject !== 'Message vocal' && msg.subject !== 'Message parent' && (
-                            <p className="text-[13px] font-bold mb-0.5">{msg.subject}</p>
-                          )}
-                          <p className="text-[15px] whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                        </div>
-                      )}
+                      {/* Texte et Fichiers */}
+                      {(() => {
+                        const contentStr = msg.content || '';
+                        const parts = contentStr.split('|||FILE|||');
+                        const displayContent = parts[0];
+                        const fileUrl = parts[1];
+                        const fileType = parts[2];
+                        
+                        return (
+                          <>
+                            {displayContent && displayContent !== 'Message vocal' && (
+                              <div className="px-3 pt-2.5 pb-1">
+                                {msg.subject && msg.subject !== 'Message vocal' && msg.subject !== 'Message parent' && (
+                                  <p className="text-[13px] font-bold mb-0.5">{msg.subject}</p>
+                                )}
+                                <p className="text-[15px] whitespace-pre-wrap leading-relaxed">{displayContent}</p>
+                              </div>
+                            )}
+                            {fileUrl && (
+                              <div className="px-2 pt-1 pb-1">
+                                {fileType?.startsWith('image/') ? (
+                                  <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+                                    <img src={fileUrl} alt="Pièce jointe" className="max-w-full h-auto rounded-lg max-h-48 object-cover border border-black/10" />
+                                  </a>
+                                ) : (
+                                  <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-black/5 rounded-lg hover:bg-black/10 transition-colors">
+                                    <span className="material-symbols-outlined text-[20px]">description</span>
+                                    <span className="text-sm font-semibold truncate max-w-[150px]">Pièce jointe</span>
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )
+                      })()}
 
                       {/* Message vocal – style WhatsApp */}
                       {msg.audio_url && (
