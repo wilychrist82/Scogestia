@@ -64,6 +64,7 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
     if (payload.audioUrl) formData.append('audioUrl', payload.audioUrl)
     if (payload.fileUrl) formData.append('fileUrl', payload.fileUrl)
     if (payload.fileType) formData.append('fileType', payload.fileType)
+    if ((payload as any).originalFileName) formData.append('originalFileName', (payload as any).originalFileName)
     
     startTransition(async () => {
       const result = await sendCommunication(formData)
@@ -308,11 +309,17 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
                                   const fileParts = parts[1].split('|||');
                                   fileUrl = fileParts[0];
                                   fileType = fileParts[1];
-                                  try {
-                                    const path = new URL(fileUrl).pathname;
-                                    let extractedName = decodeURIComponent(path.split('/').pop() || '');
-                                    if (extractedName) fileName = extractedName.replace(/_\d+\./, '.');
-                                  } catch (e) {}
+                                  let originalName = fileParts[2];
+                                  
+                                  if (originalName) {
+                                    fileName = originalName;
+                                  } else {
+                                    try {
+                                      const path = new URL(fileUrl).pathname;
+                                      let extractedName = decodeURIComponent(path.split('/').pop() || '');
+                                      if (extractedName) fileName = extractedName.replace(/_\d+\./, '.');
+                                    } catch (e) {}
+                                  }
                                 }
                                 
                                 return (
@@ -326,6 +333,8 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
                                           <a href={fileUrl} target="_blank" rel="noopener noreferrer">
                                             <img src={fileUrl} alt={fileName} className="max-w-full h-auto rounded-lg max-h-48 object-cover border border-black/10" />
                                           </a>
+                                        ) : fileType?.startsWith('video/') ? (
+                                          <video src={fileUrl} controls className="max-w-full h-auto rounded-lg max-h-48 border border-black/10" />
                                         ) : (
                                           <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-black/5 rounded-lg hover:bg-black/10 transition-colors">
                                             <span className="material-symbols-outlined text-[20px]">description</span>

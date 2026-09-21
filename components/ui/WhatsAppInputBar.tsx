@@ -135,11 +135,13 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
     try {
       let fileUrl = null
       let fileType = null
+      let originalFileName = null
 
       if (selectedFile) {
         const supabase = createClient()
         const ext = selectedFile.name.split('.').pop()
         const fileName = `attachment_${Date.now()}.${ext}`
+        originalFileName = selectedFile.name
         
         const { error } = await supabase.storage
           .from('communications')
@@ -159,7 +161,7 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
         fileType = selectedFile.type
       }
 
-      onSend({ text: text.trim(), audioUrl: null, fileUrl, fileType })
+      onSend({ text: text.trim(), audioUrl: null, fileUrl, fileType, originalFileName })
       
       // Cleanup
       setText('')

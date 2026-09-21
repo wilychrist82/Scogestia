@@ -25,6 +25,9 @@ export function ParentMessageForm() {
     if (payload.fileType) {
       formData.append('fileType', payload.fileType)
     }
+    if ((payload as any).originalFileName) {
+      formData.append('originalFileName', (payload as any).originalFileName)
+    }
 
     startTransition(async () => {
       const result = await sendCommunication(formData)

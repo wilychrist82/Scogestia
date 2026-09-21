@@ -30,12 +30,13 @@ export async function sendCommunication(formData: FormData) {
   const audioUrl = formData.get('audioUrl') as string | null
   const fileUrl = formData.get('fileUrl') as string | null
   const fileType = formData.get('fileType') as string | null
+  const originalFileName = formData.get('originalFileName') as string | null
 
   if (!subject && !audioUrl && !fileUrl) {
     return { error: 'L\'objet, l\'audio ou un fichier est requis' }
   }
 
-  const adminClient = createAdminClient()
+  const adminClient = await createAdminClient()
 
   // ─────────────────────────────────────────────────────────────────────────
   // Résolution du recipient_id selon le type
@@ -90,7 +91,7 @@ export async function sendCommunication(formData: FormData) {
     recipient_type: recipientType,
     recipient_id: recipientId,
     subject,
-    content: fileUrl ? `${message}|||FILE|||${fileUrl}|||${fileType}` : message,
+    content: fileUrl ? `${message}|||FILE|||${fileUrl}|||${fileType}|||${originalFileName || ''}` : message,
     audio_url: audioUrl
   })
 
