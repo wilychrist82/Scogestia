@@ -37,10 +37,13 @@ export default async function EnseignantLayout({
   const schoolName = school?.name || 'École inconnue'
   const schoolCity = school?.city || ''
 
+  const userAvatar = user?.user_metadata?.avatar_url || null
+
   return (
     <AdminLayoutWrapper 
       userFullName={roleData?.full_name || 'Enseignant'} 
       userRoleLabel="Enseignant"
+      userAvatar={userAvatar}
       navVariant="enseignant"
       schoolName={schoolName}
       schoolCity={schoolCity}

@@ -16,6 +16,7 @@ type Student = {
   first_name: string
   last_name: string
   classes: { name: string } | null
+  parent_user_id: string | null
 }
 
 type Communication = {
@@ -30,6 +31,7 @@ type Communication = {
   read_by?: string[]
   deleted_by?: string[]
   is_deleted_for_everyone?: boolean
+  sender_role?: string
 }
 
 type Props = {
@@ -44,7 +46,12 @@ export function EnseignantCommunication({ currentUserId, students, communication
   const [selectedParent, setSelectedParent] = useState('')
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const [isHydrated, setIsHydrated] = useState(false)
   const chatBottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
 
   // Auto-refresh toutes les 10s pour récupérer les nouveaux messages
   useEffect(() => {
@@ -65,16 +72,11 @@ export function EnseignantCommunication({ currentUserId, students, communication
     if (deletedBy.includes(currentUserId)) return false
 
     if (recipientType === 'admin') {
-      // Conversation avec l'admin :
-      // - Messages que J'ai envoyés à l'admin (recipient_type = 'admin')
-      // - Messages que l'admin m'a envoyés (recipient_type = 'enseignant' AND recipient_id = moi)
-      // - Annonces à tous les enseignants (recipient_type = 'all_teachers')
-      // EXCLURE explicitement les messages envoyés à des parents
       const iSentToAdmin = comm.sender_id === currentUserId && comm.recipient_type === 'admin'
       const adminSentToMe =
         comm.sender_id !== currentUserId &&
         (
-          (comm.recipient_type === 'enseignant' && comm.recipient_id === currentUserId) ||
+          (comm.recipient_type === 'enseignant' && comm.recipient_id === currentUserId && comm.sender_role === 'admin') ||
           comm.recipient_type === 'all_teachers'
         )
       return iSentToAdmin || adminSentToMe
@@ -82,10 +84,16 @@ export function EnseignantCommunication({ currentUserId, students, communication
 
     if (recipientType === 'parent') {
       if (!selectedParent) return false
-      // Messages que J'ai envoyés à un parent (recipient_type = 'parent')
-      // On affiche tous mes messages vers des parents quand un élève est sélectionné
-      // (filtre par recipient_id exact nécessiterait le parent_user_id côté client)
-      return comm.sender_id === currentUserId && comm.recipient_type === 'parent'
+      
+      const student = students.find(s => s.id === selectedParent)
+      const parentUserId = student?.parent_user_id
+
+      if (!parentUserId) return false
+
+      const iSentToThisParent = comm.sender_id === currentUserId && comm.recipient_type === 'parent' && comm.recipient_id === parentUserId
+      const thisParentSentToMe = comm.sender_id === parentUserId && comm.recipient_type === 'enseignant'
+
+      return iSentToThisParent || thisParentSentToMe
     }
 
     return false

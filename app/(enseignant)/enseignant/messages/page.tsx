@@ -43,10 +43,7 @@ export default async function EnseignantMessagesPage() {
   })) || []
 
   // Communications de/vers cet enseignant :
-  // - Messages qu'il a envoyés (sender_id = user.id)
-  // - Messages qui lui sont destinés (recipient_type = 'enseignant' AND recipient_id = user.id)
-  // - Messages 'all_teachers' (envoi à tous les enseignants)
-  const { data: communications } = await supabase
+  const { data: communicationsRaw } = await supabase
     .from('communications')
     .select('*')
     .eq('school_id', schoolId)
@@ -58,11 +55,53 @@ export default async function EnseignantMessagesPage() {
     .order('created_at', { ascending: false })
     .limit(50)
 
+  // Fetch parent_user_id for each student using admin client
+  const { createAdminClient } = await import('@/lib/supabase/admin')
+  const adminClient = createAdminClient()
+
+  let parentLinks: any[] = []
+  if (studentsRaw && studentsRaw.length > 0) {
+    const studentIds = studentsRaw.map(s => s.id)
+    const { data: links } = await adminClient
+      .from('parent_student_links')
+      .select('student_id, parent_user_id')
+      .in('student_id', studentIds)
+    if (links) parentLinks = links
+  }
+
+  const students = studentsRaw?.map(s => {
+    const link = parentLinks.find(l => l.student_id === s.id)
+    return {
+      ...s,
+      classes: Array.isArray(s.classes) ? s.classes[0] ?? null : s.classes,
+      parent_user_id: link?.parent_user_id || null
+    }
+  }) || []
+
+  // Fetch sender roles
+  const senderIds = [...new Set(communicationsRaw?.map(c => c.sender_id) || [])]
+  let sendersRoles: any[] = []
+  if (senderIds.length > 0) {
+    const { data: roles } = await supabase
+      .from('user_school_roles')
+      .select('user_id, role')
+      .in('user_id', senderIds)
+      .eq('school_id', schoolId)
+    if (roles) sendersRoles = roles
+  }
+
+  const rolesMap = new Map(sendersRoles.map(r => [r.user_id, r.role]))
+
+  const communications = communicationsRaw?.map(c => ({
+    ...c,
+    sender_role: rolesMap.get(c.sender_id) || 'unknown'
+  })) || []
+
   return (
     <EnseignantCommunication
       currentUserId={user.id}
       students={students as any}
-      communications={communications || []}
+      communications={communications}
     />
   )
 }
