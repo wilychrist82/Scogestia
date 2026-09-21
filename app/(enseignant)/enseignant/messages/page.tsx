@@ -37,10 +37,6 @@ export default async function EnseignantMessagesPage() {
     .in('class_id', classIds.length > 0 ? classIds : ['00000000-0000-0000-0000-000000000000'])
     .order('last_name')
 
-  const students = studentsRaw?.map(s => ({
-    ...s,
-    classes: Array.isArray(s.classes) ? s.classes[0] ?? null : s.classes
-  })) || []
 
   // Communications de/vers cet enseignant :
   const { data: communicationsRaw } = await supabase
