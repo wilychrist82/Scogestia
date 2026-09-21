@@ -315,3 +315,82 @@ export async function sendCommunication(formData: FormData) {
 
   return { success: true }
 }
+
+export async function deleteCommunication(id: string, type: 'for_me' | 'for_everyone') {
+  const supabase = createServerActionClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autorisé' }
+
+  // 1. Récupérer le message pour vérifier s'il existe et si l'utilisateur en est l'auteur
+  const adminClient = getAdminClient()
+  const { data: message, error: getError } = await adminClient
+    .from('communications')
+    .select('id, sender_id, deleted_by, is_deleted_for_everyone')
+    .eq('id', id)
+    .single()
+
+  if (getError || !message) return { error: 'Message introuvable' }
+
+  // 2. Traitement selon le type
+  if (type === 'for_everyone') {
+    // Seul l'auteur peut effacer pour tous
+    if (message.sender_id !== user.id) return { error: 'Vous ne pouvez pas effacer ce message pour tout le monde' }
+    
+    const { error: updateError } = await adminClient
+      .from('communications')
+      .update({ is_deleted_for_everyone: true })
+      .eq('id', id)
+      
+    if (updateError) return { error: 'Erreur lors de la suppression' }
+  } else if (type === 'for_me') {
+    // Si l'utilisateur a déjà supprimé, on ne fait rien
+    const currentDeletedBy = message.deleted_by || []
+    if (!currentDeletedBy.includes(user.id)) {
+      const { error: updateError } = await adminClient
+        .from('communications')
+        .update({ deleted_by: [...currentDeletedBy, user.id] })
+        .eq('id', id)
+        
+      if (updateError) return { error: 'Erreur lors de la suppression' }
+    }
+  }
+
+  revalidatePath('/admin/communication')
+  revalidatePath('/parent/messages')
+  revalidatePath('/enseignant/messages')
+
+  return { success: true }
+}
+
+export async function markAsRead(ids: string[]) {
+  if (!ids || ids.length === 0) return { success: true }
+  
+  const supabase = createServerActionClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autorisé' }
+
+  const adminClient = getAdminClient()
+  
+  // On récupère les messages concernés pour voir la liste `read_by` actuelle
+  const { data: messages } = await adminClient
+    .from('communications')
+    .select('id, read_by')
+    .in('id', ids)
+    
+  if (!messages || messages.length === 0) return { success: true }
+
+  // Mise à jour de chaque message (on pourrait faire un bulk via RPC mais on boucle pour simplifier vu qu'il n'y a pas la fonction)
+  for (const msg of messages) {
+    const currentReadBy = msg.read_by || []
+    if (!currentReadBy.includes(user.id)) {
+      await adminClient
+        .from('communications')
+        .update({ read_by: [...currentReadBy, user.id] })
+        .eq('id', msg.id)
+    }
+  }
+
+  // Ne pas faire de revalidatePath ici sinon la page va clignoter sans cesse
+  return { success: true }
+}
+

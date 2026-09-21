@@ -3,6 +3,9 @@
 import { useState, useTransition, FormEvent, useEffect } from 'react'
 import { sendCommunication } from '@/app/actions/communication'
 import { AudioRecorder } from '@/components/ui/AudioRecorder'
+import { SendResponse } from '@/app/actions/communication'
+import { MessageActions } from '@/components/ui/MessageActions'
+import { ReadReceiptTrigger } from '@/components/ui/ReadReceiptTrigger'
 import { WhatsAppInputBar } from '@/components/ui/WhatsAppInputBar'
 import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { format } from 'date-fns'
@@ -189,14 +192,27 @@ export function EnseignantCommunication({ currentUserId, students, communication
               </h3>
             </div>
             <div className="p-4 flex flex-col gap-4 flex-1 bg-[var(--color-surface)] overflow-y-auto max-h-[480px]">
+              {(() => {
+                const unreadIds = communications
+                  .filter(msg => msg.sender_id !== currentUserId && !(msg.read_by || []).includes(currentUserId))
+                  .map(msg => msg.id);
+                
+                return <ReadReceiptTrigger messageIds={unreadIds} />
+              })()}
+
               {communications.length === 0 ? (
                 <div className="text-center text-sm text-[var(--color-on-surface-variant)] py-8">
                   Aucun message récent.
                 </div>
               ) : (
                 [...communications].reverse().map(comm => {
+                  const deletedBy = comm.deleted_by || []
+                  if (deletedBy.includes(currentUserId)) return null
+
                   const isSentByMe = comm.sender_id === currentUserId
-                  const isRead = (comm as any).is_read === true
+                  const readBy = comm.read_by || []
+                  const isRead = readBy.length > 0 && (!isSentByMe ? readBy.includes(currentUserId) : true)
+                  const isDeletedForEveryone = comm.is_deleted_for_everyone === true
 
                   let recipientText = ''
                   if (comm.recipient_type === 'admin') recipientText = 'Administration'
@@ -209,69 +225,77 @@ export function EnseignantCommunication({ currentUserId, students, communication
                       <div className={`max-w-[85%] flex flex-col gap-1 ${isSentByMe ? 'items-end' : 'items-start'}`}>
 
                         {/* Bulle */}
-                        <div className={`rounded-2xl overflow-hidden shadow-sm ${
+                        <div className={`relative group rounded-2xl overflow-visible shadow-sm ${
                           isSentByMe
                             ? 'bg-[#dcf8c6] text-[#0b1c30] rounded-tr-sm'
                             : 'bg-white border border-[var(--color-outline-variant)] text-[#0b1c30] rounded-tl-sm'
                         }`}>
-                          {comm.subject && comm.subject !== 'Message vocal' && comm.subject !== 'Message de l\'administration' && (
-                            <p className="px-3 pt-2.5 text-[13px] font-bold">{comm.subject}</p>
-                          )}
-                          {(() => {
-                            const contentStr = comm.content || '';
-                            const parts = contentStr.split('|||FILE|||');
-                            const displayContent = parts[0];
-                            let fileUrl, fileType, fileName = 'Pièce jointe';
-                            
-                            if (parts[1]) {
-                              const fileParts = parts[1].split('|||');
-                              fileUrl = fileParts[0];
-                              fileType = fileParts[1];
-                              try {
-                                const path = new URL(fileUrl).pathname;
-                                let extractedName = decodeURIComponent(path.split('/').pop() || '');
-                                if (extractedName) fileName = extractedName.replace(/_\d+\./, '.');
-                              } catch (e) {}
-                            }
-                            
-                            return (
-                              <>
-                                {displayContent && displayContent !== 'Message vocal' && (
-                                  <p className="px-3 pt-1 pb-1 text-sm whitespace-pre-wrap leading-relaxed">{displayContent}</p>
-                                )}
-                                {fileUrl && (
-                                  <div className="px-2 pt-1 pb-1">
-                                    {fileType?.startsWith('image/') ? (
-                                      <a href={fileUrl} target="_blank" rel="noopener noreferrer">
-                                        <img src={fileUrl} alt={fileName} className="max-w-full h-auto rounded-lg max-h-48 object-cover border border-black/10" />
-                                      </a>
-                                    ) : (
-                                      <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-black/5 rounded-lg hover:bg-black/10 transition-colors">
-                                        <span className="material-symbols-outlined text-[20px]">description</span>
-                                        <span className="text-sm font-semibold truncate max-w-[150px]" title={fileName}>{fileName}</span>
-                                      </a>
-                                    )}
-                                  </div>
-                                )}
-                              </>
-                            )
-                          })()}
-                          {comm.audio_url && (
-                            <div className={`flex items-center gap-2 px-3 py-2 min-w-[180px] ${
-                              comm.content && comm.content !== 'Message vocal' ? 'border-t border-black/5' : ''
-                            }`}>
-                              <span className="material-symbols-outlined text-[20px] text-[var(--color-primary)] shrink-0">mic</span>
-                              <audio src={comm.audio_url} controls className="h-7 w-full flex-1" style={{ colorScheme: 'light' }} />
+                          <MessageActions messageId={comm.id} isSentByMe={isSentByMe} />
+                          
+                          {isDeletedForEveryone ? (
+                            <div className="px-3 py-2 text-[14px] text-gray-500 italic flex items-center gap-2">
+                              <span className="material-symbols-outlined text-[18px]">block</span>
+                              Ce message a été supprimé
                             </div>
+                          ) : (
+                            <>
+                              {comm.subject && comm.subject !== 'Message vocal' && comm.subject !== 'Message de l\'administration' && (
+                                <p className="px-3 pt-2.5 text-[13px] font-bold pr-6">{comm.subject}</p>
+                              )}
+                              {(() => {
+                                const contentStr = comm.content || '';
+                                const parts = contentStr.split('|||FILE|||');
+                                const displayContent = parts[0];
+                                let fileUrl, fileType, fileName = 'Pièce jointe';
+                                
+                                if (parts[1]) {
+                                  const fileParts = parts[1].split('|||');
+                                  fileUrl = fileParts[0];
+                                  fileType = fileParts[1];
+                                  try {
+                                    const path = new URL(fileUrl).pathname;
+                                    let extractedName = decodeURIComponent(path.split('/').pop() || '');
+                                    if (extractedName) fileName = extractedName.replace(/_\d+\./, '.');
+                                  } catch (e) {}
+                                }
+                                
+                                return (
+                                  <>
+                                    {displayContent && displayContent !== 'Message vocal' && (
+                                      <p className="px-3 pt-1 pb-1 text-sm whitespace-pre-wrap leading-relaxed pr-6">{displayContent}</p>
+                                    )}
+                                    {fileUrl && (
+                                      <div className="px-2 pt-1 pb-1 pr-6">
+                                        {fileType?.startsWith('image/') ? (
+                                          <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+                                            <img src={fileUrl} alt={fileName} className="max-w-full h-auto rounded-lg max-h-48 object-cover border border-black/10" />
+                                          </a>
+                                        ) : (
+                                          <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-black/5 rounded-lg hover:bg-black/10 transition-colors">
+                                            <span className="material-symbols-outlined text-[20px]">description</span>
+                                            <span className="text-sm font-semibold truncate max-w-[150px]" title={fileName}>{fileName}</span>
+                                          </a>
+                                        )}
+                                      </div>
+                                    )}
+                                  </>
+                                )
+                              })()}
+                              {comm.audio_url && (
+                                <div className={`flex items-center gap-2 px-3 py-2 min-w-[180px] pr-6 ${
+                                  comm.content && comm.content !== 'Message vocal' ? 'border-t border-black/5' : ''
+                                }`}>
+                                  <span className="material-symbols-outlined text-[20px] text-[var(--color-primary)] shrink-0">mic</span>
+                                  <audio src={comm.audio_url} controls className="h-7 w-full flex-1" style={{ colorScheme: 'light' }} />
+                                </div>
+                              )}
+                            </>
                           )}
 
                           {/* Heure + coches dans la bulle */}
-                          <div className="flex items-center justify-end gap-1 pr-2 pb-1.5">
-                            {isSentByMe && (
-                              <span className="text-[10px] text-[var(--color-on-surface-variant)]">
-                                À: {recipientText} •
-                              </span>
-                            )}
+                          <div className={`flex items-center justify-end gap-1 pr-2 pb-1.5 ${
+                            isDeletedForEveryone || ((!comm.content || comm.content === 'Message vocal') && !comm.audio_url) ? 'pt-1' : ''
+                          }`}>
                             <span className="text-[10px] text-[var(--color-on-surface-variant)]">
                               {format(new Date(comm.created_at), 'HH:mm', { locale: fr })}
                             </span>
@@ -289,11 +313,10 @@ export function EnseignantCommunication({ currentUserId, students, communication
                           </div>
                         </div>
 
-                        {!isSentByMe && (
-                          <span className="text-[10px] text-[var(--color-on-surface-variant)] px-1">
-                            De: Administration / Parent
-                          </span>
-                        )}
+                        {/* Infos expéditeur/destinataire sous la bulle */}
+                        <span className="text-[10px] text-[var(--color-on-surface-variant)] px-1">
+                          {isSentByMe ? `À : ${recipientText}` : 'Administration'}
+                        </span>
                       </div>
                     </div>
                   )
