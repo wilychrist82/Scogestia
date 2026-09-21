@@ -278,8 +278,18 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
                             const contentStr = comm.content || '';
                             const parts = contentStr.split('|||FILE|||');
                             const displayContent = parts[0];
-                            const fileUrl = parts[1];
-                            const fileType = parts[2];
+                            let fileUrl, fileType, fileName = 'Pièce jointe';
+                            
+                            if (parts[1]) {
+                              const fileParts = parts[1].split('|||');
+                              fileUrl = fileParts[0];
+                              fileType = fileParts[1];
+                              try {
+                                const path = new URL(fileUrl).pathname;
+                                let extractedName = decodeURIComponent(path.split('/').pop() || '');
+                                if (extractedName) fileName = extractedName.replace(/_\d+\./, '.');
+                              } catch (e) {}
+                            }
                             
                             return (
                               <>
@@ -290,12 +300,12 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
                                   <div className="px-2 pt-1 pb-1">
                                     {fileType?.startsWith('image/') ? (
                                       <a href={fileUrl} target="_blank" rel="noopener noreferrer">
-                                        <img src={fileUrl} alt="Pièce jointe" className="max-w-full h-auto rounded-lg max-h-48 object-cover border border-black/10" />
+                                        <img src={fileUrl} alt={fileName} className="max-w-full h-auto rounded-lg max-h-48 object-cover border border-black/10" />
                                       </a>
                                     ) : (
                                       <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-black/5 rounded-lg hover:bg-black/10 transition-colors">
                                         <span className="material-symbols-outlined text-[20px]">description</span>
-                                        <span className="text-sm font-semibold truncate max-w-[150px]">Pièce jointe</span>
+                                        <span className="text-sm font-semibold truncate max-w-[150px]" title={fileName}>{fileName}</span>
                                       </a>
                                     )}
                                   </div>
