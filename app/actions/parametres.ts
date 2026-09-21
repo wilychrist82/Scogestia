@@ -70,3 +70,26 @@ export async function updateSchoolSettings(prevState: ActionState, formData: For
     return { error: err.message };
   }
 }
+
+export async function updateUserProfile(prevState: ActionState, formData: FormData): Promise<ActionState> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Non authentifié');
+
+    const profilePhotoUrl = formData.get('profilePhotoUrl') as string
+
+    if (profilePhotoUrl !== null) {
+      const { error } = await supabase.auth.updateUser({
+        data: { avatar_url: profilePhotoUrl }
+      });
+      if (error) throw error;
+    }
+
+    revalidatePath('/parent/parametres');
+    revalidatePath('/enseignant/parametres');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
