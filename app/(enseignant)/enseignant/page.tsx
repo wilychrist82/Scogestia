@@ -105,51 +105,59 @@ export default async function EnseignantDashboardPage() {
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 w-full space-y-6">
 
-      {/* ── HERO IDENTITÉ ENSEIGNANT ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-[#0b0f19] min-h-[160px] flex flex-col sm:flex-row items-center sm:items-stretch shadow-2xl border border-white/5">
-        {/* Blobs */}
-        <div className="absolute -top-16 -left-16 w-72 h-72 bg-violet-600/20 rounded-full blur-[80px] pointer-events-none" />
-        <div className="absolute -bottom-10 right-10 w-56 h-56 bg-emerald-600/15 rounded-full blur-[80px] pointer-events-none" />
+      {/* ── HERO IDENTITÉ ENSEIGNANT PREMIUM ── */}
+      <div className="relative overflow-hidden rounded-[1.75rem] bg-[#0a0d16] min-h-[165px] flex flex-col sm:flex-row items-center sm:items-stretch shadow-2xl border border-white/[0.06] ring-1 ring-inset ring-white/[0.04]">
+        {/* Orbes */}
+        <div className="absolute -top-16 -left-16 w-72 h-72 bg-violet-500/15 rounded-full blur-[90px] pointer-events-none animate-pulse" style={{ animationDuration: '5s' }} />
+        <div className="absolute -bottom-10 right-10 w-56 h-56 bg-indigo-500/10 rounded-full blur-[70px] pointer-events-none animate-pulse" style={{ animationDuration: '7s', animationDelay: '1s' }} />
+        <div className="absolute top-0 right-1/3 w-40 h-40 bg-emerald-500/8 rounded-full blur-[60px] pointer-events-none" />
 
         {/* Gauche : identité */}
         <div className="relative z-10 flex items-center gap-5 p-6 sm:p-8 flex-1">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-700 flex items-center justify-center text-white font-black text-2xl sm:text-3xl shadow-xl flex-shrink-0 border-2 border-white/10 overflow-hidden">
-            {user.user_metadata?.avatar_url ? (
-              <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              initials
-            )}
+          {/* Avatar avec gradient border */}
+          <div className="relative flex-shrink-0">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-400 via-indigo-500 to-purple-700 blur-[2px] opacity-80" />
+            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-700 flex items-center justify-center text-white font-black text-2xl sm:text-3xl border border-white/20 overflow-hidden">
+              {user.user_metadata?.avatar_url ? (
+                <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                initials
+              )}
+            </div>
           </div>
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-400 mb-1">Espace Enseignant</p>
-            <h1 className="text-xl sm:text-2xl font-black text-white leading-tight">{roleData.full_name}</h1>
+            <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1 mb-2.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-400">Espace Enseignant</p>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight">{roleData.full_name}</h1>
             <div className="flex items-center gap-2 mt-2">
-              <span className="material-symbols-outlined text-emerald-400 text-[16px]">calendar_today</span>
-              <span className="text-white/60 text-sm font-semibold capitalize">{todayLabel}</span>
+              <span className="material-symbols-outlined text-emerald-400 text-[15px]">calendar_today</span>
+              <span className="text-white/45 text-sm font-semibold capitalize">{todayLabel}</span>
             </div>
           </div>
         </div>
 
-        {/* Droite : métriques semaine */}
-        <div className="relative z-10 flex items-center gap-3 p-6 sm:p-8 flex-wrap sm:border-l border-white/5">
-          <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center min-w-[80px]">
-            <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider mb-1">Classes</p>
-            <p className="text-2xl font-black text-white">{classCount}</p>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center min-w-[80px]">
-            <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider mb-1">Devoirs</p>
-            <p className="text-2xl font-black text-white">{devoirsCount || 0}</p>
-          </div>
-          <div className="bg-violet-500/20 border border-violet-500/30 rounded-xl px-4 py-3 text-center min-w-[80px]">
-            <p className="text-[10px] text-violet-300 font-bold uppercase tracking-wider mb-1">Cette sem.</p>
-            <p className="text-2xl font-black text-violet-300">{devoirsSemaine || 0}</p>
-          </div>
-          <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-3 text-center min-w-[80px]">
-            <p className="text-[10px] text-rose-300 font-bold uppercase tracking-wider mb-1">Absences</p>
-            <p className="text-2xl font-black text-rose-300">{absencesCount || 0}</p>
-          </div>
+        {/* Droite : métriques */}
+        <div className="relative z-10 flex items-center gap-2.5 p-6 sm:p-8 flex-wrap sm:border-l border-white/[0.06]">
+          {[
+            { label: 'Classes', value: classCount, color: 'text-white' },
+            { label: 'Devoirs total', value: devoirsCount || 0, color: 'text-white' },
+            { label: 'Cette semaine', value: devoirsSemaine || 0, color: 'text-violet-300', bg: 'bg-violet-500/15 border-violet-500/25' },
+            { label: 'Absences', value: absencesCount || 0, color: 'text-rose-300', bg: 'bg-rose-500/10 border-rose-500/20' },
+          ].map((stat, i) => (
+            <div key={i} className={`${stat.bg || 'bg-white/[0.04] border-white/[0.08]'} border hover:border-white/20 rounded-2xl px-4 py-3 text-center min-w-[76px] transition-all duration-500 group cursor-default`}
+              style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}>
+              <p className="text-[9px] text-white/35 font-bold uppercase tracking-[0.15em] mb-1">{stat.label}</p>
+              <p className={`text-xl font-black leading-none ${stat.color} group-hover:scale-105 inline-block transition-transform`}
+                style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}>
+                {stat.value}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
+
 
       {/* ── CONTENU PRINCIPAL ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

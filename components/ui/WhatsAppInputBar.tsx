@@ -6,8 +6,8 @@ import toast from 'react-hot-toast'
 import EmojiPicker from 'emoji-picker-react'
 
 interface Props {
-  /** Appelé avec { text, audioUrl, fileUrl, fileType } lors de la soumission */
-  onSend: (payload: { text: string; audioUrl: string | null; fileUrl?: string | null; fileType?: string | null }) => void
+  /** Appelé avec { text, audioUrl, fileUrl, fileType, originalFileName } lors de la soumission */
+  onSend: (payload: { text: string; audioUrl: string | null; fileUrl?: string | null; fileType?: string | null; originalFileName?: string | null }) => void
   isPending?: boolean
   placeholder?: string
 }

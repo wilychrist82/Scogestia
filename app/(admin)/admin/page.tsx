@@ -50,25 +50,31 @@ export default async function AdminDashboard() {
     .from('user_school_roles').select('*', { count: 'exact', head: true })
     .eq('school_id', schoolId).in('role', ['admin', 'comptable', 'enseignant'])
 
-  const paymentData: PaymentData[] = [
-    { month: 'Janv.', attendu: 2800000, encaisse: 2800000 },
-    { month: 'Févr.', attendu: 2800000, encaisse: 2600000 },
-    { month: 'Mars',  attendu: 2800000, encaisse: 2750000 },
-    { month: 'Avr.',  attendu: 2800000, encaisse: 2400000 },
-    { month: 'Mai',   attendu: 2800000, encaisse: 2300000 },
-    { month: 'Juin',  attendu: 2800000, encaisse: 2800000 },
-    { month: 'Juil.', attendu: 2500000, encaisse: 1200000 },
-    { month: 'Août',  attendu: 2500000, encaisse: 1400000 },
-    { month: 'Sept.', attendu: 3000000, encaisse: 2900000 },
-    { month: 'Oct.',  attendu: 3000000, encaisse: 2800000 },
-    { month: 'Nov.',  attendu: 3000000, encaisse: 2700000 },
-    { month: 'Déc.',  attendu: 3000000, encaisse: 1000000 },
-  ]
 
-  const { data: payments } = await supabase.from('payments').select('amount').eq('school_id', schoolId)
-  const totalEncaisse = payments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0
+  // ── Paiements réels groupés par mois ──
+  const { data: allPayments } = await supabase
+    .from('payments')
+    .select('amount, created_at, student:students(first_name, last_name)')
+    .eq('school_id', schoolId)
+    .order('created_at', { ascending: true })
+
+  const totalEncaisse = allPayments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0
   const totalAttendu = 28500000
   const recouvRate = totalAttendu > 0 ? Math.round((totalEncaisse / totalAttendu) * 100) : 0
+
+  // Grouper les paiements par mois
+  const monthLabels = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.']
+  const monthlyEncaisse: Record<number, number> = {}
+  allPayments?.forEach(p => {
+    const month = new Date(p.created_at).getMonth() // 0-indexed
+    monthlyEncaisse[month] = (monthlyEncaisse[month] || 0) + (p.amount || 0)
+  })
+
+  const paymentData: PaymentData[] = monthLabels.map((month, i) => ({
+    month,
+    attendu: 2500000 + (i >= 8 ? 500000 : 0), // Sept-Déc légèrement plus élevé
+    encaisse: monthlyEncaisse[i] || 0,
+  }))
 
   const today = new Date().toISOString().split('T')[0]
   const { data: attendance } = await supabase.from('attendance').select('status').eq('school_id', schoolId).eq('date', today)
@@ -116,8 +122,13 @@ export default async function AdminDashboard() {
     .eq('school_id', schoolId).eq('status', 'en_retard')
     .order('due_date', { ascending: true }).limit(5)
 
+  // Derniers paiements avec info élève
+  const recentPayments = allPayments?.slice(-5).reverse() || []
+
   const schoolName = schoolData?.name || 'Mon École'
   const todayLabel = format(new Date(), "EEEE d MMMM yyyy", { locale: fr })
+
+
 
   return (
     <div className="space-y-5 max-w-[1400px] mx-auto pb-10 px-1">
@@ -125,126 +136,153 @@ export default async function AdminDashboard() {
       {/* ── ONBOARDING WIZARD ── */}
       <OnboardingWizard classesCount={classesCount || 0} staffCount={staffCount || 0} studentCount={studentCount || 0} />
 
-      {/* ── HERO HEADER ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-[#0b0f19] p-6 sm:p-8 min-h-[130px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl border border-white/5">
-        {/* floating blobs */}
-        <div className="absolute -top-10 -left-10 w-64 h-64 bg-emerald-600/20 rounded-full blur-[80px] pointer-events-none" />
-        <div className="absolute -bottom-10 right-20 w-56 h-56 bg-violet-600/15 rounded-full blur-[80px] pointer-events-none" />
+      {/* ── HERO HEADER PREMIUM ── */}
+      <div className="relative overflow-hidden rounded-[1.75rem] bg-[#070b14] min-h-[160px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xl border border-white/[0.06] ring-1 ring-inset ring-white/[0.04]">
+        {/* Orbes animées */}
+        <div className="absolute -top-16 -left-16 w-80 h-80 bg-emerald-500/15 rounded-full blur-[100px] pointer-events-none animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute -bottom-12 right-10 w-64 h-64 bg-violet-500/12 rounded-full blur-[80px] pointer-events-none animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-32 bg-cyan-500/5 rounded-full blur-[60px] pointer-events-none" />
         
-        <div className="relative z-10">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-400 mb-1">Tableau de bord</p>
-          <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight">{schoolName}</h1>
-          <p className="text-white/50 text-sm mt-1 capitalize">{todayLabel}</p>
+        {/* Contenu principal */}
+        <div className="relative z-10 p-6 sm:p-8">
+          <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">Tableau de bord</p>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight tracking-tight">{schoolName}</h1>
+          <p className="text-white/40 text-sm mt-1.5 capitalize font-medium">{todayLabel}</p>
         </div>
 
-        <div className="relative z-10 flex items-center gap-3 flex-wrap">
-          <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-center">
-            <p className="text-[10px] text-white/40 font-semibold uppercase tracking-wider">Élèves</p>
-            <p className="text-2xl font-black text-white">{studentCount || 0}</p>
+        {/* Stats rapides en haut à droite */}
+        <div className="relative z-10 flex items-center gap-2.5 flex-wrap p-6 sm:p-8 sm:pl-0">
+          {[
+            { label: 'Élèves', value: studentCount || 0, color: 'text-white' },
+            { label: 'Classes', value: classesCount || 0, color: 'text-white' },
+            { label: 'Recouvrement', value: `${recouvRate}%`, color: 'text-emerald-400' },
+            { label: 'Absents/jour', value: aCount, color: 'text-rose-400' },
+          ].map((stat, i) => (
+            <div key={i} className="bg-white/[0.04] border border-white/[0.08] hover:border-white/20 rounded-2xl px-4 py-3 text-center transition-all duration-500 group cursor-default"
+              style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}>
+              <p className="text-[9px] text-white/35 font-bold uppercase tracking-[0.15em] mb-1">{stat.label}</p>
+              <p className={`text-xl font-black leading-none ${stat.color} group-hover:scale-105 inline-block transition-transform`}
+                style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}>
+                {stat.value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── KPI BENTO GRID PREMIUM ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+        
+        {/* Élèves — Emerald */}
+        <div className="relative overflow-hidden rounded-[1.25rem] p-[1.5px] bg-gradient-to-br from-emerald-400/30 via-emerald-600/20 to-transparent group">
+          <div className="relative bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 rounded-[calc(1.25rem-1.5px)] p-5 h-full flex flex-col gap-3 overflow-hidden"
+            style={{ boxShadow: '0 8px 32px rgba(5,150,105,0.25), inset 0 1px 1px rgba(255,255,255,0.15)' }}>
+            <div className="absolute -right-3 -bottom-3 opacity-8 group-hover:opacity-[0.15] transition-opacity duration-500">
+              <Users size={72} className="text-white" />
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-500"
+              style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}>
+              <Users size={17} className="text-white" />
+            </div>
+            <div>
+              <p className="text-[28px] font-black text-white leading-none tabular-nums">{studentCount || 0}</p>
+              <p className="text-emerald-200/80 text-[11px] font-semibold mt-1.5 leading-tight">Total élèves</p>
+            </div>
+            <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-emerald-200 px-2 py-0.5 rounded-full w-fit border border-white/10">
+              <TrendingUp size={8} /> +5% ce mois
+            </span>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-center">
-            <p className="text-[10px] text-white/40 font-semibold uppercase tracking-wider">Classes</p>
-            <p className="text-2xl font-black text-white">{classesCount || 0}</p>
+        </div>
+
+        {/* Classes — Blue */}
+        <div className="relative overflow-hidden rounded-[1.25rem] p-[1.5px] bg-gradient-to-br from-blue-400/30 via-blue-600/20 to-transparent group">
+          <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 rounded-[calc(1.25rem-1.5px)] p-5 h-full flex flex-col gap-3 overflow-hidden"
+            style={{ boxShadow: '0 8px 32px rgba(37,99,235,0.25), inset 0 1px 1px rgba(255,255,255,0.15)' }}>
+            <div className="absolute -right-3 -bottom-3 opacity-8 group-hover:opacity-[0.15] transition-opacity duration-500">
+              <Presentation size={72} className="text-white" />
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-500"
+              style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}>
+              <Presentation size={17} className="text-white" />
+            </div>
+            <div>
+              <p className="text-[28px] font-black text-white leading-none tabular-nums">{classesCount || 0}</p>
+              <p className="text-blue-200/80 text-[11px] font-semibold mt-1.5 leading-tight">Classes actives</p>
+            </div>
+            <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-blue-200 px-2 py-0.5 rounded-full w-fit border border-white/10">
+              Année 2025/2026
+            </span>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-center">
-            <p className="text-[10px] text-white/40 font-semibold uppercase tracking-wider">Recouvrement</p>
-            <p className="text-2xl font-black text-emerald-400">{recouvRate}%</p>
+        </div>
+
+        {/* Personnel — Violet */}
+        <div className="relative overflow-hidden rounded-[1.25rem] p-[1.5px] bg-gradient-to-br from-violet-400/30 via-violet-600/20 to-transparent group">
+          <div className="relative bg-gradient-to-br from-violet-600 via-violet-700 to-violet-900 rounded-[calc(1.25rem-1.5px)] p-5 h-full flex flex-col gap-3 overflow-hidden"
+            style={{ boxShadow: '0 8px 32px rgba(109,40,217,0.25), inset 0 1px 1px rgba(255,255,255,0.15)' }}>
+            <div className="absolute -right-3 -bottom-3 opacity-8 group-hover:opacity-[0.15] transition-opacity duration-500">
+              <UserCircle size={72} className="text-white" />
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-500"
+              style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}>
+              <UserCircle size={17} className="text-white" />
+            </div>
+            <div>
+              <p className="text-[28px] font-black text-white leading-none tabular-nums">{staffCount || 0}</p>
+              <p className="text-violet-200/80 text-[11px] font-semibold mt-1.5 leading-tight">Membres du staff</p>
+            </div>
+            <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-violet-200 px-2 py-0.5 rounded-full w-fit border border-white/10">
+              Personnel actif
+            </span>
           </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-center">
-            <p className="text-[10px] text-white/40 font-semibold uppercase tracking-wider">Absences</p>
-            <p className="text-2xl font-black text-red-400">{aCount}</p>
+        </div>
+
+        {/* Recouvrement — Amber */}
+        <div className="relative overflow-hidden rounded-[1.25rem] p-[1.5px] bg-gradient-to-br from-amber-400/30 via-amber-600/20 to-transparent group">
+          <div className="relative bg-gradient-to-br from-amber-500 via-amber-600 to-amber-800 rounded-[calc(1.25rem-1.5px)] p-5 h-full flex flex-col gap-3 overflow-hidden"
+            style={{ boxShadow: '0 8px 32px rgba(217,119,6,0.25), inset 0 1px 1px rgba(255,255,255,0.15)' }}>
+            <div className="absolute -right-3 -bottom-3 opacity-8 group-hover:opacity-[0.15] transition-opacity duration-500">
+              <Wallet size={72} className="text-white" />
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-500"
+              style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}>
+              <Wallet size={17} className="text-white" />
+            </div>
+            <div>
+              <p className="text-[28px] font-black text-white leading-none tabular-nums">{recouvRate}%</p>
+              <p className="text-amber-100/80 text-[11px] font-semibold mt-1.5 leading-tight">Taux recouvrement</p>
+            </div>
+            <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-amber-200 px-2 py-0.5 rounded-full w-fit border border-white/10">
+              <TrendingUp size={8} /> +2% ce mois
+            </span>
+          </div>
+        </div>
+
+        {/* Absences — Rose */}
+        <div className="relative overflow-hidden rounded-[1.25rem] p-[1.5px] bg-gradient-to-br from-rose-400/30 via-rose-600/20 to-transparent group">
+          <div className="relative bg-gradient-to-br from-rose-500 via-rose-600 to-rose-900 rounded-[calc(1.25rem-1.5px)] p-5 h-full flex flex-col gap-3 overflow-hidden"
+            style={{ boxShadow: '0 8px 32px rgba(225,29,72,0.25), inset 0 1px 1px rgba(255,255,255,0.15)' }}>
+            <div className="absolute -right-3 -bottom-3 opacity-8 group-hover:opacity-[0.15] transition-opacity duration-500">
+              <CalendarOff size={72} className="text-white" />
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-500"
+              style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}>
+              <CalendarOff size={17} className="text-white" />
+            </div>
+            <div>
+              <p className="text-[28px] font-black text-white leading-none tabular-nums">{aCount}</p>
+              <p className="text-rose-200/80 text-[11px] font-semibold mt-1.5 leading-tight">Absences aujourd'hui</p>
+            </div>
+            <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-rose-200 px-2 py-0.5 rounded-full w-fit border border-white/10">
+              {rCount > 0 ? `+${rCount} retards` : 'Aucun retard'}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* ── KPI BENTO GRID ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        
-        {/* Élèves */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-900 p-5 shadow-lg shadow-emerald-900/20 flex flex-col gap-3 group hover:-translate-y-1 transition-transform duration-300">
-          <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Users size={80} className="text-white" />
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
-            <Users size={20} className="text-white" />
-          </div>
-          <div>
-            <p className="text-3xl font-black text-white leading-none">{studentCount || 0}</p>
-            <p className="text-emerald-200 text-xs font-semibold mt-1">Total élèves</p>
-          </div>
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full w-fit">
-            <TrendingUp size={9} /> +5%
-          </span>
-        </div>
 
-        {/* Classes */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-blue-900 p-5 shadow-lg shadow-blue-900/20 flex flex-col gap-3 group hover:-translate-y-1 transition-transform duration-300">
-          <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Presentation size={80} className="text-white" />
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
-            <Presentation size={20} className="text-white" />
-          </div>
-          <div>
-            <p className="text-3xl font-black text-white leading-none">{classesCount || 0}</p>
-            <p className="text-blue-200 text-xs font-semibold mt-1">Classes actives</p>
-          </div>
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full w-fit">
-            Année en cours
-          </span>
-        </div>
-
-        {/* Personnel */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 to-violet-900 p-5 shadow-lg shadow-violet-900/20 flex flex-col gap-3 group hover:-translate-y-1 transition-transform duration-300">
-          <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <UserCircle size={80} className="text-white" />
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
-            <UserCircle size={20} className="text-white" />
-          </div>
-          <div>
-            <p className="text-3xl font-black text-white leading-none">{staffCount || 0}</p>
-            <p className="text-violet-200 text-xs font-semibold mt-1">Membres du staff</p>
-          </div>
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full w-fit">
-            Personnel actif
-          </span>
-        </div>
-
-        {/* Recouvrement */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-amber-800 p-5 shadow-lg shadow-amber-900/20 flex flex-col gap-3 group hover:-translate-y-1 transition-transform duration-300">
-          <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Wallet size={80} className="text-white" />
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
-            <Wallet size={20} className="text-white" />
-          </div>
-          <div>
-            <p className="text-3xl font-black text-white leading-none">{recouvRate}%</p>
-            <p className="text-amber-100 text-xs font-semibold mt-1">Taux recouvrement</p>
-          </div>
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full w-fit">
-            <TrendingUp size={9} /> +2% ce mois
-          </span>
-        </div>
-
-        {/* Absences */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 to-rose-900 p-5 shadow-lg shadow-rose-900/20 flex flex-col gap-3 group hover:-translate-y-1 transition-transform duration-300">
-          <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <CalendarOff size={80} className="text-white" />
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
-            <CalendarOff size={20} className="text-white" />
-          </div>
-          <div>
-            <p className="text-3xl font-black text-white leading-none">{aCount}</p>
-            <p className="text-rose-200 text-xs font-semibold mt-1">Absences aujourd'hui</p>
-          </div>
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full w-fit">
-            -3 vs hier
-          </span>
-        </div>
-      </div>
 
       {/* ── CHARTS ROW ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -394,33 +432,35 @@ export default async function AdminDashboard() {
             <Link href="/admin/finance/paiements" className="text-xs font-bold text-[var(--color-primary)] hover:underline">Voir tout</Link>
           </div>
           <div className="p-5 flex flex-col gap-3">
-            {(() => {
-              const recent = payments?.slice(-5).reverse() || []
-              if (recent.length === 0) return (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-12 h-12 bg-[var(--color-surface-container-low)] rounded-2xl flex items-center justify-center mb-3 border border-[var(--color-outline-variant)]">
-                    <Wallet className="w-5 h-5 text-[var(--color-on-surface-variant)]" />
-                  </div>
-                  <p className="font-bold text-[var(--color-on-surface)] text-sm">Aucune activité</p>
-                  <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">Les paiements apparaîtront ici.</p>
+            {recentPayments.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="w-12 h-12 bg-[var(--color-surface-container-low)] rounded-2xl flex items-center justify-center mb-3 border border-[var(--color-outline-variant)]">
+                  <Wallet className="w-5 h-5 text-[var(--color-on-surface-variant)]" />
                 </div>
-              )
-              return recent.map((p, i) => (
+                <p className="font-bold text-[var(--color-on-surface)] text-sm">Aucune activité</p>
+                <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">Les paiements apparaîtront ici.</p>
+              </div>
+            ) : recentPayments.map((p, i) => {
+              const studentName = (p.student as any)
+                ? `${(p.student as any).last_name || ''} ${(p.student as any).first_name?.charAt(0) || ''}.`.trim()
+                : 'Élève'
+              return (
                 <div key={i} className="flex gap-3 items-center p-2.5 rounded-xl hover:bg-[var(--color-surface-container-low)] transition-colors">
                   <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 border border-emerald-100">
                     <Banknote size={16} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[var(--color-on-surface)]">Paiement reçu</p>
-                    <p className="text-xs text-[var(--color-on-surface-variant)] font-semibold">{new Intl.NumberFormat('fr-FR').format(p.amount)} FCFA</p>
+                    <p className="text-sm font-bold text-[var(--color-on-surface)] truncate">{studentName}</p>
+                    <p className="text-xs text-emerald-700 font-semibold">{new Intl.NumberFormat('fr-FR').format(p.amount)} FCFA</p>
                   </div>
                   <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
                 </div>
-              ))
-            })()}
+              )
+            })}
           </div>
         </div>
       </div>
+
 
       {/* ── ACTIONS RAPIDES ── */}
       <div className="rounded-2xl overflow-hidden border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] shadow-sm">

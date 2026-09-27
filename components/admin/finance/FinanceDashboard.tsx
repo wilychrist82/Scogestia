@@ -55,15 +55,21 @@ export function FinanceDashboard({ schedules, payments, basePath = "/admin/finan
     }
   }, [schedules, payments])
 
-  // Mock data for the chart (Encaissement mensuel)
-  const chartData = [
-    { name: 'Sept', attendu: 2400000, encaisse: 2100000 },
-    { name: 'Oct', attendu: 2400000, encaisse: 2200000 },
-    { name: 'Nov', attendu: 2400000, encaisse: 1800000 },
-    { name: 'Déc', attendu: 2400000, encaisse: 1500000 },
-    { name: 'Jan', attendu: 2400000, encaisse: 2300000 },
-    { name: 'Fév', attendu: 2400000, encaisse: 1100000 },
-  ]
+  // Données réelles groupées par mois (basées sur les vrais paiements)
+  const chartData = useMemo(() => {
+    const monthLabels = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc']
+    const monthlyEncaisse: Record<number, number> = {}
+    payments.forEach(p => {
+      if (!p.paid_at) return
+      const month = new Date(p.paid_at).getMonth()
+      monthlyEncaisse[month] = (monthlyEncaisse[month] || 0) + Number(p.amount)
+    })
+    return monthLabels.map((name, i) => ({
+      name,
+      attendu: Math.round(totalAttendu / 12),
+      encaisse: monthlyEncaisse[i] || 0,
+    })).filter(d => d.encaisse > 0 || d.attendu > 0).slice(0, 6)
+  }, [payments, totalAttendu])
 
   const formatCFA = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount).replace('XOF', 'FCFA')
@@ -73,19 +79,28 @@ export function FinanceDashboard({ schedules, payments, basePath = "/admin/finan
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-[1280px] mx-auto space-y-6">
         
-        {/* Top Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)]">
-          <div>
-            <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Tableau de Bord Financier</h2>
-            <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Supervisez les encaissements, les échéances et les impayés de l'établissement.</p>
+        {/* Top Header Premium */}
+        <div className="relative overflow-hidden rounded-[1.5rem] bg-[#070b14] p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 border border-white/[0.06] shadow-2xl">
+          <div className="absolute -top-12 -left-12 w-60 h-60 bg-emerald-500/12 rounded-full blur-[80px] pointer-events-none" />
+          <div className="absolute -bottom-8 right-20 w-48 h-48 bg-violet-500/10 rounded-full blur-[60px] pointer-events-none" />
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-2.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">Finance</p>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight tracking-tight">Tableau de Bord Financier</h2>
+            <p className="text-white/40 text-sm mt-1.5 font-medium">Supervisez les encaissements, échéances et impayés.</p>
           </div>
-          <div className="flex gap-2">
-            <Link href={`${basePath}/paiements`} className="flex items-center justify-center gap-2 bg-[var(--color-primary)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all duration-300 shadow-sm group">
-              <span className="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">add_circle</span>
+          <div className="relative z-10 flex gap-2.5">
+            <Link href={`${basePath}/paiements`} className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white h-11 px-5 rounded-xl text-sm font-bold active:scale-95 transition-all duration-300 shadow-lg shadow-emerald-500/25"
+              style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}>
+              <span className="material-symbols-outlined text-[18px]">add_circle</span>
               Encaisser
             </Link>
           </div>
         </div>
+
+
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

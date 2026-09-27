@@ -30,7 +30,9 @@ export default async function EcheancesPage() {
       amount_due,
       due_date,
       status,
+      student_id,
       student:students(
+        id,
         last_name,
         first_name,
         classes(name)

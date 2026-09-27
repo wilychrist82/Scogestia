@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect, FormEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { sendCommunication, SendResponse } from '@/app/actions/communication'
+import { sendCommunication } from '@/app/actions/communication'
 import { formatDistanceToNow, format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { AudioRecorder } from '@/components/ui/AudioRecorder'
