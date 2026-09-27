@@ -37,52 +37,51 @@ export function PaymentChart({ data }: { data: PaymentData[] }) {
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
           <defs>
-            <linearGradient id="colorAttenduArea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#e2e8f0" stopOpacity={0.5}/>
-              <stop offset="95%" stopColor="#f8fafc" stopOpacity={0}/>
-            </linearGradient>
             <linearGradient id="colorEncaisseArea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.6}/>
-              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+              <stop offset="0%" stopColor="#10b981" stopOpacity={0.25}/>
+              <stop offset="100%" stopColor="#10b981" stopOpacity={0}/>
             </linearGradient>
             <filter id="shadowArea" x="-10%" y="-10%" width="120%" height="120%">
-              <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#10b981" floodOpacity="0.3" />
+              <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#10b981" floodOpacity="0.2" />
             </filter>
           </defs>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.04)" />
           <XAxis 
             dataKey="month" 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
+            tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 500, fontFamily: 'var(--font-sans)' }} 
             dy={12}
           />
           <YAxis 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
+            tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 500, fontFamily: 'var(--font-sans)' }} 
             tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`}
           />
-          <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(16, 185, 129, 0.2)', strokeWidth: 2, strokeDasharray: '5 5' }} />
+          <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: '#e2e8f0', strokeWidth: 1, strokeDasharray: '4 4' }} />
           
           <Area 
-            type="monotone" 
+            type="linear" 
             dataKey="attendu" 
             name="Attendu" 
             stroke="#cbd5e1" 
-            strokeWidth={3}
-            strokeDasharray="6 6"
-            fill="url(#colorAttenduArea)" 
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
+            fill="none" 
             activeDot={false}
           />
           <Area 
-            type="monotone" 
+            type="linear" 
             dataKey="encaisse" 
             name="Encaissé" 
             stroke="#10b981" 
-            strokeWidth={4}
+            strokeWidth={2}
             fill="url(#colorEncaisseArea)" 
-            activeDot={{ r: 6, fill: '#fff', stroke: '#10b981', strokeWidth: 3 }}
+            activeDot={{ r: 4, fill: '#fff', stroke: '#10b981', strokeWidth: 2 }}
             style={{ filter: 'url(#shadowArea)' }}
+            animationDuration={1500}
+            animationEasing="ease-in-out"
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -241,10 +240,10 @@ export function ClassBarChart({ data }: { data: ClassDistributionData[] }) {
   return (
     <div className="h-[260px] w-full mt-2">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={filteredData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }} barGap={0} barCategoryGap="25%">
+        <BarChart data={filteredData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }} barGap={0} barCategoryGap="30%">
           <defs>
             <filter id="barShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#000" floodOpacity="0.08" />
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000" floodOpacity="0.05" />
             </filter>
             {PIE_GRADIENTS.map((g) => (
               <linearGradient key={`bar-${g.id}`} id={`bar-${g.id}`} x1="0" y1="0" x2="0" y2="1">
@@ -258,16 +257,16 @@ export function ClassBarChart({ data }: { data: ClassDistributionData[] }) {
             dataKey="name" 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
+            tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 500, fontFamily: 'var(--font-sans)' }} 
             dy={12}
           />
           <YAxis 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
+            tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 500, fontFamily: 'var(--font-sans)' }} 
           />
           <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)', rx: 8 }} />
-          <Bar dataKey="value" name="Élèves" radius={[6, 6, 0, 0]} animationDuration={1200} animationEasing="ease-out">
+          <Bar dataKey="value" name="Élèves" radius={[4, 4, 0, 0]} barSize={24} animationDuration={1500} animationEasing="ease-out">
             {filteredData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={`url(#bar-${PIE_GRADIENTS[index % PIE_GRADIENTS.length].id})`} style={{ filter: 'url(#barShadow)' }} />
             ))}
