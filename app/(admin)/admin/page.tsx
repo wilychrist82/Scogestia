@@ -518,6 +518,7 @@ export default async function AdminDashboard() {
 
           <RaccourcisTrigger />
         </div>
+        </div>
       </div>
       {/* ShortcutsButton en mode modale uniquement — déclenchement via keyboard event du bouton ci-dessus */}
       <ShortcutsButton modalOnly />
