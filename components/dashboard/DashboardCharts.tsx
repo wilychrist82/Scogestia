@@ -38,47 +38,47 @@ export function PaymentChart({ data }: { data: PaymentData[] }) {
         <AreaChart data={data} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
           <defs>
             <linearGradient id="colorEncaisseArea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10b981" stopOpacity={0.25}/>
-              <stop offset="100%" stopColor="#10b981" stopOpacity={0}/>
+              <stop offset="0%" stopColor="#10b981" stopOpacity={0.7}/>
+              <stop offset="100%" stopColor="#10b981" stopOpacity={0.05}/>
             </linearGradient>
             <filter id="shadowArea" x="-10%" y="-10%" width="120%" height="120%">
-              <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#10b981" floodOpacity="0.2" />
+              <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#10b981" floodOpacity="0.4" />
             </filter>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.04)" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
           <XAxis 
             dataKey="month" 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 500, fontFamily: 'var(--font-sans)' }} 
+            tick={{ fontSize: 11, fill: '#9ca3af', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
             dy={12}
           />
           <YAxis 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 500, fontFamily: 'var(--font-sans)' }} 
+            tick={{ fontSize: 11, fill: '#9ca3af', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
             tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`}
           />
-          <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: '#e2e8f0', strokeWidth: 1, strokeDasharray: '4 4' }} />
+          <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(16, 185, 129, 0.2)', strokeWidth: 2, strokeDasharray: '4 4' }} />
           
           <Area 
-            type="linear" 
+            type="monotone" 
             dataKey="attendu" 
             name="Attendu" 
             stroke="#cbd5e1" 
-            strokeWidth={1.5}
+            strokeWidth={2}
             strokeDasharray="4 4"
             fill="none" 
             activeDot={false}
           />
           <Area 
-            type="linear" 
+            type="monotone" 
             dataKey="encaisse" 
             name="Encaissé" 
             stroke="#10b981" 
-            strokeWidth={2}
+            strokeWidth={3}
             fill="url(#colorEncaisseArea)" 
-            activeDot={{ r: 4, fill: '#fff', stroke: '#10b981', strokeWidth: 2 }}
+            activeDot={{ r: 5, fill: '#fff', stroke: '#10b981', strokeWidth: 3 }}
             style={{ filter: 'url(#shadowArea)' }}
             animationDuration={1500}
             animationEasing="ease-in-out"
