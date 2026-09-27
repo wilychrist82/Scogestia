@@ -9,7 +9,7 @@ import {
   Banknote, BookOpenCheck, AlertCircle
 } from 'lucide-react'
 import { 
-  PaymentChart, AttendancePieChart, ClassDistributionPieChart,
+  PaymentChart, AttendancePieChart, ClassDistributionPieChart, ClassBarChart,
   CircularProgress, PaymentData, AttendanceData, ClassDistributionData
 } from '@/components/dashboard/DashboardCharts'
 import { OnboardingWizard } from '@/components/admin/OnboardingWizard'
@@ -285,11 +285,26 @@ export default async function AdminDashboard() {
 
 
 
-      {/* ── CHARTS ROW ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* ── MAIN CHARTS ROW ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
         
+        {/* Effectifs des classes (Bar Chart) */}
+        <div className="p-1.5 rounded-[1.75rem] bg-slate-50/50 border border-slate-200/50 shadow-sm flex flex-col group">
+          <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex flex-col transition-all duration-300 group-hover:shadow-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <div>
+                <h3 className="font-black text-slate-800 text-base tracking-tight">Effectif des classes</h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">Répartition détaillée des élèves</p>
+              </div>
+            </div>
+            <div className="flex-1 p-6">
+              <ClassBarChart data={classDistributionData} />
+            </div>
+          </div>
+        </div>
+
         {/* Recouvrement paiements */}
-        <div className="lg:col-span-2 p-1.5 rounded-[1.75rem] bg-slate-50/50 border border-slate-200/50 shadow-sm flex flex-col group">
+        <div className="p-1.5 rounded-[1.75rem] bg-slate-50/50 border border-slate-200/50 shadow-sm flex flex-col group">
           <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex flex-col transition-all duration-300 group-hover:shadow-md">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
               <div>
@@ -322,6 +337,10 @@ export default async function AdminDashboard() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── ALERTS & SECONDARY WIDGETS ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
 
         {/* Impayés urgents */}
         <div className="p-1.5 rounded-[1.75rem] bg-slate-50/50 border border-slate-200/50 shadow-sm flex flex-col group">
@@ -368,11 +387,7 @@ export default async function AdminDashboard() {
           </div>
         </div>
         </div>
-      </div>
 
-      {/* ── PRÉSENCES + RÉPARTITION + ACTIVITÉS ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        
         {/* Présences du jour */}
         <div className="p-1.5 rounded-[1.75rem] bg-slate-50/50 border border-slate-200/50 shadow-sm flex flex-col group">
           <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex flex-col transition-all duration-300 group-hover:shadow-md">
@@ -435,7 +450,7 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Activités récentes */}
-        <div className="md:col-span-2 lg:col-span-1 p-1.5 rounded-[1.75rem] bg-slate-50/50 border border-slate-200/50 shadow-sm flex flex-col group">
+        <div className="p-1.5 rounded-[1.75rem] bg-slate-50/50 border border-slate-200/50 shadow-sm flex flex-col group">
           <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex flex-col transition-all duration-300 group-hover:shadow-md">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
               <div>

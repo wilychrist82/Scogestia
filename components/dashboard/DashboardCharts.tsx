@@ -2,7 +2,8 @@
 
 import { 
   AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, 
-  ResponsiveContainer, PieChart, Pie, Cell
+  ResponsiveContainer, PieChart, Pie, Cell,
+  BarChart, Bar, CartesianGrid
 } from 'recharts'
 
 export interface PaymentData { month: string; attendu: number; encaisse: number; }
@@ -232,3 +233,48 @@ export function ClassDistributionPieChart({ data }: { data: ClassDistributionDat
     </div>
   )
 }
+
+export function ClassBarChart({ data }: { data: ClassDistributionData[] }) {
+  // Filtrer les classes avec effectif > 0 comme demandé
+  const filteredData = data.filter(d => d.value > 0)
+
+  return (
+    <div className="h-[260px] w-full mt-2">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={filteredData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }} barGap={0} barCategoryGap="25%">
+          <defs>
+            <filter id="barShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#000" floodOpacity="0.08" />
+            </filter>
+            {PIE_GRADIENTS.map((g) => (
+              <linearGradient key={`bar-${g.id}`} id={`bar-${g.id}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={g.colors[0]} stopOpacity={1}/>
+                <stop offset="100%" stopColor={g.colors[1]} stopOpacity={0.8}/>
+              </linearGradient>
+            ))}
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
+          <XAxis 
+            dataKey="name" 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
+            dy={12}
+          />
+          <YAxis 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
+          />
+          <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)', rx: 8 }} />
+          <Bar dataKey="value" name="Élèves" radius={[6, 6, 0, 0]} animationDuration={1200} animationEasing="ease-out">
+            {filteredData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={`url(#bar-${PIE_GRADIENTS[index % PIE_GRADIENTS.length].id})`} style={{ filter: 'url(#barShadow)' }} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
