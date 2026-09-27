@@ -9,7 +9,7 @@ import {
   Banknote, BookOpenCheck, AlertCircle
 } from 'lucide-react'
 import { 
-  PaymentBarChart, AttendancePieChart, ClassDistributionPieChart,
+  PaymentChart, AttendancePieChart, ClassDistributionPieChart,
   CircularProgress, PaymentData, AttendanceData, ClassDistributionData
 } from '@/components/dashboard/DashboardCharts'
 import { OnboardingWizard } from '@/components/admin/OnboardingWizard'
@@ -302,7 +302,7 @@ export default async function AdminDashboard() {
               </div>
             </div>
           <div className="flex-1 p-6">
-            <PaymentBarChart data={paymentData} />
+            <PaymentChart data={paymentData} />
           </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t border-slate-100 px-6 py-4 gap-4 bg-slate-50/30">
               <div className="flex gap-10">

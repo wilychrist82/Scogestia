@@ -1,8 +1,8 @@
 'use client'
 
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
-  ResponsiveContainer, PieChart, Pie, Cell, LabelList
+  AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, 
+  ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts'
 
 export interface PaymentData { month: string; attendu: number; encaisse: number; }
@@ -30,22 +30,24 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null
 }
 
-export function PaymentBarChart({ data }: { data: PaymentData[] }) {
+export function PaymentChart({ data }: { data: PaymentData[] }) {
   return (
     <div className="h-[260px] w-full mt-2">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 5, right: 5, left: -25, bottom: 0 }} barGap={4} barCategoryGap="30%">
+        <AreaChart data={data} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
           <defs>
-            <linearGradient id="colorAttendu" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#e2e8f0" stopOpacity={0.8}/>
-              <stop offset="100%" stopColor="#f8fafc" stopOpacity={0.3}/>
+            <linearGradient id="colorAttenduArea" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#e2e8f0" stopOpacity={0.5}/>
+              <stop offset="95%" stopColor="#f8fafc" stopOpacity={0}/>
             </linearGradient>
-            <linearGradient id="colorEncaisse" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10b981" stopOpacity={1}/>
-              <stop offset="100%" stopColor="#047857" stopOpacity={1}/>
+            <linearGradient id="colorEncaisseArea" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#10b981" stopOpacity={0.6}/>
+              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
             </linearGradient>
+            <filter id="shadowArea" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#10b981" floodOpacity="0.3" />
+            </filter>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.04)" />
           <XAxis 
             dataKey="month" 
             axisLine={false} 
@@ -59,10 +61,29 @@ export function PaymentBarChart({ data }: { data: PaymentData[] }) {
             tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
             tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`}
           />
-          <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)', rx: 8 }} />
-          <Bar dataKey="attendu" name="Attendu" fill="url(#colorAttendu)" radius={[6, 6, 0, 0]} />
-          <Bar dataKey="encaisse" name="Encaissé" fill="url(#colorEncaisse)" radius={[6, 6, 0, 0]} />
-        </BarChart>
+          <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(16, 185, 129, 0.2)', strokeWidth: 2, strokeDasharray: '5 5' }} />
+          
+          <Area 
+            type="monotone" 
+            dataKey="attendu" 
+            name="Attendu" 
+            stroke="#cbd5e1" 
+            strokeWidth={3}
+            strokeDasharray="6 6"
+            fill="url(#colorAttenduArea)" 
+            activeDot={false}
+          />
+          <Area 
+            type="monotone" 
+            dataKey="encaisse" 
+            name="Encaissé" 
+            stroke="#10b981" 
+            strokeWidth={4}
+            fill="url(#colorEncaisseArea)" 
+            activeDot={{ r: 6, fill: '#fff', stroke: '#10b981', strokeWidth: 3 }}
+            style={{ filter: 'url(#shadowArea)' }}
+          />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   )
