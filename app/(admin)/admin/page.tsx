@@ -367,6 +367,7 @@ export default async function AdminDashboard() {
             )}
           </div>
         </div>
+        </div>
       </div>
 
       {/* ── PRÉSENCES + RÉPARTITION + ACTIVITÉS ── */}
@@ -405,6 +406,7 @@ export default async function AdminDashboard() {
             </div>
           </div>
         </div>
+        </div>
 
         {/* Répartition par classe */}
         <div className="p-1.5 rounded-[1.75rem] bg-slate-50/50 border border-slate-200/50 shadow-sm flex flex-col group">
@@ -429,6 +431,7 @@ export default async function AdminDashboard() {
               ))}
             </div>
           </div>
+        </div>
         </div>
 
         {/* Activités récentes */}
@@ -468,6 +471,7 @@ export default async function AdminDashboard() {
               )
             })}
           </div>
+        </div>
         </div>
       </div>
 
