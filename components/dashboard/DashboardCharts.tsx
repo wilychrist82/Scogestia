@@ -50,15 +50,8 @@ export function PaymentBarChart({ data }: { data: PaymentData[] }) {
             tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`}
           />
           <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', rx: 6 }} />
-          <Bar dataKey="attendu" name="Attendu" fill="#E5E7EB" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="encaisse" name="Encaissé" radius={[4, 4, 0, 0]}>
-            {data.map((entry, index) => (
-              <Cell 
-                key={`cell-${index}`}
-                fill={entry.encaisse >= entry.attendu * 0.9 ? '#059669' : entry.encaisse >= entry.attendu * 0.7 ? '#f59e0b' : '#ef4444'}
-              />
-            ))}
-          </Bar>
+          <Bar dataKey="attendu" name="Attendu" fill="#d1fae5" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="encaisse" name="Encaissé" fill="#059669" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

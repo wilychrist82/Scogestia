@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { globalSearch, SearchResult } from '@/app/actions/search'
 
-export function ShortcutsButton() {
+export function ShortcutsButton({ modalOnly = false }: { modalOnly?: boolean }) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -67,14 +67,16 @@ export function ShortcutsButton() {
 
   return (
     <>
-      <button 
-        onClick={() => setIsOpen(true)}
-        className="flex items-center justify-center gap-2 bg-[var(--color-sidebar-bg)] hover:bg-[var(--color-sidebar-hover)] hover:shadow-lg hover:-translate-y-0.5 text-white py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-all duration-300 shadow-sm text-center leading-tight group w-full h-full"
-      >
-        <LayoutGrid size={16} className="group-hover:scale-110 transition-transform shrink-0" />
-        Raccourcis
-        <span className="hidden sm:inline-block ml-1 opacity-60 font-normal text-[10px] bg-white/20 px-1.5 py-0.5 rounded">⌘K</span>
-      </button>
+      {!modalOnly && (
+        <button 
+          onClick={() => setIsOpen(true)}
+          className="flex items-center justify-center gap-2 bg-[var(--color-sidebar-bg)] hover:bg-[var(--color-sidebar-hover)] hover:shadow-lg hover:-translate-y-0.5 text-white py-3 px-2 rounded-lg font-semibold text-[11px] sm:text-[13px] transition-all duration-300 shadow-sm text-center leading-tight group w-full h-full"
+        >
+          <LayoutGrid size={16} className="group-hover:scale-110 transition-transform shrink-0" />
+          Raccourcis
+          <span className="hidden sm:inline-block ml-1 opacity-60 font-normal text-[10px] bg-white/20 px-1.5 py-0.5 rounded">⌘K</span>
+        </button>
+      )}
 
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] bg-[#0b1c30]/40  transition-opacity p-4">
