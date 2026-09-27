@@ -312,7 +312,6 @@ export default async function AdminDashboard() {
                 <p className="text-xs text-slate-500 font-medium mt-0.5">Mensuel — Année scolaire 2026/2027</p>
               </div>
               <div className="flex items-center gap-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-200 inline-block"/>Attendu</span>
                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shadow-[0_0_8px_rgba(16,185,129,0.4)]"/>Encaissé</span>
               </div>
             </div>

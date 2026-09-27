@@ -62,23 +62,13 @@ export function PaymentChart({ data }: { data: PaymentData[] }) {
           <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(16, 185, 129, 0.2)', strokeWidth: 2, strokeDasharray: '4 4' }} />
           
           <Area 
-            type="monotone" 
-            dataKey="attendu" 
-            name="Attendu" 
-            stroke="#cbd5e1" 
-            strokeWidth={2}
-            strokeDasharray="4 4"
-            fill="none" 
-            activeDot={false}
-          />
-          <Area 
-            type="monotone" 
+            type="natural" 
             dataKey="encaisse" 
             name="Encaissé" 
             stroke="#10b981" 
-            strokeWidth={3}
+            strokeWidth={4}
             fill="url(#colorEncaisseArea)" 
-            activeDot={{ r: 5, fill: '#fff', stroke: '#10b981', strokeWidth: 3 }}
+            activeDot={{ r: 6, fill: '#fff', stroke: '#10b981', strokeWidth: 3 }}
             style={{ filter: 'url(#shadowArea)' }}
             animationDuration={1500}
             animationEasing="ease-in-out"
