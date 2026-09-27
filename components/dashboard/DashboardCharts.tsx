@@ -34,24 +34,34 @@ export function PaymentBarChart({ data }: { data: PaymentData[] }) {
   return (
     <div className="h-[260px] w-full mt-2">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 5, right: 5, left: -25, bottom: 0 }} barGap={3} barCategoryGap="35%">
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.06)" />
+        <BarChart data={data} margin={{ top: 5, right: 5, left: -25, bottom: 0 }} barGap={4} barCategoryGap="30%">
+          <defs>
+            <linearGradient id="colorAttendu" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#e2e8f0" stopOpacity={0.8}/>
+              <stop offset="100%" stopColor="#f8fafc" stopOpacity={0.3}/>
+            </linearGradient>
+            <linearGradient id="colorEncaisse" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity={1}/>
+              <stop offset="100%" stopColor="#047857" stopOpacity={1}/>
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.04)" />
           <XAxis 
             dataKey="month" 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 10.5, fill: '#9ca3af', fontWeight: 600 }} 
-            dy={10}
+            tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
+            dy={12}
           />
           <YAxis 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 10.5, fill: '#9ca3af', fontWeight: 600 }} 
+            tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
             tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`}
           />
-          <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', rx: 6 }} />
-          <Bar dataKey="attendu" name="Attendu" fill="#d1fae5" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="encaisse" name="Encaissé" fill="#059669" radius={[4, 4, 0, 0]} />
+          <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)', rx: 8 }} />
+          <Bar dataKey="attendu" name="Attendu" fill="url(#colorAttendu)" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="encaisse" name="Encaissé" fill="url(#colorEncaisse)" radius={[6, 6, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -97,24 +107,51 @@ function DonutCenterLabel({ cx, cy, total, label }: { cx: number; cy: number; to
   )
 }
 
+// Préparer des gradients premium pour les pie charts
+const PIE_GRADIENTS = [
+  { id: 'pie-grad-1', colors: ['#10b981', '#047857'] }, // Emerald
+  { id: 'pie-grad-2', colors: ['#3b82f6', '#1d4ed8'] }, // Blue
+  { id: 'pie-grad-3', colors: ['#8b5cf6', '#6d28d9'] }, // Violet
+  { id: 'pie-grad-4', colors: ['#f59e0b', '#b45309'] }, // Amber
+  { id: 'pie-grad-5', colors: ['#ec4899', '#be185d'] }, // Pink
+  { id: 'pie-grad-6', colors: ['#f43f5e', '#be123c'] }, // Rose
+  { id: 'pie-grad-7', colors: ['#06b6d4', '#0e7490'] }, // Cyan
+]
+
+const ATTENDANCE_GRADIENTS = [
+  { id: 'att-grad-present', colors: ['#10b981', '#047857'] }, // Emerald (Présents)
+  { id: 'att-grad-absent', colors: ['#f43f5e', '#be123c'] },  // Rose (Absents)
+  { id: 'att-grad-retard', colors: ['#f59e0b', '#b45309'] },  // Amber (Retards)
+]
+
 export function AttendancePieChart({ data }: { data: AttendanceData[] }) {
   const total = data.reduce((s, d) => s + d.value, 0)
   return (
     <div className="h-[200px] w-full relative">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
+          <defs>
+            {ATTENDANCE_GRADIENTS.map((g) => (
+              <linearGradient key={g.id} id={g.id} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={g.colors[0]} stopOpacity={1}/>
+                <stop offset="100%" stopColor={g.colors[1]} stopOpacity={1}/>
+              </linearGradient>
+            ))}
+          </defs>
           <Pie
             data={data}
             cx="50%" cy="50%"
             innerRadius={58} outerRadius={78}
-            paddingAngle={3}
+            paddingAngle={4}
             dataKey="value"
             stroke="none"
             animationBegin={0}
-            animationDuration={900}
+            animationDuration={1000}
+            animationEasing="ease-out"
+            cornerRadius={4}
           >
             {data.map((entry, i) => (
-              <Cell key={i} fill={entry.color} />
+              <Cell key={i} fill={`url(#${ATTENDANCE_GRADIENTS[i % ATTENDANCE_GRADIENTS.length].id})`} style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.06))' }} />
             ))}
           </Pie>
           <RechartsTooltip content={<CustomTooltip />} />
@@ -122,9 +159,9 @@ export function AttendancePieChart({ data }: { data: AttendanceData[] }) {
       </ResponsiveContainer>
       {/* Centre label */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="text-center">
-          <p className="text-xl font-black text-[#0b1c30] leading-none">{total}</p>
-          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mt-0.5">élèves</p>
+        <div className="text-center bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded-full w-[100px] h-[100px] flex flex-col items-center justify-center border border-slate-100">
+          <p className="text-2xl font-black text-slate-800 leading-none">{total}</p>
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mt-1">élèves</p>
         </div>
       </div>
     </div>
@@ -137,18 +174,28 @@ export function ClassDistributionPieChart({ data }: { data: ClassDistributionDat
     <div className="h-[200px] w-full relative">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
+          <defs>
+            {PIE_GRADIENTS.map((g) => (
+              <linearGradient key={g.id} id={`dist-${g.id}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={g.colors[0]} stopOpacity={1}/>
+                <stop offset="100%" stopColor={g.colors[1]} stopOpacity={1}/>
+              </linearGradient>
+            ))}
+          </defs>
           <Pie
             data={data}
             cx="50%" cy="50%"
             innerRadius={58} outerRadius={78}
-            paddingAngle={3}
+            paddingAngle={4}
             dataKey="value"
             stroke="none"
-            animationBegin={0}
-            animationDuration={900}
+            animationBegin={100}
+            animationDuration={1000}
+            animationEasing="ease-out"
+            cornerRadius={4}
           >
             {data.map((entry, i) => (
-              <Cell key={i} fill={entry.color} />
+              <Cell key={i} fill={`url(#dist-${PIE_GRADIENTS[i % PIE_GRADIENTS.length].id})`} style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.06))' }} />
             ))}
           </Pie>
           <RechartsTooltip content={<CustomTooltip />} />
@@ -156,9 +203,9 @@ export function ClassDistributionPieChart({ data }: { data: ClassDistributionDat
       </ResponsiveContainer>
       {/* Centre label */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="text-center">
-          <p className="text-xl font-black text-[#0b1c30] leading-none">{total}</p>
-          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide mt-0.5">total</p>
+        <div className="text-center bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded-full w-[100px] h-[100px] flex flex-col items-center justify-center border border-slate-100">
+          <p className="text-2xl font-black text-slate-800 leading-none">{total}</p>
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mt-1">total</p>
         </div>
       </div>
     </div>

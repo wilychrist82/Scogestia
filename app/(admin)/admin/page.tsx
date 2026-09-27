@@ -289,50 +289,56 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         
         {/* Recouvrement paiements */}
-        <div className="lg:col-span-2 rounded-2xl overflow-hidden border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] shadow-sm flex flex-col">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
-            <div>
-              <h3 className="font-bold text-[var(--color-on-surface)] text-base">Recouvrement des paiements</h3>
-              <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">Mensuel — Année scolaire 2026/2027</p>
+        <div className="lg:col-span-2 p-1.5 rounded-[1.75rem] bg-slate-50/50 border border-slate-200/50 shadow-sm flex flex-col group">
+          <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex flex-col transition-all duration-300 group-hover:shadow-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <div>
+                <h3 className="font-black text-slate-800 text-base tracking-tight">Recouvrement des paiements</h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">Mensuel — Année scolaire 2026/2027</p>
+              </div>
+              <div className="flex items-center gap-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-200 inline-block"/>Attendu</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shadow-[0_0_8px_rgba(16,185,129,0.4)]"/>Encaissé</span>
+              </div>
             </div>
-            <div className="flex items-center gap-3 text-xs font-semibold text-[var(--color-on-surface-variant)]">
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-gray-200 inline-block"/>&nbsp;Attendu</span>
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-500 inline-block"/>&nbsp;Encaissé</span>
-            </div>
-          </div>
           <div className="flex-1 p-6">
             <PaymentBarChart data={paymentData} />
           </div>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t border-[var(--color-outline-variant)] px-6 py-4 gap-4 bg-[var(--color-surface-bright)]">
-            <div className="flex gap-8">
-              <div>
-                <p className="text-[11px] text-[var(--color-on-surface-variant)] font-semibold uppercase tracking-wide">Total attendu</p>
-                <p className="text-base font-black text-[var(--color-on-surface)]">{new Intl.NumberFormat('fr-FR').format(totalAttendu)} FCFA</p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t border-slate-100 px-6 py-4 gap-4 bg-slate-50/30">
+              <div className="flex gap-10">
+                <div>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Total attendu</p>
+                  <p className="text-xl font-black text-slate-700">{new Intl.NumberFormat('fr-FR').format(totalAttendu)} FCFA</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-emerald-600/70 font-bold uppercase tracking-widest mb-1">Total encaissé</p>
+                  <p className="text-xl font-black text-emerald-600">{new Intl.NumberFormat('fr-FR').format(totalEncaisse)} FCFA</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[11px] text-[var(--color-on-surface-variant)] font-semibold uppercase tracking-wide">Total encaissé</p>
-                <p className="text-base font-black text-emerald-600">{new Intl.NumberFormat('fr-FR').format(totalEncaisse)} FCFA</p>
+              <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-2xl border border-slate-100 shadow-sm">
+                <CircularProgress percentage={recouvRate} />
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-tight">Taux de<br/>recouvrement</p>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <CircularProgress percentage={recouvRate} />
-              <p className="text-xs text-[var(--color-on-surface-variant)] font-medium leading-tight">Taux de<br/>recouvrement</p>
             </div>
           </div>
         </div>
 
         {/* Impayés urgents */}
-        <div className="rounded-2xl overflow-hidden border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] shadow-sm flex flex-col">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
-            <div>
-              <h3 className="font-bold text-[var(--color-on-surface)] text-base flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse inline-block"/>
-                Impayés urgents
-              </h3>
-              <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">Échéances dépassées</p>
+        <div className="p-1.5 rounded-[1.75rem] bg-slate-50/50 border border-slate-200/50 shadow-sm flex flex-col group">
+          <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex flex-col transition-all duration-300 group-hover:shadow-md">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+              <div>
+                <h3 className="font-black text-slate-800 text-base tracking-tight flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span>
+                  </span>
+                  Impayés urgents
+                </h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">Échéances dépassées</p>
+              </div>
+              <Link href="/admin/finance/echeances" className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors">Voir tout</Link>
             </div>
-            <Link href="/admin/finance/echeances" className="text-xs font-bold text-[var(--color-primary)] hover:underline">Voir tout</Link>
-          </div>
           <div className="flex-1 p-4 flex flex-col gap-3">
             {(overdueDues || []).length > 0 ? overdueDues?.map((row, i) => (
               <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[var(--color-surface-container-low)] transition-colors">
@@ -367,11 +373,12 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         
         {/* Présences du jour */}
-        <div className="rounded-2xl overflow-hidden border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] shadow-sm">
-          <div className="px-5 py-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
-            <h3 className="font-bold text-[var(--color-on-surface)]">Présences du jour</h3>
-            <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5 capitalize">{format(new Date(), 'EEEE d MMMM', { locale: fr })}</p>
-          </div>
+        <div className="p-1.5 rounded-[1.75rem] bg-slate-50/50 border border-slate-200/50 shadow-sm flex flex-col group">
+          <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex flex-col transition-all duration-300 group-hover:shadow-md">
+            <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="font-black text-slate-800 tracking-tight">Présences du jour</h3>
+              <p className="text-xs text-slate-500 font-medium mt-0.5 capitalize">{format(new Date(), 'EEEE d MMMM', { locale: fr })}</p>
+            </div>
           <div className="p-5 flex flex-col sm:flex-row items-center gap-5">
             <div className="w-full sm:w-1/2 shrink-0">
               <AttendancePieChart data={attendanceData} />
@@ -400,11 +407,12 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Répartition par classe */}
-        <div className="rounded-2xl overflow-hidden border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] shadow-sm">
-          <div className="px-5 py-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
-            <h3 className="font-bold text-[var(--color-on-surface)]">Répartition par classe</h3>
-            <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">{studentCount || 0} élèves au total</p>
-          </div>
+        <div className="p-1.5 rounded-[1.75rem] bg-slate-50/50 border border-slate-200/50 shadow-sm flex flex-col group">
+          <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex flex-col transition-all duration-300 group-hover:shadow-md">
+            <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="font-black text-slate-800 tracking-tight">Répartition par classe</h3>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">{studentCount || 0} élèves au total</p>
+            </div>
           <div className="p-5 flex flex-col sm:flex-row items-center gap-5">
             <div className="w-full sm:w-1/2 shrink-0">
               <ClassDistributionPieChart data={classDistributionData} />
@@ -424,14 +432,15 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Activités récentes */}
-        <div className="rounded-2xl overflow-hidden border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] shadow-sm md:col-span-2 lg:col-span-1">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
-            <div>
-              <h3 className="font-bold text-[var(--color-on-surface)]">Activités récentes</h3>
-              <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">Derniers paiements</p>
+        <div className="md:col-span-2 lg:col-span-1 p-1.5 rounded-[1.75rem] bg-slate-50/50 border border-slate-200/50 shadow-sm flex flex-col group">
+          <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex flex-col transition-all duration-300 group-hover:shadow-md">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+              <div>
+                <h3 className="font-black text-slate-800 tracking-tight">Activités récentes</h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">Derniers paiements</p>
+              </div>
+              <Link href="/admin/finance/paiements" className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors">Voir tout</Link>
             </div>
-            <Link href="/admin/finance/paiements" className="text-xs font-bold text-[var(--color-primary)] hover:underline">Voir tout</Link>
-          </div>
           <div className="p-5 flex flex-col gap-3">
             {recentPayments.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -464,11 +473,12 @@ export default async function AdminDashboard() {
 
 
       {/* ── ACTIONS RAPIDES ── */}
-      <div className="rounded-2xl overflow-hidden border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] shadow-sm">
-        <div className="px-6 py-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
-          <h3 className="font-bold text-[var(--color-on-surface)]">Actions rapides</h3>
-          <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">Raccourcis vers les fonctions clés</p>
-        </div>
+      <div className="p-1.5 rounded-[1.75rem] bg-slate-50/50 border border-slate-200/50 shadow-sm flex flex-col group mt-5">
+        <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex flex-col transition-all duration-300 group-hover:shadow-md">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+            <h3 className="font-black text-slate-800 tracking-tight">Actions rapides</h3>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Raccourcis vers les fonctions clés</p>
+          </div>
         <div className="p-5 grid grid-cols-3 sm:grid-cols-6 gap-3">
           
           <Link href="/admin/eleves/nouveau" className="group flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-emerald-50 hover:border-emerald-200 border border-transparent transition-all duration-200">
