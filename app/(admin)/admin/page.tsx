@@ -5,7 +5,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { 
   Users, Presentation, UserCircle, Wallet, CalendarOff,
-  TrendingUp, UserPlus, PlusSquare, CalendarPlus,
+  UserPlus, PlusSquare, CalendarPlus,
   Banknote, BookOpenCheck, AlertCircle
 } from 'lucide-react'
 import { 
@@ -15,6 +15,7 @@ import {
 import { OnboardingWizard } from '@/components/admin/OnboardingWizard'
 import { ShortcutsButton } from '@/components/admin/ShortcutsButton'
 import { RaccourcisTrigger } from '@/components/admin/RaccourcisTrigger'
+import { AnimatedCounter } from '@/components/ui/AnimatedCounter'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,9 +38,11 @@ export default async function AdminDashboard() {
 
   const { data: schoolData } = await supabase
     .from('schools')
-    .select('name')
+    .select('name, current_academic_year')
     .eq('id', schoolId)
     .maybeSingle()
+
+  const academicYear = schoolData?.current_academic_year || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`
 
   const { count: studentCount } = await supabase
     .from('students').select('*', { count: 'exact', head: true }).eq('school_id', schoolId)
@@ -59,8 +62,14 @@ export default async function AdminDashboard() {
     .eq('school_id', schoolId)
     .order('created_at', { ascending: true })
 
+  // ── Total attendu calculé depuis les échéances réelles ──
+  const { data: duesData } = await supabase
+    .from('dues')
+    .select('amount')
+    .eq('school_id', schoolId)
+  const totalAttendu = duesData?.reduce((acc, d) => acc + Number(d.amount || 0), 0) || 0
+
   let totalEncaisse = allPayments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0
-  const totalAttendu = 28500000
   let recouvRate = totalAttendu > 0 ? Math.round((totalEncaisse / totalAttendu) * 100) : 0
 
   // Grouper les paiements par mois
@@ -71,37 +80,26 @@ export default async function AdminDashboard() {
     monthlyEncaisse[month] = (monthlyEncaisse[month] || 0) + (p.amount || 0)
   })
 
-  let paymentData: PaymentData[] = monthLabels.map((month, i) => ({
+  // Calculer le montant attendu mensuel (total / 12 ou réparti par mois)
+  const monthlyAttendu = totalAttendu > 0 ? Math.round(totalAttendu / 12) : 0
+
+  const paymentData: PaymentData[] = monthLabels.map((month, i) => ({
     month,
-    attendu: 2500000 + (i >= 8 ? 500000 : 0), // Sept-Déc légèrement plus élevé
+    attendu: monthlyAttendu,
     encaisse: monthlyEncaisse[i] || 0,
   }))
-
-  // Si aucune donnée n'est présente, injecter une belle courbe sinusoïdale de démonstration pour le design
-  if (totalEncaisse === 0) {
-    let mockTotal = 0
-    paymentData = paymentData.map((d, i) => {
-      // Formule pour créer une jolie courbe sinusoïdale (montante et descendante)
-      const mockValue = d.attendu * (0.4 + 0.4 * Math.sin(i / 1.5))
-      mockTotal += mockValue
-      return { ...d, encaisse: mockValue }
-    })
-    totalEncaisse = mockTotal
-    recouvRate = totalAttendu > 0 ? Math.round((totalEncaisse / totalAttendu) * 100) : 0
-  }
 
   const today = new Date().toISOString().split('T')[0]
   const { data: attendance } = await supabase.from('attendance').select('status').eq('school_id', schoolId).eq('date', today)
 
   let pCount = 0, aCount = 0, rCount = 0
-  if (attendance && attendance.length > 0) {
+  const hasAttendanceData = attendance && attendance.length > 0
+  if (hasAttendanceData) {
     attendance.forEach(a => {
       if (a.status === 'present') pCount++
       else if (a.status === 'absent') aCount++
       else if (a.status === 'retard') rCount++
     })
-  } else {
-    pCount = 476; aCount = 32; rCount = 54
   }
 
   const attendanceData: AttendanceData[] = [
@@ -123,12 +121,7 @@ export default async function AdminDashboard() {
   const classDistributionData: ClassDistributionData[] = Object.entries(classCounts).map(([name, value], i) => ({
     name, value, color: colors[i % colors.length]
   }))
-  if (classDistributionData.length === 0) {
-    classDistributionData.push(
-      { name: '6ème', value: 120, color: '#059669' },
-      { name: '5ème', value: 140, color: '#3b82f6' },
-    )
-  }
+  // Pas de fausses données — on affiche un état vide si aucune classe
 
   const { data: overdueDues } = await supabase
     .from('dues')
@@ -202,11 +195,13 @@ export default async function AdminDashboard() {
               <Users size={17} className="text-white" />
             </div>
             <div>
-              <p className="text-[28px] font-black text-white leading-none tabular-nums">{studentCount || 0}</p>
+              <p className="text-[28px] font-black text-white leading-none tabular-nums">
+                <AnimatedCounter value={studentCount || 0} />
+              </p>
               <p className="text-emerald-200/80 text-[11px] font-semibold mt-1.5 leading-tight">Total élèves</p>
             </div>
             <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-emerald-200 px-2 py-0.5 rounded-full w-fit border border-white/10">
-              <TrendingUp size={8} /> +5% ce mois
+              Inscrits cette année
             </span>
           </div>
         </div>
@@ -223,11 +218,13 @@ export default async function AdminDashboard() {
               <Presentation size={17} className="text-white" />
             </div>
             <div>
-              <p className="text-[28px] font-black text-white leading-none tabular-nums">{classesCount || 0}</p>
+              <p className="text-[28px] font-black text-white leading-none tabular-nums">
+                <AnimatedCounter value={classesCount || 0} />
+              </p>
               <p className="text-blue-200/80 text-[11px] font-semibold mt-1.5 leading-tight">Classes actives</p>
             </div>
             <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-blue-200 px-2 py-0.5 rounded-full w-fit border border-white/10">
-              Année 2025/2026
+              {academicYear}
             </span>
           </div>
         </div>
@@ -244,7 +241,9 @@ export default async function AdminDashboard() {
               <UserCircle size={17} className="text-white" />
             </div>
             <div>
-              <p className="text-[28px] font-black text-white leading-none tabular-nums">{staffCount || 0}</p>
+              <p className="text-[28px] font-black text-white leading-none tabular-nums">
+                <AnimatedCounter value={staffCount || 0} />
+              </p>
               <p className="text-violet-200/80 text-[11px] font-semibold mt-1.5 leading-tight">Membres du staff</p>
             </div>
             <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-violet-200 px-2 py-0.5 rounded-full w-fit border border-white/10">
@@ -265,11 +264,13 @@ export default async function AdminDashboard() {
               <Wallet size={17} className="text-white" />
             </div>
             <div>
-              <p className="text-[28px] font-black text-white leading-none tabular-nums">{recouvRate}%</p>
+              <p className="text-[28px] font-black text-white leading-none tabular-nums">
+                <AnimatedCounter value={recouvRate} suffix="%" />
+              </p>
               <p className="text-amber-100/80 text-[11px] font-semibold mt-1.5 leading-tight">Taux recouvrement</p>
             </div>
             <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-amber-200 px-2 py-0.5 rounded-full w-fit border border-white/10">
-              <TrendingUp size={8} /> +2% ce mois
+              {totalAttendu > 0 ? `${new Intl.NumberFormat('fr-FR').format(totalAttendu)} FCFA` : 'Aucune échéance'}
             </span>
           </div>
         </div>
@@ -286,7 +287,9 @@ export default async function AdminDashboard() {
               <CalendarOff size={17} className="text-white" />
             </div>
             <div>
-              <p className="text-[28px] font-black text-white leading-none tabular-nums">{aCount}</p>
+              <p className="text-[28px] font-black text-white leading-none tabular-nums">
+                <AnimatedCounter value={aCount} />
+              </p>
               <p className="text-rose-200/80 text-[11px] font-semibold mt-1.5 leading-tight">Absences aujourd'hui</p>
             </div>
             <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-rose-200 px-2 py-0.5 rounded-full w-fit border border-white/10">
@@ -322,7 +325,7 @@ export default async function AdminDashboard() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
               <div>
                 <h3 className="font-black text-slate-800 text-base tracking-tight">Recouvrement des paiements</h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">Mensuel — Année scolaire 2026/2027</p>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">Mensuel — Année scolaire {academicYear}</p>
               </div>
               <div className="flex items-center gap-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shadow-[0_0_8px_rgba(16,185,129,0.4)]"/>Encaissé</span>
@@ -556,8 +559,8 @@ export default async function AdminDashboard() {
 
 
       <footer className="pt-6 border-t border-[var(--color-outline-variant)] flex flex-col md:flex-row items-center justify-between text-xs text-[var(--color-on-surface-variant)] font-medium pb-4">
-        <p>© 2026 Scogestia · Tous droits réservés.</p>
-        <p className="mt-1 md:mt-0">Année scolaire 2026 — 2027</p>
+        <p>© {new Date().getFullYear()} Scogestia · Tous droits réservés.</p>
+        <p className="mt-1 md:mt-0">Année scolaire {academicYear}</p>
       </footer>
     </div>
   )

@@ -7,7 +7,7 @@ export type SearchResult = {
   title: string
   subtitle: string
   href: string
-  type: 'student' | 'invoice' | 'staff'
+  type: 'student' | 'invoice' | 'staff' | 'class'
 }
 
 export async function globalSearch(query: string): Promise<SearchResult[]> {
@@ -87,6 +87,26 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
         subtitle: `Personnel - Rôle: ${s.role}`,
         href: `/admin/personnel`,
         type: 'staff'
+      })
+    })
+  }
+
+  // 4. Search Classes (name)
+  const { data: classes } = await supabase
+    .from('classes')
+    .select('id, name')
+    .eq('school_id', schoolId)
+    .ilike('name', searchQuery)
+    .limit(4)
+
+  if (classes) {
+    classes.forEach(c => {
+      results.push({
+        id: c.id,
+        title: c.name,
+        subtitle: `Classe`,
+        href: `/admin/classes`,
+        type: 'class'
       })
     })
   }

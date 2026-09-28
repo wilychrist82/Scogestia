@@ -19,7 +19,17 @@ export default async function ParentDashboardPage() {
     .eq('role', 'parent')
     .limit(1).maybeSingle()
 
-  if (!roleData) return null
+  if (!roleData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
+        <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mb-4 border border-amber-100">
+          <span className="text-3xl">🔒</span>
+        </div>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Compte non configuré</h2>
+        <p className="text-sm text-slate-500 max-w-sm">Votre compte parent n'est pas encore lié à une école. Veuillez contacter l'administration de l'école de votre enfant.</p>
+      </div>
+    )
+  }
 
   // Récupérer les enfants liés
   const { data: links } = await supabase

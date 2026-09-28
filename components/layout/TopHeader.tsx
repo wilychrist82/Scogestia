@@ -2,10 +2,12 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Menu, Bell, ChevronDown, CheckCheck, Settings, LogOut } from 'lucide-react'
+import { Menu, Bell, ChevronDown, CheckCheck, Settings, LogOut, Search, User, Shield } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { useNotifications } from '@/components/providers/NotificationProvider'
 import { useState, useRef, useEffect } from 'react'
+import { CommandPalette } from '@/components/search/CommandPalette'
+import { NetworkStatusIndicator } from '@/components/ui/NetworkStatusIndicator'
 
 export function TopHeader({ 
   userFullName, 
@@ -29,6 +31,7 @@ export function TopHeader({
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
   const [showNotifs, setShowNotifs] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
   const notifRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
 
@@ -142,9 +145,41 @@ export function TopHeader({
         </div>
       </div>
 
-      {/* Droite : École + Notifs + Profil */}
-      <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+      {/* Droite : Recherche + Réseau + École + Notifs + Profil */}
+      <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
         
+        {/* Recherche Globale - Bouton Desktop (Ctrl+K) */}
+        <button
+          onClick={() => setShowSearch(true)}
+          className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border ${
+            isEnseignant || isSuperAdmin
+              ? 'bg-white/10 border-white/20 text-white/70 hover:text-white'
+              : 'bg-gray-100/80 border-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-100'
+          } text-xs transition-colors`}
+          aria-label="Recherche rapide (Ctrl+K)"
+          title="Rechercher (Ctrl+K)"
+        >
+          <Search size={14} />
+          <span className="font-medium">Rechercher...</span>
+          <kbd className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold ${
+            isEnseignant || isSuperAdmin ? 'bg-white/20 text-white' : 'bg-white border border-gray-200 text-gray-500 shadow-2xs'
+          }`}>
+            Ctrl K
+          </kbd>
+        </button>
+
+        {/* Bouton recherche mobile */}
+        <button
+          onClick={() => setShowSearch(true)}
+          className={`p-2 ${iconColor} ${hoverBg} transition-colors rounded-lg md:hidden`}
+          aria-label="Rechercher"
+        >
+          <Search size={19} />
+        </button>
+
+        {/* Indicateur de connectivité Togo */}
+        <NetworkStatusIndicator />
+
         {/* Sélecteur d'école */}
         <div className={`hidden lg:flex items-center gap-2 px-3 py-1.5 border ${schoolBorderColor} rounded-lg cursor-pointer transition-colors`}>
           <div className="text-right">
@@ -247,25 +282,45 @@ export function TopHeader({
           </button>
 
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-dropdown">
+            <div className="absolute right-0 mt-2 w-60 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-dropdown">
               <div className="p-3.5 border-b border-gray-100 bg-gray-50/80">
                 <p className="text-sm font-bold text-gray-900 truncate">{userFullName}</p>
                 <p className="text-xs text-gray-500 truncate mt-0.5">{userRoleLabel}</p>
               </div>
               <div className="py-1.5">
                 <Link 
-                  href={isEnseignant ? "/enseignant/parametres" : isSuperAdmin ? "/" : "/admin/parametres"}
+                  href={isEnseignant ? "/enseignant/parametres" : isSuperAdmin ? "/" : "/admin/parametres/profil"}
                   onClick={() => setShowProfileMenu(false)}
                   className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                  <Settings size={15} className="text-gray-400" />
-                  Paramètres du profil
+                  <User size={15} className="text-gray-400" />
+                  Mon profil personnel
                 </Link>
+                {!isEnseignant && !isSuperAdmin && (
+                  <>
+                    <Link 
+                      href="/admin/parametres"
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Settings size={15} className="text-gray-400" />
+                      Configuration école
+                    </Link>
+                    <Link 
+                      href="/admin/parametres/journal"
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Shield size={15} className="text-gray-400" />
+                      Journal d'activités
+                    </Link>
+                  </>
+                )}
                 <div className="mx-3 my-1 h-px bg-gray-100" />
                 <form action={logout}>
                   <button 
                     type="submit" 
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left font-medium"
                   >
                     <LogOut size={15} />
                     Se déconnecter
@@ -276,6 +331,9 @@ export function TopHeader({
           )}
         </div>
       </div>
+
+      {/* Command Palette Modal */}
+      <CommandPalette isOpen={showSearch} onClose={() => setShowSearch(false)} />
     </header>
   )
 }

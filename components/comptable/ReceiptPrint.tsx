@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
+import { MessageCircle, Printer, X } from 'lucide-react'
 
 type ReceiptData = {
   receiptNumber: string
@@ -23,6 +24,22 @@ export function ReceiptPrint({ data, onClose }: { data: ReceiptData, onClose: ()
 
   const handlePrint = () => {
     window.print()
+  }
+
+  const handleShareWhatsApp = () => {
+    const text = `*${data.schoolName.toUpperCase()} — REÇU DE PAIEMENT*\n\n` +
+      `📄 *Reçu N°* : ${data.receiptNumber}\n` +
+      `👤 *Élève* : ${data.studentName} (${data.className})\n` +
+      `📅 *Date* : ${data.date}\n` +
+      `💰 *Montant versé* : ${data.amountPaid.toLocaleString('fr-FR')} FCFA\n` +
+      `📌 *Motif* : ${data.label}\n` +
+      `💳 *Mode* : ${data.paymentMethod}\n` +
+      `⚖️ *Reste à payer* : ${data.remaining.toLocaleString('fr-FR')} FCFA\n\n` +
+      `_Ce reçu certifie le versement enregistré. Merci de votre confiance._\n` +
+      `*Scogestia ERP Scolaire*`
+
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`
+    window.open(url, '_blank')
   }
 
   const renderReceiptBox = (isSouche: boolean = false) => (
@@ -171,20 +188,31 @@ export function ReceiptPrint({ data, onClose }: { data: ReceiptData, onClose: ()
         </div>
 
         {/* Actions (non imprimables) */}
-        <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 print:hidden">
+        <div className="p-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between gap-3 print:hidden">
           <button 
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            onClick={handleShareWhatsApp}
+            className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors shadow-xs"
+            title="Envoyer les détails du reçu au parent par WhatsApp"
           >
-            Fermer
+            <MessageCircle size={16} />
+            Partager sur WhatsApp
           </button>
-          <button 
-            onClick={handlePrint}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg flex items-center gap-2 hover:bg-blue-700"
-          >
-            <span className="material-symbols-outlined text-[18px]">print</span>
-            Imprimer le reçu
-          </button>
+
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Fermer
+            </button>
+            <button 
+              onClick={handlePrint}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg flex items-center gap-2 hover:bg-blue-700"
+            >
+              <Printer size={16} />
+              Imprimer le reçu
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -90,7 +90,17 @@ const mainNavItems: NavItem[] = [
     ]
   },
   { label: 'Abonnement', href: '/admin/abonnement', icon: CreditCard },
-  { label: 'Paramètres', href: '/admin/parametres', icon: Settings },
+  { 
+    label: 'Paramètres', 
+    href: '/admin/parametres', 
+    icon: Settings,
+    hasDropdown: true,
+    subItems: [
+      { label: 'Établissement', href: '/admin/parametres' },
+      { label: 'Mon profil', href: '/admin/parametres/profil' },
+      { label: 'Journal d\'activités', href: '/admin/parametres/journal' },
+    ]
+  },
 ]
 
 const roleNavItems: NavItem[] = [
