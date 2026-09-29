@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { ExportButtons } from '@/components/ui/ExportButtons'
 
 type Props = {
   totalStudents: number
@@ -32,6 +33,21 @@ export function RapportsManager({ totalStudents, totalClasses, totalExpected, to
   
   const recoveryRate = totalExpected > 0 ? (totalCollected / totalExpected) * 100 : 0
 
+  // Prepare data for ExportButtons
+  const exportData = [
+    { Indicateur: 'Effectif Total', Valeur: totalStudents, Détail: `Répartis dans ${totalClasses} classes` },
+    { Indicateur: 'Total Encaissé (F CFA)', Valeur: totalCollected, Détail: `Sur ${totalExpected.toLocaleString('fr-FR')} F attendus` },
+    { Indicateur: 'Taux de Recouvrement (%)', Valeur: Number(recoveryRate.toFixed(1)), Détail: `${totalCollected.toLocaleString('fr-FR')} / ${totalExpected.toLocaleString('fr-FR')} F` },
+    { Indicateur: 'Assiduité Globale (%)', Valeur: Number(attendanceRate.toFixed(1)), Détail: 'Taux de présence mensuel' },
+    ...studentsByClass.map(c => ({ Indicateur: `Classe ${c.name}`, Valeur: c.count, Détail: 'élèves' }))
+  ]
+
+  const exportHeaders = [
+    { key: 'Indicateur', label: 'Indicateur' },
+    { key: 'Valeur', label: 'Valeur' },
+    { key: 'Détail', label: 'Détail' }
+  ]
+
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-[1280px] mx-auto space-y-6">
@@ -45,10 +61,7 @@ export function RapportsManager({ totalStudents, totalClasses, totalExpected, to
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Rapport Global</h2>
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Synthèse des effectifs, de la finance et de l'assiduité.</p>
           </div>
-          <button onClick={() => window.print()} className="print:hidden flex items-center justify-center gap-2 bg-[var(--color-primary)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:opacity-90 transition-colors shadow-sm w-full sm:w-auto shrink-0">
-            <span className="material-symbols-outlined text-[20px]">print</span>
-            Exporter PDF
-          </button>
+          <ExportButtons data={exportData} filename="rapport_global" headers={exportHeaders} title="Rapport Global Scogestia" />
         </div>
 
         {/* KPIs */}

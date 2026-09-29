@@ -66,7 +66,7 @@ export default async function CommunicationPage() {
       <CommunicationManager 
         currentUserId={user.id}
         classes={classes || []} 
-        students={students as any}
+        students={students as { id: string; first_name: string; last_name: string; classes: { name: string } | null }[]}
         teachers={teachers}
         recentCommunications={communications || []}
       />

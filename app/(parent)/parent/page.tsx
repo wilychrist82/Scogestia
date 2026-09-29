@@ -63,13 +63,31 @@ export default async function ParentDashboardPage() {
     displayName = `Parent de ${children[0].first_name}`
   }
 
-  // Récupérer les communications récentes
+  // Récupérer les annonces récentes (distinctes des messages directs)
+  const { data: announcementsRaw } = await supabase
+    .from('announcements')
+    .select('*')
+    .eq('school_id', roleData.school_id)
+    .eq('is_published', true)
+    .order('published_at', { ascending: false })
+    .limit(3)
+
+  // Fallback: aussi récupérer les communications récentes si pas d'annonces
   const { data: communications } = await supabase
     .from('communications')
     .select('*')
     .eq('school_id', roleData.school_id)
     .order('created_at', { ascending: false })
     .limit(2)
+
+  // Combiner annonces + communications pour la section "À la une"
+  const announcements = (announcementsRaw || []).map((a: Record<string, unknown>) => ({
+    id: a.id as string,
+    subject: a.title as string,
+    content: a.content as string,
+    created_at: (a.published_at || a.created_at) as string,
+    isAnnouncement: true,
+  }))
 
   if (children.length === 0) {
     return (
@@ -125,7 +143,16 @@ export default async function ParentDashboardPage() {
           </div>
           
           <div className="flex-1 flex flex-col gap-4">
-            {communications && communications.length > 0 ? communications.map((comm: any, idx) => (
+            {announcements.length > 0 ? announcements.map((ann: { id: string; subject: string; content: string; isAnnouncement?: boolean }, idx: number) => (
+              <div key={ann.id} className={`block ${idx !== 0 ? 'pt-4 border-t border-gray-50' : ''}`}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="material-symbols-outlined text-[14px] text-amber-500">push_pin</span>
+                  <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Annonce</span>
+                </div>
+                <h3 className="font-bold text-gray-800 text-sm leading-tight">{ann.subject}</h3>
+                <p className="text-xs text-gray-500 line-clamp-2 mt-1.5">{ann.content}</p>
+              </div>
+            )) : communications && communications.length > 0 ? communications.map((comm: { id: string; subject: string; content: string }, idx: number) => (
               <Link key={comm.id} href="/parent/messages" className={`block group/item ${idx !== 0 ? 'pt-4 border-t border-gray-50' : ''}`}>
                 <h3 className="font-bold text-gray-800 text-sm leading-tight group-hover/item:text-[var(--color-primary)] transition-colors">{comm.subject}</h3>
                 <p className="text-xs text-gray-500 line-clamp-2 mt-1.5">{comm.content === 'Message vocal' ? '🎵 Message vocal reçu' : comm.content}</p>
@@ -144,7 +171,7 @@ export default async function ParentDashboardPage() {
         <div className="lg:col-span-8 space-y-4 sm:space-y-5">
           <h2 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest px-2">Dossiers Scolaires</h2>
           
-          {children.map((child: any) => (
+          {children.map((child: { id: string; first_name: string; last_name: string; classes: { name: string } | null }) => (
             <div key={child.id} className="bg-white/80 backdrop-blur-md rounded-[2rem] p-5 sm:p-6 shadow-sm border border-gray-100 transition-all hover:shadow-md hover:border-blue-100/50 flex flex-col sm:flex-row gap-5 sm:gap-6 group/child">
               
               <div className="flex items-center gap-4 sm:w-[35%] sm:border-r border-gray-100 sm:pr-4">
@@ -194,7 +221,7 @@ export default async function ParentDashboardPage() {
         {/* Finance */}
         <div className="lg:col-span-4 space-y-4 sm:space-y-5">
           <h2 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest px-2">Caisse</h2>
-          <Link href={`/parent/paiements${children && children.length > 0 ? `?child=${(children[0] as any).id}` : ''}`} className="block relative overflow-hidden bg-gradient-to-br from-[#1e293b] to-[#0f172a] rounded-[2rem] p-6 sm:p-8 shadow-xl text-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 border border-slate-700/50 group min-h-[180px] lg:min-h-[200px] flex flex-col justify-between">
+          <Link href={`/parent/paiements${children && children.length > 0 ? `?child=${children[0].id}` : ''}`} className="block relative overflow-hidden bg-gradient-to-br from-[#1e293b] to-[#0f172a] rounded-[2rem] p-6 sm:p-8 shadow-xl text-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 border border-slate-700/50 group min-h-[180px] lg:min-h-[200px] flex flex-col justify-between">
             <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/10 rounded-bl-[100px] -z-0 group-hover:scale-125 transition-transform duration-700"></div>
             <div className="absolute bottom-[-30px] right-[-10px] text-emerald-400/5 -z-0 group-hover:rotate-[-10deg] group-hover:scale-110 transition-transform duration-500">
               <span className="material-symbols-outlined" style={{ fontSize: '160px' }}>account_balance_wallet</span>

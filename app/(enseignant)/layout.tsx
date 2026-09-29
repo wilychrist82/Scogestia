@@ -33,7 +33,8 @@ export default async function EnseignantLayout({
     return <UnauthorizedAccess role="enseignant" />
   }
 
-  const school = roleData.schools as any
+  const schoolJoin = roleData.schools as unknown as { name: string; city: string | null } | { name: string; city: string | null }[] | null
+  const school = Array.isArray(schoolJoin) ? schoolJoin[0] ?? null : schoolJoin
   const schoolName = school?.name || 'École inconnue'
   const schoolCity = school?.city || ''
 

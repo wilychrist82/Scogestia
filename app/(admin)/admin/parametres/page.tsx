@@ -46,6 +46,6 @@ export default async function ParametresPage() {
   const userAvatar = user?.user_metadata?.avatar_url || ''
 
   return (
-    <ParametresManager school={school as any} userAvatar={userAvatar} />
+    <ParametresManager school={school as { id: string; name: string; city: string | null; phone: string | null; email: string | null; current_academic_year: string; director_name?: string | null; logo_url?: string | null; signature_url?: string | null; stamp_url?: string | null }} userAvatar={userAvatar} />
   )
 }

@@ -66,8 +66,9 @@ export async function updateSchoolSettings(prevState: ActionState, formData: For
 
     revalidatePath('/admin/parametres');
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erreur inconnue'
+    return { error: message };
   }
 }
 
@@ -89,7 +90,8 @@ export async function updateUserProfile(prevState: ActionState, formData: FormDa
     revalidatePath('/parent/parametres');
     revalidatePath('/enseignant/parametres');
     return { success: true };
-  } catch (err: any) {
-    return { error: err.message };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erreur inconnue'
+    return { error: message };
   }
 }
