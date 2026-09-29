@@ -1,6 +1,7 @@
 import { StudentList } from '@/components/admin/StudentList'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getSchoolSubscriptionStatus } from '@/lib/subscription'
 
 export const dynamic = 'force-dynamic'
 
@@ -76,6 +77,21 @@ export default async function StudentsPage({
     .eq('school_id', schoolId)
     .order('name')
 
+  // Total student count across the school for capacity quota
+  const { count: totalSchoolStudents } = await supabase
+    .from('students')
+    .select('*', { count: 'exact', head: true })
+    .eq('school_id', schoolId)
+
+  const subStatus = await getSchoolSubscriptionStatus(supabase, schoolId)
+
+  const studentQuota = {
+    current: totalSchoolStudents || 0,
+    max: subStatus.maxStudents,
+    planName: subStatus.planName,
+    isPro: subStatus.isPro,
+  }
+
   if (error) {
     return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur lors de la récupération des élèves.</div>
   }
@@ -87,6 +103,7 @@ export default async function StudentsPage({
       totalCount={count || 0}
       currentPage={page}
       itemsPerPage={itemsPerPage}
+      studentQuota={studentQuota}
     />
   )
 }

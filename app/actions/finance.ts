@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendNotification } from './notifications'
+import { assertActiveSubscription } from '@/lib/subscription'
 
 export type ActionState = {
   error?: string;
@@ -54,6 +55,7 @@ export async function generateSchedule(prevState: ActionState, formData: FormDat
   try {
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
+    await assertActiveSubscription(supabase, school_id);
 
     if (type === 'individual') {
       if (!studentId) return { error: 'Veuillez sélectionner un élève.' };
@@ -125,6 +127,7 @@ export async function recordPayment(prevState: ActionState, formData: FormData):
   try {
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
+    await assertActiveSubscription(supabase, school_id);
     
     const { data: { user } } = await supabase.auth.getUser();
 

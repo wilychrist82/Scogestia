@@ -84,7 +84,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Define route mapping
-  const routePrefix = `/${userRole}` // e.g. /admin, /enseignant, /comptable, /parent
+  const routePrefix = userRole === 'comptable' ? '/admin' : `/${userRole}` // e.g. /admin, /enseignant, /parent
   
   // If user is going to the root or an auth page, redirect them to their dashboard
   const isAuthRouteForRedirect = pathname === '/' || 
@@ -101,12 +101,20 @@ export async function proxy(request: NextRequest) {
   }
 
   // Enforce role-based access control for protected routes
-  const protectedGroups = ['/admin', '/enseignant', '/comptable', '/parent', '/super_admin']
+  const protectedGroups = ['/admin', '/enseignant', '/parent', '/super_admin']
   const attemptingToAccess = protectedGroups.find(group => pathname.startsWith(group))
 
   if (attemptingToAccess) {
-    if (isSuperAdmin) {
-      // Super admins can access everything, no restriction
+    if (!isSuperAdmin) {
+      const canAccessAdmin = (userRole === 'admin' || userRole === 'comptable') && attemptingToAccess === '/admin'
+      const canAccessEnseignant = userRole === 'enseignant' && attemptingToAccess === '/enseignant'
+      const canAccessParent = userRole === 'parent' && attemptingToAccess === '/parent'
+
+      if (!canAccessAdmin && !canAccessEnseignant && !canAccessParent) {
+        const url = request.nextUrl.clone()
+        url.pathname = routePrefix
+        return NextResponse.redirect(url)
+      }
     }
 
     // Check school suspension status for non-super admins

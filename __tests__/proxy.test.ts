@@ -57,6 +57,7 @@ vi.mock('@supabase/ssr', () => {
           return { data: { user: supabaseMockState.mockUser } }
         })
       },
+      rpc: vi.fn().mockImplementation(async () => ({ data: false, error: null })),
       from: vi.fn().mockImplementation(() => ({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
@@ -95,26 +96,26 @@ describe('Middleware Route Protection', () => {
     expect(redirectUrl.pathname).toBe('/connexion')
   })
 
-  it('devrait bloquer un comptable accédant à /admin et le renvoyer vers /comptable', async () => {
+  it('devrait bloquer un enseignant accédant à /admin et le renvoyer vers /enseignant', async () => {
     supabaseMockState.mockUser = { id: 'user-123' }
-    supabaseMockState.mockRole = 'comptable'
+    supabaseMockState.mockRole = 'enseignant'
 
     const req = new NextRequest('http://localhost:3000/admin/dashboard') as any
     const res = await proxy(req)
     
     expect(mockRedirect).toHaveBeenCalled()
     const redirectUrl = mockRedirect.mock.calls[0][0]
-    expect(redirectUrl.pathname).toBe('/comptable')
+    expect(redirectUrl.pathname).toBe('/enseignant')
   })
 
-  it('devrait laisser passer un comptable accédant à /comptable', async () => {
+  it('devrait laisser passer un comptable accédant à /admin', async () => {
     supabaseMockState.mockUser = { id: 'user-123' }
     supabaseMockState.mockRole = 'comptable'
 
-    const req = new NextRequest('http://localhost:3000/comptable/factures') as any
+    const req = new NextRequest('http://localhost:3000/admin/dashboard') as any
     const res = await proxy(req)
     
-    // Le NextResponse.next() a dû être retourné
+    // Le NextResponse.next() a dû être retourné car le comptable a accès à l'espace admin
     expect(res).toBeDefined()
     expect(mockRedirect).not.toHaveBeenCalled()
   })

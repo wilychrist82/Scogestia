@@ -46,15 +46,16 @@ async function generateUniqueMatricule(supabase: any, school_id: string): Promis
   return (maxMatricule + 1).toString();
 }
 
-async function checkStudentLimit(supabase: any, school_id: string, incomingCount: number = 1): Promise<void> {
-  const { data: sub } = await supabase
-    .from('saas_subscriptions')
-    .select('plan_name, status')
-    .eq('school_id', school_id)
-    .maybeSingle();
+import { getSchoolSubscriptionStatus } from '@/lib/subscription';
 
-  const isPro = sub?.plan_name?.toLowerCase().includes('pro');
-  const limit = isPro ? 400 : 200;
+async function checkStudentLimit(supabase: any, school_id: string, incomingCount: number = 1): Promise<void> {
+  const subStatus = await getSchoolSubscriptionStatus(supabase, school_id);
+
+  if (subStatus.isExpired) {
+    throw new Error("Abonnement requis : Votre période d'essai ou votre abonnement a expiré. Veuillez renouveler votre accès depuis l'espace Abonnement.");
+  }
+
+  const limit = subStatus.maxStudents;
 
   const { count, error } = await supabase
     .from('students')
@@ -66,9 +67,9 @@ async function checkStudentLimit(supabase: any, school_id: string, incomingCount
   const currentCount = count || 0;
   if (currentCount + incomingCount > limit) {
     if (incomingCount === 1) {
-       throw new Error(`Limite atteinte : Votre plan actuel vous limite à ${limit} élèves.`);
+       throw new Error(`Limite atteinte : Votre ${subStatus.isPro ? 'Plan Pro' : 'Plan Standard'} vous limite à ${limit} élèves. ${!subStatus.isPro ? 'Passez au Plan Pro pour accueillir jusqu\'à 400 élèves.' : 'Contactez le support pour une extension sur-mesure.'}`);
     } else {
-       throw new Error(`Limite atteinte : Vous essayez d'ajouter ${incomingCount} élèves, mais il ne vous reste que ${limit - currentCount} places disponibles sur votre plan (${limit} max).`);
+       throw new Error(`Limite atteinte : Vous essayez d'ajouter ${incomingCount} élèves, mais il ne vous reste que ${Math.max(0, limit - currentCount)} place(s) disponible(s) sur votre ${subStatus.isPro ? 'Plan Pro' : 'Plan Standard'} (${limit} max). ${!subStatus.isPro ? 'Passez au Plan Pro pour accueillir jusqu\'à 400 élèves.' : ''}`);
     }
   }
 }

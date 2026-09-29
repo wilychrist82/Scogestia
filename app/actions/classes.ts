@@ -23,6 +23,8 @@ async function getActiveSchoolId() {
   return roleData.school_id;
 }
 
+import { assertActiveSubscription } from '@/lib/subscription';
+
 export async function createClass(prevState: ActionState, formData: FormData): Promise<ActionState> {
   const name = formData.get('className') as string;
   const level = formData.get('classLevel') as string;
@@ -38,6 +40,8 @@ export async function createClass(prevState: ActionState, formData: FormData): P
   try {
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
+
+    await assertActiveSubscription(supabase, school_id);
 
     const { error } = await supabase
       .from('classes')

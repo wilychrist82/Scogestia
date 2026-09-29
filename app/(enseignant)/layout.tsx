@@ -2,6 +2,8 @@ import { AdminLayoutWrapper } from '@/components/layout/AdminLayoutWrapper'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { UnauthorizedAccess } from '@/components/shared/UnauthorizedAccess'
+import { SchoolSuspendedScreen } from '@/components/shared/SchoolSuspendedScreen'
+import { getSchoolSubscriptionStatus } from '@/lib/subscription'
 
 export default async function EnseignantLayout({
   children,
@@ -20,6 +22,7 @@ export default async function EnseignantLayout({
     .select(`
       full_name, 
       role,
+      school_id,
       schools (
         name,
         city
@@ -37,6 +40,14 @@ export default async function EnseignantLayout({
   const school = Array.isArray(schoolJoin) ? schoolJoin[0] ?? null : schoolJoin
   const schoolName = school?.name || 'École inconnue'
   const schoolCity = school?.city || ''
+
+  // Vérifier si l'établissement est actif
+  if (roleData.school_id) {
+    const subStatus = await getSchoolSubscriptionStatus(supabase, roleData.school_id)
+    if (subStatus.isExpired) {
+      return <SchoolSuspendedScreen schoolName={schoolName} userRole="enseignant" />
+    }
+  }
 
   const userAvatar = user?.user_metadata?.avatar_url || null
 

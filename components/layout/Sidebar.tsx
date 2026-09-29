@@ -20,7 +20,8 @@ import {
   X,
   LogOut,
   Calendar,
-  CreditCard
+  CreditCard,
+  Lock
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { ContactSupportModal } from './ContactSupportModal'
@@ -39,6 +40,7 @@ export type SidebarProps = {
   navVariant?: 'admin' | 'enseignant' | 'super_admin'
   isOpen?: boolean
   onClose?: () => void
+  isExpired?: boolean
 }
 
 // ── Nav items définis HORS du composant (évite re-création à chaque render) ──
@@ -121,9 +123,10 @@ type NavGroupProps = {
   openDropdowns: Record<string, boolean>
   onToggleDropdown: (href: string) => void
   onClose?: () => void
+  isExpired?: boolean
 }
 
-function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onClose }: NavGroupProps) {
+function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onClose, isExpired }: NavGroupProps) {
   return (
     <div className="mb-4">
       <h3 className="px-4 text-[10px] font-bold text-[var(--color-sidebar-muted)] mb-2 uppercase tracking-[0.12em]">
@@ -134,6 +137,8 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
           const isActive = pathname === item.href || (item.href !== '/admin' && item.href !== '/enseignant' && item.href !== '/super_admin' && pathname.startsWith(`${item.href}/`))
           const isOpen = openDropdowns[item.href] ?? isActive
           const Icon = item.icon
+          const isAbonnement = item.href === '/admin/abonnement'
+          const isLocked = Boolean(isExpired && !isAbonnement)
 
           return (
             <div key={item.href}>
@@ -144,7 +149,9 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
                   className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200 mx-2 text-left group ${
                     isActive 
                       ? 'bg-[var(--color-sidebar-active)] text-white font-semibold' 
-                      : 'text-[var(--color-sidebar-text)] hover:bg-[var(--color-sidebar-hover)]'
+                      : isLocked
+                        ? 'text-[var(--color-sidebar-text)] opacity-70 hover:bg-[var(--color-sidebar-hover)]'
+                        : 'text-[var(--color-sidebar-text)] hover:bg-[var(--color-sidebar-hover)]'
                   }`}
                   style={{ width: 'calc(100% - 1rem)' }}
                 >
@@ -155,10 +162,13 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
                     />
                     <span className="text-sm font-medium">{item.label}</span>
                   </div>
-                  <ChevronDown 
-                    size={14} 
-                    className={`flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'} ${isActive ? 'text-white' : 'text-[var(--color-sidebar-muted)]'}`} 
-                  />
+                  <div className="flex items-center gap-2">
+                    {isLocked && <Lock size={12} className="text-amber-400 shrink-0" />}
+                    <ChevronDown 
+                      size={14} 
+                      className={`flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : 'rotate-0'} ${isActive ? 'text-white' : 'text-[var(--color-sidebar-muted)]'}`} 
+                    />
+                  </div>
                 </button>
               ) : (
                 <Link 
@@ -167,21 +177,35 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
                   className={`flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200 mx-2 group ${
                     isActive 
                       ? 'bg-[var(--color-sidebar-active)] text-white font-semibold' 
-                      : 'text-[var(--color-sidebar-text)] hover:bg-[var(--color-sidebar-hover)]'
+                      : isAbonnement && isExpired
+                        ? 'bg-red-500/20 text-red-200 border border-red-500/40 hover:bg-red-500/30'
+                        : isLocked
+                          ? 'text-[var(--color-sidebar-text)] opacity-70 hover:bg-[var(--color-sidebar-hover)]'
+                          : 'text-[var(--color-sidebar-text)] hover:bg-[var(--color-sidebar-hover)]'
                   }`}
                   style={{ display: 'flex', marginLeft: '0.5rem', marginRight: '0.5rem', borderRadius: '0.5rem' }}
                 >
                   <div className="flex items-center gap-3">
                     <Icon 
                       size={18} 
-                      className={`flex-shrink-0 transition-colors ${isActive ? 'text-white' : 'text-[var(--color-sidebar-muted)] group-hover:text-white/70'}`} 
+                      className={`flex-shrink-0 transition-colors ${isActive ? 'text-white' : isAbonnement && isExpired ? 'text-red-400' : 'text-[var(--color-sidebar-muted)] group-hover:text-white/70'}`} 
                     />
                     <span className="text-sm font-medium">{item.label}</span>
                   </div>
-                  {/* Indicateur actif */}
-                  {isActive && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/70 flex-shrink-0" />
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {isAbonnement && isExpired && (
+                      <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-red-500 text-white animate-pulse">
+                        Requis
+                      </span>
+                    )}
+                    {isLocked && (
+                      <Lock size={12} className="text-amber-400 shrink-0" />
+                    )}
+                    {/* Indicateur actif */}
+                    {isActive && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-white/70 flex-shrink-0" />
+                    )}
+                  </div>
                 </Link>
               )}
 
@@ -198,16 +222,21 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
                         key={subItem.href}
                         href={subItem.href}
                         onClick={onClose}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[12.5px] font-medium transition-all duration-150 ${
+                        className={`flex items-center justify-between px-3 py-1.5 rounded-md text-[12.5px] font-medium transition-all duration-150 ${
                           isSubActive
                             ? 'text-white bg-white/10'
-                            : 'text-[var(--color-sidebar-muted)] hover:text-white hover:bg-white/5'
+                            : isLocked
+                              ? 'text-[var(--color-sidebar-muted)] opacity-70 hover:text-white hover:bg-white/5'
+                              : 'text-[var(--color-sidebar-muted)] hover:text-white hover:bg-white/5'
                         }`}
                       >
-                        {isSubActive && (
-                          <span className="w-1 h-1 rounded-full bg-[var(--color-sidebar-active)] flex-shrink-0" />
-                        )}
-                        <span className={isSubActive ? '' : 'ml-3'}>{subItem.label}</span>
+                        <div className="flex items-center gap-2">
+                          {isSubActive && (
+                            <span className="w-1 h-1 rounded-full bg-[var(--color-sidebar-active)] flex-shrink-0" />
+                          )}
+                          <span className={isSubActive ? '' : 'ml-3'}>{subItem.label}</span>
+                        </div>
+                        {isLocked && <Lock size={10} className="text-amber-400/80 shrink-0" />}
                       </Link>
                     )
                   })}
@@ -223,7 +252,7 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
 
 // ── Composant principal Sidebar ──
 
-export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isOpen, onClose }: SidebarProps) {
+export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isOpen, onClose, isExpired }: SidebarProps) {
   const pathname = usePathname()
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
 
@@ -304,6 +333,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
               openDropdowns={openDropdowns}
               onToggleDropdown={handleToggleDropdown}
               onClose={onClose}
+              isExpired={isExpired}
             />
           ) : (
             <>
@@ -314,6 +344,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
                 openDropdowns={openDropdowns}
                 onToggleDropdown={handleToggleDropdown}
                 onClose={onClose}
+                isExpired={isExpired}
               />
               <NavGroup 
                 title="Espaces par rôle" 
@@ -322,6 +353,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
                 openDropdowns={openDropdowns}
                 onToggleDropdown={handleToggleDropdown}
                 onClose={onClose}
+                isExpired={isExpired}
               />
             </>
           )}
