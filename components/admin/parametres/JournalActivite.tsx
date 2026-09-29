@@ -13,7 +13,8 @@ import {
   Calendar,
   Clock,
   CheckCircle2,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Building2
 } from 'lucide-react'
 
 export type ActivityItem = {
@@ -104,6 +105,24 @@ export function JournalActivite({ activities, schoolName }: Props) {
             <p className="text-[10px] uppercase font-bold text-slate-400">Total événements</p>
             <p className="text-xl font-black text-slate-800">{activities.length}</p>
           </div>
+        </div>
+
+        {/* Navigation Onglets Paramètres */}
+        <div className="flex items-center gap-2 border-b border-[var(--color-outline-variant)]">
+          <Link
+            href="/admin/parametres"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 transition-colors"
+          >
+            <Building2 size={16} />
+            Établissement & Identité
+          </Link>
+          <Link
+            href="/admin/parametres/journal"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 border-emerald-600 text-emerald-700 transition-colors"
+          >
+            <ShieldCheck size={16} />
+            Journal d'activités & Audit
+          </Link>
         </div>
 
         {/* Barre de filtre & recherche */}

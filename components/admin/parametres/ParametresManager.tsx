@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useTransition, FormEvent } from 'react'
+import Link from 'next/link'
+import { Building2, ShieldCheck } from 'lucide-react'
 import { updateSchoolSettings } from '@/app/actions/parametres'
 import { ImageUpload } from '@/components/shared/ImageUpload'
 
@@ -61,6 +63,24 @@ export function ParametresManager({ school, userAvatar }: Props) {
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Configuration de l'École</h2>
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Gérez les informations globales et les préférences du système.</p>
           </div>
+        </div>
+
+        {/* Navigation Onglets Paramètres */}
+        <div className="flex items-center gap-2 border-b border-[var(--color-outline-variant)]">
+          <Link
+            href="/admin/parametres"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 border-[var(--color-primary)] text-[var(--color-primary)] transition-colors"
+          >
+            <Building2 size={16} />
+            Établissement & Identité
+          </Link>
+          <Link
+            href="/admin/parametres/journal"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 transition-colors"
+          >
+            <ShieldCheck size={16} />
+            Journal d'activités & Audit
+          </Link>
         </div>
 
         {error && (
@@ -131,21 +151,6 @@ export function ParametresManager({ school, userAvatar }: Props) {
                   placeholder="contact@ecole.com"
                 />
               </div>
-              <div className="flex flex-col gap-1.5 md:col-span-2 mt-4 pt-4 border-t border-[var(--color-outline-variant)]">
-                <h4 className="font-bold text-[var(--color-on-surface)] text-sm mb-2">Profil Administrateur</h4>
-              </div>
-
-              <div className="flex flex-col gap-1.5 md:col-span-2">
-                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Photo de Profil (Avatar)</label>
-                <ImageUpload 
-                  name="profilePhotoUrl" 
-                  bucket="avatars" 
-                  folder={`admin_${school.id}`} 
-                  defaultUrl={userAvatar || null} 
-                  label="Choisir une photo (Depuis la galerie ou le PC)"
-                />
-              </div>
-
               <div className="flex flex-col gap-1.5 md:col-span-2 mt-4 pt-4 border-t border-[var(--color-outline-variant)]">
                 <h4 className="font-bold text-[var(--color-on-surface)] text-sm mb-2">Signatures & Cachets Officiels (Pour les bulletins et reçus)</h4>
               </div>
