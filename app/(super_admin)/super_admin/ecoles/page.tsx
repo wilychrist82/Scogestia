@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Settings, ShieldOff, CheckCircle, CalendarPlus } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function SuperAdminSchools() {
   const schools = await getAllSchools()
 

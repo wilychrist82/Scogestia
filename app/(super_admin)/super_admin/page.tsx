@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Building2, CheckCircle2, XCircle, TrendingUp } from 'lucide-react'
 import { MRRChart } from '@/components/super_admin/MRRChart'
 
+export const dynamic = 'force-dynamic'
+
 export default async function SuperAdminDashboard() {
   const metrics = await getSaaSDashboardMetrics()
 

@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export type ActionState = {
@@ -31,52 +30,82 @@ async function verifySuperAdmin(supabase: any) {
 }
 
 export async function getSaaSDashboardMetrics() {
-  const supabase = await createClient();
-  await verifySuperAdmin(supabase);
+  try {
+    const supabase = await createClient();
+    await verifySuperAdmin(supabase);
 
-  const adminClient = createAdminClient();
-  const { data: schools, error } = await adminClient
-    .from('schools')
-    .select('id, subscription_status, subscription_plan');
+    const { data: schools, error } = await supabase
+      .from('schools')
+      .select('id, subscription_status, subscription_plan');
 
-  if (error) {
-    throw new Error('Erreur lors de la récupération des métriques: ' + error.message);
-  }
-
-  const totalSchools = schools?.length || 0;
-  const activeSchools = schools?.filter(s => s.subscription_status === 'active').length || 0;
-  const suspendedSchools = schools?.filter(s => s.subscription_status === 'suspended').length || 0;
-  
-  let mrr = 0;
-  schools?.forEach(s => {
-    if (s.subscription_status === 'active') {
-      if (s.subscription_plan === 'pro') mrr += 15000;
-      if (s.subscription_plan === 'premium') mrr += 30000;
+    if (error) {
+      console.error('Erreur métriques:', error);
+      return { totalSchools: 0, activeSchools: 0, suspendedSchools: 0, mrr: 0 };
     }
-  });
 
-  return { totalSchools, activeSchools, suspendedSchools, mrr };
+    const totalSchools = schools?.length || 0;
+    const activeSchools = schools?.filter(s => s.subscription_status === 'active').length || 0;
+    const suspendedSchools = schools?.filter(s => s.subscription_status === 'suspended').length || 0;
+    
+    let mrr = 0;
+    schools?.forEach(s => {
+      if (s.subscription_status === 'active') {
+        if (s.subscription_plan === 'pro') mrr += 15000;
+        if (s.subscription_plan === 'premium') mrr += 30000;
+      }
+    });
+
+    return { totalSchools, activeSchools, suspendedSchools, mrr };
+  } catch (err: any) {
+    console.error('Erreur getSaaSDashboardMetrics:', err);
+    return { totalSchools: 0, activeSchools: 0, suspendedSchools: 0, mrr: 0 };
+  }
 }
 
 export async function getAllSchools() {
-  const supabase = await createClient();
-  await verifySuperAdmin(supabase);
+  try {
+    const supabase = await createClient();
+    await verifySuperAdmin(supabase);
 
-  const adminClient = createAdminClient();
-  const { data: schools, error } = await adminClient
-    .from('schools')
-    .select(`
-      *,
-      saas_subscriptions (
-        status,
-        current_period_end,
-        plan_name
-      )
-    `)
-    .order('created_at', { ascending: false });
+    const { data: schools, error: schoolsError } = await supabase
+      .from('schools')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  if (error) throw new Error('Erreur de récupération des écoles: ' + error.message);
-  return schools;
+    if (schoolsError) {
+      console.error('Erreur récupération écoles:', schoolsError);
+      return [];
+    }
+
+    if (!schools || schools.length === 0) {
+      return [];
+    }
+
+    // Récupérer les abonnements séparément pour éviter tout problème de jointure
+    try {
+      const schoolIds = schools.map(s => s.id);
+      const { data: subscriptions } = await supabase
+        .from('saas_subscriptions')
+        .select('school_id, status, current_period_end, plan_name')
+        .in('school_id', schoolIds);
+
+      const subMap = new Map();
+      subscriptions?.forEach(sub => {
+        subMap.set(sub.school_id, sub);
+      });
+
+      return schools.map(school => ({
+        ...school,
+        saas_subscriptions: subMap.get(school.id) || null
+      }));
+    } catch (subErr) {
+      console.warn('Impossible de charger saas_subscriptions:', subErr);
+      return schools;
+    }
+  } catch (err: any) {
+    console.error('Erreur getAllSchools:', err);
+    return [];
+  }
 }
 
 export async function toggleSchoolStatus(schoolId: string, currentStatus: string): Promise<ActionState> {
@@ -85,9 +114,8 @@ export async function toggleSchoolStatus(schoolId: string, currentStatus: string
     await verifySuperAdmin(supabase);
 
     const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
-    const adminClient = createAdminClient();
 
-    const { error } = await adminClient
+    const { error } = await supabase
       .from('schools')
       .update({ subscription_status: newStatus })
       .eq('id', schoolId);
@@ -95,25 +123,29 @@ export async function toggleSchoolStatus(schoolId: string, currentStatus: string
     if (error) throw new Error(`Erreur lors de la mise à jour: ${error.message}`);
 
     // Si on réactive l'école, on prolonge aussi saas_subscriptions pour lever le blocage
-    if (newStatus === 'active') {
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 30);
-      await adminClient
-        .from('saas_subscriptions')
-        .upsert({
-          school_id: schoolId,
-          status: 'active',
-          current_period_end: futureDate.toISOString(),
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'school_id' });
-    } else {
-      await adminClient
-        .from('saas_subscriptions')
-        .update({
-          status: 'expired',
-          updated_at: new Date().toISOString()
-        })
-        .eq('school_id', schoolId);
+    try {
+      if (newStatus === 'active') {
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + 30);
+        await supabase
+          .from('saas_subscriptions')
+          .upsert({
+            school_id: schoolId,
+            status: 'active',
+            current_period_end: futureDate.toISOString(),
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'school_id' });
+      } else {
+        await supabase
+          .from('saas_subscriptions')
+          .update({
+            status: 'expired',
+            updated_at: new Date().toISOString()
+          })
+          .eq('school_id', schoolId);
+      }
+    } catch (e) {
+      console.warn('Mise à jour saas_subscriptions ignorée:', e);
     }
 
     revalidatePath('/super_admin/ecoles');
@@ -131,23 +163,26 @@ export async function reactivateOrExtendSchool(schoolId: string, days: number = 
     const supabase = await createClient();
     await verifySuperAdmin(supabase);
 
-    const adminClient = createAdminClient();
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + days);
 
-    await adminClient
+    await supabase
       .from('schools')
       .update({ subscription_status: 'active' })
       .eq('id', schoolId);
 
-    await adminClient
-      .from('saas_subscriptions')
-      .upsert({
-        school_id: schoolId,
-        status: 'active',
-        current_period_end: futureDate.toISOString(),
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'school_id' });
+    try {
+      await supabase
+        .from('saas_subscriptions')
+        .upsert({
+          school_id: schoolId,
+          status: 'active',
+          current_period_end: futureDate.toISOString(),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'school_id' });
+    } catch (e) {
+      console.warn('Upsert saas_subscriptions ignoré:', e);
+    }
 
     revalidatePath('/super_admin/ecoles');
     revalidatePath('/super_admin');
@@ -164,21 +199,22 @@ export async function updateSchoolPlan(schoolId: string, newPlan: string): Promi
     const supabase = await createClient();
     await verifySuperAdmin(supabase);
 
-    const adminClient = createAdminClient();
-    const { error } = await adminClient
+    const { error } = await supabase
       .from('schools')
       .update({ subscription_plan: newPlan })
       .eq('id', schoolId);
 
     if (error) throw new Error(`Erreur lors de la mise à jour: ${error.message}`);
 
-    await adminClient
-      .from('saas_subscriptions')
-      .update({
-        plan_name: newPlan,
-        updated_at: new Date().toISOString()
-      })
-      .eq('school_id', schoolId);
+    try {
+      await supabase
+        .from('saas_subscriptions')
+        .update({
+          plan_name: newPlan,
+          updated_at: new Date().toISOString()
+        })
+        .eq('school_id', schoolId);
+    } catch (e) {}
 
     revalidatePath('/super_admin/ecoles');
     return { success: true };
