@@ -25,7 +25,12 @@ export default async function SuperAdminLayout({
   const userRoleLabel = 'Super Administrateur SaaS'
 
   return (
-    <AdminLayoutWrapper userFullName={userFullName} userRoleLabel={userRoleLabel} navVariant="super_admin">
+    <AdminLayoutWrapper 
+      userFullName={userFullName} 
+      userRoleLabel={userRoleLabel} 
+      navVariant="super_admin"
+      isSuperAdmin={true}
+    >
       {children}
     </AdminLayoutWrapper>
   )

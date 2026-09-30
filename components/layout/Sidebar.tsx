@@ -41,6 +41,7 @@ export type SidebarProps = {
   isOpen?: boolean
   onClose?: () => void
   isExpired?: boolean
+  isSuperAdmin?: boolean
 }
 
 // ── Nav items définis HORS du composant (évite re-création à chaque render) ──
@@ -253,9 +254,15 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
 
 // ── Composant principal Sidebar ──
 
-export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isOpen, onClose, isExpired }: SidebarProps) {
+export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isOpen, onClose, isExpired, isSuperAdmin = false }: SidebarProps) {
   const pathname = usePathname()
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
+
+  const currentRoleNavItems: NavItem[] = [
+    ...(isSuperAdmin ? [{ label: 'Cockpit Super Admin', href: '/super_admin', icon: ShieldCheck }] : []),
+    { label: 'Espace Enseignant', href: '/enseignant', icon: GraduationCap },
+    { label: 'Espace Parent', href: '/parent', icon: Users },
+  ]
 
   // État indépendant pour chaque dropdown (permet l'ouverture manuelle)
   const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>(() => {
@@ -349,7 +356,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
               />
               <NavGroup 
                 title="Espaces par rôle" 
-                items={roleNavItems}
+                items={currentRoleNavItems}
                 pathname={pathname}
                 openDropdowns={openDropdowns}
                 onToggleDropdown={handleToggleDropdown}

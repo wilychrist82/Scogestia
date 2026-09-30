@@ -93,6 +93,7 @@ export default async function AdminLayout({
         schoolCity={schoolCity}
         isExpired={isExpired}
         daysRemaining={daysRemaining}
+        isSuperAdmin={isPrivileged}
         banner={showBanner ? (
           <div className={`px-4 py-3 flex items-center justify-between shadow-sm z-50 ${isExpired ? 'bg-[#d93025] text-white' : 'bg-[#f57f17] text-white'}`}>
             <div className="flex items-center gap-2 text-sm font-medium">

@@ -4,6 +4,8 @@ import { BottomNav } from '@/components/parent/BottomNav'
 import { ParentHeader } from '@/components/parent/ParentHeader'
 import { UnauthorizedAccess } from '@/components/shared/UnauthorizedAccess'
 import { NotificationProvider } from '@/components/providers/NotificationProvider'
+import { SchoolSuspendedScreen } from '@/components/shared/SchoolSuspendedScreen'
+import { getSchoolSubscriptionStatus } from '@/lib/subscription'
 
 export default async function ParentLayout({
   children,
@@ -19,13 +21,31 @@ export default async function ParentLayout({
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('full_name, role')
+    .select(`
+      full_name, 
+      role,
+      school_id,
+      schools (
+        name
+      )
+    `)
     .eq('user_id', user.id)
     .eq('role', 'parent')
     .limit(1).maybeSingle()
 
   if (!roleData) {
     return <UnauthorizedAccess role="parent" />
+  }
+
+  // Vérifier si l'établissement est actif
+  if (roleData.school_id) {
+    const subStatus = await getSchoolSubscriptionStatus(supabase, roleData.school_id)
+    if (subStatus.isExpired) {
+      const schoolJoin = roleData.schools as unknown as { name: string } | { name: string }[] | null
+      const school = Array.isArray(schoolJoin) ? schoolJoin[0] ?? null : schoolJoin
+      const schoolName = school?.name || 'Votre établissement'
+      return <SchoolSuspendedScreen schoolName={schoolName} userRole="parent" />
+    }
   }
 
   const userAvatar = user?.user_metadata?.avatar_url || null

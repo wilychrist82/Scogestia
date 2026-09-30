@@ -16,7 +16,8 @@ export function AdminLayoutWrapper({
   schoolName,
   schoolCity,
   isExpired = false,
-  daysRemaining = 0
+  daysRemaining = 0,
+  isSuperAdmin = false
 }: { 
   children: React.ReactNode, 
   userFullName: string, 
@@ -27,7 +28,8 @@ export function AdminLayoutWrapper({
   schoolName?: string,
   schoolCity?: string,
   isExpired?: boolean,
-  daysRemaining?: number
+  daysRemaining?: number,
+  isSuperAdmin?: boolean
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const pathname = usePathname()
@@ -46,6 +48,7 @@ export function AdminLayoutWrapper({
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         isExpired={isExpired}
+        isSuperAdmin={isSuperAdmin}
       />
       <div className="flex h-screen bg-[var(--color-dashboard-bg)] overflow-hidden w-full relative">
         <div className="flex-1 ml-0 md:ml-64 flex flex-col h-screen overflow-hidden relative">
