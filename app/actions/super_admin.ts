@@ -114,44 +114,20 @@ export async function toggleSchoolStatus(schoolId: string, currentStatus: string
     await verifySuperAdmin(supabase);
 
     const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+    const admin = createAdminClient();
 
-    const { error } = await supabase
+    const { error } = await admin
       .from('schools')
-      .update({ subscription_status: newStatus })
+      .update({ subscription_status: newStatus, updated_at: new Date().toISOString() })
       .eq('id', schoolId);
 
     if (error) throw new Error(`Erreur lors de la mise à jour: ${error.message}`);
-
-    // Si on réactive l'école, on prolonge aussi saas_subscriptions pour lever le blocage
-    try {
-      if (newStatus === 'active') {
-        const futureDate = new Date();
-        futureDate.setDate(futureDate.getDate() + 30);
-        await supabase
-          .from('saas_subscriptions')
-          .upsert({
-            school_id: schoolId,
-            status: 'active',
-            current_period_end: futureDate.toISOString(),
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'school_id' });
-      } else {
-        await supabase
-          .from('saas_subscriptions')
-          .update({
-            status: 'expired',
-            updated_at: new Date().toISOString()
-          })
-          .eq('school_id', schoolId);
-      }
-    } catch (e) {
-      console.warn('Mise à jour saas_subscriptions ignorée:', e);
-    }
 
     revalidatePath('/super_admin/ecoles');
     revalidatePath('/super_admin');
     revalidatePath('/admin');
     revalidatePath('/enseignant');
+    revalidatePath('/parent');
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
@@ -163,31 +139,20 @@ export async function reactivateOrExtendSchool(schoolId: string, days: number = 
     const supabase = await createClient();
     await verifySuperAdmin(supabase);
 
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + days);
+    const admin = createAdminClient();
 
-    await supabase
+    const { error } = await admin
       .from('schools')
-      .update({ subscription_status: 'active' })
+      .update({ subscription_status: 'active', updated_at: new Date().toISOString() })
       .eq('id', schoolId);
 
-    try {
-      await supabase
-        .from('saas_subscriptions')
-        .upsert({
-          school_id: schoolId,
-          status: 'active',
-          current_period_end: futureDate.toISOString(),
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'school_id' });
-    } catch (e) {
-      console.warn('Upsert saas_subscriptions ignoré:', e);
-    }
+    if (error) throw new Error(`Erreur lors de la mise à jour: ${error.message}`);
 
     revalidatePath('/super_admin/ecoles');
     revalidatePath('/super_admin');
     revalidatePath('/admin');
     revalidatePath('/enseignant');
+    revalidatePath('/parent');
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
@@ -199,22 +164,19 @@ export async function updateSchoolPlan(schoolId: string, newPlan: string): Promi
     const supabase = await createClient();
     await verifySuperAdmin(supabase);
 
-    const { error } = await supabase
+    const admin = createAdminClient();
+    const maxStudents = (newPlan === 'pro' || newPlan === 'premium') ? 400 : 200;
+
+    const { error } = await admin
       .from('schools')
-      .update({ subscription_plan: newPlan })
+      .update({ 
+        subscription_plan: newPlan, 
+        max_students: maxStudents,
+        updated_at: new Date().toISOString() 
+      })
       .eq('id', schoolId);
 
     if (error) throw new Error(`Erreur lors de la mise à jour: ${error.message}`);
-
-    try {
-      await supabase
-        .from('saas_subscriptions')
-        .update({
-          plan_name: newPlan,
-          updated_at: new Date().toISOString()
-        })
-        .eq('school_id', schoolId);
-    } catch (e) {}
 
     revalidatePath('/super_admin/ecoles');
     return { success: true };

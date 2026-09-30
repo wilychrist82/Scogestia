@@ -1,7 +1,7 @@
-import { getAllSchools, toggleSchoolStatus, updateSchoolPlan, reactivateOrExtendSchool } from '@/app/actions/super_admin'
+import { getAllSchools } from '@/app/actions/super_admin'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Settings, ShieldOff, CheckCircle, CalendarPlus } from 'lucide-react'
+import { SchoolRowActions } from '@/components/super_admin/SchoolRowActions'
 
 export const dynamic = 'force-dynamic'
 
@@ -70,62 +70,11 @@ export default async function SuperAdminSchools() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <form className="flex items-center justify-end gap-2">
-                          <input type="hidden" name="schoolId" value={school.id} />
-                          
-                          {/* Modifier le Plan */}
-                          <select 
-                            name="newPlan" 
-                            defaultValue={school.subscription_plan}
-                            className="text-xs border-gray-300 rounded-md py-1 px-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
-                            title="Modifier le plan"
-                          >
-                            <option value="starter">Starter</option>
-                            <option value="pro">Pro</option>
-                            <option value="premium">Premium</option>
-                          </select>
-                          <button 
-                            formAction={async (formData) => {
-                              'use server'
-                              const id = formData.get('schoolId') as string
-                              const plan = formData.get('newPlan') as string
-                              await updateSchoolPlan(id, plan)
-                            }}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                            title="Sauvegarder le plan"
-                          >
-                            <Settings size={16} />
-                          </button>
-
-                          {/* Prolonger +30 jours */}
-                          <button
-                            formAction={async () => {
-                              'use server'
-                              await reactivateOrExtendSchool(school.id, 30)
-                            }}
-                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md border border-emerald-200 transition-colors"
-                            title="Réactiver ou prolonger de 30 jours"
-                          >
-                            <CalendarPlus size={14} />
-                            <span>+30j</span>
-                          </button>
-
-                          {/* Bloquer / Débloquer */}
-                          <button 
-                            formAction={async () => {
-                              'use server'
-                              await toggleSchoolStatus(school.id, school.subscription_status)
-                            }}
-                            className={`p-1.5 rounded-md transition-colors ${
-                              school.subscription_status === 'active' && !isExpired
-                                ? 'text-red-600 hover:bg-red-50' 
-                                : 'text-green-600 hover:bg-green-50'
-                            }`}
-                            title={school.subscription_status === 'active' && !isExpired ? "Suspendre l'école" : "Réactiver l'école"}
-                          >
-                            {school.subscription_status === 'active' && !isExpired ? <ShieldOff size={16} /> : <CheckCircle size={16} />}
-                          </button>
-                        </form>
+                        <SchoolRowActions 
+                          schoolId={school.id}
+                          currentPlan={school.subscription_plan}
+                          currentStatus={school.subscription_status}
+                        />
                       </td>
                     </tr>
                   )

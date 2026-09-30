@@ -15,38 +15,48 @@ export type SubscriptionStatus = {
  * Récupère le statut complet d'abonnement d'un établissement
  */
 export async function getSchoolSubscriptionStatus(supabase: any, schoolId: string): Promise<SubscriptionStatus> {
-  const { data: sub } = await supabase
-    .from('saas_subscriptions')
-    .select('status, current_period_end, plan_name')
-    .eq('school_id', schoolId)
+  // 1. Vérifier le statut directement depuis la table schools
+  const { data: school } = await supabase
+    .from('schools')
+    .select('id, name, subscription_status, subscription_plan, max_students, created_at')
+    .eq('id', schoolId)
     .maybeSingle()
 
-  if (!sub || !sub.current_period_end) {
+  if (school) {
+    const isSuspended = school.subscription_status === 'suspended'
+    const plan = school.subscription_plan || 'starter'
+    const isPro = plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('premium')
+    const maxStudents = school.max_students || (isPro ? 400 : 200)
+
+    if (isSuspended) {
+      return {
+        isExpired: true,
+        daysRemaining: 0,
+        planName: plan,
+        status: 'expired',
+        maxStudents,
+        isPro,
+      }
+    }
+
+    // Statut actif : accès débloqué
     return {
-      isExpired: true,
-      daysRemaining: 0,
-      planName: 'Standard',
-      status: 'expired',
-      maxStudents: 200,
-      isPro: false,
+      isExpired: false,
+      daysRemaining: 30,
+      planName: plan,
+      status: 'active',
+      maxStudents,
+      isPro,
     }
   }
 
-  const endDate = new Date(sub.current_period_end)
-  const now = new Date()
-  const diffTime = endDate.getTime() - now.getTime()
-  const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  const isExpired = daysRemaining <= 0 || sub.status === 'expired'
-  const isPro = Boolean(sub.plan_name?.toLowerCase().includes('pro'))
-  const maxStudents = isPro ? 400 : 200
-
   return {
-    isExpired,
-    daysRemaining,
-    planName: sub.plan_name || (isPro ? 'Pro' : 'Standard'),
-    status: isExpired ? 'expired' : sub.status,
-    maxStudents,
-    isPro,
+    isExpired: true,
+    daysRemaining: 0,
+    planName: 'Standard',
+    status: 'expired',
+    maxStudents: 200,
+    isPro: false,
   }
 }
 
