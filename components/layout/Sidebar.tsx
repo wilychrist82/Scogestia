@@ -96,6 +96,7 @@ const mainNavItems: NavItem[] = [
 ]
 
 const roleNavItems: NavItem[] = [
+  { label: 'Cockpit Super Admin', href: '/super_admin', icon: ShieldCheck },
   { label: 'Espace Enseignant', href: '/enseignant', icon: GraduationCap },
   { label: 'Espace Parent', href: '/parent', icon: Users },
 ]

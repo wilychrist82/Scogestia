@@ -44,8 +44,19 @@ export default async function AdminLayout({
   const schoolName = school?.name || 'École inconnue'
   const schoolCity = school?.city || ''
 
+  // Vérifier si Super Admin ou propriétaire du SaaS
+  const { data: isSuperAdmin } = await supabase.rpc('is_super_admin')
+  const isOwnerEmail = Boolean(
+    user.email && (
+      user.email.toLowerCase().includes('wilfried') || 
+      user.email.toLowerCase().includes('juste6603') ||
+      user.email.toLowerCase().endsWith('@scogestia.com')
+    )
+  )
+  const isPrivileged = Boolean(isSuperAdmin || isOwnerEmail)
+
   const userFullName = roleData?.full_name || 'Admin User'
-  const userRoleLabel = 'Administrateur'
+  const userRoleLabel = isPrivileged ? 'Super Admin (Propriétaire)' : 'Administrateur'
   const userAvatar = user?.user_metadata?.avatar_url || null
 
   // Vérification de l'abonnement via l'utilitaire centralisé
@@ -54,7 +65,11 @@ export default async function AdminLayout({
   let isExpired = false
   let daysRemaining = 0
 
-  if (roleData?.school_id) {
+  if (isPrivileged) {
+    // Le Super Admin / Propriétaire du SaaS a accès illimité et n'est jamais bloqué
+    isExpired = false
+    showBanner = false
+  } else if (roleData?.school_id) {
     const subStatus = await getSchoolSubscriptionStatus(supabase, roleData.school_id)
     isExpired = subStatus.isExpired
     daysRemaining = subStatus.daysRemaining
