@@ -24,6 +24,7 @@ export async function sendCommunication(formData: FormData) {
   const selectedClass = formData.get('selectedClass') as string
   const selectedParent = formData.get('selectedParent') as string
   const selectedEnseignant = formData.get('selectedEnseignant') as string
+  const studentName = formData.get('studentName') as string | null
   const subject = formData.get('subject') as string || 'Message vocal'
   const message = formData.get('message') as string || 'Message vocal'
   const shouldSendSms = formData.get('sendSms') === 'true'
@@ -216,8 +217,8 @@ export async function sendCommunication(formData: FormData) {
         .maybeSingle()
 
       const senderName = senderRole?.full_name || 'Utilisateur'
-      const roleLabel = senderRole?.role === 'parent'
-        ? 'Parent'
+      let roleLabel = senderRole?.role === 'parent'
+        ? (studentName ? `Parent de ${studentName}` : 'Parent')
         : senderRole?.role === 'enseignant'
           ? 'Enseignant'
           : 'Administration'

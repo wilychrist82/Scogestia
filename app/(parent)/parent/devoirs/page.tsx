@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
 import { resolveStudentId } from '@/lib/parent-utils'
+import { ChildSwitchBar } from '@/components/parent/ChildSwitchBar'
 import { HomeworkList } from '@/components/parent/HomeworkList'
 
 export const dynamic = 'force-dynamic'
@@ -107,6 +108,14 @@ export default async function ParentDevoirsPage({
           </p>
         </div>
       </div>
+
+      {childrenList.length > 0 && (
+        <ChildSwitchBar
+          childrenList={childrenList}
+          selectedChildId={childId}
+          title="Élève"
+        />
+      )}
 
       {homeworks.length === 0 ? (
         <div className="bg-white p-8 rounded-xl shadow-sm border border-[var(--color-outline-variant)] text-center flex flex-col items-center">

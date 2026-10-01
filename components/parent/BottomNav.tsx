@@ -15,7 +15,7 @@ const navItems = [
 export function BottomNav() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const child = searchParams.get('child')
+  const child = searchParams.get('child') || searchParams.get('student_id')
   const { unreadCount } = useNotifications()
 
   return (

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ResultatsTabs } from '@/components/parent/ResultatsTabs'
 
 import { resolveStudentId } from '@/lib/parent-utils'
+import { ChildSwitchBar } from '@/components/parent/ChildSwitchBar'
 
 export const dynamic = 'force-dynamic'
 
@@ -127,6 +128,14 @@ export default async function ParentBulletinsPage({
           </p>
         </div>
       </div>
+
+      {childrenList.length > 0 && (
+        <ChildSwitchBar
+          childrenList={childrenList}
+          selectedChildId={childId}
+          title="Élève"
+        />
+      )}
 
       <ResultatsTabs />
 

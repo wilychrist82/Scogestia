@@ -6,6 +6,8 @@ import { Sidebar } from './Sidebar'
 import { TopHeader } from './TopHeader'
 import { PaywallOverlay } from '@/components/admin/abonnement/PaywallOverlay'
 
+import { EnseignantBottomNav } from '@/components/enseignant/EnseignantBottomNav'
+
 export function AdminLayoutWrapper({ 
   children, 
   userFullName, 
@@ -62,13 +64,14 @@ export function AdminLayoutWrapper({
             schoolCity={schoolCity}
             navVariant={navVariant}
           />
-          <main className={`flex-1 ${navVariant === 'enseignant' ? 'pb-8 lg:p-8' : 'p-4 md:p-6 lg:p-8'} overflow-y-auto scrollbar-light relative`}>
+          <main className={`flex-1 ${navVariant === 'enseignant' ? 'pb-20 md:pb-8 lg:p-8' : 'p-4 md:p-6 lg:p-8'} overflow-y-auto scrollbar-light relative`}>
             {shouldBlockAccess ? (
               <PaywallOverlay schoolName={schoolName} daysRemaining={daysRemaining} />
             ) : (
               children
             )}
           </main>
+          {navVariant === 'enseignant' && <EnseignantBottomNav />}
         </div>
       </div>
     </>

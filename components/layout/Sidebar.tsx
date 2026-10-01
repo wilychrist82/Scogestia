@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { ContactSupportModal } from './ContactSupportModal'
+import { useNotifications } from '@/components/providers/NotificationProvider'
 
 export type NavItem = {
   label: string
@@ -126,9 +127,10 @@ type NavGroupProps = {
   onToggleDropdown: (href: string) => void
   onClose?: () => void
   isExpired?: boolean
+  unreadCount?: number
 }
 
-function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onClose, isExpired }: NavGroupProps) {
+function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onClose, isExpired, unreadCount = 0 }: NavGroupProps) {
   return (
     <div className="mb-4">
       <h3 className="px-4 text-[10px] font-bold text-[var(--color-sidebar-muted)] mb-2 uppercase tracking-[0.12em]">
@@ -195,6 +197,11 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
                     <span className="text-sm font-medium">{item.label}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
+                    {(item.href === '/enseignant/messages' || item.href === '/admin/communication') && unreadCount > 0 && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-extrabold rounded-full bg-red-500 text-white shadow-xs min-w-[18px] h-[18px] flex items-center justify-center animate-pulse">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
                     {isAbonnement && isExpired && (
                       <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded bg-red-500 text-white animate-pulse">
                         Requis
@@ -256,6 +263,7 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
 
 export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isOpen, onClose, isExpired, isSuperAdmin = false }: SidebarProps) {
   const pathname = usePathname()
+  const { unreadCount } = useNotifications()
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
 
   const currentRoleNavItems: NavItem[] = [
@@ -332,6 +340,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
               openDropdowns={openDropdowns}
               onToggleDropdown={handleToggleDropdown}
               onClose={onClose}
+              unreadCount={unreadCount}
             />
           ) : navVariant === 'enseignant' ? (
             <NavGroup 
@@ -342,6 +351,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
               onToggleDropdown={handleToggleDropdown}
               onClose={onClose}
               isExpired={isExpired}
+              unreadCount={unreadCount}
             />
           ) : (
             <>
@@ -353,6 +363,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
                 onToggleDropdown={handleToggleDropdown}
                 onClose={onClose}
                 isExpired={isExpired}
+                unreadCount={unreadCount}
               />
               <NavGroup 
                 title="Espaces par rôle" 
@@ -362,6 +373,7 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
                 onToggleDropdown={handleToggleDropdown}
                 onClose={onClose}
                 isExpired={isExpired}
+                unreadCount={unreadCount}
               />
             </>
           )}

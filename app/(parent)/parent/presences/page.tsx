@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { resolveStudentId } from '@/lib/parent-utils'
+import { ChildSwitchBar } from '@/components/parent/ChildSwitchBar'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,6 +72,14 @@ export default async function ParentPresencesPage({
           </p>
         </div>
       </div>
+
+      {childrenList.length > 0 && (
+        <ChildSwitchBar
+          childrenList={childrenList}
+          selectedChildId={childId}
+          title="Élève"
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex flex-col items-center justify-center text-center">

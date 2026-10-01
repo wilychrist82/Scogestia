@@ -3,15 +3,17 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/components/providers/NotificationProvider'
-import { Bell, CheckCheck, LogOut, Settings } from 'lucide-react'
+import { Bell, CheckCheck, LogOut, Settings, UserPlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { LinkChildModal } from './LinkChildModal'
 
 export function ParentHeader({ fullName, userAvatar }: { fullName: string, userAvatar?: string | null }) {
   const router = useRouter()
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
   const [showNotifs, setShowNotifs] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [showLinkChildModal, setShowLinkChildModal] = useState(false)
   const notifRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
 
@@ -90,6 +92,16 @@ export function ParentHeader({ fullName, userAvatar }: { fullName: string, userA
                 <Settings size={15} className="text-gray-400" />
                 Mon profil
               </Link>
+              <button
+                onClick={() => {
+                  setShowProfileMenu(false)
+                  setShowLinkChildModal(true)
+                }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-primary)] hover:bg-emerald-50 font-semibold transition-colors text-left"
+              >
+                <UserPlus size={15} />
+                Lier un autre enfant
+              </button>
               <div className="mx-3 my-1 h-px bg-gray-100" />
               <button 
                 onClick={handleSignOut}
@@ -101,6 +113,11 @@ export function ParentHeader({ fullName, userAvatar }: { fullName: string, userA
             </div>
           </div>
         )}
+
+        <LinkChildModal 
+          isOpen={showLinkChildModal} 
+          onClose={() => setShowLinkChildModal(false)} 
+        />
       </div>
 
       <div className="relative" ref={notifRef}>

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { headers } from 'next/headers'
+import { revalidatePath } from 'next/cache'
 import { authRateLimit, checkRateLimit } from '@/lib/ratelimit'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -180,17 +181,112 @@ export async function activateParentAccount(prevState: any, formData: FormData):
     return { error: "Erreur lors de la liaison à l'élève. L'administrateur a été notifié." }
   }
 
-  // D. S'assurer que le parent a le rôle 'parent'
+  // D. S'assurer que le parent a le rôle 'parent' (upsert pour éviter conflit d'unicité)
   await adminClient
     .from('user_school_roles')
-    .insert({
+    .upsert({
       user_id: parentUserId,
       school_id: inv.school_id,
       role: 'parent',
       full_name: 'Parent'
-    })
+    }, { onConflict: 'user_id,school_id,role', ignoreDuplicates: true })
 
   return { success: true }
+}
+
+/**
+ * Permet à un parent déjà connecté de lier un autre enfant à son compte via son code d'activation.
+ */
+export async function linkChildWithCode(code: string): Promise<{ error?: string, success?: boolean, studentName?: string, studentId?: string }> {
+  if (!code || code.trim().length !== 6) {
+    return { error: 'Le code d\'activation doit contenir 6 caractères.' }
+  }
+
+  const cleanCode = code.trim().toUpperCase()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'Vous devez être connecté pour lier un élève.' }
+  }
+
+  const adminClient = createAdminClient()
+
+  // 1. Trouver le code valide
+  const { data: inv, error: invError } = await adminClient
+    .from('parent_invitation_codes')
+    .select('id, school_id, student_id, expires_at, used_at')
+    .eq('code', cleanCode)
+    .maybeSingle()
+
+  if (invError || !inv) {
+    return { error: 'Code d\'activation introuvable ou invalide.' }
+  }
+
+  if (inv.used_at) {
+    return { error: 'Ce code d\'activation a déjà été utilisé.' }
+  }
+
+  if (new Date(inv.expires_at) < new Date()) {
+    return { error: 'Ce code d\'activation a expiré.' }
+  }
+
+  // 2. Vérifier si l'élève est déjà lié à ce parent
+  const { data: existingLink } = await adminClient
+    .from('parent_student_links')
+    .select('id')
+    .eq('parent_user_id', user.id)
+    .eq('student_id', inv.student_id)
+    .maybeSingle()
+
+  if (existingLink) {
+    return { error: 'Cet enfant est déjà lié à votre compte.' }
+  }
+
+  // 3. Récupérer les infos de l'élève pour le message de confirmation
+  const { data: student } = await adminClient
+    .from('students')
+    .select('first_name, last_name')
+    .eq('id', inv.student_id)
+    .maybeSingle()
+
+  const studentName = student ? `${student.first_name} ${student.last_name}` : 'l\'élève'
+
+  // 4. Lier l'élève au parent
+  const { error: linkError } = await adminClient
+    .from('parent_student_links')
+    .insert({
+      parent_user_id: user.id,
+      student_id: inv.student_id,
+      school_id: inv.school_id,
+      relationship: 'parent'
+    })
+
+  if (linkError) {
+    console.error('Erreur liaison parent-élève:', linkError)
+    return { error: 'Impossible de lier l\'élève. Veuillez réessayer.' }
+  }
+
+  // 5. Marquer le code comme consommé
+  await adminClient
+    .from('parent_invitation_codes')
+    .update({ used_at: new Date().toISOString() })
+    .eq('id', inv.id)
+
+  // 6. S'assurer que le rôle parent existe pour cette école
+  const parentFullName = user.user_metadata?.full_name || 'Parent'
+  await adminClient
+    .from('user_school_roles')
+    .upsert({
+      user_id: user.id,
+      school_id: inv.school_id,
+      role: 'parent',
+      full_name: parentFullName
+    }, { onConflict: 'user_id,school_id,role', ignoreDuplicates: true })
+
+  revalidatePath('/parent')
+  revalidatePath('/parent/messages')
+
+  return { success: true, studentName, studentId: inv.student_id }
 }
 
 export async function inviteStaff(prevState: any, formData: FormData): Promise<{ error?: string, success?: boolean }> {

@@ -132,10 +132,13 @@ export function TopHeader({
         {/* Bouton menu — fonctionne sur mobile ET desktop */}
         <button 
           onClick={onMenuClick} 
-          className={`${iconColor} ${hoverBg} p-2 rounded-lg transition-colors flex-shrink-0`}
+          className={`relative ${iconColor} ${hoverBg} p-2 rounded-lg transition-colors flex-shrink-0`}
           aria-label="Ouvrir le menu"
         >
           <Menu size={20} />
+          {unreadCount > 0 && (
+            <span className="md:hidden absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
+          )}
         </button>
 
         {/* Titre de page — masqué sur très petit mobile */}

@@ -8,9 +8,16 @@ import { AutoRefresh } from '@/components/ui/AutoRefresh'
 import { ReadReceiptTrigger } from '@/components/ui/ReadReceiptTrigger'
 import { MessageActions } from '@/components/ui/MessageActions'
 
+import { resolveStudentId } from '@/lib/parent-utils'
+import { ChildSwitchBar } from '@/components/parent/ChildSwitchBar'
+
 export const dynamic = 'force-dynamic'
 
-export default async function ParentMessagesPage() {
+export default async function ParentMessagesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ child?: string; student_id?: string }>
+}) {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -26,19 +33,78 @@ export default async function ParentMessagesPage() {
   if (!roleData) redirect('/')
 
   const schoolId = roleData.school_id
+  const resolvedSearchParams = await searchParams
+  const { childrenList, selectedChild, selectedChildId } = await resolveStudentId(supabase, user.id, resolvedSearchParams)
 
-  // Charger les enseignants de l'école pour le sélecteur
-  const { data: teachersRaw } = await supabase
+  // Map de tous les enseignants pour identifier l'expéditeur des messages reçus
+  const { data: allTeachersRaw } = await supabase
     .from('user_school_roles')
     .select('user_id, full_name')
     .eq('school_id', schoolId)
     .eq('role', 'enseignant')
-    .order('full_name')
 
-  const teachers = teachersRaw?.map(t => ({
-    id: t.user_id,
-    full_name: t.full_name || 'Enseignant'
-  })) || []
+  const allTeachersMap = new Map((allTeachersRaw || []).map(t => [t.user_id, t.full_name || 'Enseignant']))
+
+  // Charger UNIQUEMENT les enseignants de la classe de l'enfant sélectionné pour le sélecteur d'envoi
+  let teachers: { id: string; full_name: string }[] = []
+  let selectedChildClassInfo: { id: string; name: string } | null = null
+
+  if (selectedChild?.class_id) {
+    // 1. Classe et enseignant titulaire
+    const { data: classData } = await supabase
+      .from('classes')
+      .select('id, name, main_teacher_id')
+      .eq('id', selectedChild.class_id)
+      .maybeSingle()
+
+    if (classData) {
+      selectedChildClassInfo = { id: classData.id, name: classData.name }
+    }
+
+    // 2. Matières et enseignants affectés à cette classe
+    const { data: tcsData } = await supabase
+      .from('teacher_class_subjects')
+      .select('teacher_id, subject_name')
+      .eq('class_id', selectedChild.class_id)
+
+    const teacherIds = new Set<string>()
+    if (classData?.main_teacher_id) {
+      teacherIds.add(classData.main_teacher_id)
+    }
+    tcsData?.forEach(st => {
+      if (st.teacher_id) teacherIds.add(st.teacher_id)
+    })
+
+    if (teacherIds.size > 0) {
+      const { data: filteredTeachersRaw } = await supabase
+        .from('user_school_roles')
+        .select('user_id, full_name')
+        .in('user_id', Array.from(teacherIds))
+        .eq('school_id', schoolId)
+
+      teachers = (filteredTeachersRaw || []).map(t => {
+        const isTitulaire = classData?.main_teacher_id === t.user_id
+        const subjectItem = tcsData?.find(st => st.teacher_id === t.user_id)
+        let label = t.full_name || 'Enseignant'
+        if (isTitulaire && classData?.name) {
+          label += ` (Titulaire - ${classData.name})`
+        } else if (subjectItem?.subject_name) {
+          label += ` (${subjectItem.subject_name})`
+        }
+        return {
+          id: t.user_id,
+          full_name: label
+        }
+      })
+    }
+  }
+
+  const selectedChildProp = selectedChild ? {
+    id: selectedChild.id,
+    first_name: selectedChild.first_name,
+    last_name: selectedChild.last_name,
+    className: selectedChildClassInfo?.name || ''
+  } : undefined
 
   // Charger tous les messages visibles par ce parent (RLS gère les droits)
   const { data: messages } = await supabase
@@ -57,11 +123,26 @@ export default async function ParentMessagesPage() {
       <ReadReceiptTrigger messageIds={unreadMessageIds} />
       
       {/* Header */}
-      <div className="shrink-0 bg-[var(--color-surface)] px-4 py-3 flex items-center shadow-sm z-10 border-b border-[var(--color-outline-variant)]">
-        <div>
-          <h2 className="text-xl font-bold text-[var(--color-on-surface)]">Messages</h2>
-          <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">Contactez l'administration ou un enseignant.</p>
+      <div className="shrink-0 bg-[var(--color-surface)] px-4 py-3 flex flex-col gap-2 shadow-xs z-10 border-b border-[var(--color-outline-variant)]">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-[var(--color-on-surface)]">Messages</h2>
+            <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">
+              Contactez l'administration ou l'enseignant de votre enfant.
+            </p>
+          </div>
         </div>
+
+        {/* Sélecteur d'enfant si plusieurs enfants */}
+        {childrenList.length > 0 && (
+          <div className="pt-1">
+            <ChildSwitchBar
+              childrenList={childrenList}
+              selectedChildId={selectedChildId || ''}
+              title="Élève concerné"
+            />
+          </div>
+        )}
       </div>
 
       {/* Messages List */}
@@ -84,9 +165,10 @@ export default async function ParentMessagesPage() {
               let senderText = 'Administration'
               if (isSentByMe) {
                 senderText = 'Vous'
-              } else if (msg.recipient_type === 'enseignant' || (msg.sender_id && teachers.some(t => t.id === msg.sender_id))) {
-                const teacher = teachers.find(t => t.id === msg.sender_id)
-                senderText = teacher ? teacher.full_name : 'Enseignant'
+              } else if (msg.sender_id && allTeachersMap.has(msg.sender_id)) {
+                senderText = allTeachersMap.get(msg.sender_id)!
+              } else if (msg.recipient_type === 'enseignant') {
+                senderText = 'Enseignant'
               }
               const readBy = msg.read_by || []
               const isRead = readBy.length > 0 && (!isSentByMe ? readBy.includes(user.id) : true)
@@ -230,7 +312,7 @@ export default async function ParentMessagesPage() {
       {/* Input Area */}
       <div className="shrink-0 bg-[var(--color-surface)]">
         <div className="max-w-3xl mx-auto w-full">
-          <ParentMessageForm teachers={teachers} />
+          <ParentMessageForm teachers={teachers} selectedChild={selectedChildProp} />
         </div>
       </div>
     </div>

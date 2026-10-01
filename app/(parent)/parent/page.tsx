@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { AddChildButton } from '@/components/parent/AddChildButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -96,9 +97,10 @@ export default async function ParentDashboardPage() {
           <span className="material-symbols-outlined text-[48px] text-[var(--color-primary)]">child_care</span>
         </div>
         <h2 className="text-2xl font-bold text-[var(--color-on-surface)] mb-3">Bienvenue sur Scogestia</h2>
-        <p className="text-base text-gray-500 max-w-sm leading-relaxed">
-          Votre compte est actif, mais aucun enfant n'est encore lié. Veuillez contacter l'administration de l'école.
+        <p className="text-base text-gray-500 max-w-sm leading-relaxed mb-6">
+          Votre compte est actif, mais aucun enfant n'est encore lié. Vous pouvez entrer le code d'activation fourni par l'établissement.
         </p>
+        <AddChildButton variant="badge" />
       </div>
     )
   }
@@ -216,6 +218,8 @@ export default async function ParentDashboardPage() {
               </div>
             </div>
           ))}
+
+          <AddChildButton />
         </div>
 
         {/* Finance */}

@@ -13,30 +13,45 @@ type Teacher = {
 
 type Props = {
   teachers?: Teacher[]
+  selectedChild?: {
+    id: string
+    first_name: string
+    last_name: string
+    className?: string
+  }
 }
 
-export function ParentMessageForm({ teachers = [] }: Props) {
+export function ParentMessageForm({ teachers = [], selectedChild }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [recipientType, setRecipientType] = useState<'admin' | 'enseignant'>('admin')
-  const [selectedTeacher, setSelectedTeacher] = useState('')
+  const [selectedTeacher, setSelectedTeacher] = useState(() => teachers.length === 1 ? teachers[0].id : '')
 
   const handleSend = (payload: { text: string; audioUrl: string | null; fileUrl?: string | null; fileType?: string | null }) => {
     setError(null)
 
-    if (recipientType === 'enseignant' && !selectedTeacher) {
+    const effectiveTeacher = selectedTeacher || (teachers.length === 1 ? teachers[0].id : '')
+
+    if (recipientType === 'enseignant' && !effectiveTeacher) {
       toast.error("Veuillez sélectionner un enseignant avant d'envoyer.", { position: 'top-center' })
       return
     }
 
+    const studentInfo = selectedChild ? ` (Élève: ${selectedChild.first_name} ${selectedChild.last_name}${selectedChild.className ? ` - ${selectedChild.className}` : ''})` : ''
+
     const formData = new FormData()
     formData.append('recipientType', recipientType)
-    formData.append('subject', recipientType === 'admin' ? 'Message parent' : 'Message parent → enseignant')
+    formData.append('subject', recipientType === 'admin' ? `Message parent${studentInfo}` : `Message parent → enseignant${studentInfo}`)
     formData.append('message', payload.text || 'Message vocal')
 
-    if (recipientType === 'enseignant' && selectedTeacher) {
-      formData.append('selectedEnseignant', selectedTeacher)
+    if (selectedChild) {
+      formData.append('studentId', selectedChild.id)
+      formData.append('studentName', `${selectedChild.first_name} ${selectedChild.last_name}`)
+    }
+
+    if (recipientType === 'enseignant' && effectiveTeacher) {
+      formData.append('selectedEnseignant', effectiveTeacher)
     }
     if (payload.audioUrl) {
       formData.append('audioUrl', payload.audioUrl)
@@ -109,19 +124,26 @@ export function ParentMessageForm({ teachers = [] }: Props) {
       </div>
 
       {/* Sélecteur d'enseignant (affiché uniquement si recipientType = enseignant) */}
-      {recipientType === 'enseignant' && teachers.length > 0 && (
-        <div className="px-4 pt-1 pb-1">
-          <select
-            value={selectedTeacher}
-            onChange={(e) => setSelectedTeacher(e.target.value)}
-            className="w-full text-sm border border-[var(--color-outline-variant)] rounded-lg px-3 py-2 bg-[var(--color-surface-container-lowest)] text-[var(--color-on-surface)] outline-none focus:border-[var(--color-primary)] transition-colors"
-          >
-            <option value="">— Sélectionner un enseignant —</option>
-            {teachers.map(t => (
-              <option key={t.id} value={t.id}>{t.full_name}</option>
-            ))}
-          </select>
-        </div>
+      {recipientType === 'enseignant' && (
+        teachers.length === 0 ? (
+          <div className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-y border-amber-200 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px] text-amber-600">info</span>
+            <span>Aucun enseignant n'est encore assigné à la classe de cet enfant. Vous pouvez contacter l'Administration.</span>
+          </div>
+        ) : (
+          <div className="px-4 pt-1 pb-1">
+            <select
+              value={selectedTeacher || (teachers.length === 1 ? teachers[0].id : '')}
+              onChange={(e) => setSelectedTeacher(e.target.value)}
+              className="w-full text-sm border border-[var(--color-outline-variant)] rounded-lg px-3 py-2 bg-[var(--color-surface-container-lowest)] text-[var(--color-on-surface)] outline-none focus:border-[var(--color-primary)] transition-colors font-medium"
+            >
+              {teachers.length > 1 && <option value="">— Sélectionner un enseignant —</option>}
+              {teachers.map(t => (
+                <option key={t.id} value={t.id}>{t.full_name}</option>
+              ))}
+            </select>
+          </div>
+        )
       )}
 
       {error && (
