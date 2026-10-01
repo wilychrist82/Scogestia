@@ -1,13 +1,13 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import admin from 'npm:firebase-admin'
+import { initializeApp, cert, getApps } from 'npm:firebase-admin@12.7.0/app'
+import { getMessaging } from 'npm:firebase-admin@12.7.0/messaging'
 import serviceAccount from './service-account.json' with { type: 'json' }
 
 // Initialiser l'application Firebase (si elle n'est pas déjà initialisée)
-if (admin.apps.length === 0) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-}
+const app = getApps().length === 0
+  ? initializeApp({ credential: cert(serviceAccount) })
+  : getApps()[0]
+const messaging = getMessaging(app)
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -51,7 +51,7 @@ serve(async (req) => {
     };
 
     // Envoyer le message via FCM
-    const response = await admin.messaging().send(message);
+    const response = await messaging.send(message);
 
     return new Response(
       JSON.stringify({ success: true, messageId: response }),
