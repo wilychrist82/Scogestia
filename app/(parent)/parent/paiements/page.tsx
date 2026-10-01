@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { DownloadReceiptButton } from '@/components/parent/DownloadReceiptButton'
 
 import { resolveStudentId } from '@/lib/parent-utils'
+import { ChildSwitchBar } from '@/components/parent/ChildSwitchBar'
 
 export const dynamic = 'force-dynamic'
 
@@ -115,6 +116,14 @@ export default async function ParentPaiementsPage({
           </p>
         </div>
       </div>
+
+      {childrenList.length > 0 && (
+        <ChildSwitchBar
+          childrenList={childrenList}
+          selectedChildId={childId}
+          title="Élève"
+        />
+      )}
 
       <div className="bg-[var(--color-primary)] rounded-xl p-6 text-white shadow-md relative overflow-hidden">
         <div className="absolute -right-4 -top-4 opacity-10">
