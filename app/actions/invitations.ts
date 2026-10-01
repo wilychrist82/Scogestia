@@ -198,36 +198,53 @@ export async function activateParentAccount(prevState: any, formData: FormData):
  * Permet à un parent déjà connecté de lier un autre enfant à son compte via son code d'activation.
  */
 export async function linkChildWithCode(code: string): Promise<{ error?: string, success?: boolean, studentName?: string, studentId?: string }> {
-  if (!code || code.trim().length !== 6) {
-    return { error: 'Le code d\'activation doit contenir 6 caractères.' }
+  if (!code) {
+    return { error: 'Le code d\'activation est requis.' }
   }
 
-  const cleanCode = code.trim().toUpperCase()
+  const cleanCode = code.replace(/[^a-zA-Z0-9]/g, '').trim().toUpperCase()
+  if (cleanCode.length !== 6) {
+    return { error: 'Le code d\'activation doit contenir exactement 6 caractères.' }
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    return { error: 'Vous devez être connecté pour lier un élève.' }
+    return { error: 'Votre session a expiré. Veuillez vous reconnecter.' }
   }
 
   const adminClient = createAdminClient()
 
-  // 1. Trouver le code valide
-  const { data: inv, error: invError } = await adminClient
+  // 1. Trouver l'invitation valide (avec adminClient et repli supabase)
+  let { data: inv, error: invError } = await adminClient
     .from('parent_invitation_codes')
-    .select('id, school_id, student_id, expires_at, used_at')
+    .select('id, school_id, student_id, expires_at, used_at, code')
     .eq('code', cleanCode)
     .maybeSingle()
 
-  if (invError || !inv) {
-    return { error: 'Code d\'activation introuvable ou invalide.' }
+  if (!inv) {
+    const { data: fallbackInv } = await supabase
+      .from('parent_invitation_codes')
+      .select('id, school_id, student_id, expires_at, used_at, code')
+      .eq('code', cleanCode)
+      .maybeSingle()
+    if (fallbackInv) inv = fallbackInv
+  }
+
+  if (invError) {
+    console.error('Erreur recherche invitation:', invError)
+  }
+
+  if (!inv) {
+    return { error: `Code "${cleanCode}" introuvable. Veuillez vérifier le code affiché sur la fiche de l'élève.` }
   }
 
   if (inv.used_at) {
-    return { error: 'Ce code d\'activation a déjà été utilisé.' }
+    return { error: `Ce code a déjà été utilisé le ${new Date(inv.used_at).toLocaleDateString('fr-FR')}.` }
   }
 
   if (new Date(inv.expires_at) < new Date()) {
-    return { error: 'Ce code d\'activation a expiré.' }
+    return { error: 'Ce code d\'activation a expiré. Demandez un nouveau code à l\'administration.' }
   }
 
   // 2. Vérifier si l'élève est déjà lié à ce parent
@@ -239,7 +256,7 @@ export async function linkChildWithCode(code: string): Promise<{ error?: string,
     .maybeSingle()
 
   if (existingLink) {
-    return { error: 'Cet enfant est déjà lié à votre compte.' }
+    return { error: 'Cet enfant est déjà associé à votre compte parent.' }
   }
 
   // 3. Récupérer les infos de l'élève pour le message de confirmation
@@ -262,29 +279,40 @@ export async function linkChildWithCode(code: string): Promise<{ error?: string,
     })
 
   if (linkError) {
-    console.error('Erreur liaison parent-élève:', linkError)
-    return { error: 'Impossible de lier l\'élève. Veuillez réessayer.' }
+    console.error('Erreur insertion parent_student_links, tentative RPC:', linkError)
+    const { error: rpcError } = await adminClient.rpc('consume_parent_invitation', {
+      invitation_code: cleanCode,
+      parent_user_id: user.id
+    })
+    if (rpcError) {
+      console.error('Erreur RPC consume_parent_invitation:', rpcError)
+      return { error: 'Impossible de lier l\'élève. Veuillez réessayer.' }
+    }
+  } else {
+    // 5. Marquer le code comme consommé
+    await adminClient
+      .from('parent_invitation_codes')
+      .update({ used_at: new Date().toISOString() })
+      .eq('id', inv.id)
+
+    // 6. S'assurer que le rôle parent existe pour cette école
+    const parentFullName = user.user_metadata?.full_name || 'Parent'
+    await adminClient
+      .from('user_school_roles')
+      .upsert({
+        user_id: user.id,
+        school_id: inv.school_id,
+        role: 'parent',
+        full_name: parentFullName
+      }, { onConflict: 'user_id,school_id,role', ignoreDuplicates: true })
   }
-
-  // 5. Marquer le code comme consommé
-  await adminClient
-    .from('parent_invitation_codes')
-    .update({ used_at: new Date().toISOString() })
-    .eq('id', inv.id)
-
-  // 6. S'assurer que le rôle parent existe pour cette école
-  const parentFullName = user.user_metadata?.full_name || 'Parent'
-  await adminClient
-    .from('user_school_roles')
-    .upsert({
-      user_id: user.id,
-      school_id: inv.school_id,
-      role: 'parent',
-      full_name: parentFullName
-    }, { onConflict: 'user_id,school_id,role', ignoreDuplicates: true })
 
   revalidatePath('/parent')
   revalidatePath('/parent/messages')
+  revalidatePath('/parent/bulletins')
+  revalidatePath('/parent/notes')
+  revalidatePath('/parent/presences')
+  revalidatePath('/parent/devoirs')
 
   return { success: true, studentName, studentId: inv.student_id }
 }
