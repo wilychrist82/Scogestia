@@ -42,6 +42,7 @@ export async function sendCommunication(formData: FormData) {
   // Résolution du recipient_id selon le type
   // ─────────────────────────────────────────────────────────────────────────
   let recipientId: string | null = null
+  let parentUserIds: string[] = []
 
   if (recipientType === 'class') {
     if (!selectedClass) return { error: 'La classe est requise' }
@@ -50,18 +51,41 @@ export async function sendCommunication(formData: FormData) {
   } else if (recipientType === 'parent') {
     if (!selectedParent) return { error: 'L\'élève/parent est requis' }
     
-    // selectedParent est un student_id → on trouve le parent lié
+    // selectedParent est un student_id → on trouve le(s) parent(s) lié(s)
     // On utilise adminClient car les enseignants n'ont pas accès en RLS à parent_student_links
-    const { data: linkData } = await adminClient
+    // Note : On n'utilise PAS .maybeSingle() car un élève peut avoir plusieurs parents liés (PGRST116)
+    const { data: links, error: linksError } = await adminClient
       .from('parent_student_links')
       .select('parent_user_id')
       .eq('student_id', selectedParent)
-      .maybeSingle()
 
-    if (!linkData?.parent_user_id) {
+    if (linksError) {
+      console.error('Error fetching parent_student_links:', linksError)
+    }
+
+    if (links && links.length > 0) {
+      parentUserIds = Array.from(new Set(links.map(l => l.parent_user_id).filter(Boolean)))
+    }
+
+    // Si aucun lien trouvé dans parent_student_links, vérifions si selectedParent est directement un user_id d'un compte parent
+    if (parentUserIds.length === 0) {
+      const { data: userRole } = await adminClient
+        .from('user_school_roles')
+        .select('user_id')
+        .eq('user_id', selectedParent)
+        .eq('role', 'parent')
+        .maybeSingle()
+
+      if (userRole?.user_id) {
+        parentUserIds = [userRole.user_id]
+      }
+    }
+
+    if (parentUserIds.length === 0) {
       return { error: 'Aucun compte parent n\'est encore activé pour cet élève.' }
     }
-    recipientId = linkData.parent_user_id
+
+    recipientId = parentUserIds[0]
 
   } else if (recipientType === 'enseignant') {
     // selectedEnseignant est directement un user_id d'enseignant
@@ -85,19 +109,39 @@ export async function sendCommunication(formData: FormData) {
   // Insertion en base (adminClient pour bypasser RLS — sécurisé car on a
   // déjà vérifié l'identité de l'utilisateur via supabase.auth.getUser())
   // ─────────────────────────────────────────────────────────────────────────
-  const { error: insertError } = await adminClient.from('communications').insert({
-    school_id: roleData.school_id,
-    sender_id: user.id,
-    recipient_type: recipientType,
-    recipient_id: recipientId,
-    subject,
-    content: fileUrl ? `${message}|||FILE|||${fileUrl}|||${fileType}|||${originalFileName || ''}` : message,
-    audio_url: audioUrl
-  })
+  const contentToStore = fileUrl ? `${message}|||FILE|||${fileUrl}|||${fileType}|||${originalFileName || ''}` : message
 
-  if (insertError) {
-    console.error('Error inserting communication:', insertError)
-    return { error: 'Erreur lors de l\'envoi du message' }
+  if (recipientType === 'parent' && parentUserIds.length > 0) {
+    const records = parentUserIds.map(pId => ({
+      school_id: roleData.school_id,
+      sender_id: user.id,
+      recipient_type: recipientType,
+      recipient_id: pId,
+      subject,
+      content: contentToStore,
+      audio_url: audioUrl
+    }))
+
+    const { error: insertError } = await adminClient.from('communications').insert(records)
+    if (insertError) {
+      console.error('Error inserting communication:', insertError)
+      return { error: 'Erreur lors de l\'envoi du message' }
+    }
+  } else {
+    const { error: insertError } = await adminClient.from('communications').insert({
+      school_id: roleData.school_id,
+      sender_id: user.id,
+      recipient_type: recipientType,
+      recipient_id: recipientId,
+      subject,
+      content: contentToStore,
+      audio_url: audioUrl
+    })
+
+    if (insertError) {
+      console.error('Error inserting communication:', insertError)
+      return { error: 'Erreur lors de l\'envoi du message' }
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -106,9 +150,9 @@ export async function sendCommunication(formData: FormData) {
   try {
     let usersToNotify: string[] = []
 
-    if (recipientType === 'parent' && recipientId) {
-      // Notifier le parent spécifique
-      usersToNotify = [recipientId]
+    if (recipientType === 'parent' && parentUserIds.length > 0) {
+      // Notifier tous les comptes parents liés à cet élève
+      usersToNotify = parentUserIds
 
     } else if (recipientType === 'enseignant' && recipientId) {
       // Notifier l'enseignant spécifique
@@ -206,14 +250,14 @@ export async function sendCommunication(formData: FormData) {
           if (data) parentIdsToSms = data.map(d => d.parent_user_id)
         }
 
-      } else if (recipientType === 'parent' && recipientId) {
-        parentIdsToSms = [recipientId]
+      } else if (recipientType === 'parent' && parentUserIds.length > 0) {
+        parentIdsToSms = parentUserIds
       }
 
       if (parentIdsToSms.length > 0) {
         parentIdsToSms = Array.from(new Set(parentIdsToSms))
 
-        const { data: parentsData } = await supabase
+        const { data: parentsData } = await adminClient
           .from('user_school_roles')
           .select('phone')
           .in('user_id', parentIdsToSms)

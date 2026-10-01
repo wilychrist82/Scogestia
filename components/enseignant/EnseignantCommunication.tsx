@@ -17,6 +17,7 @@ type Student = {
   last_name: string
   classes: { name: string } | null
   parent_user_id: string | null
+  parent_user_ids?: string[]
 }
 
 type Communication = {
@@ -82,12 +83,21 @@ export function EnseignantCommunication({ currentUserId, students, communication
       if (!selectedParent) return false
       
       const student = students.find(s => s.id === selectedParent)
-      const parentUserId = student?.parent_user_id
+      const parentUserIds = student?.parent_user_ids?.length
+        ? student.parent_user_ids
+        : (student?.parent_user_id ? [student.parent_user_id] : [])
 
-      if (!parentUserId) return false
+      if (parentUserIds.length === 0) return false
 
-      const iSentToThisParent = comm.sender_id === currentUserId && comm.recipient_type === 'parent' && comm.recipient_id === parentUserId
-      const thisParentSentToMe = comm.sender_id === parentUserId && comm.recipient_type === 'enseignant'
+      const iSentToThisParent =
+        comm.sender_id === currentUserId &&
+        comm.recipient_type === 'parent' &&
+        comm.recipient_id !== null &&
+        parentUserIds.includes(comm.recipient_id)
+
+      const thisParentSentToMe =
+        parentUserIds.includes(comm.sender_id) &&
+        comm.recipient_type === 'enseignant'
 
       return iSentToThisParent || thisParentSentToMe
     }
@@ -95,8 +105,20 @@ export function EnseignantCommunication({ currentUserId, students, communication
     return false
   })
 
+  // Dédupliquer les messages envoyés simultanément aux multiples parents d'un même élève
+  const seenSentKeys = new Set<string>()
+  const deduplicatedMessages = filteredMessages.filter(comm => {
+    if (comm.sender_id === currentUserId && recipientType === 'parent') {
+      const timeKey = comm.created_at ? comm.created_at.substring(0, 19) : ''
+      const key = `${timeKey}_${comm.content}_${comm.audio_url || ''}`
+      if (seenSentKeys.has(key)) return false
+      seenSentKeys.add(key)
+    }
+    return true
+  })
+
   // IDs non lus dans la conversation active
-  const unreadIds = filteredMessages
+  const unreadIds = deduplicatedMessages
     .filter(msg => msg.sender_id !== currentUserId && !(msg.read_by || []).includes(currentUserId))
     .map(msg => msg.id)
 
@@ -220,10 +242,13 @@ export function EnseignantCommunication({ currentUserId, students, communication
                   value={selectedParent}
                   onChange={(val) => setSelectedParent(val)}
                   placeholder="Sélectionner l'élève..."
-                  options={students.map(s => ({
-                    value: s.id,
-                    label: `${s.first_name} ${s.last_name} ${s.classes?.name ? `(${s.classes.name})` : ''}`
-                  }))}
+                  options={students.map(s => {
+                    const hasParent = (s.parent_user_ids && s.parent_user_ids.length > 0) || !!s.parent_user_id
+                    return {
+                      value: s.id,
+                      label: `${s.first_name} ${s.last_name} ${s.classes?.name ? `(${s.classes.name})` : ''}${hasParent ? '' : ' ⚠️ (Compte parent non activé)'}`
+                    }
+                  })}
                 />
               </div>
             )}
@@ -239,7 +264,7 @@ export function EnseignantCommunication({ currentUserId, students, communication
               <ReadReceiptTrigger messageIds={unreadIds} />
 
               <div className="relative z-10 flex flex-col gap-2 p-3 min-h-full justify-end">
-                {filteredMessages.length === 0 ? (
+                {deduplicatedMessages.length === 0 ? (
                   <div className="flex items-center justify-center h-full py-12">
                     <span className="bg-white/80 px-4 py-1.5 rounded-lg text-xs font-semibold text-gray-500 shadow-sm backdrop-blur-sm">
                       {recipientType === 'parent' && !selectedParent
@@ -248,7 +273,7 @@ export function EnseignantCommunication({ currentUserId, students, communication
                     </span>
                   </div>
                 ) : (
-                  [...filteredMessages].reverse().map(comm => {
+                  [...deduplicatedMessages].reverse().map(comm => {
                     const isSentByMe = comm.sender_id === currentUserId
                     const readBy = comm.read_by || []
                     const isRead = readBy.length > 0 && (!isSentByMe ? readBy.includes(currentUserId) : true)
@@ -350,7 +375,11 @@ export function EnseignantCommunication({ currentUserId, students, communication
                           {/* Label expéditeur sous la bulle */}
                           {!isSentByMe && (
                             <span className="text-[10px] text-[var(--color-on-surface-variant)] px-1">
-                              {comm.recipient_type === 'all_teachers' ? 'À tous les enseignants' : 'Administration'}
+                              {comm.recipient_type === 'all_teachers'
+                                ? 'À tous les enseignants'
+                                : recipientType === 'parent'
+                                  ? `Parent (${selectedStudentLabel})`
+                                  : 'Administration'}
                             </span>
                           )}
                         </div>
@@ -499,7 +528,7 @@ export function EnseignantCommunication({ currentUserId, students, communication
                         </div>
 
                         <span className="text-[10px] text-[var(--color-on-surface-variant)] px-1">
-                          {isSentByMe ? `À : ${recipientText}` : 'Administration'}
+                          {isSentByMe ? `À : ${recipientText}` : (comm.recipient_type === 'enseignant' ? "Parent d'élève" : 'Administration')}
                         </span>
                       </div>
                     </div>

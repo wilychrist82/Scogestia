@@ -23,13 +23,23 @@ export default async function EnseignantMessagesPage() {
 
   const schoolId = roleData.school_id
 
-  // Classes assignées à cet enseignant
+  // Classes assignées à cet enseignant (matières et titulaire)
   const { data: assignments } = await supabase
     .from('teacher_class_subjects')
     .select('class_id')
     .eq('teacher_id', user.id)
 
-  const classIds = [...new Set(assignments?.map(a => a.class_id) || [])]
+  const { data: mainClasses } = await supabase
+    .from('classes')
+    .select('id')
+    .eq('main_teacher_id', user.id)
+
+  const classIds = [
+    ...new Set([
+      ...(assignments?.map(a => a.class_id) || []),
+      ...(mainClasses?.map(c => c.id) || [])
+    ])
+  ]
 
   // Élèves de ces classes (normaliser la jointure Supabase)
   const { data: studentsRaw } = await supabase
@@ -71,11 +81,13 @@ export default async function EnseignantMessagesPage() {
   }
 
   const students = studentsRaw?.map(s => {
-    const link = parentLinks.find(l => l.student_id === s.id)
+    const studentLinks = parentLinks.filter(l => l.student_id === s.id)
+    const parentUserIds = Array.from(new Set(studentLinks.map(l => l.parent_user_id).filter(Boolean)))
     return {
       ...s,
       classes: Array.isArray(s.classes) ? s.classes[0] ?? null : s.classes,
-      parent_user_id: link?.parent_user_id || null
+      parent_user_ids: parentUserIds,
+      parent_user_id: parentUserIds[0] || null
     }
   }) || []
 
