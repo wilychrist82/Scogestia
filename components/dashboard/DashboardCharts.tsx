@@ -31,52 +31,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null
 }
 
-export function PaymentChart({ data }: { data: PaymentData[] }) {
-  return (
-    <div className="h-[260px] w-full mt-2">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-          <defs>
-            <linearGradient id="colorEncaisseArea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10b981" stopOpacity={0.7}/>
-              <stop offset="100%" stopColor="#10b981" stopOpacity={0.05}/>
-            </linearGradient>
-            <filter id="shadowArea" x="-10%" y="-10%" width="120%" height="120%">
-              <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#10b981" floodOpacity="0.4" />
-            </filter>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
-          <XAxis 
-            dataKey="month" 
-            axisLine={false} 
-            tickLine={false} 
-            tick={{ fontSize: 11, fill: '#9ca3af', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
-            dy={12}
-          />
-          <YAxis 
-            axisLine={false} 
-            tickLine={false} 
-            tick={{ fontSize: 11, fill: '#9ca3af', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
-            tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`}
-          />
-          <RechartsTooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(16, 185, 129, 0.2)', strokeWidth: 2, strokeDasharray: '4 4' }} />
-          
-          <Area 
-            type="natural" 
-            dataKey="encaisse" 
-            name="Encaissé" 
-            stroke="#10b981" 
-            strokeWidth={4}
-            fill="url(#colorEncaisseArea)" 
-            activeDot={{ r: 6, fill: '#fff', stroke: '#10b981', strokeWidth: 3 }}
-            style={{ filter: 'url(#shadowArea)' }}
-            animationDuration={1500}
-            animationEasing="ease-in-out"
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  )
+export function PaymentChart({ data, height = 280 }: { data: PaymentData[]; height?: number }) {
+  return <DualSplineTrendChart data={data} height={height} />
 }
 
 export function CircularProgress({ percentage }: { percentage: number }) {
@@ -224,7 +180,6 @@ export function ClassDistributionPieChart({ data }: { data: ClassDistributionDat
 }
 
 export function ClassBarChart({ data }: { data: ClassDistributionData[] }) {
-  // Filtrer les classes avec effectif > 0 comme demandé
   const filteredData = data.filter(d => d.value > 0)
 
   return (
@@ -266,4 +221,595 @@ export function ClassBarChart({ data }: { data: ClassDistributionData[] }) {
     </div>
   )
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPOSANTS HAUTE PRÉCISION INSPIRÉS DU BENCHMARK SCHOLIX
+// ─────────────────────────────────────────────────────────────────────────────
+
+// 1. Tooltip Callout Spline inspiré du badge "Juin : 2.9" dans Scholix
+const SplineCalloutTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const encaisse = payload.find((p: any) => p.dataKey === 'encaisse')?.value || 0
+    const attendu = payload.find((p: any) => p.dataKey === 'attendu')?.value || 0
+    return (
+      <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-3 shadow-xl text-xs space-y-1.5 min-w-[170px] ring-1 ring-black/5">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+          <span className="font-extrabold text-slate-800 uppercase tracking-wider text-[11px]">{label}</span>
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700">
+            {attendu > 0 ? `${Math.round((encaisse / attendu) * 100)}%` : '100%'}
+          </span>
+        </div>
+        <div className="flex items-center justify-between text-slate-600 gap-3">
+          <span className="flex items-center gap-1.5 font-medium text-[11px]">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] inline-block shadow-sm" />
+            Encaissé
+          </span>
+          <span className="font-bold text-slate-900 tabular-nums">
+            {new Intl.NumberFormat('fr-FR').format(encaisse)} F
+          </span>
+        </div>
+        <div className="flex items-center justify-between text-slate-600 gap-3">
+          <span className="flex items-center gap-1.5 font-medium text-[11px]">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#f43f5e] inline-block shadow-sm" />
+            Attendu
+          </span>
+          <span className="font-bold text-slate-500 tabular-nums">
+            {new Intl.NumberFormat('fr-FR').format(attendu)} F
+          </span>
+        </div>
+      </div>
+    )
+  }
+  return null
+}
+
+// 2. Courbe Sinusoïdale / Spline à Deux Volets (Encaissé vs Attendu)
+export function DualSplineTrendChart({ 
+  data, 
+  height = 300 
+}: { 
+  data: PaymentData[]
+  height?: number 
+}) {
+  return (
+    <div style={{ height: `${height}px` }} className="w-full relative">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 15, right: 15, left: -20, bottom: 0 }}>
+          <defs>
+            {/* Dégradé doux Encaissé (Vert Menthe / Emeraude) */}
+            <linearGradient id="splineGreenGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity={0.35}/>
+              <stop offset="60%" stopColor="#10b981" stopOpacity={0.08}/>
+              <stop offset="100%" stopColor="#10b981" stopOpacity={0.00}/>
+            </linearGradient>
+            {/* Dégradé doux Attendu / Charges (Corail / Pêche) */}
+            <linearGradient id="splineCoralGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.20}/>
+              <stop offset="70%" stopColor="#f43f5e" stopOpacity={0.04}/>
+              <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.00}/>
+            </linearGradient>
+            {/* Glow filters */}
+            <filter id="glowGreen" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#10b981" floodOpacity="0.3" />
+            </filter>
+            <filter id="glowCoral" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#f43f5e" floodOpacity="0.25" />
+            </filter>
+          </defs>
+
+          {/* Grille horizontale ultra discrète comme dans Scholix */}
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+
+          <XAxis 
+            dataKey="month" 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
+            dy={10}
+          />
+          <YAxis 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
+            tickFormatter={(v) => {
+              if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`
+              if (v >= 1000) return `${Math.round(v / 1000)}k`
+              return `${v}`
+            }} 
+          />
+
+          <RechartsTooltip 
+            content={<SplineCalloutTooltip />} 
+            cursor={{ stroke: 'rgba(244, 63, 94, 0.35)', strokeWidth: 1.5, strokeDasharray: '4 4' }} 
+          />
+
+          {/* Volet 1 : Courbe sinusoïdale Encaissé (Vert Emeraude avec aire ombrée) */}
+          <Area 
+            type="monotone" 
+            dataKey="encaisse" 
+            name="Encaissé" 
+            stroke="#10b981" 
+            strokeWidth={3}
+            fill="url(#splineGreenGrad)" 
+            dot={{ r: 3, fill: '#10b981', stroke: '#ffffff', strokeWidth: 2 }}
+            activeDot={{ r: 6, fill: '#10b981', stroke: '#ffffff', strokeWidth: 3 }}
+            style={{ filter: 'url(#glowGreen)' }}
+            animationDuration={1400}
+            animationEasing="ease-out"
+          />
+
+          {/* Volet 2 : Courbe sinusoïdale Attendu / Prévisions (Corail / Rose saumon) */}
+          <Area 
+            type="monotone" 
+            dataKey="attendu" 
+            name="Attendu" 
+            stroke="#f43f5e" 
+            strokeWidth={2.5}
+            fill="url(#splineCoralGrad)" 
+            dot={{ r: 3, fill: '#f43f5e', stroke: '#ffffff', strokeWidth: 2 }}
+            activeDot={{ r: 6, fill: '#f43f5e', stroke: '#ffffff', strokeWidth: 3 }}
+            style={{ filter: 'url(#glowCoral)' }}
+            animationDuration={1600}
+            animationEasing="ease-out"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+// 3. Barres Cylindriques Bicolores (Dual Bar Pillars avec capsule arrondie et colonnes guides)
+export function DualBarPillarChart({ 
+  data, 
+  height = 300 
+}: { 
+  data: PaymentData[]
+  height?: number 
+}) {
+  return (
+    <div style={{ height: `${height}px` }} className="w-full relative">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart 
+          data={data} 
+          margin={{ top: 15, right: 10, left: -20, bottom: 0 }} 
+          barGap={4}
+        >
+          <defs>
+            <linearGradient id="barPillarGreen" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#34d399"/>
+              <stop offset="100%" stopColor="#059669"/>
+            </linearGradient>
+            <linearGradient id="barPillarCoral" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#fb7185"/>
+              <stop offset="100%" stopColor="#e11d48"/>
+            </linearGradient>
+          </defs>
+
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+
+          <XAxis 
+            dataKey="month" 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
+            dy={10}
+          />
+          <YAxis 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 600, fontFamily: 'var(--font-sans)' }} 
+            tickFormatter={(v) => {
+              if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`
+              if (v >= 1000) return `${Math.round(v / 1000)}k`
+              return `${v}`
+            }} 
+          />
+
+          <RechartsTooltip 
+            content={<SplineCalloutTooltip />} 
+            cursor={{ fill: 'rgba(241, 245, 249, 0.55)', rx: 8 }} 
+          />
+
+          {/* Pilier 1 : Encaissé (Capsule verte) */}
+          <Bar 
+            dataKey="encaisse" 
+            name="Encaissé" 
+            fill="url(#barPillarGreen)" 
+            radius={[6, 6, 6, 6]} 
+            barSize={12} 
+            animationDuration={1200}
+          />
+
+          {/* Pilier 2 : Attendu (Capsule corail) */}
+          <Bar 
+            dataKey="attendu" 
+            name="Attendu" 
+            fill="url(#barPillarCoral)" 
+            radius={[6, 6, 6, 6]} 
+            barSize={12} 
+            animationDuration={1400}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+// 4. Carte KPI avec Anneau de Progression Circulaire (Directement tirée du bandeau haut de Scholix)
+export function CircularKpiCard({
+  title,
+  current,
+  total,
+  percentage,
+  icon,
+  theme = 'emerald',
+  badgeText
+}: {
+  title: string
+  current: number | string
+  total: number | string
+  percentage: number
+  icon: React.ReactNode
+  theme?: 'amber' | 'blue' | 'purple' | 'emerald' | 'rose'
+  badgeText?: string
+}) {
+  const themes = {
+    amber: {
+      border: 'border-amber-100 hover:border-amber-200',
+      bg: 'bg-amber-500/10 text-amber-600',
+      stroke: '#f59e0b',
+      text: 'text-amber-600',
+      badge: 'bg-amber-50 text-amber-700 border-amber-200'
+    },
+    blue: {
+      border: 'border-blue-100 hover:border-blue-200',
+      bg: 'bg-blue-500/10 text-blue-600',
+      stroke: '#3b82f6',
+      text: 'text-blue-600',
+      badge: 'bg-blue-50 text-blue-700 border-blue-200'
+    },
+    purple: {
+      border: 'border-purple-100 hover:border-purple-200',
+      bg: 'bg-purple-500/10 text-purple-600',
+      stroke: '#a855f7',
+      text: 'text-purple-600',
+      badge: 'bg-purple-50 text-purple-700 border-purple-200'
+    },
+    emerald: {
+      border: 'border-emerald-100 hover:border-emerald-200',
+      bg: 'bg-emerald-500/10 text-emerald-600',
+      stroke: '#10b981',
+      text: 'text-emerald-600',
+      badge: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    },
+    rose: {
+      border: 'border-rose-100 hover:border-rose-200',
+      bg: 'bg-rose-500/10 text-rose-600',
+      stroke: '#f43f5e',
+      text: 'text-rose-600',
+      badge: 'bg-rose-50 text-rose-700 border-rose-200'
+    },
+  }
+
+  const currentTheme = themes[theme] || themes.emerald
+  const size = 52
+  const strokeWidth = 5
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const clamped = Math.min(Math.max(percentage, 0), 100)
+  const offset = circumference - (clamped / 100) * circumference
+
+  return (
+    <div className={`p-4 sm:p-5 rounded-2xl bg-white border ${currentTheme.border} shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-md transition-all duration-300 flex flex-col justify-between group`}>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className={`w-10 h-10 rounded-xl ${currentTheme.bg} flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform`}>
+          {icon}
+        </div>
+
+        {/* Anneau de progression circulaire compact avec % */}
+        <div className="relative inline-flex items-center justify-center flex-shrink-0">
+          <svg width={size} height={size} className="-rotate-90">
+            <circle cx={size/2} cy={size/2} r={radius} stroke="#f1f5f9" strokeWidth={strokeWidth} fill="transparent" />
+            <circle
+              cx={size/2} cy={size/2} r={radius}
+              stroke={currentTheme.stroke}
+              strokeWidth={strokeWidth}
+              fill="transparent"
+              strokeDasharray={circumference}
+              strokeDashoffset={offset}
+              strokeLinecap="round"
+              className="transition-all duration-1000 ease-out"
+            />
+          </svg>
+          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-slate-700">
+            {clamped}%
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold text-slate-500 leading-tight mb-1">{title}</p>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-2xl font-black text-slate-900 tracking-tight leading-none tabular-nums">
+            {current}
+          </span>
+          <span className="text-sm font-bold text-slate-400">
+            / {total}
+          </span>
+        </div>
+      </div>
+
+      {badgeText && (
+        <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${currentTheme.badge}`}>
+            {badgeText}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// 5. Barres de Statut Horizontales pour le Recouvrement (Fees Overview)
+export function FeesStatusHorizontalBars({
+  unpaidCount,
+  unpaidTotal,
+  partialCount,
+  partialTotal,
+  paidCount,
+  paidTotal,
+}: {
+  unpaidCount: number
+  unpaidTotal: number
+  partialCount: number
+  partialTotal: number
+  paidCount: number
+  paidTotal: number
+}) {
+  const total = unpaidTotal + partialTotal + paidTotal || 1
+  const unpaidPct = Math.round((unpaidTotal / total) * 100)
+  const partialPct = Math.round((partialTotal / total) * 100)
+  const paidPct = Math.max(0, 100 - unpaidPct - partialPct)
+
+  const items = [
+    {
+      label: 'IMPAYÉ / RETARD',
+      count: unpaidCount,
+      percentage: unpaidPct,
+      amount: unpaidTotal,
+      color: 'from-rose-500 to-red-600',
+      bgColor: 'bg-rose-50',
+      textColor: 'text-rose-700',
+      trackHatch: 'repeating-linear-gradient(45deg, #ffe4e6, #ffe4e6 6px, #fff1f2 6px, #fff1f2 12px)'
+    },
+    {
+      label: 'PARTIELLEMENT RÉGLÉ',
+      count: partialCount,
+      percentage: partialPct,
+      amount: partialTotal,
+      color: 'from-cyan-400 to-blue-500',
+      bgColor: 'bg-cyan-50',
+      textColor: 'text-cyan-800',
+      trackHatch: 'repeating-linear-gradient(45deg, #cffafe, #cffafe 6px, #e0f2fe 6px, #e0f2fe 12px)'
+    },
+    {
+      label: 'SOLDÉ / PAYÉ',
+      count: paidCount,
+      percentage: paidPct,
+      amount: paidTotal,
+      color: 'from-emerald-400 to-teal-500',
+      bgColor: 'bg-emerald-50',
+      textColor: 'text-emerald-800',
+      trackHatch: 'repeating-linear-gradient(45deg, #d1fae5, #d1fae5 6px, #ecfdf5 6px, #ecfdf5 12px)'
+    }
+  ]
+
+  return (
+    <div className="space-y-4">
+      {items.map((item, idx) => (
+        <div key={idx} className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-extrabold text-slate-700 tracking-wide flex items-center gap-1.5 text-[11px]">
+              <span className={`font-black ${item.textColor}`}>{item.count}</span> {item.label}
+            </span>
+            <span className="font-bold text-slate-800 tabular-nums text-xs">
+              {item.percentage}%
+            </span>
+          </div>
+          {/* Track hachuré ultra moderne avec barre de remplissage arrondi */}
+          <div 
+            className="h-3 w-full rounded-full overflow-hidden p-[1px] border border-slate-200/60"
+            style={{ background: item.trackHatch }}
+          >
+            <div 
+              className={`h-full rounded-full bg-gradient-to-r ${item.color} shadow-sm transition-all duration-1000 ease-out`}
+              style={{ width: `${Math.max(item.percentage, item.count > 0 ? 3 : 0)}%` }}
+            />
+          </div>
+          <div className="flex justify-end">
+            <span className="text-[10px] text-slate-400 font-medium tabular-nums">
+              {new Intl.NumberFormat('fr-FR').format(item.amount)} FCFA
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// 6. Barres d'Assiduité Horizontales (Student Today Attendance)
+export function AttendanceStatusHorizontalBars({
+  presentCount,
+  lateCount,
+  absentCount,
+}: {
+  presentCount: number
+  lateCount: number
+  absentCount: number
+}) {
+  const total = presentCount + lateCount + absentCount || 1
+  const presentPct = Math.round((presentCount / total) * 100)
+  const latePct = Math.round((lateCount / total) * 100)
+  const absentPct = Math.max(0, 100 - presentPct - latePct)
+
+  const items = [
+    {
+      label: 'PRÉSENTS',
+      count: presentCount,
+      percentage: presentPct,
+      color: 'from-emerald-400 to-emerald-600',
+      textColor: 'text-emerald-700',
+      trackHatch: 'repeating-linear-gradient(45deg, #d1fae5, #d1fae5 6px, #ecfdf5 6px, #ecfdf5 12px)'
+    },
+    {
+      label: 'RETARDS',
+      count: lateCount,
+      percentage: latePct,
+      color: 'from-amber-400 to-amber-600',
+      textColor: 'text-amber-700',
+      trackHatch: 'repeating-linear-gradient(45deg, #fef3c7, #fef3c7 6px, #fffbeb 6px, #fffbeb 12px)'
+    },
+    {
+      label: 'ABSENTS',
+      count: absentCount,
+      percentage: absentPct,
+      color: 'from-rose-400 to-rose-600',
+      textColor: 'text-rose-700',
+      trackHatch: 'repeating-linear-gradient(45deg, #ffe4e6, #ffe4e6 6px, #fff1f2 6px, #fff1f2 12px)'
+    }
+  ]
+
+  return (
+    <div className="space-y-4">
+      {items.map((item, idx) => (
+        <div key={idx} className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-extrabold text-slate-700 tracking-wide flex items-center gap-1.5 text-[11px]">
+              <span className={`font-black ${item.textColor}`}>{item.count}</span> {item.label}
+            </span>
+            <span className="font-bold text-slate-800 tabular-nums text-xs">
+              {item.percentage}%
+            </span>
+          </div>
+          <div 
+            className="h-3 w-full rounded-full overflow-hidden p-[1px] border border-slate-200/60"
+            style={{ background: item.trackHatch }}
+          >
+            <div 
+              className={`h-full rounded-full bg-gradient-to-r ${item.color} shadow-sm transition-all duration-1000 ease-out`}
+              style={{ width: `${Math.max(item.percentage, item.count > 0 ? 3 : 0)}%` }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// 7. Donut Breakdown Widget (Pour Recettes et Dépenses comme dans Scholix)
+export function DonutBreakdownWidget({
+  data,
+  totalLabel = "Total",
+  formatValue = (v: number) => `${new Intl.NumberFormat('fr-FR').format(v)} F`
+}: {
+  data: { name: string; value: number; color: string }[]
+  totalLabel?: string
+  formatValue?: (v: number) => string
+}) {
+  const total = data.reduce((acc, curr) => acc + curr.value, 0)
+  return (
+    <div className="flex flex-col sm:flex-row items-center gap-6">
+      <div className="w-[140px] h-[140px] relative flex-shrink-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%" cy="50%"
+              innerRadius={46} outerRadius={64}
+              paddingAngle={4}
+              dataKey="value"
+              stroke="none"
+              cornerRadius={5}
+            >
+              {data.map((entry, i) => (
+                <Cell key={i} fill={entry.color} style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.06))' }} />
+              ))}
+            </Pie>
+            <RechartsTooltip content={<CustomTooltip />} />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none flex-col text-center">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-0.5">{totalLabel}</span>
+          <span className="text-xs font-black text-slate-800 tabular-nums">
+            {total >= 1000000 ? `${(total / 1000000).toFixed(1)}M` : total >= 1000 ? `${Math.round(total / 1000)}k` : total}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex-1 w-full space-y-2">
+        {data.map((item, idx) => (
+          <div key={idx} className="flex items-center justify-between text-xs py-0.5">
+            <span className="flex items-center gap-2 text-slate-600 truncate max-w-[140px]">
+              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+              <span className="font-medium text-[11px] truncate">{item.name}</span>
+            </span>
+            <span className="font-bold text-slate-800 tabular-nums text-xs flex-shrink-0 pl-2">
+              {formatValue(item.value)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// 8. Aperçu Semainier / Planning (Bandeau bas de Scholix)
+export function WeeklyTimetablePreview() {
+  const days = [
+    { name: 'Lun', date: '24', isToday: false },
+    { name: 'Mar', date: '25', isToday: false },
+    { name: 'Mer', date: '26', isToday: true },
+    { name: 'Jeu', date: '27', isToday: false },
+    { name: 'Ven', date: '28', isToday: false },
+    { name: 'Sam', date: '29', isToday: false },
+  ]
+
+  return (
+    <div className="w-full overflow-x-auto pb-2">
+      <div className="min-w-[640px] grid grid-cols-6 gap-2">
+        {days.map((day, i) => (
+          <div 
+            key={i} 
+            className={`p-3 rounded-2xl border transition-all ${
+              day.isToday 
+                ? 'bg-emerald-500/5 border-emerald-500/30 shadow-sm' 
+                : 'bg-white border-slate-100 hover:border-slate-200'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-slate-600">{day.name}</span>
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black ${
+                day.isToday ? 'bg-emerald-600 text-white' : 'text-slate-400'
+              }`}>
+                {day.date}
+              </span>
+            </div>
+            {/* Blocs de cours / cours actifs inspirés des barres bicolores de Scholix */}
+            <div className="space-y-1.5">
+              <div className="h-10 rounded-xl bg-gradient-to-r from-emerald-500/15 to-emerald-500/25 border border-emerald-500/20 p-2 flex flex-col justify-center">
+                <span className="text-[10px] font-extrabold text-emerald-800 leading-tight">Cours Matin</span>
+                <span className="text-[9px] font-medium text-emerald-700/80">08h00 - 12h00</span>
+              </div>
+              <div className="h-10 rounded-xl bg-gradient-to-r from-violet-500/15 to-violet-500/25 border border-violet-500/20 p-2 flex flex-col justify-center">
+                <span className="text-[10px] font-extrabold text-violet-800 leading-tight">Cours Après-midi</span>
+                <span className="text-[9px] font-medium text-violet-700/80">14h30 - 17h30</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 

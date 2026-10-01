@@ -327,8 +327,15 @@ export default async function AdminDashboard() {
                 <h3 className="font-black text-slate-800 text-base tracking-tight">Recouvrement des paiements</h3>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">Mensuel — Année scolaire {academicYear}</p>
               </div>
-              <div className="flex items-center gap-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shadow-[0_0_8px_rgba(16,185,129,0.4)]"/>Encaissé</span>
+              <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-wider">
+                <span className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block shadow-[0_0_8px_rgba(16,185,129,0.4)]"/>
+                  Encaissé
+                </span>
+                <span className="flex items-center gap-1.5 text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-100">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 inline-block shadow-[0_0_8px_rgba(244,63,94,0.4)]"/>
+                  Attendu
+                </span>
               </div>
             </div>
           <div className="flex-1 p-6">
