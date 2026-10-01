@@ -207,16 +207,55 @@ export async function sendCommunication(formData: FormData) {
 
     // Insérer les notifications
     if (usersToNotify.length > 0) {
-      const notifTitle = 'Nouveau message'
-      const notifMessage = audioUrl ? 'Vous avez reçu un nouveau message vocal.' : subject
-      
-      const notificationsToInsert = usersToNotify.map(uid => ({
-        user_id: uid,
-        school_id: roleData.school_id,
-        title: notifTitle,
-        message: notifMessage,
-        type: 'message'
-      }))
+      // Récupérer le nom et rôle de l'expéditeur
+      const { data: senderRole } = await adminClient
+        .from('user_school_roles')
+        .select('full_name, role')
+        .eq('user_id', user.id)
+        .eq('school_id', roleData.school_id)
+        .maybeSingle()
+
+      const senderName = senderRole?.full_name || 'Utilisateur'
+      const roleLabel = senderRole?.role === 'parent'
+        ? 'Parent'
+        : senderRole?.role === 'enseignant'
+          ? 'Enseignant'
+          : 'Administration'
+
+      const notifTitle = `Message de ${senderName} (${roleLabel})`
+
+      let notifBody = audioUrl ? '🎤 Nouveau message vocal' : (subject || 'Vous avez reçu un nouveau message')
+      if (message && message !== 'Message vocal' && message !== 'Message enseignant' && message !== 'Message parent' && message !== 'Message parent → enseignant') {
+        const cleanContent = message.split('|||FILE|||')[0].trim()
+        if (cleanContent) {
+          notifBody = cleanContent.length > 100 ? `${cleanContent.substring(0, 100)}...` : cleanContent
+        }
+      }
+
+      // Récupérer les rôles des destinataires pour router vers le bon lien
+      const { data: recipientsRoles } = await adminClient
+        .from('user_school_roles')
+        .select('user_id, role')
+        .in('user_id', usersToNotify)
+        .eq('school_id', roleData.school_id)
+
+      const roleMap = new Map((recipientsRoles || []).map(r => [r.user_id, r.role]))
+
+      const notificationsToInsert = usersToNotify.map(uid => {
+        const targetRole = roleMap.get(uid)
+        let actionUrl = '/parent/messages'
+        if (targetRole === 'enseignant') actionUrl = '/enseignant/messages'
+        else if (targetRole === 'admin') actionUrl = '/admin/communication'
+
+        return {
+          user_id: uid,
+          school_id: roleData.school_id,
+          title: notifTitle,
+          message: notifBody,
+          type: 'message',
+          action_url: actionUrl
+        }
+      })
 
       await adminClient.from('notifications').insert(notificationsToInsert)
     }
