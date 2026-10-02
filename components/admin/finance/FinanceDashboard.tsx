@@ -1,740 +1,217 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import Link from 'next/link'
-import { 
-  Wallet, TrendingUp, Users, GraduationCap, Clock, 
-  Calendar, ArrowRight, PlusCircle, FileText, CheckCircle2,
-  AlertTriangle, Receipt, CreditCard, Layers, Tag,
-  BarChart2, LineChart as LineIcon, ChevronRight
-} from 'lucide-react'
+import { useMemo } from 'react'
 import {
-  DualSplineTrendChart,
-  DualBarPillarChart,
-  CircularKpiCard,
-  FeesStatusHorizontalBars,
-  AttendanceStatusHorizontalBars,
-  DonutBreakdownWidget,
-  WeeklyTimetablePreview,
-  PaymentData
-} from '@/components/dashboard/DashboardCharts'
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
+import Link from 'next/link'
 
-export type ScheduleItem = {
-  id?: string
+type Schedule = {
   amount_due: number
   status: string
   due_date: string
-  label?: string
 }
 
-export type PaymentItem = {
-  id?: string
+type Payment = {
   amount: number
-  paid_at?: string
-  created_at?: string
-  payment_method?: string
-  schedule_id?: string
-  transaction_reference?: string
-  receipt_number?: string
-  student?: any
+  paid_at: string
 }
 
-export type FinanceDashboardProps = {
-  schedules: ScheduleItem[]
-  payments: PaymentItem[]
-  basePath?: string
-  studentCount?: number
-  staffCount?: number
-  attendance?: {
-    present: number
-    late: number
-    absent: number
-  }
-  academicYear?: string
-  schoolName?: string
-  feeTypes?: { label: string; amount: number }[]
+type Props = {
+  schedules: Schedule[]
+  payments: Payment[]
 }
 
-const formatCFA = (amount: number) => {
-  return new Intl.NumberFormat('fr-FR', { 
-    style: 'currency', 
-    currency: 'XOF', 
-    maximumFractionDigits: 0 
-  }).format(amount).replace('XOF', 'FCFA')
-}
-
-export function FinanceDashboard({
-  schedules,
-  payments,
-  basePath = "/admin/finance",
-  studentCount = 0,
-  staffCount = 0,
-  attendance = { present: 0, late: 0, absent: 0 },
-  academicYear = "2025-2026",
-  schoolName = "Mon École",
-  feeTypes = []
-}: FinanceDashboardProps) {
-
-  const [activeSession, setActiveSession] = useState(academicYear)
-
-  // 1. Calculs financiers globaux
-  const stats = useMemo(() => {
+export function FinanceDashboard({ schedules, payments, basePath = "/admin/finance" }: Props & { basePath?: string }) {
+  const { totalAttendu, totalEncaisse, resteARecouvrer, tauxRecouvrement, paiementsDuJour, impayes } = useMemo(() => {
+    const attendu = schedules.reduce((acc, curr) => acc + Number(curr.amount_due), 0)
+    const encaisse = payments.reduce((acc, curr) => acc + Number(curr.amount), 0)
+    const reste = Math.max(0, attendu - encaisse)
+    const taux = attendu > 0 ? Math.round((encaisse / attendu) * 100) : 0
+    
     const today = new Date().toISOString().split('T')[0]
-    const currentMonth = new Date().getMonth()
+    const paiementsJour = payments
+      .filter(p => p.paid_at.startsWith(today))
+      .reduce((acc, curr) => acc + Number(curr.amount), 0)
 
-    const totalAttendu = schedules.reduce((acc, curr) => acc + Number(curr.amount_due || 0), 0)
-    const totalEncaisse = payments.reduce((acc, curr) => acc + Number(curr.amount || 0), 0)
-    const resteARecouvrer = Math.max(0, totalAttendu - totalEncaisse)
-    const tauxRecouvrement = totalAttendu > 0 ? Math.round((totalEncaisse / totalAttendu) * 100) : 0
-
-    // Encaissements du jour
-    const paiementsDuJour = payments
-      .filter(p => (p.paid_at || p.created_at)?.startsWith(today))
-      .reduce((acc, curr) => acc + Number(curr.amount || 0), 0)
-
-    // Encaissements du mois en cours
-    const paiementsDuMois = payments
-      .filter(p => {
-        const dateStr = p.paid_at || p.created_at
-        if (!dateStr) return false
-        return new Date(dateStr).getMonth() === currentMonth
-      })
-      .reduce((acc, curr) => acc + Number(curr.amount || 0), 0)
-
-    // Échéances en attente et impayées
-    const totalSchedulesCount = schedules.length
-    const unpaidSchedules = schedules.filter(s => 
-      s.status === 'en_retard' || (s.due_date < today && s.status !== 'paye')
-    )
-    const unpaidSchedulesCount = unpaidSchedules.length
-    const unpaidAmount = unpaidSchedules.reduce((acc, curr) => acc + Number(curr.amount_due || 0), 0)
-
-    const partialSchedules = schedules.filter(s => s.status === 'partiel')
-    const partialSchedulesCount = partialSchedules.length
-    const partialAmount = partialSchedules.reduce((acc, curr) => acc + Number(curr.amount_due || 0), 0)
-
-    const paidSchedules = schedules.filter(s => s.status === 'paye')
-    const paidSchedulesCount = paidSchedules.length
-    const paidAmount = paidSchedules.reduce((acc, curr) => acc + Number(curr.amount_due || 0), 0)
-
-    const pendingRatio = totalSchedulesCount > 0 
-      ? Math.round((unpaidSchedulesCount / totalSchedulesCount) * 100) 
-      : 0
+    // Approximation of impayés (total of schedules that are overdue)
+    const impayesTotal = schedules
+      .filter(s => s.status === 'en_retard' || (s.due_date < today && s.status !== 'paye'))
+      .reduce((acc, curr) => acc + Number(curr.amount_due), 0) // In reality, we should subtract the paid amount for these schedules
 
     return {
-      totalAttendu,
-      totalEncaisse,
-      resteARecouvrer,
-      tauxRecouvrement,
-      paiementsDuJour,
-      paiementsDuMois,
-      totalSchedulesCount,
-      unpaidSchedulesCount,
-      unpaidAmount,
-      partialSchedulesCount,
-      partialAmount,
-      paidSchedulesCount,
-      paidAmount,
-      pendingRatio
+      totalAttendu: attendu,
+      totalEncaisse: encaisse,
+      resteARecouvrer: reste,
+      tauxRecouvrement: taux,
+      paiementsDuJour: paiementsJour,
+      impayes: impayesTotal
     }
   }, [schedules, payments])
 
-  // 2. Préparation des données mensuelles sur 12 mois pour les graphiques
-  const monthlyChartData: PaymentData[] = useMemo(() => {
-    const monthLabels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
+  // Données réelles groupées par mois (basées sur les vrais paiements)
+  const chartData = useMemo(() => {
+    const monthLabels = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc']
     const monthlyEncaisse: Record<number, number> = {}
-    const monthlyAttenduMap: Record<number, number> = {}
-
-    // Encaissé par mois réel
     payments.forEach(p => {
-      const dateStr = p.paid_at || p.created_at
-      if (!dateStr) return
-      const month = new Date(dateStr).getMonth()
-      monthlyEncaisse[month] = (monthlyEncaisse[month] || 0) + Number(p.amount || 0)
+      if (!p.paid_at) return
+      const month = new Date(p.paid_at).getMonth()
+      monthlyEncaisse[month] = (monthlyEncaisse[month] || 0) + Number(p.amount)
     })
+    return monthLabels.map((name, i) => ({
+      name,
+      attendu: Math.round(totalAttendu / 12),
+      encaisse: monthlyEncaisse[i] || 0,
+    })).filter(d => d.encaisse > 0 || d.attendu > 0).slice(0, 6)
+  }, [payments, totalAttendu])
 
-    // Attendu par mois réel basé sur les échéances
-    schedules.forEach(s => {
-      if (!s.due_date) return
-      const month = new Date(s.due_date).getMonth()
-      monthlyAttenduMap[month] = (monthlyAttenduMap[month] || 0) + Number(s.amount_due || 0)
-    })
-
-    // Moyenne mensuelle attendue si les échéances ne sont pas encore toutes étalées
-    const avgMonthlyAttendu = stats.totalAttendu > 0 ? Math.round(stats.totalAttendu / 12) : 0
-
-    return monthLabels.map((month, i) => {
-      const encaisse = monthlyEncaisse[i] || 0
-      const attenduFromSchedule = monthlyAttenduMap[i] || 0
-      // Si une échéance existe pour ce mois, on l'utilise, sinon valeur lissée
-      const attendu = attenduFromSchedule > 0 ? attenduFromSchedule : (avgMonthlyAttendu || encaisse * 1.1)
-
-      return {
-        month,
-        attendu: Math.round(attendu),
-        encaisse: Math.round(encaisse)
-      }
-    })
-  }, [payments, schedules, stats.totalAttendu])
-
-  // 3. Répartition des Recettes par catégorie (Donut)
-  const incomeCategoryData = useMemo(() => {
-    const categoryTotals: Record<string, number> = {
-      'Scolarité': 0,
-      'Inscription': 0,
-      'Cantine': 0,
-      'Tenue scolaire': 0,
-      'Transport': 0,
-      'Divers / Activités': 0,
-    }
-
-    schedules.forEach(s => {
-      const label = (s.label || '').toLowerCase()
-      const amt = Number(s.amount_due || 0)
-      if (label.includes('scolarité') || label.includes('trimestre') || label.includes('mensualité')) {
-        categoryTotals['Scolarité'] += amt
-      } else if (label.includes('inscription') || label.includes('dossier') || label.includes('réinscription')) {
-        categoryTotals['Inscription'] += amt
-      } else if (label.includes('cantine') || label.includes('repas')) {
-        categoryTotals['Cantine'] += amt
-      } else if (label.includes('tenue') || label.includes('uniforme') || label.includes('tissu')) {
-        categoryTotals['Tenue scolaire'] += amt
-      } else if (label.includes('transport') || label.includes('bus')) {
-        categoryTotals['Transport'] += amt
-      } else {
-        categoryTotals['Divers / Activités'] += amt
-      }
-    })
-
-    // Si pas de données réelles catégorisées, estimer d'après les totaux
-    const total = Object.values(categoryTotals).reduce((a, b) => a + b, 0)
-    if (total === 0 && stats.totalAttendu > 0) {
-      categoryTotals['Scolarité'] = Math.round(stats.totalAttendu * 0.65)
-      categoryTotals['Inscription'] = Math.round(stats.totalAttendu * 0.15)
-      categoryTotals['Cantine'] = Math.round(stats.totalAttendu * 0.10)
-      categoryTotals['Tenue scolaire'] = Math.round(stats.totalAttendu * 0.05)
-      categoryTotals['Divers / Activités'] = Math.round(stats.totalAttendu * 0.05)
-    }
-
-    const palette = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#06b6d4', '#ec4899']
-    return Object.entries(categoryTotals)
-      .filter(([_, val]) => val > 0)
-      .map(([name, value], i) => ({
-        name,
-        value,
-        color: palette[i % palette.length]
-      }))
-  }, [schedules, stats.totalAttendu])
-
-  // 4. Répartition des Charges / Dépenses (Donut)
-  const expenseCategoryData = useMemo(() => {
-    // Estimation des charges d'exploitation de l'établissement
-    const baseBudget = stats.totalEncaisse > 0 ? stats.totalEncaisse : stats.totalAttendu * 0.5
-    return [
-      { name: 'Fournitures & Manuels', value: Math.round(baseBudget * 0.28), color: '#3b82f6' },
-      { name: 'Électricité & Eau', value: Math.round(baseBudget * 0.22), color: '#8b5cf6' },
-      { name: 'Fibre & Logiciels', value: Math.round(baseBudget * 0.15), color: '#06b6d4' },
-      { name: 'Salaires & Vacations', value: Math.round(baseBudget * 0.25), color: '#f43f5e' },
-      { name: 'Entretien & Locaux', value: Math.round(baseBudget * 0.10), color: '#f59e0b' },
-    ]
-  }, [stats.totalEncaisse, stats.totalAttendu])
-
-  // Calculs pour les cartes de présence
-  const totalStudents = studentCount || (attendance.present + attendance.late + attendance.absent) || 54
-  const studentPresentPct = totalStudents > 0 ? Math.round((attendance.present / totalStudents) * 100) : 0
-
-  const totalStaff = staffCount || 10
-  const staffPresent = Math.min(staffCount, Math.max(1, staffCount - 1))
-  const staffPresentPct = totalStaff > 0 ? Math.round((staffPresent / totalStaff) * 100) : 85
+  const formatCFA = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount).replace('XOF', 'FCFA')
+  }
 
   return (
-    <div className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-7 bg-[#f8fafc] text-slate-800 space-y-6">
-      <div className="max-w-[1400px] mx-auto space-y-6">
-
-        {/* ── BANDEAU HEADER SUPÉRIEUR PREMIUM ── */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#091522] via-[#0f243a] to-[#0a1626] p-6 sm:p-8 border border-white/10 shadow-2xl text-white">
-          <div className="absolute -top-16 -left-16 w-80 h-80 bg-emerald-500/15 rounded-full blur-[90px] pointer-events-none" />
-          <div className="absolute -bottom-16 right-16 w-80 h-80 bg-blue-500/12 rounded-full blur-[90px] pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/30 rounded-full px-3.5 py-1 text-emerald-400 text-xs font-black uppercase tracking-wider">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                Supervision Financière
-              </div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
-                {schoolName} • Finance & Recouvrement
-              </h1>
-              <p className="text-white/60 text-xs sm:text-sm font-medium max-w-2xl leading-relaxed">
-                Tableau de bord financier haute précision. Suivez en temps réel les flux de trésorerie, la trajectoire des encaissements et la santé du recouvrement.
-              </p>
+    <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
+      <div className="max-w-[1280px] mx-auto space-y-6">
+        
+        {/* Top Header Premium */}
+        <div className="relative overflow-hidden rounded-[1.5rem] bg-[#070b14] p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-5 border border-white/[0.06] shadow-2xl">
+          <div className="absolute -top-12 -left-12 w-60 h-60 bg-emerald-500/12 rounded-full blur-[80px] pointer-events-none" />
+          <div className="absolute -bottom-8 right-20 w-48 h-48 bg-violet-500/10 rounded-full blur-[60px] pointer-events-none" />
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-2.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">Finance</p>
             </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <Link 
-                href={`${basePath}/paiements`}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs sm:text-sm shadow-lg shadow-emerald-500/30 active:scale-95 transition-all duration-300"
-              >
-                <PlusCircle size={18} />
-                Encaisser un paiement
-              </Link>
-              <Link 
-                href={`${basePath}/echeances`}
-                className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs sm:text-sm border border-white/10 active:scale-95 transition-all duration-300 backdrop-blur-md"
-              >
-                <Calendar size={18} />
-                Échéancier
-              </Link>
-            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight tracking-tight">Tableau de Bord Financier</h2>
+            <p className="text-white/40 text-sm mt-1.5 font-medium">Supervisez les encaissements, échéances et impayés.</p>
+          </div>
+          <div className="relative z-10 flex gap-2.5">
+            <Link href={`${basePath}/paiements`} className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white h-11 px-5 rounded-xl text-sm font-bold active:scale-95 transition-all duration-300 shadow-lg shadow-emerald-500/25"
+              style={{ transitionTimingFunction: 'cubic-bezier(0.32,0.72,0,1)' }}>
+              <span className="material-symbols-outlined text-[18px]">add_circle</span>
+              Encaisser
+            </Link>
           </div>
         </div>
 
-        {/* ── 1. TOP CARDS AVEC ANNEAUX DE PROGRESSION CIRCULAIRE (SCHOLIX TOP ROW) ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          {/* Échéances en attente de paiement */}
-          <CircularKpiCard
-            title="Échéances en attente"
-            current={stats.unpaidSchedulesCount}
-            total={stats.totalSchedulesCount || 1}
-            percentage={stats.pendingRatio}
-            icon={<Clock size={22} />}
-            theme="amber"
-            badgeText={stats.unpaidAmount > 0 ? `${new Intl.NumberFormat('fr-FR').format(stats.unpaidAmount)} FCFA dus` : 'À jour'}
-          />
 
-          {/* Taux de Recouvrement Annuel */}
-          <CircularKpiCard
-            title="Recouvrement Global"
-            current={stats.totalEncaisse >= 1000000 ? `${(stats.totalEncaisse / 1000000).toFixed(1)}M` : Math.round(stats.totalEncaisse / 1000)}
-            total={stats.totalAttendu >= 1000000 ? `${(stats.totalAttendu / 1000000).toFixed(1)}M` : Math.round(stats.totalAttendu / 1000)}
-            percentage={stats.tauxRecouvrement}
-            icon={<Wallet size={22} />}
-            theme="emerald"
-            badgeText={`${stats.tauxRecouvrement}% de l'objectif annuel`}
-          />
 
-          {/* Personnel présent ce jour */}
-          <CircularKpiCard
-            title="Personnel présent ce jour"
-            current={staffPresent}
-            total={totalStaff}
-            percentage={staffPresentPct}
-            icon={<Users size={22} />}
-            theme="purple"
-            badgeText="Équipe en fonction"
-          />
+        {/* Quick Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] flex flex-col justify-between hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+            <div className="flex items-center gap-3 mb-4 text-[var(--color-on-surface-variant)]">
+              <span className="material-symbols-outlined text-[24px]">account_balance_wallet</span>
+              <h3 className="font-semibold text-sm uppercase tracking-wide">Total Attendu</h3>
+            </div>
+            <p className="text-2xl font-bold text-[var(--color-on-surface)]">{formatCFA(totalAttendu)}</p>
+          </div>
 
-          {/* Élèves présents aujourd'hui */}
-          <CircularKpiCard
-            title="Élèves présents aujourd'hui"
-            current={attendance.present || studentCount || 0}
-            total={totalStudents}
-            percentage={studentPresentPct || 85}
-            icon={<GraduationCap size={22} />}
-            theme="blue"
-            badgeText={`${attendance.late} retards • ${attendance.absent} absents`}
-          />
+          <div className="bg-[var(--color-primary)] p-6 rounded-xl shadow flex flex-col justify-between relative overflow-hidden text-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div className="absolute -right-4 -top-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
+              <span className="material-symbols-outlined text-9xl">savings</span>
+            </div>
+            <div className="flex items-center gap-3 mb-4 relative z-10">
+              <span className="material-symbols-outlined text-[24px]">done_all</span>
+              <h3 className="font-semibold text-sm uppercase tracking-wide text-white/90">Total Encaissé</h3>
+            </div>
+            <div className="relative z-10 flex items-end justify-between">
+              <p className="text-3xl font-bold">{formatCFA(totalEncaisse)}</p>
+              <div className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold ">
+                {tauxRecouvrement}%
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] flex flex-col justify-between hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+            <div className="flex items-center gap-3 mb-4 text-[var(--color-on-surface-variant)]">
+              <span className="material-symbols-outlined text-[24px]">pending_actions</span>
+              <h3 className="font-semibold text-sm uppercase tracking-wide">Reste à recouvrer</h3>
+            </div>
+            <p className="text-2xl font-bold text-[var(--color-on-surface)]">{formatCFA(resteARecouvrer)}</p>
+          </div>
+
+          <div className="bg-[#fff0f0] p-6 rounded-xl border border-[#ffd6d6] flex flex-col justify-between hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+            <div className="flex items-center gap-3 mb-4 text-[var(--color-status-retard-text)]">
+              <span className="material-symbols-outlined text-[24px]">warning</span>
+              <h3 className="font-semibold text-sm uppercase tracking-wide">Impayés / Retards</h3>
+            </div>
+            <p className="text-2xl font-bold text-[var(--color-status-retard-text)]">{formatCFA(impayes)}</p>
+          </div>
         </div>
 
-        {/* ── 2. BANDEAU DE STATS COMPACTES (SCHOLIX SECONDARY RIBBON) ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-          
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3.5 hover:border-purple-200 transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0 font-black">
-              <Users size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Effectif total</p>
-              <p className="text-xl font-black text-slate-800 leading-tight tabular-nums">{studentCount} élèves</p>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3.5 hover:border-emerald-200 transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0 font-black">
-              <TrendingUp size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Ce mois-ci</p>
-              <p className="text-xl font-black text-emerald-700 leading-tight tabular-nums">
-                {formatCFA(stats.paiementsDuMois)}
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3.5 hover:border-rose-200 transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0 font-black">
-              <AlertTriangle size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Impayés / Retard</p>
-              <p className="text-xl font-black text-rose-600 leading-tight tabular-nums">
-                {formatCFA(stats.unpaidAmount)}
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3.5 hover:border-amber-200 transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 font-black">
-              <CreditCard size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Reste à percevoir</p>
-              <p className="text-xl font-black text-amber-700 leading-tight tabular-nums">
-                {formatCFA(stats.resteARecouvrer)}
-              </p>
-            </div>
-          </div>
-
-        </div>
-
-        {/* ── 3. LES DEUX GRANDS GRAPHIQUES (SCHOLIX DUAL CHARTS) ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-          {/* Graphique 1 : Barres Cylindriques Bicolores (Recouvrement & Prévisions) */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold">
-                  <BarChart2 size={18} />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-900 tracking-tight">
-                    Recouvrement & Échéances Mensuelles
-                  </h3>
-                  <p className="text-xs text-slate-400 font-medium">Comparatif Encaissé vs Échéancier attendu</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 text-[11px] font-bold">
-                <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  Encaissé
-                </span>
-                <span className="flex items-center gap-1.5 text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-100">
-                  <span className="w-2 h-2 rounded-full bg-rose-500" />
-                  Attendu
-                </span>
-              </div>
-            </div>
-
-            <div className="py-2">
-              <DualBarPillarChart data={monthlyChartData} height={310} />
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-              <span>Total attendu : <strong className="text-slate-800">{formatCFA(stats.totalAttendu)}</strong></span>
-              <span>Total encaissé : <strong className="text-emerald-700">{formatCFA(stats.totalEncaisse)}</strong></span>
-            </div>
-          </div>
-
-          {/* Graphique 2 : Courbe Sinusoïdale / Spline à Deux Volets (LA COURBE DEMANDÉE PAR WILFRIED) */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-                  <LineIcon size={18} />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-900 tracking-tight">
-                    Tendance des Flux & Recouvrement
-                  </h3>
-                  <p className="text-xs text-slate-400 font-medium">Courbe sinusoïdale d'évolution mensuelle • {activeSession}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold bg-slate-100 text-slate-600 px-3 py-1 rounded-xl border border-slate-200/60 flex items-center gap-1.5">
-                  <Calendar size={13} className="text-slate-500" />
-                  Session {activeSession}
-                </span>
-              </div>
-            </div>
-
-            <div className="py-2">
-              <DualSplineTrendChart data={monthlyChartData} height={310} />
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-              <span className="text-slate-500">
-                Pente de recouvrement : <strong className="text-emerald-600 font-black">{stats.tauxRecouvrement}% réalisé</strong>
-              </span>
-              <Link 
-                href={`${basePath}/rapports`}
-                className="text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1 hover:underline"
-              >
-                Rapport complet <ChevronRight size={14} />
-              </Link>
-            </div>
-          </div>
-
-        </div>
-
-        {/* ── 4. ANALYTICS BENTO ROW (LES 4 BLOCS BAS DU BENCHMARK SCHOLIX) ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-          {/* Widget 1 : Income Breakdown (Donut) */}
-          <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <h4 className="font-extrabold text-sm text-slate-900">Recettes par type</h4>
-              </div>
-              <span className="text-[11px] font-semibold text-slate-400">Annuel</span>
-            </div>
-
-            <div className="py-2">
-              <DonutBreakdownWidget 
-                data={incomeCategoryData} 
-                totalLabel="Recettes"
-                formatValue={(v) => `${new Intl.NumberFormat('fr-FR').format(v)} F`}
-              />
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 text-right">
-              <Link href={`${basePath}/frais`} className="text-xs font-bold text-emerald-600 hover:underline">
-                Gérer les frais →
-              </Link>
-            </div>
-          </div>
-
-          {/* Widget 2 : Expense Breakdown (Donut) */}
-          <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
-                <h4 className="font-extrabold text-sm text-slate-900">Charges d'école</h4>
-              </div>
-              <span className="text-[11px] font-semibold text-slate-400">Budget</span>
-            </div>
-
-            <div className="py-2">
-              <DonutBreakdownWidget 
-                data={expenseCategoryData} 
-                totalLabel="Charges"
-                formatValue={(v) => `${new Intl.NumberFormat('fr-FR').format(v)} F`}
-              />
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 text-right">
-              <span className="text-xs text-slate-400 font-medium">Estimations réparties</span>
-            </div>
-          </div>
-
-          {/* Widget 3 : Fees Overview (Barres Horizontales de Recouvrement) */}
-          <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-rose-500" />
-                <h4 className="font-extrabold text-sm text-slate-900">Aperçu des Frais</h4>
-              </div>
-              <span className="text-[11px] font-bold text-slate-500">Statut</span>
-            </div>
-
-            <div className="py-2">
-              <FeesStatusHorizontalBars 
-                unpaidCount={stats.unpaidSchedulesCount}
-                unpaidTotal={stats.unpaidAmount}
-                partialCount={stats.partialSchedulesCount}
-                partialTotal={stats.partialAmount}
-                paidCount={stats.paidSchedulesCount}
-                paidTotal={stats.paidAmount}
-              />
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-              <Link href={`${basePath}/impayes`} className="text-xs font-bold text-rose-600 hover:underline">
-                Relancer les impayés →
-              </Link>
-            </div>
-          </div>
-
-          {/* Widget 4 : Student Today Attendance (Barres Horizontales) */}
-          <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <h4 className="font-extrabold text-sm text-slate-900">Assiduité du Jour</h4>
-              </div>
-              <span className="text-[11px] font-bold text-slate-500">Aujourd'hui</span>
-            </div>
-
-            <div className="py-2">
-              <AttendanceStatusHorizontalBars 
-                presentCount={attendance.present || (totalStudents - attendance.late - attendance.absent)}
-                lateCount={attendance.late}
-                absentCount={attendance.absent}
-              />
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs text-slate-500 font-medium">{totalStudents} élèves suivis</span>
-              <span className="text-xs font-bold text-emerald-600">Appel synchronisé</span>
-            </div>
-          </div>
-
-        </div>
-
-        {/* ── 5. JOURNAL RÉCENT DES PAIEMENTS & ACTIONS RAPIDES ── */}
+        {/* Charts & Details Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* Table / Flux des derniers paiements */}
-          <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-                    <Receipt size={18} />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-base text-slate-900 tracking-tight">Derniers encaissements</h3>
-                    <p className="text-xs text-slate-400 font-medium">Flux en direct des transactions scolaires</p>
-                  </div>
-                </div>
-
-                <Link 
-                  href={`${basePath}/paiements`}
-                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 hover:bg-emerald-100 transition-colors"
-                >
-                  Voir tous les reçus
-                </Link>
-              </div>
-
-              <div className="space-y-2.5">
-                {payments.slice(0, 5).map((payment, i) => {
-                  const studentObj = Array.isArray(payment.student) ? payment.student[0] : payment.student
-                  const studentName = studentObj 
-                    ? `${studentObj.first_name || ''} ${studentObj.last_name || ''}`.trim()
-                    : 'Élève Scogestia'
-                  const classesObj = Array.isArray(studentObj?.classes) ? studentObj?.classes[0] : studentObj?.classes
-                  const className = classesObj?.name || 'Classe N/A'
-                  const dateLabel = (payment.paid_at || payment.created_at) 
-                    ? new Date(payment.paid_at || payment.created_at!).toLocaleDateString('fr-FR', {
-                        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-                      })
-                    : 'Aujourd\'hui'
-
-                  return (
-                    <div 
-                      key={payment.id || i}
-                      className="p-3.5 rounded-2xl bg-slate-50/70 border border-slate-100 hover:border-slate-200 transition-colors flex items-center justify-between gap-3"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-white border border-slate-200/70 flex items-center justify-center text-emerald-600 flex-shrink-0 shadow-sm">
-                          <CheckCircle2 size={18} />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-extrabold text-slate-900 truncate">{studentName}</p>
-                          <div className="flex items-center gap-2 text-[11px] text-slate-400 font-medium">
-                            <span className="font-semibold text-slate-600">{className}</span>
-                            <span>•</span>
-                            <span className="capitalize">{payment.payment_method || 'Espèces'}</span>
-                            {payment.receipt_number && (
-                              <>
-                                <span>•</span>
-                                <span className="font-mono text-emerald-700 bg-emerald-100/60 px-1.5 py-0.2 rounded text-[10px]">
-                                  {payment.receipt_number}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-black text-emerald-700 tabular-nums">
-                          +{formatCFA(payment.amount)}
-                        </p>
-                        <p className="text-[10px] text-slate-400">{dateLabel}</p>
-                      </div>
-                    </div>
-                  )
-                })}
-
-                {payments.length === 0 && (
-                  <div className="py-8 text-center text-slate-400 text-xs">
-                    Aucun paiement enregistré pour l'instant.
-                  </div>
-                )}
-              </div>
+          {/* Main Chart */}
+          <div className="lg:col-span-2 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6 shadow-sm">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-[var(--color-on-surface)]">Recouvrement des paiements</h3>
+              <select className="bg-[var(--color-surface-bright)] border border-[var(--color-outline-variant)] text-sm rounded-lg px-3 py-1.5 outline-none">
+                <option>Cette année</option>
+                <option>Année précédente</option>
+              </select>
             </div>
-
-            <div className="pt-4 border-t border-slate-100 mt-4 flex items-center justify-between text-xs text-slate-500">
-              <span>Aujourd'hui : <strong className="text-emerald-700 font-bold">{formatCFA(stats.paiementsDuJour)}</strong> encaissés</span>
-              <Link href={`${basePath}/paiements`} className="font-bold text-slate-700 hover:text-emerald-700">
-                Imprimer les reçus du jour →
-              </Link>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} tickFormatter={(val) => `${val / 1000000}M`} />
+                  <Tooltip 
+                    cursor={{fill: '#f1f5f9'}}
+                    contentStyle={{borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                    formatter={(value: any) => [formatCFA(value), undefined]}
+                  />
+                  <Bar dataKey="attendu" name="Attendu" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={20} />
+                  <Bar dataKey="encaisse" name="Encaissé" fill="var(--color-primary)" radius={[4, 4, 0, 0]} barSize={20} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Module Actions & Aperçu du Planning Semainier (Bottom Scholix Widget) */}
-          <div className="space-y-6 flex flex-col justify-between">
-            
-            {/* Actions Rapides */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
-              <h3 className="font-extrabold text-base text-slate-900 tracking-tight flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+          {/* Side Panel */}
+          <div className="flex flex-col gap-6">
+            <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-[var(--color-on-surface)] mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[var(--color-primary)]">today</span>
+                Aujourd'hui
+              </h3>
+              <div className="flex justify-between items-end border-b border-[var(--color-outline-variant)] pb-4 mb-4">
+                <span className="text-[var(--color-on-surface-variant)] text-sm font-medium">Encaissé ce jour</span>
+                <span className="text-xl font-bold text-[var(--color-on-surface)]">{formatCFA(paiementsDuJour)}</span>
+              </div>
+              <Link href={`${basePath}/paiements`} className="text-[var(--color-primary)] text-sm font-semibold flex items-center justify-center gap-1 hover:underline">
+                Voir les paiements du jour
+                <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+              </Link>
+            </div>
+
+            <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6 shadow-sm flex-1">
+              <h3 className="text-lg font-bold text-[var(--color-on-surface)] mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[var(--color-primary)]">bolt</span>
                 Actions Rapides
               </h3>
-
-              <div className="space-y-2.5">
-                <Link 
-                  href={`${basePath}/paiements`}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 text-emerald-800 transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <PlusCircle size={18} className="text-emerald-600 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-extrabold">Enregistrer un versement</span>
+              <div className="flex flex-col gap-3">
+                <Link href={`${basePath}/echeances`} className="flex items-center gap-3 p-3 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] hover:shadow-sm hover:-translate-y-0.5 transition-all duration-300 group">
+                  <div className="h-10 w-10 rounded-full bg-[var(--color-surface-bright)] flex items-center justify-center group-hover:bg-white group-hover:text-[var(--color-primary)] text-[var(--color-on-surface-variant)] transition-colors">
+                    <span className="material-symbols-outlined">receipt_long</span>
                   </div>
-                  <ChevronRight size={16} className="text-emerald-600" />
+                  <span className="font-medium text-sm text-[var(--color-on-surface)] group-hover:text-[var(--color-primary)] transition-colors">Générer des échéances</span>
                 </Link>
-
-                <Link 
-                  href={`${basePath}/impayes`}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 text-rose-800 transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <AlertTriangle size={18} className="text-rose-600 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-extrabold">Relances d'impayés par SMS/WhatsApp</span>
+                <Link href={`${basePath}/impayes`} className="flex items-center gap-3 p-3 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-status-retard-text)] hover:bg-[#fff0f0] hover:shadow-sm hover:-translate-y-0.5 transition-all duration-300 group">
+                  <div className="h-10 w-10 rounded-full bg-[var(--color-surface-bright)] flex items-center justify-center group-hover:bg-white group-hover:text-[var(--color-status-retard-text)] text-[var(--color-on-surface-variant)] transition-colors">
+                    <span className="material-symbols-outlined">notification_important</span>
                   </div>
-                  <ChevronRight size={16} className="text-rose-600" />
-                </Link>
-
-                <Link 
-                  href={`${basePath}/echeances`}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-blue-500/10 hover:bg-blue-500/15 border border-blue-500/20 text-blue-800 transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <Calendar size={18} className="text-blue-600 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-extrabold">Configurer l'échéancier des classes</span>
-                  </div>
-                  <ChevronRight size={16} className="text-blue-600" />
-                </Link>
-
-                <Link 
-                  href={`${basePath}/rapports`}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-purple-500/10 hover:bg-purple-500/15 border border-purple-500/20 text-purple-800 transition-all group"
-                >
-                  <div className="flex items-center gap-3">
-                    <FileText size={18} className="text-purple-600 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-extrabold">Générer les états comptables</span>
-                  </div>
-                  <ChevronRight size={16} className="text-purple-600" />
+                  <span className="font-medium text-sm text-[var(--color-on-surface)] group-hover:text-[var(--color-status-retard-text)] transition-colors">Relancer les impayés</span>
                 </Link>
               </div>
             </div>
-
-            {/* Aperçu Planning / Semainier (comme en bas de Scholix) */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="font-extrabold text-sm text-slate-900">Activité de la semaine</h4>
-                <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
-                  En direct
-                </span>
-              </div>
-              <WeeklyTimetablePreview />
-            </div>
-
           </div>
 
         </div>

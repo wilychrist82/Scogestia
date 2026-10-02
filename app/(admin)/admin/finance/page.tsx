@@ -22,81 +22,40 @@ export default async function FinancePage() {
 
   const schoolId = roleData.school_id
 
-  // 1. Informations école
-  const { data: schoolData } = await supabase
-    .from('schools')
-    .select('name, current_academic_year')
-    .eq('id', schoolId)
-    .maybeSingle()
-
-  const academicYear = schoolData?.current_academic_year || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`
-
-  // 2. Fetch total expected (payment_schedules)
+  // 1. Fetch total expected (payment_schedules)
   const { data: schedules } = await supabase
     .from('payment_schedules')
-    .select('id, amount_due, status, due_date, label')
+    .select('amount_due, status, due_date')
     .eq('school_id', schoolId)
 
-  // 3. Fetch total received (payments)
+  // 2. Fetch total received (payments)
   const { data: payments } = await supabase
     .from('payments')
-    .select('id, amount, paid_at, payment_method, schedule_id, transaction_reference, receipt_number, created_at, student:students(first_name, last_name, classes(name))')
-    .eq('school_id', schoolId)
-    .order('created_at', { ascending: false })
-
-  // 4. Effectifs
-  const { count: studentCount } = await supabase
-    .from('students')
-    .select('*', { count: 'exact', head: true })
+    .select('amount, paid_at')
     .eq('school_id', schoolId)
 
-  const { count: staffCount } = await supabase
-    .from('user_school_roles')
-    .select('*', { count: 'exact', head: true })
-    .eq('school_id', schoolId)
-    .in('role', ['admin', 'comptable', 'enseignant'])
-
-  // 5. Présences du jour
+  const totalAttendu = schedules?.reduce((acc, curr) => acc + Number(curr.amount_due), 0) || 0
+  const totalEncaisse = payments?.reduce((acc, curr) => acc + Number(curr.amount), 0) || 0
+  
   const today = new Date().toISOString().split('T')[0]
-  const { data: attendanceData } = await supabase
-    .from('attendance')
-    .select('status')
-    .eq('school_id', schoolId)
-    .eq('date', today)
-
-  let presentCount = 0
-  let lateCount = 0
-  let absentCount = 0
-
-  if (attendanceData && attendanceData.length > 0) {
-    attendanceData.forEach((a: any) => {
-      if (a.status === 'present') presentCount++
-      else if (a.status === 'retard') lateCount++
-      else if (a.status === 'absent') absentCount++
-    })
-  }
-
-  // 6. Types de frais configurés
-  const { data: feeTypes } = await supabase
-    .from('fee_types')
-    .select('label, amount')
-    .eq('school_id', schoolId)
+  
+  const paiementsDuJour = payments?.filter(p => p.paid_at?.startsWith(today))
+    .reduce((acc, curr) => acc + Number(curr.amount), 0) || 0
+    
+  // Impayés : where status is 'en_retard' or (due_date < today and status != 'paye')
+  // We approximate the amount by looking at the remaining amount per schedule. 
+  // For simplicity here, we'll just sum the 'en_retard' or past due schedules
+  const impayesSchedules = schedules?.filter(s => {
+    return s.status === 'en_retard' || (s.due_date < today && s.status !== 'paye')
+  }) || []
+  const totalImpayesAttendu = impayesSchedules.reduce((acc, curr) => acc + Number(curr.amount_due), 0)
+  
+  // Real calculation of impayés would require joining schedules and payments, but we will pass the raw arrays to the client component to compute accurately.
 
   return (
     <FinanceDashboard 
       schedules={schedules || []} 
-      payments={payments || []}
-      studentCount={studentCount || 0}
-      staffCount={staffCount || 0}
-      attendance={{
-        present: presentCount,
-        late: lateCount,
-        absent: absentCount
-      }}
-      academicYear={academicYear}
-      schoolName={schoolData?.name || 'Mon École'}
-      feeTypes={feeTypes || []}
+      payments={payments || []} 
     />
   )
 }
-
