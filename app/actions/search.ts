@@ -10,7 +10,7 @@ export type SearchResult = {
   type: 'student' | 'invoice' | 'staff' | 'class'
 }
 
-export async function globalSearch(query: string): Promise<SearchResult[]> {
+export async function globalSearch(query: string, overrideRole?: string): Promise<SearchResult[]> {
   if (!query || query.length < 2) return []
 
   const supabase = await createClient()
@@ -20,17 +20,55 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('school_id')
+    .select('school_id, role')
     .eq('user_id', user.id)
     .limit(1).maybeSingle()
 
   const schoolId = roleData?.school_id
   if (!schoolId) return []
 
+  const role = overrideRole || roleData.role
+  const isEnseignant = role === 'enseignant'
+
   const results: SearchResult[] = []
   const searchQuery = `%${query}%`
 
-  // 1. Search Students (first_name, last_name, matricule)
+  // ── ESPACE ENSEIGNANT : RECHERCHE STRICTEMENT RESTREINTE AUX ÉLÈVES DE SES CLASSES ──
+  if (isEnseignant) {
+    const { data: assignments } = await supabase
+      .from('teacher_class_subjects')
+      .select('class_id')
+      .eq('teacher_id', user.id)
+
+    const classIds = Array.from(new Set(assignments?.map(a => a.class_id).filter(Boolean) || []))
+
+    if (classIds.length === 0) return []
+
+    const { data: students } = await supabase
+      .from('students')
+      .select('id, first_name, last_name, matricule, class_id, classes(name)')
+      .eq('school_id', schoolId)
+      .in('class_id', classIds)
+      .or(`first_name.ilike.${searchQuery},last_name.ilike.${searchQuery},matricule.ilike.${searchQuery}`)
+      .limit(10)
+
+    if (students) {
+      students.forEach(s => {
+        results.push({
+          id: s.id,
+          title: `${s.first_name} ${s.last_name}`,
+          subtitle: `Élève • Classe : ${(s.classes as any)?.name || 'N/A'}${s.matricule ? ` • N° ${s.matricule}` : ''}`,
+          href: `/enseignant/notes?classe=${s.class_id}`,
+          type: 'student'
+        })
+      })
+    }
+
+    return results
+  }
+
+  // ── ESPACE ADMINISTRATEUR : RECHERCHE COMPLÈTE ÉTABLISSEMENT ──
+  // 1. Search Students
   const { data: students } = await supabase
     .from('students')
     .select('id, first_name, last_name, matricule, classes(name)')
@@ -43,28 +81,28 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
       results.push({
         id: s.id,
         title: `${s.first_name} ${s.last_name}`,
-        subtitle: `Élève - Matricule: ${s.matricule} - Classe: ${(s.classes as any)?.name || 'N/A'}`,
+        subtitle: `Élève - Matricule: ${s.matricule || 'N/A'} - Classe: ${(s.classes as any)?.name || 'N/A'}`,
         href: `/admin/eleves/${s.id}`,
         type: 'student'
       })
     })
   }
 
-  // 2. Search Dues/Invoices (payment_label)
-  const { data: dues } = await supabase
-    .from('dues')
-    .select('id, payment_label, amount, students(first_name, last_name)')
+  // 2. Search Invoices / Schedules
+  const { data: schedules } = await supabase
+    .from('payment_schedules')
+    .select('id, label, amount_due, student:students(first_name, last_name)')
     .eq('school_id', schoolId)
-    .ilike('payment_label', searchQuery)
+    .ilike('label', searchQuery)
     .limit(5)
 
-  if (dues) {
-    dues.forEach(d => {
-      const studentName = d.students ? `${(d.students as any).first_name} ${(d.students as any).last_name}` : 'Classe entière'
+  if (schedules) {
+    schedules.forEach(d => {
+      const studentName = d.student ? `${(d.student as any).first_name} ${(d.student as any).last_name}` : 'Classe entière'
       results.push({
         id: d.id,
-        title: d.payment_label,
-        subtitle: `Facture - ${new Intl.NumberFormat('fr-FR').format(d.amount)} FCFA - ${studentName}`,
+        title: d.label || 'Échéance',
+        subtitle: `Facturation - ${new Intl.NumberFormat('fr-FR').format(d.amount_due || 0)} FCFA - ${studentName}`,
         href: `/admin/finance/echeances`,
         type: 'invoice'
       })
@@ -83,7 +121,7 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
     staff.forEach(s => {
       results.push({
         id: s.id,
-        title: s.full_name || 'Utilisateur inconnu',
+        title: s.full_name || 'Personnel',
         subtitle: `Personnel - Rôle: ${s.role}`,
         href: `/admin/personnel`,
         type: 'staff'

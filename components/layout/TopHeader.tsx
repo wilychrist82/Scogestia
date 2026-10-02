@@ -159,11 +159,11 @@ export function TopHeader({
               ? 'bg-white/10 border-white/20 text-white/70 hover:text-white'
               : 'bg-gray-100/80 border-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-100'
           } text-xs transition-colors`}
-          aria-label="Recherche rapide (Ctrl+K)"
-          title="Rechercher (Ctrl+K)"
+          aria-label={isEnseignant ? "Rechercher un élève (Ctrl+K)" : "Recherche rapide (Ctrl+K)"}
+          title={isEnseignant ? "Rechercher un élève dans vos classes (Ctrl+K)" : "Recherche rapide (Ctrl+K)"}
         >
           <Search size={14} />
-          <span className="font-medium">Rechercher...</span>
+          <span className="font-medium">{isEnseignant ? "Rechercher un élève..." : "Rechercher..."}</span>
           <kbd className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold ${
             isEnseignant || isSuperAdmin ? 'bg-white/20 text-white' : 'bg-white border border-gray-200 text-gray-500 shadow-2xs'
           }`}>
@@ -336,7 +336,7 @@ export function TopHeader({
       </div>
 
       {/* Command Palette Modal */}
-      <CommandPalette isOpen={showSearch} onClose={() => setShowSearch(false)} />
+      <CommandPalette isOpen={showSearch} onClose={() => setShowSearch(false)} role={navVariant} />
     </header>
   )
 }

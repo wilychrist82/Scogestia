@@ -14,16 +14,18 @@ import {
   BookOpen, 
   Settings, 
   CreditCard,
-  FileText
+  FileText,
+  MessageSquare
 } from 'lucide-react'
 import { globalSearch, SearchResult } from '@/app/actions/search'
 
 interface CommandPaletteProps {
   isOpen?: boolean
   onClose?: () => void
+  role?: 'admin' | 'enseignant' | 'super_admin'
 }
 
-const quickLinks = [
+const adminQuickLinks = [
   { title: 'Élèves', subtitle: 'Gestion des inscriptions & fiches', href: '/admin/eleves', icon: Users },
   { title: 'Classes', subtitle: 'Gestion des niveaux et effectifs', href: '/admin/classes', icon: Presentation },
   { title: 'Caisse & Encaissements', subtitle: 'Enregistrer un paiement comptant', href: '/admin/finance/caisse', icon: CircleDollarSign },
@@ -32,10 +34,21 @@ const quickLinks = [
   { title: 'Paramètres école', subtitle: 'Configuration générale & profil', href: '/admin/parametres', icon: Settings },
 ]
 
-export function CommandPalette({ isOpen: controlledIsOpen, onClose: controlledOnClose }: CommandPaletteProps) {
+const teacherQuickLinks = [
+  { title: 'Saisie des notes', subtitle: 'Évaluations et notes par classe', href: '/enseignant/notes', icon: BookOpen },
+  { title: 'Feuille de présence', subtitle: 'Pointage des absences et retards', href: '/enseignant/presences', icon: Users },
+  { title: 'Cahier de devoirs', subtitle: 'Gestion des devoirs et exercices', href: '/enseignant/devoirs', icon: FileText },
+  { title: 'Emploi du temps', subtitle: 'Planning hebdomadaire des cours', href: '/enseignant/planning', icon: Clock },
+  { title: 'Messagerie parents', subtitle: 'Échanger avec les familles des élèves', href: '/enseignant/messages', icon: MessageSquare },
+]
+
+export function CommandPalette({ isOpen: controlledIsOpen, onClose: controlledOnClose, role = 'admin' }: CommandPaletteProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(false)
   const isControlled = controlledIsOpen !== undefined
   const isOpen = isControlled ? controlledIsOpen : internalIsOpen
+
+  const isEnseignant = role === 'enseignant'
+  const currentQuickLinks = isEnseignant ? teacherQuickLinks : adminQuickLinks
 
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
@@ -96,7 +109,7 @@ export function CommandPalette({ isOpen: controlledIsOpen, onClose: controlledOn
     const timer = setTimeout(() => {
       startTransition(async () => {
         try {
-          const res = await globalSearch(query)
+          const res = await globalSearch(query, role)
           setResults(res)
           setSelectedIndex(0)
         } catch (err) {
@@ -106,10 +119,10 @@ export function CommandPalette({ isOpen: controlledIsOpen, onClose: controlledOn
     }, 220)
 
     return () => clearTimeout(timer)
-  }, [query])
+  }, [query, role])
 
   // Navigation clavier dans la liste
-  const totalItems = query.trim().length >= 2 ? results.length : quickLinks.length
+  const totalItems = query.trim().length >= 2 ? results.length : currentQuickLinks.length
 
   const handleKeyDownList = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
@@ -123,8 +136,8 @@ export function CommandPalette({ isOpen: controlledIsOpen, onClose: controlledOn
       if (query.trim().length >= 2 && results[selectedIndex]) {
         router.push(results[selectedIndex].href)
         handleClose()
-      } else if (quickLinks[selectedIndex]) {
-        router.push(quickLinks[selectedIndex].href)
+      } else if (currentQuickLinks[selectedIndex]) {
+        router.push(currentQuickLinks[selectedIndex].href)
         handleClose()
       }
     }
@@ -162,7 +175,11 @@ export function CommandPalette({ isOpen: controlledIsOpen, onClose: controlledOn
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDownList}
-            placeholder="Rechercher un élève, classe, facture, personnel... (ex: Komi, CM2)"
+            placeholder={
+              isEnseignant 
+                ? "Rechercher un élève dans vos classes... (ex: Komi, CM2)" 
+                : "Rechercher un élève, classe, facture, personnel... (ex: Komi, CM2)"
+            }
             className="w-full bg-transparent text-slate-800 placeholder-slate-400 text-base outline-none font-medium"
           />
           {isPending ? (
@@ -187,8 +204,16 @@ export function CommandPalette({ isOpen: controlledIsOpen, onClose: controlledOn
             results.length === 0 && !isPending ? (
               <div className="p-8 text-center text-slate-400">
                 <Search size={32} className="mx-auto text-slate-300 mb-2" />
-                <p className="text-sm font-semibold text-slate-600">Aucun résultat trouvé pour "{query}"</p>
-                <p className="text-xs text-slate-400 mt-1">Vérifiez l'orthographe du nom ou du matricule.</p>
+                <p className="text-sm font-semibold text-slate-600">
+                  {isEnseignant 
+                    ? `Aucun élève trouvé dans vos classes pour "${query}"`
+                    : `Aucun résultat trouvé pour "${query}"`}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  {isEnseignant
+                    ? "Vérifiez l'orthographe du prénom, nom ou matricule de l'élève."
+                    : "Vérifiez l'orthographe du nom ou du matricule."}
+                </p>
               </div>
             ) : (
               results.map((res, index) => (
@@ -218,10 +243,10 @@ export function CommandPalette({ isOpen: controlledIsOpen, onClose: controlledOn
             <div>
               <div className="px-3 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                 <Clock size={12} />
-                Accès rapide
+                {isEnseignant ? 'Mes raccourcis enseignant' : 'Accès rapide'}
               </div>
               <div className="space-y-0.5">
-                {quickLinks.map((link, index) => {
+                {currentQuickLinks.map((link, index) => {
                   const Icon = link.icon
                   return (
                     <div
@@ -258,7 +283,9 @@ export function CommandPalette({ isOpen: controlledIsOpen, onClose: controlledOn
             <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded font-semibold text-slate-600">↵</kbd> Ouvrir</span>
             <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded font-semibold text-slate-600">ESC</kbd> Fermer</span>
           </div>
-          <span className="font-semibold text-emerald-600">Scogestia Spotlight</span>
+          <span className="font-semibold text-emerald-600">
+            {isEnseignant ? 'Scogestia Enseignant' : 'Scogestia Spotlight'}
+          </span>
         </div>
       </div>
     </div>
