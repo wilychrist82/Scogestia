@@ -14,6 +14,7 @@ type Props = {
 export function ImportStudentsModal({ isOpen, onClose }: Props) {
   const [file, setFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   if (!isOpen) return null
@@ -21,6 +22,27 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0])
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setFile(e.dataTransfer.files[0])
     }
   }
 
@@ -41,7 +63,7 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
         const text = await file.text()
         const result = Papa.parse(text, { header: true, skipEmptyLines: true })
         parsedData = result.data as any[]
-      } else if (fileExt === 'xlsx' || fileExt === 'xls') {
+      } else if (fileExt === 'xlsx' || fileExt === 'xls' || fileExt === 'ods') {
         const data = await file.arrayBuffer()
         const workbook = XLSX.read(data, { type: 'array' })
         const firstSheetName = workbook.SheetNames[0]
@@ -54,7 +76,7 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
       }
 
       if (parsedData.length === 0) {
-        toast.error('Le fichier est vide.')
+        toast.error('Le fichier est vide ou n\'a pas pu être lu.')
         setIsUploading(false)
         return
       }
@@ -148,30 +170,55 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
 
           <div 
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center cursor-pointer hover:border-emerald-500 hover:bg-emerald-50/50 transition-all group"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all group ${
+              isDragging 
+                ? 'border-emerald-600 bg-emerald-100/50 scale-[1.02]' 
+                : file 
+                  ? 'border-emerald-500 bg-emerald-50/40' 
+                  : 'border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50'
+            }`}
           >
             <input 
               type="file" 
-              accept=".xlsx,.xls,.csv" 
+              accept=".xlsx,.xls,.csv,.ods,.XLSX,.XLS,.CSV,.ODS,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" 
               className="hidden" 
               ref={fileInputRef}
               onChange={handleFileChange}
+              onClick={(e) => { (e.target as HTMLInputElement).value = '' }}
             />
-            <div className="mx-auto w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined">file_upload</span>
+            <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-transform ${
+              file ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-100 text-emerald-600 group-hover:scale-110'
+            }`}>
+              <span className="material-symbols-outlined">
+                {file ? 'check_circle' : 'file_upload'}
+              </span>
             </div>
             {file ? (
-              <div>
-                <p className="font-semibold text-slate-800">{file.name}</p>
-                <p className="text-xs text-slate-500 mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+              <div className="space-y-1">
+                <p className="font-bold text-slate-800 break-all">{file.name}</p>
+                <p className="text-xs text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                <p className="text-xs text-emerald-600 font-semibold pt-1">
+                  ✓ Fichier sélectionné. Cliquez sur « Importer » ci-dessous ou cliquez ici pour changer de fichier.
+                </p>
               </div>
             ) : (
               <div>
-                <p className="font-semibold text-slate-700">Cliquez pour sélectionner un fichier (Excel ou CSV)</p>
-                <p className="text-xs text-slate-500 mt-1">Taille maximale recommandée : 50 MB</p>
+                <p className="font-semibold text-slate-700">
+                  Cliquez pour sélectionner un fichier (ou glissez-déposez-le ici)
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Formats acceptés : Excel (.xlsx, .xls) ou CSV
+                </p>
               </div>
             )}
           </div>
+
+          <p className="text-xs text-slate-500 text-center italic">
+            💡 Astuce : si votre dossier semble vide lors de la sélection, vérifiez que le filtre en bas à droite de l'explorateur Windows est bien sur <strong>« Tous les fichiers (*.*) »</strong>, ou glissez simplement votre fichier depuis votre dossier jusque dans la zone ci-dessus.
+          </p>
         </div>
 
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
