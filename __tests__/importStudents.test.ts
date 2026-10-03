@@ -5,7 +5,7 @@ import {
   getRowField,
   parseFlexibleDate,
   parseGender
-} from '../app/actions/students'
+} from '../lib/student-import-utils'
 
 describe('Import Students Helpers', () => {
   describe('normalizeText', () => {
