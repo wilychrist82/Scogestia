@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { importStudents } from '@/app/actions/students'
 import toast from 'react-hot-toast'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
-
 import { extractClassFromFilename } from '@/lib/student-import-utils'
-import { useEffect, useMemo } from 'react'
 
 type Props = {
   isOpen: boolean
@@ -17,6 +16,7 @@ type Props = {
 }
 
 export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClassId }: Props) {
+  const router = useRouter()
   const [file, setFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -110,10 +110,15 @@ export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClas
             { duration: 6000 }
           )
         } else {
-          toast.success(`${response.count} élèves importés et répartis dans leurs classes !`)
+          toast.success(`${response.count} élèves importés et enregistrés avec succès !`)
         }
         onClose()
         setFile(null)
+        // Actualiser immédiatement la page pour afficher les élèves importés
+        router.refresh()
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
       }
     } catch (error: any) {
       toast.error('Erreur lors de l\'importation: ' + error.message)
@@ -164,7 +169,7 @@ export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClas
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-5">
           <div className="bg-blue-50 text-blue-800 p-4 rounded-xl text-sm leading-relaxed border border-blue-100">
             <p className="font-semibold mb-2 flex items-center gap-1.5">
               <span className="material-symbols-outlined text-base">info</span>
@@ -173,8 +178,8 @@ export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClas
             <ul className="list-disc pl-5 space-y-1 opacity-90">
               <li>Le fichier peut être au format <strong>Excel (.xlsx, .xls)</strong> ou <strong>CSV</strong>.</li>
               <li>Un même fichier peut contenir <strong>plusieurs classes différentes</strong> (ex: 2nde A, 1ère D, 6ème B, CM2...).</li>
-              <li>Colonnes obligatoires : <strong>Prénom, Nom, Classe</strong>.</li>
-              <li>Colonnes recommandées : <strong>Sexe</strong> (M/F), <strong>Date de Naissance</strong> (JJ/MM/AAAA), <strong>Matricule</strong>, <strong>Téléphone Parent</strong>.</li>
+              <li>Colonnes obligatoires : <strong>Prénom, Nom</strong> (la <strong>Classe</strong> est obligatoire si non sélectionnée ci-dessous).</li>
+              <li>Colonnes recommandées : <strong>Sexe</strong> (M/F), <strong>Date de Naissance</strong>, <strong>Matricule</strong>, <strong>Téléphone Parent</strong>.</li>
               <li>✨ <em>Si une classe n'existe pas encore dans Scogestia, elle sera créée automatiquement avec son niveau !</em></li>
             </ul>
             <button 
@@ -214,53 +219,82 @@ export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClas
             )}
           </div>
 
-          <div 
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all group ${
-              isDragging 
-                ? 'border-emerald-600 bg-emerald-100/50 scale-[1.02]' 
-                : file 
-                  ? 'border-emerald-500 bg-emerald-50/40' 
-                  : 'border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50'
-            }`}
-          >
-            <input 
-              type="file" 
-              accept=".xlsx,.xls,.csv,.ods,.XLSX,.XLS,.CSV,.ODS,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" 
-              className="hidden" 
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              onClick={(e) => { (e.target as HTMLInputElement).value = '' }}
-            />
-            <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-transform ${
-              file ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-100 text-emerald-600 group-hover:scale-110'
-            }`}>
-              <span className="material-symbols-outlined">
-                {file ? 'check_circle' : 'file_upload'}
-              </span>
-            </div>
-            {file ? (
+          <input 
+            type="file" 
+            accept=".xlsx,.xls,.csv,.ods,.XLSX,.XLS,.CSV,.ODS,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" 
+            className="hidden" 
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            onClick={(e) => { (e.target as HTMLInputElement).value = '' }}
+          />
+
+          {file ? (
+            <div className="border-2 border-emerald-500 bg-emerald-50/50 rounded-xl p-5 text-center space-y-4">
+              <div className="mx-auto w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                <span className="material-symbols-outlined text-2xl">task_alt</span>
+              </div>
               <div className="space-y-1">
-                <p className="font-bold text-slate-800 break-all">{file.name}</p>
-                <p className="text-xs text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                <p className="text-xs text-emerald-600 font-semibold pt-1">
-                  ✓ Fichier sélectionné. Cliquez sur « Importer » ci-dessous ou cliquez ici pour changer de fichier.
-                </p>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Fichier prêt à être enregistré
+                </div>
+                <p className="font-bold text-slate-800 text-sm break-all pt-1">{file.name}</p>
+                <p className="text-xs text-slate-500">Taille : {(file.size / 1024).toFixed(1)} Ko</p>
               </div>
-            ) : (
-              <div>
-                <p className="font-semibold text-slate-700">
-                  Cliquez pour sélectionner un fichier (ou glissez-déposez-le ici)
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  Formats acceptés : Excel (.xlsx, .xls) ou CSV
-                </p>
+
+              {/* Bouton d'action principal bien en évidence */}
+              <div className="pt-2 flex flex-col items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleImport}
+                  disabled={isUploading}
+                  className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 text-base transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+                >
+                  {isUploading ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin">refresh</span>
+                      <span>Enregistrement en cours...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined">cloud_upload</span>
+                      <span>Confirmer et lancer l'importation</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="text-xs text-slate-500 hover:text-slate-700 underline font-medium cursor-pointer"
+                >
+                  Changer de fichier
+                </button>
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all group ${
+                isDragging 
+                  ? 'border-emerald-600 bg-emerald-100/50 scale-[1.02]' 
+                  : 'border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50'
+              }`}
+            >
+              <div className="mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3 bg-emerald-100 text-emerald-600 group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined">file_upload</span>
+              </div>
+              <p className="font-semibold text-slate-700">
+                Cliquez pour sélectionner un fichier (ou glissez-déposez-le ici)
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                Formats acceptés : Excel (.xlsx, .xls) ou CSV
+              </p>
+            </div>
+          )}
 
           <p className="text-xs text-slate-500 text-center italic">
             💡 Astuce : si votre dossier semble vide lors de la sélection, vérifiez que le filtre en bas à droite de l'explorateur Windows est bien sur <strong>« Tous les fichiers (*.*) »</strong>, ou glissez simplement votre fichier depuis votre dossier jusque dans la zone ci-dessus.
@@ -270,19 +304,20 @@ export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClas
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
           <button 
             onClick={onClose}
-            className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+            disabled={isUploading}
+            className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-lg transition-colors disabled:opacity-50"
           >
             Annuler
           </button>
           <button 
             onClick={handleImport}
             disabled={!file || isUploading}
-            className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-5 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isUploading ? (
               <>
                 <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
-                Importation...
+                Enregistrement...
               </>
             ) : (
               'Importer'
