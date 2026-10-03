@@ -59,12 +59,12 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
     if (!selectedLevel) return false;
     if (!c.level) return false;
     const l = c.level.toLowerCase();
-    const isPrimary = ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', 'maternelle', 's1', 's2'].includes(l);
-    const isSecondary = ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège'].includes(l);
+    const isPrimary = ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', 'maternelle', 's1', 's2'].some(k => l.includes(k));
+    const isSecondary = ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège', '2nde', '1ere', '1ère', 'tle', 'terminale', 'seconde', 'premiere', 'lycee', 'lycée'].some(k => l.includes(k));
     
     if (selectedLevel === 'primaire') return isPrimary;
     if (selectedLevel === 'secondaire') return isSecondary;
-    if (selectedLevel === 'maternelle') return ['s1', 's2', 'maternelle'].includes(l);
+    if (selectedLevel === 'maternelle') return ['s1', 's2', 'maternelle'].some(k => l.includes(k));
     return false;
   })
   const availableStudents = selectedClass ? students.filter(s => s.class_id === selectedClass) : []

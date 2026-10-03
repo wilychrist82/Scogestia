@@ -34,26 +34,43 @@ export default async function StudentsPage({
   const from = (page - 1) * itemsPerPage
   const to = from + itemsPerPage - 1
 
-  const niveau = resolvedSearchParams.niveau || 'Primaire'
+  const niveau = resolvedSearchParams.niveau || 'Tous'
 
-  let query = supabase
-    .from('students')
-    .select(`
+  // Apply niveau filter
+  let levels: string[] = []
+  if (niveau === 'Maternelle') {
+    levels = ['s1', 's2', 'section1', 'section2', 'maternelle', 'Maternelle']
+  } else if (niveau === 'Primaire') {
+    levels = ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', 'Primaire', 'CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2']
+  } else if (niveau === 'Collège' || niveau === 'Secondaire') {
+    levels = ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'Secondaire', 'Collège', 'college', 'collège', '6ème', '5ème', '4ème', '3ème']
+  } else if (niveau === 'Lycée') {
+    levels = ['2nde', '1ere', '1ère', 'tle', 'terminale', 'seconde', 'premiere', 'première', 'lycee', 'lycée', 'Lycée', 'Seconde', 'Première', 'Terminale']
+  }
+
+  const selectFields = levels.length > 0
+    ? `
       id,
       matricule,
       first_name,
       last_name,
       status,
       classes!inner ( id, name, level )
-    `, { count: 'exact' })
+    `
+    : `
+      id,
+      matricule,
+      first_name,
+      last_name,
+      status,
+      classes ( id, name, level )
+    `
+
+  let query = supabase
+    .from('students')
+    .select(selectFields, { count: 'exact' })
     .eq('school_id', schoolId)
 
-  // Apply niveau filter
-  let levels: string[] = []
-  if (niveau === 'Maternelle') levels = ['s1', 's2', 'section1', 'section2', 'maternelle', 'Maternelle']
-  else if (niveau === 'Primaire') levels = ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', 'Primaire']
-  else if (niveau === 'Secondaire') levels = ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'Secondaire', 'Collège']
-  
   if (levels.length > 0) {
     query = query.in('classes.level', levels)
   }

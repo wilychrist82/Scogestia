@@ -13,6 +13,7 @@ export type ClassItem = {
   capacity: number
   academic_year: string
   main_teacher_id: string | null
+  student_count?: number
 }
 
 type Props = {
@@ -27,16 +28,18 @@ export function ClassesManager({ classes }: Props) {
   const [classToDelete, setClassToDelete] = useState<ClassItem | null>(null)
   const [openActionId, setOpenActionId] = useState<string | null>(null)
 
-  const [levelFilter, setLevelFilter] = useState('Primaire')
+  const [levelFilter, setLevelFilter] = useState('Toutes')
 
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
   const filteredClasses = classes.filter(cls => {
-    const l = cls.level.toLowerCase();
-    if (levelFilter === 'Maternelle') return ['s1', 's2', 'section1', 'section2', 'maternelle'].includes(l);
-    if (levelFilter === 'Primaire') return ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].includes(l);
-    if (levelFilter === 'Secondaire') return ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège'].includes(l);
+    if (levelFilter === 'Toutes') return true;
+    const l = (cls.level || '').toLowerCase();
+    if (levelFilter === 'Maternelle') return ['s1', 's2', 'section1', 'section2', 'maternelle'].some(k => l.includes(k));
+    if (levelFilter === 'Primaire') return ['cp1', 'cp2', 'cp', 'ce1', 'ce2', 'ce', 'cm1', 'cm2', 'cm', 'ci', 'primaire'].some(k => l.includes(k));
+    if (levelFilter === 'Collège') return ['6eme', '6ème', '5eme', '5ème', '4eme', '4ème', '3eme', '3ème', 'secondaire', 'college', 'collège'].some(k => l.includes(k));
+    if (levelFilter === 'Lycée') return ['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => l.includes(k));
     return true;
   })
 
@@ -123,13 +126,15 @@ export function ClassesManager({ classes }: Props) {
         <div className="p-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
           <div className="flex gap-2">
             <select 
-              className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg px-3 py-1.5 text-sm text-[var(--color-on-surface)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none"
+              className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg px-3 py-1.5 text-sm text-[var(--color-on-surface)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none cursor-pointer"
               value={levelFilter}
               onChange={(e) => setLevelFilter(e.target.value)}
             >
+              <option value="Toutes">Tous les niveaux</option>
               <option value="Maternelle">Maternelle</option>
               <option value="Primaire">Primaire</option>
-              <option value="Secondaire">Secondaire</option>
+              <option value="Collège">Collège (Secondaire 1)</option>
+              <option value="Lycée">Lycée (Secondaire 2)</option>
             </select>
           </div>
           <span className="text-sm text-[var(--color-on-surface-variant)]">{filteredClasses.length} Classes au total</span>
@@ -150,6 +155,7 @@ export function ClassesManager({ classes }: Props) {
                 <tr className="bg-[#eff4ff] border-b border-[var(--color-outline-variant)]">
                   <th className="py-3 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] whitespace-nowrap">Nom de la classe</th>
                   <th className="py-3 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] whitespace-nowrap">Niveau</th>
+                  <th className="py-3 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] whitespace-nowrap text-center">Effectif</th>
                   <th className="py-3 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] whitespace-nowrap text-right">Capacité</th>
                   <th className="py-3 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] whitespace-nowrap text-right">Actions</th>
                 </tr>
@@ -159,10 +165,23 @@ export function ClassesManager({ classes }: Props) {
                   <tr key={cls.id} className="border-b border-[var(--color-outline-variant)]/50 hover:bg-[#eff4ff]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
                     <td className="py-3 px-6 font-semibold text-[var(--color-on-surface)]">{cls.name}</td>
                     <td className="py-3 px-6 text-[var(--color-on-surface-variant)]">
-                      {['s1', 's2', 'section1', 'section2', 'maternelle'].includes(cls.level.toLowerCase()) ? 'MATERNELLE' :
-                       ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].includes(cls.level.toLowerCase()) ? 'PRIMAIRE' :
-                       ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège'].includes(cls.level.toLowerCase()) ? 'SECONDAIRE' :
-                       cls.level.toUpperCase()}
+                      {['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => (cls.level || '').toLowerCase().includes(k)) ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">LYCÉE</span>
+                      ) : ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège'].some(k => (cls.level || '').toLowerCase().includes(k)) ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">COLLÈGE</span>
+                      ) : ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].some(k => (cls.level || '').toLowerCase().includes(k)) ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">PRIMAIRE</span>
+                      ) : ['s1', 's2', 'section1', 'section2', 'maternelle'].some(k => (cls.level || '').toLowerCase().includes(k)) ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">MATERNELLE</span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{cls.level.toUpperCase()}</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-6 text-center">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                        <span className="material-symbols-outlined text-[14px]">groups</span>
+                        {cls.student_count ?? 0} élève{(cls.student_count ?? 0) > 1 ? 's' : ''}
+                      </span>
                     </td>
                     <td className="py-3 px-6 text-right text-[var(--color-on-surface-variant)]">{cls.capacity || 'Illimitée'}</td>
                     <td className="py-3 px-6 text-right relative">
@@ -269,11 +288,17 @@ export function ClassesManager({ classes }: Props) {
                       <option value="cm1">CM1</option>
                       <option value="cm2">CM2</option>
                     </optgroup>
-                    <optgroup label="Secondaire">
+                    <optgroup label="Secondaire - Collège">
                       <option value="6eme">6ème</option>
                       <option value="5eme">5ème</option>
                       <option value="4eme">4ème</option>
                       <option value="3eme">3ème</option>
+                    </optgroup>
+                    <optgroup label="Secondaire - Lycée">
+                      <option value="2nde">Seconde (2nde)</option>
+                      <option value="1ere">Première (1ère)</option>
+                      <option value="tle">Terminale (Tle)</option>
+                      <option value="Lycée">Autre / Général Lycée</option>
                     </optgroup>
                   </select>
                 </div>

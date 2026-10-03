@@ -24,18 +24,36 @@ export default async function ClassesPage() {
     return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur: École introuvable.</div>
   }
 
-  // 3. Fetch classes for this school
+  // 3. Fetch classes for this school with student count
   const { data: classes, error: classesError } = await supabase
     .from('classes')
-    .select('*')
+    .select(`
+      id,
+      name,
+      level,
+      capacity,
+      academic_year,
+      main_teacher_id,
+      students (count)
+    `)
     .eq('school_id', roleData.school_id)
-    .order('created_at', { ascending: false })
+    .order('name', { ascending: true })
 
   if (classesError) {
     return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur lors de la récupération des classes.</div>
   }
 
+  const formattedClasses = (classes || []).map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    level: c.level,
+    capacity: c.capacity,
+    academic_year: c.academic_year,
+    main_teacher_id: c.main_teacher_id,
+    student_count: c.students?.[0]?.count ?? 0
+  }))
+
   return (
-    <ClassesManager classes={classes || []} />
+    <ClassesManager classes={formattedClasses} />
   )
 }

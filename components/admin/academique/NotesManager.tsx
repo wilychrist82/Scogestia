@@ -32,8 +32,8 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
   const filteredClasses = classes.filter(c => {
     if (!c.level) return false;
     const l = c.level.toLowerCase();
-    const isPrimary = ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', 'maternelle', 's1', 's2'].includes(l);
-    const isSecondary = ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège'].includes(l);
+    const isPrimary = ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', 'maternelle', 's1', 's2'].some(k => l.includes(k));
+    const isSecondary = ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège', '2nde', '1ere', '1ère', 'tle', 'terminale', 'seconde', 'premiere', 'lycee', 'lycée'].some(k => l.includes(k));
     
     if (selectedCycle === 'primaire') return isPrimary;
     if (selectedCycle === 'secondaire') return isSecondary;

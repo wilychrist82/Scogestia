@@ -197,12 +197,122 @@ export async function updateStudent(prevState: ActionState, formData: FormData):
   return { success: true };
 }
 
-export async function importStudents(studentsList: any[]): Promise<ActionState & { count?: number }> {
+export function normalizeText(str: string): string {
+  return str.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+export function detectClassLevel(className: string): string {
+  const clean = normalizeText(className);
+  
+  // Lycée
+  if (
+    clean.includes('2nde') || clean.includes('seconde') ||
+    clean.includes('1ere') || clean.includes('1ere') || clean.includes('premiere') ||
+    clean.includes('tle') || clean.includes('terminale') ||
+    clean.includes('lycee') || clean.includes('lycee')
+  ) {
+    return 'Lycée';
+  }
+
+  // Collège / Secondaire
+  if (
+    clean.includes('6e') || clean.includes('6eme') ||
+    clean.includes('5e') || clean.includes('5eme') ||
+    clean.includes('4e') || clean.includes('4eme') ||
+    clean.includes('3e') || clean.includes('3eme') ||
+    clean.includes('college') || clean.includes('secondaire')
+  ) {
+    return 'Collège';
+  }
+
+  // Primaire
+  if (
+    clean.includes('cp1') || clean.includes('cp2') || clean.includes('cp') ||
+    clean.includes('ce1') || clean.includes('ce2') || clean.includes('ce') ||
+    clean.includes('cm1') || clean.includes('cm2') || clean.includes('cm') ||
+    clean.includes('ci') || clean.includes('primaire')
+  ) {
+    return 'Primaire';
+  }
+
+  // Maternelle
+  if (
+    clean.includes('s1') || clean.includes('s2') ||
+    clean.includes('section') || clean.includes('maternelle') ||
+    clean.includes('creche') || clean.includes('garderie') ||
+    clean.includes('ps') || clean.includes('ms') || clean.includes('gs')
+  ) {
+    return 'Maternelle';
+  }
+
+  return 'Secondaire';
+}
+
+export function getRowField(row: Record<string, any>, candidates: string[]): string | undefined {
+  const entries = Object.entries(row);
+  for (const candidate of candidates) {
+    const cleanCand = normalizeText(candidate);
+    const found = entries.find(([k]) => {
+      const cleanKey = normalizeText(k);
+      return cleanKey === cleanCand || cleanKey.replace(/\s+/g, '') === cleanCand.replace(/\s+/g, '');
+    });
+    if (found && found[1] !== undefined && found[1] !== null) {
+      const val = String(found[1]).trim();
+      if (val !== '') return val;
+    }
+  }
+  return undefined;
+}
+
+export function parseFlexibleDate(val: any): string | null {
+  if (!val) return null;
+  // Cas Excel serial number
+  if (typeof val === 'number') {
+    const utcDays = Math.floor(val - 25569);
+    const utcValue = utcDays * 86400;
+    const dateInfo = new Date(utcValue * 1000);
+    if (!isNaN(dateInfo.getTime())) {
+      return dateInfo.toISOString().split('T')[0];
+    }
+  }
+  const str = String(val).trim();
+  // Format DD/MM/YYYY ou DD-MM-YYYY ou DD.MM.YYYY
+  const ddmmyyyy = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  if (ddmmyyyy) {
+    const day = ddmmyyyy[1].padStart(2, '0');
+    const month = ddmmyyyy[2].padStart(2, '0');
+    const year = ddmmyyyy[3];
+    return `${year}-${month}-${day}`;
+  }
+  // Format YYYY-MM-DD
+  const yyyymmdd = str.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/);
+  if (yyyymmdd) {
+    const year = yyyymmdd[1];
+    const month = yyyymmdd[2].padStart(2, '0');
+    const day = yyyymmdd[3].padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  const parsed = Date.parse(str);
+  if (!isNaN(parsed)) {
+    return new Date(parsed).toISOString().split('T')[0];
+  }
+  return null;
+}
+
+export function parseGender(val?: string): 'M' | 'F' | null {
+  if (!val) return null;
+  const s = normalizeText(val).toUpperCase();
+  if (['M', 'MASCULIN', 'GARCON', 'HOMME', 'H', 'BOY', 'MALE'].includes(s)) return 'M';
+  if (['F', 'FEMININ', 'FILLE', 'FEMME', 'GIRL', 'FEMALE'].includes(s)) return 'F';
+  return null;
+}
+
+export async function importStudents(studentsList: any[]): Promise<ActionState & { count?: number; createdClassesCount?: number; createdClassesNames?: string[] }> {
   try {
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
 
-    // 1. Fetch all classes for this school to map names to IDs
+    // 1. Récupérer toutes les classes existantes pour cette école
     const { data: classesData, error: classesError } = await supabase
       .from('classes')
       .select('id, name')
@@ -210,50 +320,125 @@ export async function importStudents(studentsList: any[]): Promise<ActionState &
 
     if (classesError) throw new Error('Erreur de récupération des classes.');
     
-    // Create a map of Class Name -> Class ID (case insensitive, trimmed)
-    const classMap = new Map();
+    // Map Nom de classe normalisé -> ID
+    const classMap = new Map<string, string>();
     if (classesData) {
       classesData.forEach((c) => {
-        classMap.set(c.name.trim().toLowerCase(), c.id);
+        classMap.set(normalizeText(c.name), c.id);
       });
     }
 
-    // 2. Prepare bulk insert data
-    let currentMaxMatricule = parseInt(await generateUniqueMatricule(supabase, school_id), 10);
+    // 2. Détecter si le fichier contient des classes inexistantes
+    const missingClasses = new Map<string, string>(); // normalized -> raw original name
+    for (const student of studentsList) {
+      const rawClass = getRowField(student, ['classe', 'class', 'niveau', 'salle']);
+      if (rawClass) {
+        const normClass = normalizeText(rawClass);
+        if (!classMap.has(normClass) && !missingClasses.has(normClass)) {
+          missingClasses.set(normClass, rawClass.trim());
+        }
+      }
+    }
+
+    // Créer automatiquement les classes manquantes
+    const createdClassesNames: string[] = [];
+    if (missingClasses.size > 0) {
+      const newClassesToInsert = Array.from(missingClasses.values()).map((rawName) => ({
+        school_id,
+        name: rawName,
+        level: detectClassLevel(rawName),
+        academic_year: '2026-2027',
+        capacity: 60
+      }));
+
+      const { data: createdClasses, error: createError } = await supabase
+        .from('classes')
+        .insert(newClassesToInsert)
+        .select('id, name');
+
+      if (createError) {
+        throw new Error(`Erreur lors de la création automatique des classes : ${createError.message}`);
+      }
+
+      if (createdClasses) {
+        createdClasses.forEach((c) => {
+          classMap.set(normalizeText(c.name), c.id);
+          createdClassesNames.push(c.name);
+        });
+      }
+    }
+
+    // 3. Récupérer tous les matricules existants pour éviter les collisions
+    const { data: existingStudents } = await supabase
+      .from('students')
+      .select('matricule')
+      .eq('school_id', school_id);
+    
+    const usedMatricules = new Set<string>();
+    let maxMatriculeNum = 999;
+
+    if (existingStudents) {
+      existingStudents.forEach((s: any) => {
+        if (s.matricule) {
+          usedMatricules.add(s.matricule.toString().trim().toLowerCase());
+          const num = parseInt(s.matricule, 10);
+          if (!isNaN(num) && num > maxMatriculeNum) {
+            maxMatriculeNum = num;
+          }
+        }
+      });
+    }
+
+    // 4. Préparer les données élèves
     const insertData = [];
 
-    for (const student of studentsList) {
-      // Validate Required Fields
-      const firstName = student['Prénom']?.trim();
-      const lastName = student['Nom']?.trim();
-      const className = student['Classe']?.trim();
+    for (let index = 0; index < studentsList.length; index++) {
+      const student = studentsList[index];
       
+      const firstName = getRowField(student, ['prenom', 'first name', 'first_name', 'prenoms']);
+      const lastName = getRowField(student, ['nom', 'last name', 'last_name', 'nom de famille']);
+      const className = getRowField(student, ['classe', 'class', 'niveau', 'salle']);
+      
+      // Sauter les lignes vides éventuelles
+      if (!firstName && !lastName && !className) {
+        continue;
+      }
+
       if (!firstName || !lastName || !className) {
-        throw new Error(`L'élève ${firstName || ''} ${lastName || ''} n'a pas de prénom, nom ou classe.`);
+        throw new Error(`Ligne ${index + 2} : L'élève "${firstName || ''} ${lastName || ''}" doit avoir au minimum un Prénom, un Nom et une Classe.`);
       }
 
-      // Map Class ID
-      const classId = classMap.get(className.toLowerCase());
+      // Associer la classe
+      const classId = classMap.get(normalizeText(className));
       if (!classId) {
-        throw new Error(`La classe "${className}" n'existe pas dans le système pour l'élève ${firstName} ${lastName}.`);
+        throw new Error(`Impossible de trouver ou créer la classe "${className}" pour l'élève ${firstName} ${lastName}.`);
       }
 
-      // Handle Matricule
-      let matricule = student['Matricule']?.toString().trim();
-      if (!matricule) {
-        matricule = currentMaxMatricule.toString();
-        currentMaxMatricule++;
+      // Gestion du matricule unique
+      let matricule = getRowField(student, ['matricule', 'id', 'numero matricule', 'num_matricule']);
+      if (matricule) {
+        matricule = matricule.trim();
+        // Si le matricule existe déjà dans la base ou dans ce lot, on le rend unique
+        if (usedMatricules.has(matricule.toLowerCase())) {
+          maxMatriculeNum++;
+          matricule = `${matricule}-${maxMatriculeNum}`;
+        }
+      } else {
+        maxMatriculeNum++;
+        matricule = maxMatriculeNum.toString();
       }
+      usedMatricules.add(matricule.toLowerCase());
 
-      // Format Date (if invalid, set to null)
-      let date_of_birth = student['Date de Naissance']?.trim() || null;
-      if (date_of_birth && isNaN(Date.parse(date_of_birth))) {
-        date_of_birth = null;
-      }
+      // Date de naissance
+      const rawDate = getRowField(student, ['date de naissance', 'date naissance', 'ddn', 'birth date', 'date_de_naissance', 'date_naissance', 'birthdate']);
+      const date_of_birth = parseFlexibleDate(rawDate);
 
-      // Handle Parent Phone
-      const parent_phone = student['Téléphone Parent']?.toString().trim() || null;
-      const gender = student['Genre']?.trim().toUpperCase() === 'F' ? 'F' : (student['Genre']?.trim().toUpperCase() === 'M' ? 'M' : null);
+      // Genre / Sexe
+      const rawGender = getRowField(student, ['sexe', 'genre', 'gender', 'sex']);
+      const gender = parseGender(rawGender);
+
+      // Téléphone parent
+      const parent_phone = getRowField(student, ['telephone parent', 'telephone', 'contact parent', 'parent phone', 'contact', 'telephone_parent', 'tel parent', 'tel']) || null;
 
       insertData.push({
         school_id,
@@ -269,25 +454,32 @@ export async function importStudents(studentsList: any[]): Promise<ActionState &
     }
 
     if (insertData.length === 0) {
-      return { error: 'Aucun élève valide à importer.' };
+      return { error: 'Aucun élève valide trouvé dans le fichier à importer.' };
     }
 
     await checkStudentLimit(supabase, school_id, insertData.length);
     
-    // 3. Bulk Insert
+    // 5. Insertion en masse des élèves
     const { error: insertError } = await supabase
       .from('students')
       .insert(insertData);
 
     if (insertError) {
       if (insertError.code === '23505') {
-        return { error: 'Un ou plusieurs élèves ont un matricule qui existe déjà.' };
+        return { error: 'Un ou plusieurs élèves ont un matricule qui existe déjà dans cette école.' };
       }
       throw insertError;
     }
 
     revalidatePath('/admin/eleves');
-    return { success: true, count: insertData.length };
+    revalidatePath('/admin/classes');
+
+    return { 
+      success: true, 
+      count: insertData.length,
+      createdClassesCount: createdClassesNames.length,
+      createdClassesNames
+    };
 
   } catch (err: any) {
     return { error: err.message };

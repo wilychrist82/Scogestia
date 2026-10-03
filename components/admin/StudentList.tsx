@@ -38,7 +38,7 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '')
-  const currentNiveau = searchParams.get('niveau') || 'Primaire'
+  const currentNiveau = searchParams.get('niveau') || 'Tous'
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [openActionId, setOpenActionId] = useState<string | null>(null)
@@ -91,7 +91,8 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
         let newNiveau = currentNiveau
         if (['s1', 's2', 'section1', 'section2', 'maternelle'].includes(level)) newNiveau = 'Maternelle'
         else if (['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].includes(level)) newNiveau = 'Primaire'
-        else if (['6eme', '5eme', '4eme', '3eme', 'secondaire', 'collège'].includes(level)) newNiveau = 'Secondaire'
+        else if (['6eme', '5eme', '4eme', '3eme', 'secondaire', 'collège', 'college'].includes(level)) newNiveau = 'Collège'
+        else if (['2nde', '1ere', '1ère', 'tle', 'terminale', 'seconde', 'premiere', 'lycee', 'lycée'].includes(level)) newNiveau = 'Lycée'
         
         if (newNiveau !== currentNiveau) {
           params.set('niveau', newNiveau)
@@ -99,7 +100,7 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
       }
     }
 
-    if (value) {
+    if (value && value !== 'Tous') {
       params.set(key, value)
     } else {
       params.delete(key)
@@ -234,7 +235,7 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 border-b border-[var(--color-outline-variant)]">
         {/* Tabs */}
         <div className="flex gap-6 overflow-x-auto w-full sm:w-auto hide-scrollbar">
-          {['Maternelle', 'Primaire', 'Secondaire'].map(niveau => (
+          {['Tous', 'Maternelle', 'Primaire', 'Collège', 'Lycée'].map(niveau => (
             <button
               key={niveau}
               onClick={() => handleFilterChange('niveau', niveau)}

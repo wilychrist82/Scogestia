@@ -70,6 +70,20 @@ export function StudentForm({ classes }: Props) {
         <p className="text-base text-[var(--color-on-surface-variant)] mt-2">Veuillez remplir les informations requises pour ajouter un nouvel élève au système.</p>
       </div>
 
+      {/* Excel Import Callout */}
+      <div className="mb-6 p-4 rounded-xl bg-blue-50 border border-blue-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm">
+        <div className="flex items-center gap-2.5 text-blue-900">
+          <span className="material-symbols-outlined text-blue-600 text-xl">upload_file</span>
+          <span>Vous devez inscrire plusieurs élèves ou des classes entières (Lycée, Collège, Primaire) ?</span>
+        </div>
+        <Link
+          href="/admin/eleves"
+          className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap shadow-sm"
+        >
+          Importer via Excel / CSV →
+        </Link>
+      </div>
+
       {error && (
         <div className="mb-6 bg-[var(--color-status-retard-bg)] text-[var(--color-status-retard-text)] p-4 rounded-lg text-sm font-medium border border-[var(--color-status-retard-text)]/20">
           {error}

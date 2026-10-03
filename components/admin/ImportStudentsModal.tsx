@@ -64,7 +64,14 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
       if (response?.error) {
         toast.error(response.error)
       } else if (response?.success) {
-        toast.success(`${response.count} élèves importés avec succès !`)
+        if (response.createdClassesCount && response.createdClassesCount > 0) {
+          toast.success(
+            `${response.count} élèves importés avec succès ! ${response.createdClassesCount} classe(s) créée(s) automatiquement : ${response.createdClassesNames?.join(', ')}.`,
+            { duration: 6000 }
+          )
+        } else {
+          toast.success(`${response.count} élèves importés et répartis dans leurs classes !`)
+        }
         onClose()
         setFile(null)
       }
@@ -76,11 +83,13 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
   }
 
   const generateTemplate = () => {
-    // Generate an Excel file template instead of CSV
-    const headers = ['Prénom', 'Nom', 'Genre', 'Date de Naissance', 'Classe', 'Matricule', 'Téléphone Parent']
+    // Generate an Excel file template with multiple classes example
+    const headers = ['Prénom', 'Nom', 'Sexe', 'Classe', 'Date de Naissance', 'Matricule', 'Téléphone Parent']
     const data = [
-      { 'Prénom': 'Jean', 'Nom': 'Dupont', 'Genre': 'M', 'Date de Naissance': '2010-05-14', 'Classe': '6eme A', 'Matricule': '1001', 'Téléphone Parent': '90123456' },
-      { 'Prénom': 'Marie', 'Nom': 'Curie', 'Genre': 'F', 'Date de Naissance': '2011-09-22', 'Classe': '6eme A', 'Matricule': '1002', 'Téléphone Parent': '90123456' }
+      { 'Prénom': 'Jean', 'Nom': 'Dupont', 'Sexe': 'M', 'Classe': '2nde A', 'Date de Naissance': '14/05/2009', 'Matricule': '1001', 'Téléphone Parent': '90123456' },
+      { 'Prénom': 'Marie', 'Nom': 'Curie', 'Sexe': 'F', 'Classe': '1ère D', 'Date de Naissance': '22/09/2008', 'Matricule': '1002', 'Téléphone Parent': '91234567' },
+      { 'Prénom': 'Amina', 'Nom': 'Diallo', 'Sexe': 'F', 'Classe': 'Terminale C', 'Date de Naissance': '10/11/2007', 'Matricule': '1003', 'Téléphone Parent': '92345678' },
+      { 'Prénom': 'Koffi', 'Nom': 'Mensah', 'Sexe': 'M', 'Classe': '6ème A', 'Date de Naissance': '03/01/2012', 'Matricule': '1004', 'Téléphone Parent': '93456789' }
     ]
     
     const worksheet = XLSX.utils.json_to_sheet(data, { header: headers })
@@ -93,7 +102,7 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = 'template_eleves.xlsx'
+    link.download = 'modele_import_eleves_scogestia.xlsx'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -119,20 +128,21 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
           <div className="bg-blue-50 text-blue-800 p-4 rounded-xl text-sm leading-relaxed border border-blue-100">
             <p className="font-semibold mb-2 flex items-center gap-1.5">
               <span className="material-symbols-outlined text-base">info</span>
-              Instructions
+              Instructions & Répartition par classe
             </p>
             <ul className="list-disc pl-5 space-y-1 opacity-90">
-              <li>Le fichier doit être au format <strong>Excel (.xlsx, .xls)</strong> ou <strong>CSV</strong>.</li>
-              <li>Les colonnes obligatoires sont: <strong>Prénom, Nom, Classe</strong>.</li>
-              <li>La colonne <strong>Classe</strong> doit correspondre exactement au nom d'une classe existante.</li>
-              <li><strong>Matricule</strong> et <strong>Téléphone Parent</strong> sont optionnels.</li>
+              <li>Le fichier peut être au format <strong>Excel (.xlsx, .xls)</strong> ou <strong>CSV</strong>.</li>
+              <li>Un même fichier peut contenir <strong>plusieurs classes différentes</strong> (ex: 2nde A, 1ère D, 6ème B, CM2...).</li>
+              <li>Colonnes obligatoires : <strong>Prénom, Nom, Classe</strong>.</li>
+              <li>Colonnes recommandées : <strong>Sexe</strong> (M/F), <strong>Date de Naissance</strong> (JJ/MM/AAAA), <strong>Matricule</strong>, <strong>Téléphone Parent</strong>.</li>
+              <li>✨ <em>Si une classe n'existe pas encore dans Scogestia, elle sera créée automatiquement avec son niveau !</em></li>
             </ul>
             <button 
               onClick={generateTemplate}
               className="mt-3 text-blue-700 font-semibold hover:text-blue-900 underline underline-offset-2 flex items-center gap-1 transition-colors"
             >
               <span className="material-symbols-outlined text-sm">download</span>
-              Télécharger le modèle Excel
+              Télécharger le modèle Excel pré-rempli
             </button>
           </div>
 
