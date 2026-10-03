@@ -201,11 +201,17 @@ import {
   normalizeText,
   detectClassLevel,
   getRowField,
+  extractNameParts,
+  extractClassFromFilename,
   parseFlexibleDate,
   parseGender
 } from '@/lib/student-import-utils'
 
-export async function importStudents(studentsList: any[]): Promise<ActionState & { count?: number; createdClassesCount?: number; createdClassesNames?: string[] }> {
+export async function importStudents(
+  studentsList: any[],
+  defaultClassId?: string,
+  fileName?: string
+): Promise<ActionState & { count?: number; createdClassesCount?: number; createdClassesNames?: string[] }> {
   try {
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
@@ -226,10 +232,23 @@ export async function importStudents(studentsList: any[]): Promise<ActionState &
       });
     }
 
+    // Déterminer une classe par défaut (sélectionnée ou déduite du nom de fichier)
+    let fallbackClassName: string | undefined = undefined;
+    if (defaultClassId) {
+      const found = classesData?.find(c => c.id === defaultClassId);
+      if (found) fallbackClassName = found.name;
+    }
+    if (!fallbackClassName && fileName) {
+      fallbackClassName = extractClassFromFilename(fileName, classesData || []);
+    }
+
     // 2. Détecter si le fichier contient des classes inexistantes
     const missingClasses = new Map<string, string>(); // normalized -> raw original name
     for (const student of studentsList) {
-      const rawClass = getRowField(student, ['classe', 'class', 'niveau', 'salle']);
+      let rawClass = getRowField(student, ['classe', 'class', 'niveau', 'salle', 'cours', 'division', 'groupe', 'section']);
+      if (!rawClass && fallbackClassName) {
+        rawClass = fallbackClassName;
+      }
       if (rawClass) {
         const normClass = normalizeText(rawClass);
         if (!classMap.has(normClass) && !missingClasses.has(normClass)) {
@@ -293,17 +312,27 @@ export async function importStudents(studentsList: any[]): Promise<ActionState &
     for (let index = 0; index < studentsList.length; index++) {
       const student = studentsList[index];
       
-      const firstName = getRowField(student, ['prenom', 'first name', 'first_name', 'prenoms']);
-      const lastName = getRowField(student, ['nom', 'last name', 'last_name', 'nom de famille']);
-      const className = getRowField(student, ['classe', 'class', 'niveau', 'salle']);
+      const nameParts = extractNameParts(student);
+      const firstName = nameParts?.firstName;
+      const lastName = nameParts?.lastName;
+      let className = getRowField(student, ['classe', 'class', 'niveau', 'salle', 'cours', 'division', 'groupe', 'section']);
       
-      // Sauter les lignes vides éventuelles
+      // Si la ligne n'a pas de colonne classe explicite, utiliser le fallback
+      if (!className && fallbackClassName) {
+        className = fallbackClassName;
+      }
+
+      // Sauter les lignes totalement vides
       if (!firstName && !lastName && !className) {
         continue;
       }
 
-      if (!firstName || !lastName || !className) {
-        throw new Error(`Ligne ${index + 2} : L'élève "${firstName || ''} ${lastName || ''}" doit avoir au minimum un Prénom, un Nom et une Classe.`);
+      if (!firstName || !lastName) {
+        throw new Error(`Ligne ${index + 2} : Impossible de déterminer le Nom et le Prénom de l'élève.`);
+      }
+
+      if (!className) {
+        throw new Error(`Ligne ${index + 2} : L'élève "${firstName} ${lastName}" n'a pas de classe spécifiée. Veuillez sélectionner une classe de destination ou ajouter une colonne "Classe" dans votre fichier Excel.`);
       }
 
       // Associer la classe

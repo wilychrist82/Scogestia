@@ -3,6 +3,8 @@ import {
   normalizeText,
   detectClassLevel,
   getRowField,
+  extractNameParts,
+  extractClassFromFilename,
   parseFlexibleDate,
   parseGender
 } from '../lib/student-import-utils'
@@ -46,6 +48,40 @@ describe('Import Students Helpers', () => {
       expect(detectClassLevel('Grande Section')).toBe('Maternelle')
       expect(detectClassLevel('S1')).toBe('Maternelle')
       expect(detectClassLevel('S2')).toBe('Maternelle')
+    })
+  })
+
+  describe('extractNameParts', () => {
+    it('gère les colonnes séparées Nom et Prénom', () => {
+      const row = { 'Nom': 'ADJOKPA', 'Prénom': 'Kokou' }
+      expect(extractNameParts(row)).toEqual({ firstName: 'Kokou', lastName: 'ADJOKPA' })
+    })
+
+    it('gère une colonne combinée Nom et Prénoms (ex: ADJOKPA Kokou)', () => {
+      const row = { 'Nom et Prénoms': 'ADJOKPA Kokou' }
+      expect(extractNameParts(row)).toEqual({ firstName: 'Kokou', lastName: 'ADJOKPA' })
+    })
+
+    it('gère une colonne combinée avec plusieurs prénoms (ex: KOFFI Jean Paul)', () => {
+      const row = { 'Nom et Prénom': 'KOFFI Jean Paul' }
+      expect(extractNameParts(row)).toEqual({ firstName: 'Jean Paul', lastName: 'KOFFI' })
+    })
+  })
+
+  describe('extractClassFromFilename', () => {
+    const classes = [
+      { id: '1', name: 'CP1' },
+      { id: '2', name: 'CE1' },
+      { id: '3', name: '6ème A' }
+    ]
+
+    it('détecte CE1 depuis "liste alphabétique CE1.xlsx"', () => {
+      expect(extractClassFromFilename('liste alphabétique CE1.xlsx', classes)).toBe('CE1')
+      expect(extractClassFromFilename('liste alphab&tique CE1.xlsx', classes)).toBe('CE1')
+    })
+
+    it('détecte la classe depuis un nom avec tirets ou underscores', () => {
+      expect(extractClassFromFilename('eleves_CP1_2026.xlsx', classes)).toBe('CP1')
     })
   })
 

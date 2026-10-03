@@ -6,16 +6,33 @@ import toast from 'react-hot-toast'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
 
+import { extractClassFromFilename } from '@/lib/student-import-utils'
+import { useEffect, useMemo } from 'react'
+
 type Props = {
   isOpen: boolean
   onClose: () => void
+  classes?: { id: string, name: string, level?: string }[]
+  initialClassId?: string
 }
 
-export function ImportStudentsModal({ isOpen, onClose }: Props) {
+export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClassId }: Props) {
   const [file, setFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [selectedClassId, setSelectedClassId] = useState<string>(initialClassId || 'auto')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (initialClassId) {
+      setSelectedClassId(initialClassId)
+    }
+  }, [initialClassId])
+
+  const detectedClass = useMemo(() => {
+    if (!file || classes.length === 0) return null
+    return extractClassFromFilename(file.name, classes)
+  }, [file, classes])
 
   if (!isOpen) return null
 
@@ -81,10 +98,11 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
         return
       }
 
-      const response = await importStudents(parsedData)
+      const targetClassId = selectedClassId !== 'auto' ? selectedClassId : undefined
+      const response = await importStudents(parsedData, targetClassId, file.name)
 
       if (response?.error) {
-        toast.error(response.error)
+        toast.error(response.error, { duration: 6000 })
       } else if (response?.success) {
         if (response.createdClassesCount && response.createdClassesCount > 0) {
           toast.success(
@@ -166,6 +184,34 @@ export function ImportStudentsModal({ isOpen, onClose }: Props) {
               <span className="material-symbols-outlined text-sm">download</span>
               Télécharger le modèle Excel pré-rempli
             </button>
+          </div>
+
+          {/* Sélecteur de classe de destination */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+              <span>Classe de destination</span>
+              <span className="text-[11px] font-normal text-slate-400">Si non indiquée dans chaque ligne</span>
+            </label>
+            <select
+              value={selectedClassId}
+              onChange={(e) => setSelectedClassId(e.target.value)}
+              className="w-full h-11 px-3 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none cursor-pointer"
+            >
+              <option value="auto">
+                {detectedClass 
+                  ? `⚡ Détection auto (Nom du fichier : ${detectedClass})`
+                  : '⚡ Détection auto (selon le fichier ou son nom)'}
+              </option>
+              {classes.map(c => (
+                <option key={c.id} value={c.id}>Classe {c.name}</option>
+              ))}
+            </select>
+            {detectedClass && selectedClassId === 'auto' && (
+              <p className="text-xs text-emerald-700 font-medium flex items-center gap-1 mt-1">
+                <span className="material-symbols-outlined text-sm text-emerald-600">auto_awesome</span>
+                Classe détectée d'après le nom du fichier : <strong>{detectedClass}</strong>
+              </p>
+            )}
           </div>
 
           <div 

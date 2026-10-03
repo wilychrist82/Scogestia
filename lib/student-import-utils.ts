@@ -65,6 +65,104 @@ export function getRowField(row: Record<string, any>, candidates: string[]): str
   return undefined;
 }
 
+export function extractNameParts(row: Record<string, any>): { firstName: string, lastName: string } | null {
+  const directFirst = getRowField(row, ['prenom', 'first name', 'first_name', 'prenoms', 'prénoms']);
+  const directLast = getRowField(row, ['nom', 'last name', 'last_name', 'nom de famille']);
+
+  if (directFirst && directLast) {
+    return { firstName: directFirst, lastName: directLast };
+  }
+
+  // Vérifier une colonne combinée éventuelle (ex: "Nom et Prénoms", "Nom Complet")
+  const combined = getRowField(row, [
+    'nom et prenom', 'nom & prenom', 'nom et prenoms', 'nom & prenoms',
+    'noms et prenoms', 'nom complet', 'full name', 'fullname', 'eleve', 'élève', 'apprenant'
+  ]);
+
+  if (combined) {
+    const parts = combined.trim().split(/\s+/);
+    if (parts.length === 1) {
+      return { firstName: parts[0], lastName: directLast || parts[0] };
+    }
+    // Si la première partie est en MAJUSCULES (ex: ADJOKPA Kokou)
+    if (parts[0] === parts[0].toUpperCase() && parts[0].length > 1) {
+      return { firstName: parts.slice(1).join(' '), lastName: parts[0] };
+    }
+    // Si la dernière partie est en MAJUSCULES (ex: Kokou ADJOKPA)
+    const lastPart = parts[parts.length - 1];
+    if (lastPart === lastPart.toUpperCase() && lastPart.length > 1) {
+      return { firstName: parts.slice(0, -1).join(' '), lastName: lastPart };
+    }
+    return {
+      lastName: parts[0],
+      firstName: parts.slice(1).join(' ')
+    };
+  }
+
+  if (directLast && !directFirst) {
+    return { lastName: directLast, firstName: '-' };
+  }
+  if (directFirst && !directLast) {
+    return { lastName: directFirst, firstName: '-' };
+  }
+
+  return null;
+}
+
+export function extractClassFromFilename(fileName: string, availableClasses: { id: string, name: string }[]): string | undefined {
+  if (!fileName) return undefined;
+  const cleanFileName = normalizeText(fileName);
+  
+  // 1. Chercher d'abord une correspondance directe avec les classes existantes
+  for (const cls of availableClasses) {
+    const cleanClassName = normalizeText(cls.name);
+    // Vérifier mot complet ou occurrence
+    const regex = new RegExp(`(^|[^a-z0-9])${cleanClassName}([^a-z0-9]|$)`, 'i');
+    if (regex.test(cleanFileName) || cleanFileName.includes(cleanClassName)) {
+      return cls.name;
+    }
+  }
+
+  // 2. Chercher des motifs d'écoles fréquents (ex: CE1, CP1, 6ème, 2nde...)
+  const patterns: { match: string, standard: string }[] = [
+    { match: 'cp1', standard: 'CP1' },
+    { match: 'cp2', standard: 'CP2' },
+    { match: 'ce1', standard: 'CE1' },
+    { match: 'ce2', standard: 'CE2' },
+    { match: 'cm1', standard: 'CM1' },
+    { match: 'cm2', standard: 'CM2' },
+    { match: 'ci', standard: 'CI' },
+    { match: '6eme', standard: '6ème' },
+    { match: '6e', standard: '6ème' },
+    { match: '5eme', standard: '5ème' },
+    { match: '5e', standard: '5ème' },
+    { match: '4eme', standard: '4ème' },
+    { match: '4e', standard: '4ème' },
+    { match: '3eme', standard: '3ème' },
+    { match: '3e', standard: '3ème' },
+    { match: '2nde', standard: '2nde' },
+    { match: 'seconde', standard: '2nde' },
+    { match: '1ere', standard: '1ère' },
+    { match: 'premiere', standard: '1ère' },
+    { match: 'tle', standard: 'Terminale' },
+    { match: 'terminale', standard: 'Terminale' },
+    { match: 's1', standard: 'S1' },
+    { match: 's2', standard: 'S2' }
+  ];
+
+  for (const p of patterns) {
+    const regex = new RegExp(`(^|[^a-z0-9])${p.match}([^a-z0-9]|$)`, 'i');
+    if (regex.test(cleanFileName)) {
+      // Trouver si une classe existante porte ce nom
+      const found = availableClasses.find(c => normalizeText(c.name).includes(p.match));
+      if (found) return found.name;
+      return p.standard;
+    }
+  }
+
+  return undefined;
+}
+
 export function parseFlexibleDate(val: any): string | null {
   if (!val) return null;
   // Cas Excel serial number

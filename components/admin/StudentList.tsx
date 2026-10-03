@@ -366,6 +366,8 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
       <ImportStudentsModal 
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
+        classes={classes}
+        initialClassId={searchParams.get('classId') || undefined}
       />
     </div>
   )
