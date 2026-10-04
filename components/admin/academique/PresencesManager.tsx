@@ -39,10 +39,11 @@ export function PresencesManager({ classes, students }: Props) {
   const [gridData, setGridData] = useState<Record<string, string>>({})
   const [modifiedCells, setModifiedCells] = useState<Set<string>>(new Set())
 
-  // State pour la modale de récapitulation
+  // State pour la période active et la modale de récapitulation
+  const [periodStart, setPeriodStart] = useState<string>('')
+  const [periodEnd, setPeriodEnd] = useState<string>('')
+  const [onlyShowPeriodDays, setOnlyShowPeriodDays] = useState<boolean>(false)
   const [isRecapOpen, setIsRecapOpen] = useState(false)
-  const [recapPeriodStart, setRecapPeriodStart] = useState<string>('')
-  const [recapPeriodEnd, setRecapPeriodEnd] = useState<string>('')
 
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -51,16 +52,16 @@ export function PresencesManager({ classes, students }: Props) {
 
   const filteredStudents = selectedClass ? students.filter(s => s.class_id === selectedClass) : []
 
-  // Initialiser les dates de période par défaut quand le mois change
+  // Initialiser les dates de période par défaut quand l'année ou le mois change
   useEffect(() => {
     const start = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`
     const lastDay = new Date(selectedYear, selectedMonth, 0).getDate()
     const end = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
-    setRecapPeriodStart(start)
-    setRecapPeriodEnd(end)
+    setPeriodStart(start)
+    setPeriodEnd(end)
   }, [selectedYear, selectedMonth])
 
-  // Calcul des jours du mois
+  // Calcul des jours du mois et détection de la période active
   const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate()
   const days = Array.from({ length: daysInMonth }, (_, i) => {
     const dayNum = i + 1
@@ -68,13 +69,18 @@ export function PresencesManager({ classes, students }: Props) {
     const dayOfWeek = dateObj.getDay()
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
     const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`
+    const isWithinPeriod = (!periodStart || dateStr >= periodStart) && (!periodEnd || dateStr <= periodEnd)
     return {
       dayNum,
       initial: DAYS_OF_WEEK[dayOfWeek],
       isWeekend,
-      dateStr
+      dateStr,
+      isWithinPeriod
     }
   })
+
+  // Jours affichés dans le tableau (tout le mois ou uniquement la période)
+  const displayedDays = onlyShowPeriodDays ? days.filter(d => d.isWithinPeriod) : days
 
   // Chargement des données quand classe/année/mois change
   useEffect(() => {
@@ -110,8 +116,8 @@ export function PresencesManager({ classes, students }: Props) {
     return () => { isMounted = false }
   }, [selectedClass, selectedYear, selectedMonth])
 
-  const handleCellClick = (studentId: string, dateStr: string, isWeekend: boolean) => {
-    if (isWeekend) return // Impossible de modifier les weekends
+  const handleCellClick = (studentId: string, dateStr: string, isWeekend: boolean, isWithinPeriod: boolean) => {
+    if (isWeekend || !isWithinPeriod) return // Impossible de modifier les weekends ou les jours hors période
     
     const key = `${studentId}_${dateStr}`
     const currentStatus = gridData[key] || 'present'
@@ -166,11 +172,13 @@ export function PresencesManager({ classes, students }: Props) {
   const getTotalAbsences = (studentId: string) => {
     let total = 0
     days.forEach(d => {
+      // Ne comptabilise que les jours de la période active et hors weekend
+      if (!d.isWithinPeriod || d.isWeekend) return
       const status = gridData[`${studentId}_${d.dateStr}`]
       if (status === 'absent') {
-        total += 2 // '+' compte pour 2
+        total += 2 // '+' compte pour 2 demi-journées
       } else if (status === 'retard') {
-        total += 1 // '-' compte pour 1
+        total += 1 // '-' compte pour 1 demi-journée
       }
     })
     return total
@@ -209,9 +217,9 @@ export function PresencesManager({ classes, students }: Props) {
 
     // Calcul des demi-journées ouvrables
     let totalDemiJournees = 0
-    if (recapPeriodStart && recapPeriodEnd) {
-      const start = new Date(recapPeriodStart)
-      const end = new Date(recapPeriodEnd)
+    if (periodStart && periodEnd) {
+      const start = new Date(periodStart)
+      const end = new Date(periodEnd)
       let current = new Date(start)
 
       while (current <= end) {
@@ -277,40 +285,106 @@ export function PresencesManager({ classes, students }: Props) {
         </div>
 
         {/* Filters */}
-        <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] p-6 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl">
+        <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] p-5 md:p-6 shadow-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-[var(--color-on-surface)]">Classe</label>
+              <label className="text-sm font-semibold text-[var(--color-on-surface)] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-base text-[var(--color-primary)]">school</span>
+                Classe
+              </label>
               <select 
                 value={selectedClass} 
                 onChange={(e) => setSelectedClass(e.target.value)}
-                className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] text-[var(--color-on-surface)]"
               >
                 <option value="">Sélectionner une classe...</option>
                 {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-[var(--color-on-surface)]">Mois</label>
+              <label className="text-sm font-semibold text-[var(--color-on-surface)] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-base text-[var(--color-primary)]">calendar_month</span>
+                Mois
+              </label>
               <select 
                 value={selectedMonth} 
                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] text-[var(--color-on-surface)]"
               >
                 {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-[var(--color-on-surface)]">Année</label>
+              <label className="text-sm font-semibold text-[var(--color-on-surface)] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-base text-[var(--color-primary)]">event</span>
+                Année
+              </label>
               <select 
                 value={selectedYear} 
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] text-[var(--color-on-surface)]"
               >
                 {[currentDate.getFullYear() - 1, currentDate.getFullYear(), currentDate.getFullYear() + 1].map(y => (
                   <option key={y} value={y}>{y}</option>
                 ))}
               </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-[var(--color-on-surface)] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-base text-blue-600">date_range</span>
+                Période du :
+              </label>
+              <input 
+                type="date"
+                value={periodStart}
+                min={`${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`}
+                max={periodEnd || `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${daysInMonth}`}
+                onChange={(e) => setPeriodStart(e.target.value)}
+                className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] font-medium text-[var(--color-on-surface)]"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-[var(--color-on-surface)] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-base text-blue-600">event_available</span>
+                Au :
+              </label>
+              <input 
+                type="date"
+                value={periodEnd}
+                min={periodStart || `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`}
+                max={`${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${daysInMonth}`}
+                onChange={(e) => setPeriodEnd(e.target.value)}
+                className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] font-medium text-[var(--color-on-surface)]"
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-[var(--color-outline-variant)] flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 text-blue-800 font-semibold border border-blue-200">
+                <span className="material-symbols-outlined text-[15px]">date_range</span>
+                <span>
+                  Période : {periodStart ? new Date(periodStart + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—'} au {periodEnd ? new Date(periodEnd + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                </span>
+              </div>
+              <span className="text-[var(--color-on-surface-variant)] font-medium">
+                • {days.filter(d => d.isWithinPeriod && !d.isWeekend).length} jours de classe ouvré(s) ({recap.totalDemiJournees} demi-journées ouvrables)
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const start = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`
+                  const end = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`
+                  setPeriodStart(start)
+                  setPeriodEnd(end)
+                }}
+                className="px-2.5 py-1 rounded text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors border border-gray-300"
+              >
+                Réinitialiser tout le mois
+              </button>
             </div>
           </div>
         </div>
@@ -332,15 +406,39 @@ export function PresencesManager({ classes, students }: Props) {
         {selectedClass ? (
           <div className="bg-white rounded-xl border border-gray-300 overflow-hidden shadow-sm flex flex-col mt-4">
             <div className="p-4 border-b border-gray-200 flex flex-wrap justify-between items-center gap-4 bg-gray-50/50">
-              <h3 className="font-semibold text-[var(--color-on-surface)] flex items-center gap-3">
-                <span>Registre d'appel - {MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}</span>
-                {isLoadingData && <span className="w-4 h-4 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></span>}
-              </h3>
+              <div className="flex flex-wrap items-center gap-3">
+                <h3 className="font-semibold text-[var(--color-on-surface)] flex items-center gap-3">
+                  <span>Registre d'appel - {MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}</span>
+                  {isLoadingData && <span className="w-4 h-4 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></span>}
+                </h3>
+
+                {/* Filter toggle button */}
+                <div className="inline-flex rounded-lg border border-gray-300 p-0.5 bg-gray-100 text-xs font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setOnlyShowPeriodDays(false)}
+                    className={`px-2.5 py-1 rounded-md transition-all ${!onlyShowPeriodDays ? 'bg-white text-gray-900 shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'}`}
+                  >
+                    Vue mois entier ({daysInMonth}j)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOnlyShowPeriodDays(true)}
+                    className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${onlyShowPeriodDays ? 'bg-white text-blue-700 shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'}`}
+                  >
+                    <span>Période seule</span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold">
+                      {days.filter(d => d.isWithinPeriod).length}j
+                    </span>
+                  </button>
+                </div>
+              </div>
               
-              <div className="flex items-center gap-4">
-                <div className="flex gap-4 text-xs font-medium text-gray-500">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex flex-wrap gap-3 text-xs font-medium text-gray-500">
                   <div className="flex items-center gap-1"><span className="w-4 h-4 flex items-center justify-center bg-gray-100 rounded text-gray-800 font-bold border border-gray-200">-</span> Absent Matin</div>
                   <div className="flex items-center gap-1"><span className="w-4 h-4 flex items-center justify-center bg-gray-100 rounded text-gray-800 font-bold border border-gray-200">+</span> Absent Journée</div>
+                  <div className="flex items-center gap-1"><span className="w-4 h-4 flex items-center justify-center bg-gray-200/80 rounded text-gray-400 font-bold border border-gray-300">/</span> Hors période</div>
                 </div>
                 
                 <button 
@@ -376,7 +474,7 @@ export function PresencesManager({ classes, students }: Props) {
                     <th rowSpan={2} className="border border-gray-400 py-2 px-3 font-semibold text-center w-16 bg-gray-100 text-gray-700 text-sm z-30 sticky left-[304px]">
                       Sexe
                     </th>
-                    <th colSpan={daysInMonth} className="border border-gray-400 py-1 font-bold text-center bg-indigo-50/50 text-gray-700 text-sm tracking-wide">
+                    <th colSpan={displayedDays.length} className="border border-gray-400 py-1 font-bold text-center bg-indigo-50/50 text-gray-700 text-sm tracking-wide">
                       Indication des absences
                     </th>
                     <th rowSpan={2} className="border border-gray-400 py-2 px-3 font-semibold text-center w-24 bg-gray-100 text-gray-700 text-sm z-20">
@@ -385,12 +483,17 @@ export function PresencesManager({ classes, students }: Props) {
                   </tr>
                   {/* Second header row: Day numbers and initials */}
                   <tr>
-                    {days.map(d => (
+                    {displayedDays.map(d => (
                       <th 
                         key={d.dayNum} 
                         className={`border border-gray-400 p-0 text-center min-w-[28px] w-[28px] text-[11px]
-                          ${d.isWeekend ? 'bg-blue-100/50 text-blue-900' : 'bg-white text-gray-700'}
+                          ${!d.isWithinPeriod 
+                            ? 'bg-gray-200/70 text-gray-400' 
+                            : d.isWeekend 
+                              ? 'bg-blue-100/50 text-blue-900' 
+                              : 'bg-white text-gray-700'}
                         `}
+                        title={!d.isWithinPeriod ? 'Jour hors période scolaire' : d.isWeekend ? 'Weekend' : `Jour ${d.dayNum}`}
                       >
                         <div className="flex flex-col">
                           <span className="font-bold py-1 border-b border-gray-400">{String(d.dayNum).padStart(2, '0')}</span>
@@ -415,22 +518,37 @@ export function PresencesManager({ classes, students }: Props) {
                         <td className={`border border-gray-400 py-2 px-2 font-bold text-center sticky left-[304px] bg-white z-10 group-hover:bg-gray-50 ${textColor}`}>
                           {isFille ? 'F' : 'M'}
                         </td>
-                        {days.map(d => {
+                        {displayedDays.map(d => {
                           const key = `${student.id}_${d.dateStr}`
                           const status = gridData[key]
                           const isModified = modifiedCells.has(key)
                           return (
                             <td 
                               key={d.dayNum} 
-                              onClick={() => handleCellClick(student.id, d.dateStr, d.isWeekend)}
+                              onClick={() => handleCellClick(student.id, d.dateStr, d.isWeekend, d.isWithinPeriod)}
+                              title={
+                                !d.isWithinPeriod 
+                                  ? 'Jour hors période scolaire définie' 
+                                  : d.isWeekend 
+                                    ? 'Weekend (aucun cours)' 
+                                    : 'Cliquez pour marquer : Présent -> Retard (-) -> Absent (+)'
+                              }
                               className={`
-                                border border-gray-400 p-0 text-center text-sm font-bold transition-colors
-                                ${d.isWeekend ? 'bg-blue-100/30 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100'}
+                                border border-gray-400 p-0 text-center text-sm font-bold transition-colors select-none
+                                ${!d.isWithinPeriod 
+                                  ? 'bg-gray-100/80 text-gray-300 cursor-not-allowed' 
+                                  : d.isWeekend 
+                                    ? 'bg-blue-100/30 cursor-not-allowed' 
+                                    : 'cursor-pointer hover:bg-gray-100'}
                                 ${isModified ? 'text-indigo-600 bg-indigo-50/50' : 'text-gray-800'}
                               `}
                             >
                               <div className="w-full h-8 flex items-center justify-center">
-                                {!d.isWeekend && getCellDisplay(status)}
+                                {!d.isWithinPeriod ? (
+                                  <span className="text-gray-300 text-xs font-normal">/</span>
+                                ) : !d.isWeekend ? (
+                                  getCellDisplay(status)
+                                ) : null}
                               </div>
                             </td>
                           )
@@ -492,8 +610,10 @@ export function PresencesManager({ classes, students }: Props) {
                     <label className="text-xs font-semibold text-gray-600">Date de début</label>
                     <input 
                       type="date" 
-                      value={recapPeriodStart}
-                      onChange={e => setRecapPeriodStart(e.target.value)}
+                      value={periodStart}
+                      min={`${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`}
+                      max={periodEnd || `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${daysInMonth}`}
+                      onChange={e => setPeriodStart(e.target.value)}
                       className="h-10 px-3 border border-gray-300 rounded-lg text-sm focus:border-blue-500 outline-none"
                     />
                   </div>
@@ -501,12 +621,13 @@ export function PresencesManager({ classes, students }: Props) {
                     <label className="text-xs font-semibold text-gray-600">Date de fin</label>
                     <input 
                       type="date" 
-                      value={recapPeriodEnd}
-                      onChange={e => setRecapPeriodEnd(e.target.value)}
+                      value={periodEnd}
+                      min={periodStart || `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`}
+                      max={`${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${daysInMonth}`}
+                      onChange={e => setPeriodEnd(e.target.value)}
                       className="h-10 px-3 border border-gray-300 rounded-lg text-sm focus:border-blue-500 outline-none"
                     />
                   </div>
-
                 </div>
               </div>
 
