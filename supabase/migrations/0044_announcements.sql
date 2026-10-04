@@ -19,28 +19,32 @@ create table if not exists public.announcements (
   updated_at timestamptz default now()
 );
 
-create index idx_announcements_school on public.announcements(school_id);
-create index idx_announcements_published on public.announcements(school_id, is_published, published_at desc);
+create index if not exists idx_announcements_school on public.announcements(school_id);
+create index if not exists idx_announcements_published on public.announcements(school_id, is_published, published_at desc);
 
 -- RLS
 alter table public.announcements enable row level security;
 
 -- Lecture : tous les utilisateurs liés à l'école
+drop policy if exists "announcements_select" on public.announcements;
 create policy "announcements_select"
 on public.announcements for select
 using (school_id in (select public.user_school_ids()));
 
--- Insertion : admin uniquement
+-- Insertion : admin ou super_admin
+drop policy if exists "announcements_insert" on public.announcements;
 create policy "announcements_insert"
 on public.announcements for insert
-with check (public.has_role_in_school(school_id, array['admin'::user_role]));
+with check (public.has_role_in_school(school_id, array['admin'::user_role, 'super_admin'::user_role]));
 
--- Modification : admin uniquement
+-- Modification : admin ou super_admin
+drop policy if exists "announcements_update" on public.announcements;
 create policy "announcements_update"
 on public.announcements for update
-using (public.has_role_in_school(school_id, array['admin'::user_role]));
+using (public.has_role_in_school(school_id, array['admin'::user_role, 'super_admin'::user_role]));
 
--- Suppression : admin uniquement
+-- Suppression : admin ou super_admin
+drop policy if exists "announcements_delete" on public.announcements;
 create policy "announcements_delete"
 on public.announcements for delete
-using (public.has_role_in_school(school_id, array['admin'::user_role]));
+using (public.has_role_in_school(school_id, array['admin'::user_role, 'super_admin'::user_role]));

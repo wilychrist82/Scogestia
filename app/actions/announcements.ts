@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export type AnnouncementState = {
@@ -17,26 +18,30 @@ export async function createAnnouncement(
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Non authentifié' }
 
-    const { data: roleData } = await supabase
+    // Accepte à la fois 'admin' et 'super_admin'
+    const { data: roleRows } = await supabase
       .from('user_school_roles')
       .select('school_id, role')
       .eq('user_id', user.id)
-      .maybeSingle()
+      .in('role', ['admin', 'super_admin'])
+      .limit(1)
 
-    if (!roleData || roleData.role !== 'admin') {
-      return { error: 'Seul un administrateur peut publier des annonces.' }
+    const roleData = roleRows?.[0]
+    if (!roleData || !roleData.school_id) {
+      return { error: 'Seul un administrateur ou super admin peut publier des annonces.' }
     }
 
-    const title = formData.get('title') as string
-    const content = formData.get('content') as string
+    const title = (formData.get('title') as string)?.trim()
+    const content = (formData.get('content') as string)?.trim()
     const targetType = (formData.get('targetType') as string) || 'all'
-    const targetClassId = formData.get('targetClassId') as string | null
+    const targetClassId = (formData.get('targetClassId') as string)?.trim() || null
 
     if (!title || !content) {
       return { error: 'Le titre et le contenu sont requis.' }
     }
 
-    const { error } = await supabase.from('announcements').insert({
+    const adminClient = createAdminClient()
+    const { error } = await adminClient.from('announcements').insert({
       school_id: roleData.school_id,
       title,
       content,
@@ -46,14 +51,23 @@ export async function createAnnouncement(
       created_by: user.id,
     })
 
-    if (error) throw error
+    if (error) {
+      if (error.code === 'PGRST205' || error.message?.includes('schema cache')) {
+        return {
+          error: "La table 'announcements' n'est pas encore créée dans Supabase. Veuillez exécuter le script de migration SQL 0044_announcements.sql dans votre dashboard Supabase (SQL Editor)."
+        }
+      }
+      return { error: error.message || 'Erreur lors de la création de l\'annonce.' }
+    }
 
     revalidatePath('/admin/communication')
     revalidatePath('/admin/communication/annonces')
     revalidatePath('/parent')
     return { success: true }
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Erreur inconnue'
+    const message = err && typeof err === 'object' && 'message' in err
+      ? String((err as any).message)
+      : (err instanceof Error ? err.message : 'Erreur inattendue')
     return { error: message }
   }
 }
@@ -67,37 +81,49 @@ export async function updateAnnouncement(
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Non authentifié' }
 
-    const { data: roleData } = await supabase
+    const { data: roleRows } = await supabase
       .from('user_school_roles')
       .select('school_id, role')
       .eq('user_id', user.id)
-      .maybeSingle()
+      .in('role', ['admin', 'super_admin'])
+      .limit(1)
 
-    if (!roleData || roleData.role !== 'admin') {
+    const roleData = roleRows?.[0]
+    if (!roleData || !roleData.school_id) {
       return { error: 'Permission refusée.' }
     }
 
     const updatePayload: Record<string, unknown> = { updated_at: new Date().toISOString() }
-    if (data.title !== undefined) updatePayload.title = data.title
-    if (data.content !== undefined) updatePayload.content = data.content
+    if (data.title !== undefined) updatePayload.title = data.title.trim()
+    if (data.content !== undefined) updatePayload.content = data.content.trim()
     if (data.is_published !== undefined) updatePayload.is_published = data.is_published
     if (data.target_type !== undefined) updatePayload.target_type = data.target_type
     if (data.target_class_id !== undefined) updatePayload.target_class_id = data.target_class_id
 
-    const { error } = await supabase
+    const adminClient = createAdminClient()
+    const { error } = await adminClient
       .from('announcements')
       .update(updatePayload)
       .eq('id', id)
       .eq('school_id', roleData.school_id)
 
-    if (error) throw error
+    if (error) {
+      if (error.code === 'PGRST205' || error.message?.includes('schema cache')) {
+        return {
+          error: "La table 'announcements' n'est pas encore créée dans Supabase. Veuillez exécuter le script de migration SQL 0044_announcements.sql dans votre dashboard Supabase (SQL Editor)."
+        }
+      }
+      return { error: error.message || 'Erreur lors de la mise à jour.' }
+    }
 
     revalidatePath('/admin/communication')
     revalidatePath('/admin/communication/annonces')
     revalidatePath('/parent')
     return { success: true }
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Erreur inconnue'
+    const message = err && typeof err === 'object' && 'message' in err
+      ? String((err as any).message)
+      : (err instanceof Error ? err.message : 'Erreur inattendue')
     return { error: message }
   }
 }
@@ -108,30 +134,42 @@ export async function deleteAnnouncement(id: string): Promise<AnnouncementState>
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Non authentifié' }
 
-    const { data: roleData } = await supabase
+    const { data: roleRows } = await supabase
       .from('user_school_roles')
       .select('school_id, role')
       .eq('user_id', user.id)
-      .maybeSingle()
+      .in('role', ['admin', 'super_admin'])
+      .limit(1)
 
-    if (!roleData || roleData.role !== 'admin') {
+    const roleData = roleRows?.[0]
+    if (!roleData || !roleData.school_id) {
       return { error: 'Permission refusée.' }
     }
 
-    const { error } = await supabase
+    const adminClient = createAdminClient()
+    const { error } = await adminClient
       .from('announcements')
       .delete()
       .eq('id', id)
       .eq('school_id', roleData.school_id)
 
-    if (error) throw error
+    if (error) {
+      if (error.code === 'PGRST205' || error.message?.includes('schema cache')) {
+        return {
+          error: "La table 'announcements' n'est pas encore créée dans Supabase. Veuillez exécuter le script de migration SQL 0044_announcements.sql dans votre dashboard Supabase (SQL Editor)."
+        }
+      }
+      return { error: error.message || 'Erreur lors de la suppression.' }
+    }
 
     revalidatePath('/admin/communication')
     revalidatePath('/admin/communication/annonces')
     revalidatePath('/parent')
     return { success: true }
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Erreur inconnue'
+    const message = err && typeof err === 'object' && 'message' in err
+      ? String((err as any).message)
+      : (err instanceof Error ? err.message : 'Erreur inattendue')
     return { error: message }
   }
 }
