@@ -4,7 +4,7 @@ import { useState, useTransition, useRef } from 'react'
 import Link from 'next/link'
 import { generateParentCode } from '@/app/actions/invitations'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { FileEdit, CalendarDays, Banknote, Camera } from 'lucide-react'
+import { FileEdit, CalendarDays, Banknote, Camera, User, GraduationCap, CalendarCheck, CreditCard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
@@ -284,30 +284,54 @@ export function StudentDetailTabs({ student }: Props) {
       </div>
 
       {/* Tabbed Navigation */}
-      <div className="border-b border-[var(--color-outline-variant)] flex gap-8 overflow-x-auto no-scrollbar">
+      <div className="border-b border-slate-200 flex gap-2 overflow-x-auto no-scrollbar pb-px">
         <button 
+          type="button"
           onClick={() => setActiveTab('info')}
-          className={`px-2 py-4 border-b-2 font-semibold text-sm whitespace-nowrap transition-colors ${activeTab === 'info' ? 'border-[var(--color-primary)] text-[var(--color-primary)]' : 'border-transparent text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]'}`}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all ${
+            activeTab === 'info' 
+              ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/60' 
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+          }`}
         >
+          <User size={16} className={activeTab === 'info' ? 'text-emerald-600' : 'text-slate-400'} />
           Informations
         </button>
         <button 
+          type="button"
           onClick={() => setActiveTab('notes')}
-          className={`px-2 py-4 border-b-2 font-semibold text-sm whitespace-nowrap transition-colors ${activeTab === 'notes' ? 'border-[var(--color-primary)] text-[var(--color-primary)]' : 'border-transparent text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]'}`}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all ${
+            activeTab === 'notes' 
+              ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/60' 
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+          }`}
         >
-          Notes
+          <GraduationCap size={16} className={activeTab === 'notes' ? 'text-emerald-600' : 'text-slate-400'} />
+          Notes & Bulletins
         </button>
         <button 
+          type="button"
           onClick={() => setActiveTab('presences')}
-          className={`px-2 py-4 border-b-2 font-semibold text-sm whitespace-nowrap transition-colors ${activeTab === 'presences' ? 'border-[var(--color-primary)] text-[var(--color-primary)]' : 'border-transparent text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]'}`}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all ${
+            activeTab === 'presences' 
+              ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/60' 
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+          }`}
         >
-          Présences
+          <CalendarCheck size={16} className={activeTab === 'presences' ? 'text-emerald-600' : 'text-slate-400'} />
+          Présences & Appel
         </button>
         <button 
+          type="button"
           onClick={() => setActiveTab('paiements')}
-          className={`px-2 py-4 border-b-2 font-semibold text-sm whitespace-nowrap transition-colors ${activeTab === 'paiements' ? 'border-[var(--color-primary)] text-[var(--color-primary)]' : 'border-transparent text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]'}`}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all ${
+            activeTab === 'paiements' 
+              ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/60' 
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
+          }`}
         >
-          Paiements
+          <CreditCard size={16} className={activeTab === 'paiements' ? 'text-emerald-600' : 'text-slate-400'} />
+          Paiements & Échéances
         </button>
       </div>
 

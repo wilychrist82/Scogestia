@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { ChevronDown, User } from 'lucide-react'
 
 type Child = {
   id: string
@@ -24,28 +25,36 @@ export function ChildSelector({ childrenList, selectedId }: Props) {
     return null // Pas besoin de sélecteur si 0 ou 1 enfant
   }
 
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newId = e.target.value
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('child', newId)
+    params.set('student_id', newId)
+    router.push(`${pathname}?${params.toString()}`)
+  }
+
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-flex items-center">
+      <div className="absolute left-3 pointer-events-none text-emerald-600">
+        <User size={15} />
+      </div>
+
       <select 
-        className="appearance-none flex items-center gap-xs px-10 py-1 rounded-lg hover:bg-[var(--color-surface-container-low)] transition-colors active:scale-95 bg-[var(--color-surface-container)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] font-semibold text-sm cursor-pointer"
+        className="appearance-none pl-8 pr-8 py-1.5 rounded-xl transition-all active:scale-[0.98] bg-white border border-slate-200 text-slate-800 font-semibold text-xs cursor-pointer shadow-2xs hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
         value={selectedId}
-        onChange={(e) => {
-          const params = new URLSearchParams(searchParams.toString())
-          params.set('student_id', e.target.value)
-          router.push(`${pathname}?${params.toString()}`)
-        }}
+        onChange={handleChange}
+        aria-label="Sélectionner un enfant"
       >
         {childrenList.map(child => (
           <option key={child.id} value={child.id}>
-            Enfant : {child.first_name}
+            {child.first_name} {child.last_name}
           </option>
         ))}
       </select>
-      {/* Icon custom pour le dropdown par dessus l'apparence native */}
-      <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none text-xl">
-        arrow_drop_down
-      </span>
+
+      <div className="absolute right-2.5 pointer-events-none text-slate-400">
+        <ChevronDown size={14} />
+      </div>
     </div>
   )
 }
-

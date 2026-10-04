@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { LinkChildModal } from './LinkChildModal'
-import { UserPlus, Check } from 'lucide-react'
+import { UserPlus, Check, Smile, User } from 'lucide-react'
 
 export type ChildItem = {
   id: string
@@ -54,25 +54,28 @@ export function ChildSwitchBar({ childrenList, selectedChildId, title }: Props) 
             return (
               <button
                 key={child.id}
+                type="button"
                 onClick={() => handleSelectChild(child.id)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 ${
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 active:scale-95 ${
                   isSelected
-                    ? 'bg-[var(--color-primary)] text-white shadow-xs'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200/80'
+                    ? 'bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-500/30'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200/80'
                 }`}
               >
-                <span className="material-symbols-outlined text-[16px]">
-                  {isSelected ? 'face' : 'person'}
-                </span>
+                {isSelected ? (
+                  <Smile size={16} className="text-emerald-200 shrink-0" />
+                ) : (
+                  <User size={15} className="text-slate-400 shrink-0" />
+                )}
                 <span>{child.first_name}</span>
                 {className && (
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded font-normal ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-medium ${
+                    isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
                   }`}>
                     {className}
                   </span>
                 )}
-                {isSelected && <Check size={13} className="stroke-[3]" />}
+                {isSelected && <Check size={13} className="stroke-[3] text-emerald-200" />}
               </button>
             )
           })}
