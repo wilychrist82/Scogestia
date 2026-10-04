@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
 })
 
 export type BulletinData = {
-  level: 'primaire' | 'secondaire' | 'maternelle'
+  level: 'primaire' | 'secondaire' | 'maternelle' | 'college' | 'lycee'
   student: { first_name: string; last_name: string; matricule: string }
   cls: { name: string }
   schoolName: string
@@ -101,7 +101,7 @@ function renderSecondaryTable(data: BulletinData) {
     <View style={styles.table}>
       <View style={styles.rowHeader}>
         <Text style={styles.colSubj}>MATIÈRES</Text>
-        <Text style={styles.colScore}>NOTE CL.</Text>
+        <Text style={styles.colScore}>{data.level === 'lycee' ? 'DEVOIR' : 'NOTE CL.'}</Text>
         <Text style={styles.colScore}>COMPO.</Text>
         <Text style={styles.colMoy}>MOY. /20</Text>
         <Text style={styles.colCoef}>COEF</Text>
@@ -189,7 +189,7 @@ function SecondaryFooter({ data }: { data: BulletinData }) {
     <View>
       <View style={styles.statsBox}>
         <View style={styles.statItem}>
-          <Text style={styles.statLabel}>MOYENNE TRIMESTRIELLE</Text>
+          <Text style={styles.statLabel}>{data.level === 'lycee' ? 'MOYENNE SEMESTRIELLE' : 'MOYENNE TRIMESTRIELLE'}</Text>
           <Text style={styles.statValue}>{data.termAvg} <Text style={styles.statSub}>/ 20</Text></Text>
         </View>
         <View style={styles.statItem}>
@@ -269,12 +269,18 @@ export function BulletinPage({ data }: { data: BulletinData }) {
           <View style={styles.headerCol}>
             <Text style={styles.schoolName}>{data.schoolName}</Text>
             <Text style={styles.bulletinTitle}>
-              {data.level === 'primaire' || data.level === 'maternelle' ? 'LIVRET SCOLAIRE' : 'BULLETIN DE NOTES'}
+              {data.level === 'primaire' || data.level === 'maternelle' 
+                ? 'LIVRET SCOLAIRE' 
+                : data.level === 'lycee' 
+                  ? 'BULLETIN DE NOTES DU LYCÉE' 
+                  : data.level === 'college' 
+                    ? 'BULLETIN DE NOTES DU COLLÈGE' 
+                    : 'BULLETIN DE NOTES'}
             </Text>
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.titleText}>Année : {data.academicYear}</Text>
-            {data.level === 'secondaire' && (
+            {(data.level === 'secondaire' || data.level === 'college' || data.level === 'lycee') && (
               <Text style={styles.subtitleText}>{data.termOrMonth.replace(/_/g, ' ').toUpperCase()}</Text>
             )}
           </View>
@@ -295,8 +301,8 @@ export function BulletinPage({ data }: { data: BulletinData }) {
           </View>
         </View>
 
-        {data.level === 'secondaire' ? renderSecondaryTable(data) : renderPrimaryTable(data)}
-        {data.level === 'secondaire' ? <SecondaryFooter data={data} /> : <PrimaryFooter data={data} />}
+        {data.level === 'primaire' || data.level === 'maternelle' ? renderPrimaryTable(data) : renderSecondaryTable(data)}
+        {data.level === 'primaire' || data.level === 'maternelle' ? <PrimaryFooter data={data} /> : <SecondaryFooter data={data} />}
         
       </Page>
   )

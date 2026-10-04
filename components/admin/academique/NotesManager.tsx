@@ -127,16 +127,22 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
               <select 
                 value={selectedCycle} 
                 onChange={(e) => {
-                  setSelectedCycle(e.target.value)
+                  const val = e.target.value
+                  setSelectedCycle(val)
                   setSelectedClass('')
                   setSelectedSubject('')
+                  if (val === 'lycee') {
+                    setSelectedTerm('1er_semestre')
+                  } else if (val === 'college') {
+                    setSelectedTerm('1er_trimestre')
+                  }
                 }}
                 className="h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
               >
                 <option value="maternelle">Maternelle</option>
                 <option value="primaire">Primaire (Mensuel)</option>
                 <option value="college">Collège (Trimestriel)</option>
-                <option value="lycee">Lycée (Trimestriel)</option>
+                <option value="lycee">Lycée (Semestriel)</option>
               </select>
             </div>
             
@@ -164,9 +170,38 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
               </select>
             </div>
 
-            {isSecondaryCycle && (
+            {selectedCycle === 'college' && (
               <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
                 <label className="text-sm font-semibold text-[var(--color-on-surface)]">Trimestre</label>
+                <select 
+                  value={selectedTerm} 
+                  onChange={(e) => setSelectedTerm(e.target.value)}
+                  className="h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                >
+                  <option value="1er_trimestre">1er Trimestre</option>
+                  <option value="2e_trimestre">2e Trimestre</option>
+                  <option value="3e_trimestre">3e Trimestre</option>
+                </select>
+              </div>
+            )}
+
+            {selectedCycle === 'lycee' && (
+              <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Semestre</label>
+                <select 
+                  value={selectedTerm} 
+                  onChange={(e) => setSelectedTerm(e.target.value)}
+                  className="h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                >
+                  <option value="1er_semestre">1er Semestre</option>
+                  <option value="2e_semestre">2e Semestre</option>
+                </select>
+              </div>
+            )}
+
+            {selectedCycle === 'secondaire' && (
+              <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Période</label>
                 <select 
                   value={selectedTerm} 
                   onChange={(e) => setSelectedTerm(e.target.value)}
@@ -215,7 +250,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                       ) : (
                         <>
                           <th className="py-3 px-4 font-semibold text-center w-[120px]">
-                            Note Classe
+                            {selectedCycle === 'lycee' ? 'Devoir' : 'Note Classe'}
                             <div className="text-[10px] font-normal opacity-70">/ 20</div>
                           </th>
                           <th className="py-3 px-4 font-semibold text-center w-[120px]">

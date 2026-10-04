@@ -63,25 +63,9 @@ export function BulletinsManager({
     setStampText(schoolName.toUpperCase())
   }, [schoolName])
 
-  // Titre adapté pour le Lycée ou Collège
+  // Titre officiel de l'école (défini dans Paramètres, ex: Complexe Scolaire EPL LE ROI)
   const getDisplaySchoolTitle = () => {
-    let name = schoolName || 'ÉTABLISSEMENT SCOLAIRE';
-    if (selectedLevel === 'lycee') {
-      if (/collège/i.test(name)) {
-        return name.replace(/collège/gi, 'Lycée');
-      }
-      if (!/lycée/i.test(name)) {
-        return `LYCÉE ${name}`;
-      }
-    } else if (selectedLevel === 'college') {
-      if (/lycée/i.test(name)) {
-        return name.replace(/lycée/gi, 'Collège');
-      }
-      if (!/collège/i.test(name)) {
-        return `COLLÈGE ${name}`;
-      }
-    }
-    return name;
+    return schoolName || 'ÉTABLISSEMENT SCOLAIRE';
   };
 
   // Local state for interactive editing
@@ -765,13 +749,24 @@ export function BulletinsManager({
             ) : null}
             <h1 className="font-black text-xl uppercase tracking-wide leading-tight">{getDisplaySchoolTitle()}</h1>
             <div className="mt-1 px-3 py-0.5 border border-black inline-block rounded text-xs font-bold uppercase tracking-wider bg-gray-50">
-              {selectedLevel === 'lycee' ? 'BULLETIN DE NOTES DU LYCÉE' : selectedLevel === 'college' ? 'BULLETIN DE NOTES DU COLLÈGE' : 'BULLETIN DE NOTES'}
+              {selectedLevel === 'lycee' 
+                ? `BULLETIN DU ${selectedTerm === '2e_semestre' ? '2E SEMESTRE' : '1ER SEMESTRE'} - LYCÉE` 
+                : selectedLevel === 'college' 
+                  ? `BULLETIN DU ${selectedTerm === '3e_trimestre' ? '3E TRIMESTRE' : selectedTerm === '2e_trimestre' ? '2E TRIMESTRE' : '1ER TRIMESTRE'} - COLLÈGE` 
+                  : 'BULLETIN DE NOTES'}
             </div>
           </div>
 
           <div className="w-1/3 text-right">
             <p className="font-bold text-sm">Année Scolaire : 2026 - 2027</p>
-            <p className="font-semibold text-gray-700 text-xs mt-1 uppercase">{selectedTerm.replace('_', ' ')}</p>
+            <p className="font-semibold text-gray-700 text-xs mt-1 uppercase">
+              {selectedTerm === '1er_semestre' ? '1er Semestre' :
+               selectedTerm === '2e_semestre' ? '2e Semestre' :
+               selectedTerm === '1er_trimestre' ? '1er Trimestre' :
+               selectedTerm === '2e_trimestre' ? '2e Trimestre' :
+               selectedTerm === '3e_trimestre' ? '3e Trimestre' :
+               selectedTerm.replace('_', ' ')}
+            </p>
           </div>
         </div>
 
@@ -797,7 +792,7 @@ export function BulletinsManager({
             <thead>
               <tr className="bg-gray-100">
                 <th className="border border-black p-2 text-left">MATIÈRES</th>
-                <th className="border border-black p-2 text-center w-16">NOTE CL.</th>
+                <th className="border border-black p-2 text-center w-16">{selectedLevel === 'lycee' ? 'DEVOIR' : 'NOTE CL.'}</th>
                 <th className="border border-black p-2 text-center w-16">COMPO.</th>
                 <th className="border border-black p-2 text-center w-16 bg-gray-200">MOY. /20</th>
                 <th className="border border-black p-2 text-center w-12">COEF</th>
@@ -888,7 +883,22 @@ export function BulletinsManager({
         </div>
 
         {/* Statistics Block */}
-        {selectedTerm === '3eme_trimestre' ? (
+        {selectedTerm === '2e_semestre' ? (
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Moy. 1er Semestre</p>
+              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.t1} onChange={e => setSecStats({...secStats, t1: e.target.value})} />
+            </div>
+            <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Moy. 2ème Semestre</p>
+              <div className="text-center font-bold mt-1">{termAvg}</div>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
+              <p className="text-xs text-gray-600 font-semibold uppercase">Moyenne Annuelle</p>
+              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.annual_t3} onChange={e => setSecStats({...secStats, annual_t3: e.target.value})} />
+            </div>
+          </div>
+        ) : selectedTerm === '3eme_trimestre' || selectedTerm === '3e_trimestre' ? (
           <div className="grid grid-cols-4 gap-4 mb-8">
             <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
               <p className="text-xs text-gray-600 font-semibold uppercase">Moy. 1er Trim.</p>
@@ -918,8 +928,8 @@ export function BulletinsManager({
               <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.max} onChange={e => setSecStats({...secStats, max: e.target.value})} />
             </div>
             <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
-              <p className="text-xs text-gray-600 font-semibold uppercase">Moyenne Annuelle</p>
-              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.annual} onChange={e => setSecStats({...secStats, annual: e.target.value})} />
+              <p className="text-xs text-gray-600 font-semibold uppercase">Moyenne {selectedLevel === 'lycee' ? '1er Semestre' : 'Trimestrielle'}</p>
+              <div className="text-center font-bold mt-1">{termAvg}</div>
             </div>
           </div>
         )}
@@ -1003,9 +1013,15 @@ export function BulletinsManager({
               <select 
                 value={selectedLevel} 
                 onChange={(e) => {
-                  setSelectedLevel(e.target.value)
+                  const val = e.target.value
+                  setSelectedLevel(val)
                   setSelectedClass('')
                   setSelectedStudent('')
+                  if (val === 'lycee') {
+                    setSelectedTerm('1er_semestre')
+                  } else if (val === 'college') {
+                    setSelectedTerm('1er_trimestre')
+                  }
                 }}
                 className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
               >
@@ -1033,9 +1049,38 @@ export function BulletinsManager({
               </select>
             </div>
 
-            {(selectedLevel === 'college' || selectedLevel === 'lycee' || selectedLevel === 'secondaire') && (
+            {selectedLevel === 'college' && (
               <div className="flex-1 min-w-[150px] flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[var(--color-on-surface)]">Trimestre</label>
+                <select 
+                  value={selectedTerm} 
+                  onChange={(e) => setSelectedTerm(e.target.value)}
+                  className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                >
+                  <option value="1er_trimestre">1er Trimestre</option>
+                  <option value="2e_trimestre">2e Trimestre</option>
+                  <option value="3e_trimestre">3e Trimestre</option>
+                </select>
+              </div>
+            )}
+
+            {selectedLevel === 'lycee' && (
+              <div className="flex-1 min-w-[150px] flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Semestre</label>
+                <select 
+                  value={selectedTerm} 
+                  onChange={(e) => setSelectedTerm(e.target.value)}
+                  className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                >
+                  <option value="1er_semestre">1er Semestre</option>
+                  <option value="2e_semestre">2e Semestre</option>
+                </select>
+              </div>
+            )}
+
+            {selectedLevel === 'secondaire' && (
+              <div className="flex-1 min-w-[150px] flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-[var(--color-on-surface)]">Période</label>
                 <select 
                   value={selectedTerm} 
                   onChange={(e) => setSelectedTerm(e.target.value)}
