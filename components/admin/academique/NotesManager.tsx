@@ -30,17 +30,29 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<boolean>(false)
 
+  const isSecondaryCycle = selectedCycle === 'secondaire' || selectedCycle === 'college' || selectedCycle === 'lycee';
+
   const filteredClasses = sortClasses(classes.filter(c => {
-    if (!c.level) return false;
-    const l = c.level.toLowerCase();
-    const isPrimary = ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', 'maternelle', 's1', 's2'].some(k => l.includes(k));
-    const isSecondary = ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège', '2nde', '1ere', '1ère', 'tle', 'terminale', 'seconde', 'premiere', 'lycee', 'lycée'].some(k => l.includes(k));
+    const full = ((c.level || '') + ' ' + (c.name || '')).toLowerCase();
     
-    if (selectedCycle === 'primaire') return isPrimary;
-    if (selectedCycle === 'secondaire') return isSecondary;
+    if (selectedCycle === 'maternelle') {
+      return ['s1', 's2', 'section1', 'section2', 'maternelle', 'ps', 'ms', 'gs'].some(k => full.includes(k));
+    }
+    if (selectedCycle === 'primaire') {
+      return ['cp1', 'cp2', 'cp', 'ce1', 'ce2', 'ce', 'cm1', 'cm2', 'cm', 'ci', 'primaire'].some(k => full.includes(k));
+    }
+    if (selectedCycle === 'college') {
+      return ['6eme', '6ème', '5eme', '5ème', '4eme', '4ème', '3eme', '3ème', 'college', 'collège', '6e', '5e', '4e', '3e'].some(k => full.includes(k));
+    }
+    if (selectedCycle === 'lycee') {
+      return ['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => full.includes(k));
+    }
+    if (selectedCycle === 'secondaire') {
+      return ['6eme', '6ème', '5eme', '5ème', '4eme', '4ème', '3eme', '3ème', 'college', 'collège', '2nde', 'seconde', '1ere', '1ère', 'tle', 'terminale', 'lycee', 'lycée', 'secondaire'].some(k => full.includes(k));
+    }
     return false;
   }))
-  const filteredSubjects = subjects.filter(s => s.cycle === selectedCycle)
+  const filteredSubjects = subjects.filter(s => isSecondaryCycle ? s.cycle === 'secondaire' : (s.cycle === 'primaire' || s.cycle === 'maternelle'))
   const filteredStudents = selectedClass ? students.filter(s => s.class_id === selectedClass) : []
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -51,7 +63,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
     
     startTransition(async () => {
       let result;
-      if (selectedCycle === 'primaire') {
+      if (selectedCycle === 'primaire' || selectedCycle === 'maternelle') {
         result = await savePrimaryGrades(null, formData)
       } else {
         result = await saveSecondaryGrades(null, formData)
@@ -111,7 +123,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
           {/* Filters */}
           <div className="p-4 border-b border-[var(--color-outline-variant)] flex flex-wrap gap-4 bg-[var(--color-surface-bright)] items-end">
             <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
-              <label className="text-sm font-semibold text-[var(--color-on-surface)]">Cycle</label>
+              <label className="text-sm font-semibold text-[var(--color-on-surface)]">Niveau</label>
               <select 
                 value={selectedCycle} 
                 onChange={(e) => {
@@ -121,8 +133,10 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                 }}
                 className="h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
               >
+                <option value="maternelle">Maternelle</option>
                 <option value="primaire">Primaire (Mensuel)</option>
-                <option value="secondaire">Secondaire (Trimestriel)</option>
+                <option value="college">Collège (Trimestriel)</option>
+                <option value="lycee">Lycée (Trimestriel)</option>
               </select>
             </div>
             
@@ -150,7 +164,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
               </select>
             </div>
 
-            {selectedCycle === 'secondaire' && (
+            {isSecondaryCycle && (
               <div className="flex flex-col gap-1.5 flex-1 min-w-[150px]">
                 <label className="text-sm font-semibold text-[var(--color-on-surface)]">Trimestre</label>
                 <select 
@@ -182,7 +196,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
             <form onSubmit={handleSubmit} className="flex flex-col">
               <input type="hidden" name="classId" value={selectedClass} />
               <input type="hidden" name="subjectId" value={selectedSubject} />
-              {selectedCycle === 'secondaire' && <input type="hidden" name="term" value={selectedTerm} />}
+              {isSecondaryCycle && <input type="hidden" name="term" value={selectedTerm} />}
               
               <div className="overflow-x-auto min-h-[400px] custom-scrollbar">
                 <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -191,7 +205,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                       <th className="py-3 px-4 font-semibold sticky left-0 bg-[var(--color-surface-container-low)] z-10 border-r border-[var(--color-outline-variant)] shadow-[1px_0_0_var(--color-outline-variant)] min-w-[200px]">
                         Élève
                       </th>
-                      {selectedCycle === 'primaire' ? (
+                      {!isSecondaryCycle ? (
                         Array.from({ length: 9 }).map((_, i) => (
                           <th key={i} className="py-3 px-2 font-semibold text-center w-[80px]">
                             Mois {i + 1}
@@ -219,7 +233,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                           {student.last_name} {student.first_name}
                         </td>
                         
-                        {selectedCycle === 'primaire' ? (
+                        {!isSecondaryCycle ? (
                           Array.from({ length: 9 }).map((_, i) => {
                             const month = i + 1;
                             return (

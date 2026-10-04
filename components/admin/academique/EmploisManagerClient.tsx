@@ -6,6 +6,7 @@ import { StaticTimetable } from '@/components/ui/StaticTimetable'
 import { getTimetableSlots } from '@/app/actions/timetable'
 import type { TimetableSlot } from '@/app/actions/timetable'
 import { Calendar, ChevronDown } from 'lucide-react'
+import { sortClasses } from '@/lib/classes'
 
 type ClassItem = { id: string; name: string; level: string }
 
@@ -98,7 +99,7 @@ export function EmploisManagerClient({ classes, schoolId, readOnly }: Props) {
                   className="w-full h-11 px-3 pr-10 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] appearance-none"
                 >
                   <option value="">Sélectionner une classe...</option>
-                  {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {sortClasses(classes).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-on-surface-variant)] pointer-events-none" />
               </div>

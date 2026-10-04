@@ -23,10 +23,32 @@ type Props = {
   primaryRanks?: any[]
   primaryInfo?: any[]
   schoolName: string
+  schoolLogo?: string | null
+  schoolStamp?: string | null
+  schoolSignature?: string | null
+  schoolDirector?: string | null
+  schoolCity?: string | null
+  schoolPhone?: string | null
   schoolId: string
 }
 
-export function BulletinsManager({ classes, students, subjects, primaryGrades, secondaryGrades, primaryRanks, primaryInfo, schoolName, schoolId }: Props) {
+export function BulletinsManager({ 
+  classes, 
+  students, 
+  subjects, 
+  primaryGrades, 
+  secondaryGrades, 
+  primaryRanks, 
+  primaryInfo, 
+  schoolName, 
+  schoolLogo,
+  schoolStamp,
+  schoolSignature,
+  schoolDirector,
+  schoolCity,
+  schoolPhone,
+  schoolId 
+}: Props) {
   const [selectedLevel, setSelectedLevel] = useState<string>('')
   const [selectedClass, setSelectedClass] = useState<string>('')
   const [selectedTerm, setSelectedTerm] = useState<string>('1er_trimestre')
@@ -40,6 +62,27 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
   useEffect(() => {
     setStampText(schoolName.toUpperCase())
   }, [schoolName])
+
+  // Titre adapté pour le Lycée ou Collège
+  const getDisplaySchoolTitle = () => {
+    let name = schoolName || 'ÉTABLISSEMENT SCOLAIRE';
+    if (selectedLevel === 'lycee') {
+      if (/collège/i.test(name)) {
+        return name.replace(/collège/gi, 'Lycée');
+      }
+      if (!/lycée/i.test(name)) {
+        return `LYCÉE ${name}`;
+      }
+    } else if (selectedLevel === 'college') {
+      if (/lycée/i.test(name)) {
+        return name.replace(/lycée/gi, 'Collège');
+      }
+      if (!/collège/i.test(name)) {
+        return `COLLÈGE ${name}`;
+      }
+    }
+    return name;
+  };
 
   // Local state for interactive editing
   const [localPrimGrades, setLocalPrimGrades] = useState<Record<string, string>>({})
@@ -58,14 +101,23 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
 
   const availableClasses = sortClasses(classes.filter(c => {
     if (!selectedLevel) return false;
-    if (!c.level) return false;
-    const l = c.level.toLowerCase();
-    const isPrimary = ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', 'maternelle', 's1', 's2'].some(k => l.includes(k));
-    const isSecondary = ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège', '2nde', '1ere', '1ère', 'tle', 'terminale', 'seconde', 'premiere', 'lycee', 'lycée'].some(k => l.includes(k));
+    const full = ((c.level || '') + ' ' + (c.name || '')).toLowerCase();
     
-    if (selectedLevel === 'primaire') return isPrimary;
-    if (selectedLevel === 'secondaire') return isSecondary;
-    if (selectedLevel === 'maternelle') return ['s1', 's2', 'maternelle'].some(k => l.includes(k));
+    if (selectedLevel === 'maternelle') {
+      return ['s1', 's2', 'section1', 'section2', 'maternelle', 'ps', 'ms', 'gs'].some(k => full.includes(k));
+    }
+    if (selectedLevel === 'primaire') {
+      return ['cp1', 'cp2', 'cp', 'ce1', 'ce2', 'ce', 'cm1', 'cm2', 'cm', 'ci', 'primaire'].some(k => full.includes(k));
+    }
+    if (selectedLevel === 'college') {
+      return ['6eme', '6ème', '5eme', '5ème', '4eme', '4ème', '3eme', '3ème', 'college', 'collège', '6e', '5e', '4e', '3e'].some(k => full.includes(k));
+    }
+    if (selectedLevel === 'lycee') {
+      return ['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => full.includes(k));
+    }
+    if (selectedLevel === 'secondaire') {
+      return ['6eme', '6ème', '5eme', '5ème', '4eme', '4ème', '3eme', '3ème', 'college', 'collège', '2nde', 'seconde', '1ere', '1ère', 'tle', 'terminale', 'lycee', 'lycée', 'secondaire'].some(k => full.includes(k));
+    }
     return false;
   }))
   const availableStudents = selectedClass ? students.filter(s => s.class_id === selectedClass) : []
@@ -384,23 +436,36 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
   const renderStamp = () => {
     return (
       <div className="flex flex-col items-center mt-2">
-        <input 
-          type="text" 
-          value={stampText} 
-          onChange={e => setStampText(e.target.value)} 
-          placeholder="Texte du cachet (vide = cacher)"
-          className="print-input print:hidden text-center text-xs border-b border-gray-300 focus:border-blue-500 outline-none mb-2 text-blue-800 bg-transparent w-48"
-        />
-        {stampText && (
-          <div className="relative w-28 h-28 text-blue-800 flex flex-col items-center justify-center opacity-90" style={{ border: '4px double #1e40af', borderRadius: '50%' }}>
-            <span className="text-[10px] font-black uppercase tracking-widest mt-1">Direction</span>
-            <div className="w-12 h-px bg-blue-800 my-1"></div>
-            <span className="material-symbols-outlined text-xl">verified</span>
-            <div className="w-12 h-px bg-blue-800 my-1"></div>
-            <span className="text-[8px] font-bold uppercase text-center px-2 leading-tight">
-              {stampText}
-            </span>
+        {schoolStamp ? (
+          <div className="relative flex flex-col items-center justify-center">
+            <img 
+              src={schoolStamp} 
+              alt="Cachet de l'établissement" 
+              className="w-24 h-24 object-contain mix-blend-multiply opacity-95" 
+              crossOrigin="anonymous" 
+            />
           </div>
+        ) : (
+          <>
+            <input 
+              type="text" 
+              value={stampText} 
+              onChange={e => setStampText(e.target.value)} 
+              placeholder="Texte du cachet (vide = cacher)"
+              className="print-input print:hidden text-center text-xs border-b border-gray-300 focus:border-blue-500 outline-none mb-2 text-blue-800 bg-transparent w-48"
+            />
+            {stampText && (
+              <div className="relative w-24 h-24 text-blue-800 flex flex-col items-center justify-center opacity-90" style={{ border: '4px double #1e40af', borderRadius: '50%' }}>
+                <span className="text-[9px] font-black uppercase tracking-widest mt-1">Direction</span>
+                <div className="w-10 h-px bg-blue-800 my-0.5"></div>
+                <span className="material-symbols-outlined text-lg">verified</span>
+                <div className="w-10 h-px bg-blue-800 my-0.5"></div>
+                <span className="text-[7.5px] font-bold uppercase text-center px-1 leading-tight">
+                  {stampText}
+                </span>
+              </div>
+            )}
+          </>
         )}
       </div>
     )
@@ -423,17 +488,27 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
       <div className="bg-white p-8 print:p-4 rounded-xl shadow-sm border border-[var(--color-outline-variant)] print:border-none text-black relative bulletin-page" ref={printRef}>
         
         {/* Header */}
-        <div className="flex justify-between items-start border-b-2 border-black pb-6 print:pb-2 mb-6 print:mb-4">
-          <div className="w-1/3 text-center">
-            <h2 className="font-bold text-lg uppercase">RÉPUBLIQUE TOGOLAISE</h2>
-            <p className="text-sm italic">Travail - Liberté - Patrie</p>
+        <div className="flex justify-between items-center border-b-2 border-black pb-4 print:pb-2 mb-6 print:mb-4">
+          <div className="w-1/3 text-left">
+            <h2 className="font-bold text-sm uppercase">RÉPUBLIQUE TOGOLAISE</h2>
+            <p className="text-xs italic text-gray-600">Travail - Liberté - Patrie</p>
+            {schoolCity && <p className="text-xs text-gray-600 font-medium mt-1">Ville : {schoolCity}</p>}
+            {schoolPhone && <p className="text-xs text-gray-600 font-medium">Tél : {schoolPhone}</p>}
           </div>
-          <div className="w-1/3 text-center">
-            <h1 className="font-black text-2xl uppercase">{schoolName}</h1>
-            <p className="text-sm font-semibold">LIVRET SCOLAIRE</p>
+          <div className="w-1/3 text-center flex flex-col items-center">
+            {schoolLogo ? (
+              <img 
+                src={schoolLogo} 
+                alt="Logo Établissement" 
+                className="h-16 w-16 object-contain mb-1 rounded-full border border-gray-200" 
+                crossOrigin="anonymous" 
+              />
+            ) : null}
+            <h1 className="font-black text-xl uppercase tracking-wide">{schoolName}</h1>
+            <p className="text-xs font-bold text-gray-800 tracking-wider">LIVRET SCOLAIRE</p>
           </div>
           <div className="w-1/3 text-right">
-            <p className="font-bold">Année Scolaire : 2026 - 2027</p>
+            <p className="font-bold text-sm">Année Scolaire : 2026 - 2027</p>
           </div>
         </div>
 
@@ -586,11 +661,20 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
             {renderStamp()}
           </div>
           <div className="text-center flex flex-col items-center w-1/3">
-            <p className="font-bold underline mb-10">Le Directeur / La Directrice</p>
+            <p className="font-bold underline mb-2">Le Directeur / La Directrice</p>
+            {schoolSignature && (
+              <img 
+                src={schoolSignature} 
+                alt="Signature Direction" 
+                className="h-12 object-contain mix-blend-multiply my-1" 
+                crossOrigin="anonymous" 
+              />
+            )}
             <input 
               type="text" 
               placeholder="Saisir le nom..." 
-              className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-2 w-56 border-b border-transparent focus:border-gray-300"
+              defaultValue={schoolDirector || ''}
+              className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-56 border-b border-transparent focus:border-gray-300"
             />
             <div className="mt-4 flex flex-col items-center w-full">
               <span className="text-sm font-semibold mb-1">Décision du directeur :</span>
@@ -661,18 +745,33 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
       <div className="bg-white p-8 print:p-4 rounded-xl shadow-sm border border-[var(--color-outline-variant)] print:border-none text-black relative bulletin-page" ref={printRef}>
         
         {/* Header */}
-        <div className="flex justify-between items-start border-b-2 border-black pb-6 mb-6">
-          <div className="w-1/3 text-center">
-            <h2 className="font-bold text-lg uppercase">RÉPUBLIQUE TOGOLAISE</h2>
-            <p className="text-sm italic">Travail - Liberté - Patrie</p>
+        <div className="flex justify-between items-center border-b-2 border-black pb-4 mb-6">
+          <div className="w-1/3 text-left">
+            <h2 className="font-bold text-sm uppercase tracking-wide">RÉPUBLIQUE TOGOLAISE</h2>
+            <p className="text-xs italic text-gray-600">Travail - Liberté - Patrie</p>
+            <p className="text-[11px] text-gray-600 font-medium mt-1">Ministère des Enseignements Primaire, Secondaire et Technique</p>
+            {schoolCity && <p className="text-xs text-gray-600 font-medium">Ville : {schoolCity}</p>}
+            {schoolPhone && <p className="text-xs text-gray-600 font-medium">Tél : {schoolPhone}</p>}
           </div>
-          <div className="w-1/3 text-center">
-            <h1 className="font-black text-2xl uppercase">{schoolName}</h1>
-            <p className="text-sm font-semibold">BULLETIN DE NOTES</p>
+
+          <div className="w-1/3 text-center flex flex-col items-center">
+            {schoolLogo ? (
+              <img 
+                src={schoolLogo} 
+                alt="Logo Établissement" 
+                className="h-16 w-16 object-contain mb-1 rounded-full border border-gray-200" 
+                crossOrigin="anonymous" 
+              />
+            ) : null}
+            <h1 className="font-black text-xl uppercase tracking-wide leading-tight">{getDisplaySchoolTitle()}</h1>
+            <div className="mt-1 px-3 py-0.5 border border-black inline-block rounded text-xs font-bold uppercase tracking-wider bg-gray-50">
+              {selectedLevel === 'lycee' ? 'BULLETIN DE NOTES DU LYCÉE' : selectedLevel === 'college' ? 'BULLETIN DE NOTES DU COLLÈGE' : 'BULLETIN DE NOTES'}
+            </div>
           </div>
+
           <div className="w-1/3 text-right">
-            <p className="font-bold">Année Scolaire : 2026 - 2027</p>
-            <p className="font-semibold text-gray-700">{selectedTerm.replace('_', ' ').toUpperCase()}</p>
+            <p className="font-bold text-sm">Année Scolaire : 2026 - 2027</p>
+            <p className="font-semibold text-gray-700 text-xs mt-1 uppercase">{selectedTerm.replace('_', ' ')}</p>
           </div>
         </div>
 
@@ -856,11 +955,20 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
             {renderStamp()}
           </div>
           <div className="text-center w-1/3 flex flex-col items-center">
-            <p className="font-bold underline mb-10">Le Chef d'Établissement</p>
-             <input 
+            <p className="font-bold underline mb-2">Le Chef d'Établissement</p>
+            {schoolSignature && (
+              <img 
+                src={schoolSignature} 
+                alt="Signature Direction" 
+                className="h-12 object-contain mix-blend-multiply my-1" 
+                crossOrigin="anonymous" 
+              />
+            )}
+            <input 
               type="text" 
               placeholder="Saisir le nom..." 
-              className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-2 w-56 border-b border-transparent focus:border-gray-300 mb-4"
+              defaultValue={schoolDirector || ''}
+              className="print-input text-center font-bold text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-56 border-b border-transparent focus:border-gray-300 mb-4"
             />
             <div className="w-full text-left flex flex-col items-center">
               <p className="font-bold underline mb-2">Décision du chef d'établissement :</p>
@@ -904,7 +1012,8 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
                 <option value="">Sélectionner un niveau...</option>
                 <option value="maternelle">Maternelle</option>
                 <option value="primaire">Primaire</option>
-                <option value="secondaire">Secondaire</option>
+                <option value="college">Collège</option>
+                <option value="lycee">Lycée</option>
               </select>
             </div>
             
@@ -924,7 +1033,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
               </select>
             </div>
 
-            {selectedLevel === 'secondaire' && (
+            {(selectedLevel === 'college' || selectedLevel === 'lycee' || selectedLevel === 'secondaire') && (
               <div className="flex-1 min-w-[150px] flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[var(--color-on-surface)]">Trimestre</label>
                 <select 

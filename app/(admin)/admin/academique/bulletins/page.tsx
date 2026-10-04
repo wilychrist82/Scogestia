@@ -13,7 +13,7 @@ export default async function BulletinsPage() {
 
   const { data: roleData, error: roleError } = await supabase
     .from('user_school_roles')
-    .select('school_id, school:schools(name, logo_url, city, phone)')
+    .select('school_id, school:schools(name, logo_url, city, phone, stamp_url, signature_url, director_name)')
     .eq('user_id', user.id)
     .limit(1).maybeSingle()
 
@@ -22,7 +22,7 @@ export default async function BulletinsPage() {
   }
 
   const schoolId = roleData.school_id
-  const schoolDetails = roleData.school
+  const schoolDetails = roleData.school as any
 
   const { data: classes } = await supabase.from('classes').select('id, name, level').eq('school_id', schoolId).order('name')
   const { data: students } = await supabase.from('students').select('id, matricule, last_name, first_name, class_id').eq('school_id', schoolId).order('last_name')
@@ -91,7 +91,13 @@ export default async function BulletinsPage() {
       secondaryGrades={secondaryGrades || []}
       primaryRanks={primaryRanks}
       primaryInfo={primaryInfo}
-      schoolName={(schoolDetails as any)?.name || 'École'}
+      schoolName={schoolDetails?.name || 'École'}
+      schoolLogo={schoolDetails?.logo_url || null}
+      schoolStamp={schoolDetails?.stamp_url || null}
+      schoolSignature={schoolDetails?.signature_url || null}
+      schoolDirector={schoolDetails?.director_name || null}
+      schoolCity={schoolDetails?.city || null}
+      schoolPhone={schoolDetails?.phone || null}
       schoolId={schoolId}
     />
   )
