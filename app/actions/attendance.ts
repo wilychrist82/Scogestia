@@ -22,14 +22,26 @@ export async function saveClassAttendance(
     if (!user) return { error: 'Non authentifié' }
 
     // 2. Vérification: L'enseignant a-t-il accès à cette école ?
-    const { data: roleData } = await supabase
+    const { data: roleRows } = await supabase
       .from('user_school_roles')
       .select('school_id, role')
       .eq('user_id', user.id)
       .in('role', ['admin', 'enseignant'])
-      .single()
+      .limit(1)
 
+    const roleData = roleRows?.[0]
     if (!roleData) return { error: 'Non autorisé' }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: 'Date invalide' }
+
+    // La classe doit appartenir à l'école de l'utilisateur
+    const { data: cls } = await supabase
+      .from('classes')
+      .select('id')
+      .eq('id', classId)
+      .eq('school_id', roleData.school_id)
+      .maybeSingle()
+    if (!cls) return { error: 'Classe introuvable' }
     
     // (Optionnel) on pourrait re-vérifier si teacher_class_subjects inclut classId pour cet enseignant
     

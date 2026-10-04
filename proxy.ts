@@ -38,9 +38,21 @@ export async function proxy(request: NextRequest) {
                       pathname.startsWith('/connexion') || 
                       pathname.startsWith('/inscription-ecole') || 
                       pathname.startsWith('/activer-parent') ||
+                      pathname.startsWith('/activer-personnel') ||
                       pathname.startsWith('/mot-de-passe-oublie') ||
                       pathname.startsWith('/nouveau-mot-de-passe') ||
-                      pathname.startsWith('/api/auth');
+                      pathname.startsWith('/confidentialite') ||
+                      pathname.startsWith('/conditions-utilisation') ||
+                      pathname.startsWith('/mentions-legales') ||
+                      pathname.startsWith('/api/auth') ||
+                      // Endpoints machine-à-machine : authentifiés par leur propre mécanisme (signature / secret)
+                      pathname.startsWith('/api/webhooks') ||
+                      pathname.startsWith('/api/cron');
+
+  // Les webhooks et le cron ne doivent JAMAIS être redirigés, même si une session existe
+  if (pathname.startsWith('/api/webhooks') || pathname.startsWith('/api/cron')) {
+    return supabaseResponse
+  }
 
   if (!user && isAuthRoute) {
     return supabaseResponse
@@ -145,6 +157,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3|wav|ico)$).*)',
   ],
 }

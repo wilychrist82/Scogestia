@@ -20,13 +20,6 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
   
   const [selectedClassId, setSelectedClassId] = useState<string>('')
 
-  useEffect(() => {
-    if (isOpen && teacherId) {
-      loadData()
-      setSelectedClassId('')
-    }
-  }, [isOpen, teacherId])
-
   const loadData = async () => {
     setIsLoading(true)
     setError(null)
@@ -44,6 +37,14 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (isOpen && teacherId) {
+      loadData()
+      setSelectedClassId('')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, teacherId])
 
   const handleAssign = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()

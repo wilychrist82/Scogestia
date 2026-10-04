@@ -216,12 +216,13 @@ export async function linkChildWithCode(code: string): Promise<{ error?: string,
   const adminClient = createAdminClient()
 
   // 1. Trouver l'invitation valide (avec adminClient et repli supabase)
-  let { data: inv, error: invError } = await adminClient
+  const { data: firstInv, error: invError } = await adminClient
     .from('parent_invitation_codes')
     .select('id, school_id, student_id, expires_at, used_at, code')
     .eq('code', cleanCode)
     .maybeSingle()
 
+  let inv = firstInv
   if (!inv) {
     const { data: fallbackInv } = await supabase
       .from('parent_invitation_codes')

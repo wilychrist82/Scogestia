@@ -22,17 +22,27 @@ export async function saveGrade(payload: GradeSavePayload): Promise<{ error?: st
     if (!user) return { error: 'Non authentifié' }
 
     // 2. Vérification du rôle et récupération de l'école
-    const { data: roleData } = await supabase
+    const { data: roleRows } = await supabase
       .from('user_school_roles')
       .select('school_id, role')
       .eq('user_id', user.id)
       .in('role', ['admin', 'enseignant'])
-      .single()
+      .limit(1)
 
+    const roleData = roleRows?.[0]
     if (!roleData) return { error: 'Non autorisé' }
 
+    // La classe doit appartenir à l'école de l'utilisateur
+    const { data: cls } = await supabase
+      .from('classes')
+      .select('id')
+      .eq('id', payload.class_id)
+      .eq('school_id', roleData.school_id)
+      .maybeSingle()
+    if (!cls) return { error: 'Classe introuvable' }
+
     // Validation basique
-    if (payload.score !== null && (payload.score < 0 || payload.score > 20)) {
+    if (payload.score !== null && (typeof payload.score !== 'number' || Number.isNaN(payload.score) || payload.score < 0 || payload.score > 20)) {
       return { error: 'La note doit être comprise entre 0 et 20' }
     }
 

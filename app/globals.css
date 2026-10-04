@@ -74,16 +74,16 @@
   --color-chart-purple: #8B5CF6;
   --color-chart-light-gray: #E5E7EB;
 
-  --font-sans: "Work Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-body-lg: "Public Sans";
-  --font-body-md: "Public Sans";
-  --font-headline-sm: "Work Sans";
-  --font-headline-lg: "Work Sans";
-  --font-display-lg: "Work Sans";
-  --font-headline-lg-mobile: "Work Sans";
-  --font-label-md: "Public Sans";
-  --font-headline-md: "Work Sans";
-  --font-label-sm: "Public Sans";
+  --font-sans: var(--font-work-sans), "Work Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-body-lg: var(--font-public-sans), "Public Sans", sans-serif;
+  --font-body-md: var(--font-public-sans), "Public Sans", sans-serif;
+  --font-headline-sm: var(--font-work-sans), "Work Sans", sans-serif;
+  --font-headline-lg: var(--font-work-sans), "Work Sans", sans-serif;
+  --font-display-lg: var(--font-work-sans), "Work Sans", sans-serif;
+  --font-headline-lg-mobile: var(--font-work-sans), "Work Sans", sans-serif;
+  --font-label-md: var(--font-public-sans), "Public Sans", sans-serif;
+  --font-headline-md: var(--font-work-sans), "Work Sans", sans-serif;
+  --font-label-sm: var(--font-public-sans), "Public Sans", sans-serif;
 
   --text-body-lg: 18px;
   --text-body-lg--line-height: 28px;

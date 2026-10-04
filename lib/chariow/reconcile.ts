@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { getChariowSaleStatus, mapChariowStatus } from './api'
 
-export async function reconcileChariowPayment(providerSaleId: string) {
-  const supabase = await createClient()
+export async function reconcileChariowPayment(providerSaleId: string, client?: SupabaseClient) {
+  const supabase = client ?? await createClient()
 
   // 1. Lire le paiement dans la base de données
   const { data: payment, error: paymentError } = await supabase

@@ -69,8 +69,8 @@ export default async function AdminDashboard() {
     .eq('school_id', schoolId)
   const totalAttendu = schedulesData?.reduce((acc, d) => acc + Number(d.amount_due || 0), 0) || 0
 
-  let totalEncaisse = allPayments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0
-  let recouvRate = totalAttendu > 0 ? Math.round((totalEncaisse / totalAttendu) * 100) : 0
+  const totalEncaisse = allPayments?.reduce((acc, p) => acc + (p.amount || 0), 0) || 0
+  const recouvRate = totalAttendu > 0 ? Math.round((totalEncaisse / totalAttendu) * 100) : 0
 
   // Grouper les paiements et échéances par mois
   const monthLabels = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.']

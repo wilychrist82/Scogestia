@@ -129,7 +129,7 @@ export async function sendManualReminder(dueId: string): Promise<{ error?: strin
   if (dueError || !due) return { error: 'Échéance introuvable ou non autorisée' }
   if (due.status === 'paye') return { error: 'Cette échéance est déjà payée' }
 
-  // @ts-ignore - Supabase type casting pour les relations complexes
+  // @ts-expect-error - Supabase type casting pour les relations complexes
   const parentPhone = due.student?.parent_links?.[0]?.parent?.phone
   if (!parentPhone) return { error: 'Aucun numéro de téléphone trouvé pour le parent' }
 

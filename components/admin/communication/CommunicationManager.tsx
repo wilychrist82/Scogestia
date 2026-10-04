@@ -309,14 +309,14 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
                                   const fileParts = parts[1].split('|||');
                                   fileUrl = fileParts[0];
                                   fileType = fileParts[1];
-                                  let originalName = fileParts[2];
+                                  const originalName = fileParts[2];
                                   
                                   if (originalName) {
                                     fileName = originalName;
                                   } else {
                                     try {
                                       const path = new URL(fileUrl).pathname;
-                                      let extractedName = decodeURIComponent(path.split('/').pop() || '');
+                                      const extractedName = decodeURIComponent(path.split('/').pop() || '');
                                       if (extractedName) fileName = extractedName.replace(/_\d+\./, '.');
                                     } catch (e) {}
                                   }

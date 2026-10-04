@@ -221,7 +221,7 @@ export function PresencesManager({ classes, students }: Props) {
     if (periodStart && periodEnd) {
       const start = new Date(periodStart)
       const end = new Date(periodEnd)
-      let current = new Date(start)
+      const current = new Date(start)
 
       while (current <= end) {
         const dayOfWeek = current.getDay() // 0 = Dimanche, 3 = Mercredi

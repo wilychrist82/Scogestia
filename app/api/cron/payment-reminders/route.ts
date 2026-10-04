@@ -7,28 +7,29 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   try {
-    // Basic authorization for the cron job (Optional but recommended, e.g. checking a secret token)
-    // For manual trigger from the UI, we might accept GET or POST without strict cron token,
-    // but in production, we should secure it.
+    // Sécurité : le cron exige CRON_SECRET (header Bearer, format Vercel Cron, ou ?token=)
     const url = new URL(request.url)
-    const cronSecret = url.searchParams.get('token')
-    
-    // Si on veut sécuriser la route cron, on peut vérifier un token
-    if (process.env.CRON_SECRET && cronSecret !== process.env.CRON_SECRET) {
-      // Allow if the request comes from an authenticated admin via UI?
-      // Since it's a GET, it's easier to just call it.
-      // We will skip strict auth for now to allow manual triggering easily, 
-      // but in a real app you'd check Supabase Auth or CRON_SECRET.
+    const provided = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? url.searchParams.get('token')
+
+    if (!process.env.CRON_SECRET || provided !== process.env.CRON_SECRET) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!supabaseUrl || !supabaseKey) {
       return NextResponse.json({ error: 'Configuration Supabase manquante' }, { status: 500 })
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // Relances déjà envoyées (dédoublonnage côté serveur)
+    const { data: existing } = await supabase.from('payment_reminders').select('due_id, type')
+    const alreadySent = (type: string) =>
+      new Set((existing ?? []).filter((r: any) => r.type === type).map((r: any) => r.due_id))
+    const sentJ3 = alreadySent('j-3')
+    const sentOver = alreadySent('overdue')
 
     const today = new Date()
     const jPlus3 = new Date(today)
@@ -51,14 +52,13 @@ export async function GET(request: Request) {
       `)
       .eq('status', 'en_attente')
       .eq('due_date', jPlus3Str)
-      // Ne pas relancer si on l'a déjà fait
-      .not('id', 'in', `(select due_id from payment_reminders where type = 'j-3')`)
 
     if (approachingError) console.error("Erreur récupération J-3:", approachingError)
 
     const sentApproaching = []
     if (approachingDues && approachingDues.length > 0) {
       for (const due of approachingDues) {
+        if (sentJ3.has(due.id)) continue
         const parentPhone = (due.student as any)?.parent_links?.[0]?.parent?.phone
         
         if (parentPhone) {
@@ -91,13 +91,13 @@ export async function GET(request: Request) {
         )
       `)
       .eq('status', 'en_retard')
-      .not('id', 'in', `(select due_id from payment_reminders where type = 'overdue')`)
 
     if (overdueError) console.error("Erreur récupération overdue:", overdueError)
 
     const sentOverdue = []
     if (overdueDues && overdueDues.length > 0) {
       for (const due of overdueDues) {
+        if (sentOver.has(due.id)) continue
         const parentPhone = (due.student as any)?.parent_links?.[0]?.parent?.phone
         
         if (parentPhone) {

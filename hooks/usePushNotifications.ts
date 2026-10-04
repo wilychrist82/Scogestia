@@ -10,12 +10,6 @@ export const usePushNotifications = () => {
   const supabase = createClient();
   const router = useRouter();
 
-  useEffect(() => {
-    if (Capacitor.getPlatform() !== 'web') {
-      registerPushNotifications();
-    }
-  }, []);
-
   const registerPushNotifications = async () => {
     try {
       // Demander la permission
@@ -123,6 +117,15 @@ export const usePushNotifications = () => {
       console.error('Erreur lors de la configuration des notifications:', error);
     }
   };
+
+  useEffect(() => {
+    if (Capacitor.getPlatform() === 'web') return;
+    registerPushNotifications();
+    return () => {
+      PushNotifications.removeAllListeners().catch(() => {});
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return { fcmToken };
 };

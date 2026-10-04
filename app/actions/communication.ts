@@ -217,7 +217,7 @@ export async function sendCommunication(formData: FormData) {
         .maybeSingle()
 
       const senderName = senderRole?.full_name || 'Utilisateur'
-      let roleLabel = senderRole?.role === 'parent'
+      const roleLabel = senderRole?.role === 'parent'
         ? (studentName ? `Parent de ${studentName}` : 'Parent')
         : senderRole?.role === 'enseignant'
           ? 'Enseignant'
