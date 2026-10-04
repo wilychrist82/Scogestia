@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { EcheancesManager } from '@/components/admin/finance/EcheancesManager'
+import { sortClasses } from '@/lib/classes'
 
 export const dynamic = 'force-dynamic'
 
@@ -93,7 +94,7 @@ export default async function EcheancesPage() {
   return (
     <EcheancesManager 
       schedules={formattedSchedules as any}
-      classes={classes as any || []}
+      classes={sortClasses(classes as any || [])}
       students={students as any || []}
       basePath="/admin/finance"
     />

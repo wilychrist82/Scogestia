@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service'
 import { revalidatePath } from 'next/cache'
+import { sortClasses } from '@/lib/classes'
 
 export type ActionState = {
   error?: string;
@@ -344,7 +345,7 @@ export async function getSchoolClassesAndSubjects() {
     ]);
 
     return {
-      classes: classesRes.data || [],
+      classes: sortClasses(classesRes.data || []),
       subjects: subjectsRes.data || []
     };
   } catch (err: any) {

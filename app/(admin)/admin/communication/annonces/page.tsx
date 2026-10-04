@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AnnouncementsManager } from '@/components/admin/communication/AnnouncementsManager'
+import { sortClasses } from '@/lib/classes'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,7 +38,7 @@ export default async function AnnoncesPage() {
   return (
     <AnnouncementsManager
       announcements={announcements || []}
-      classes={classes || []}
+      classes={sortClasses(classes || [])}
     />
   )
 }

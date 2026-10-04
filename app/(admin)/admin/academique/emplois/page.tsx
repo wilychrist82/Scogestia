@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { EmploisManagerClient } from '@/components/admin/academique/EmploisManagerClient'
+import { sortClasses } from '@/lib/classes'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +32,7 @@ export default async function EmploisDuTempsPage() {
 
   return (
     <EmploisManagerClient
-      classes={classes || []}
+      classes={sortClasses(classes || [])}
       schoolId={schoolId}
       readOnly={isReadOnly}
     />

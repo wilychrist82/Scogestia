@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { BulletinsManager } from '@/components/admin/academique/BulletinsManager'
+import { sortClasses } from '@/lib/classes'
 
 export const dynamic = 'force-dynamic'
 
@@ -83,7 +84,7 @@ export default async function BulletinsPage() {
 
   return (
     <BulletinsManager 
-      classes={classes || []} 
+      classes={sortClasses(classes || [])} 
       students={students || []} 
       subjects={subjects || []}
       primaryGrades={primaryGrades || []}

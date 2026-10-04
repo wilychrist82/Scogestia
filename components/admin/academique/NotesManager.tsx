@@ -3,6 +3,7 @@
 import { useState, useTransition, FormEvent } from 'react'
 import { savePrimaryGrades, saveSecondaryGrades } from '@/app/actions/academique'
 import Link from 'next/link'
+import { sortClasses } from '@/lib/classes'
 
 type ClassItem = { id: string; name: string; level?: string }
 type SubjectItem = { id: string; name: string; cycle: string }
@@ -29,7 +30,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<boolean>(false)
 
-  const filteredClasses = classes.filter(c => {
+  const filteredClasses = sortClasses(classes.filter(c => {
     if (!c.level) return false;
     const l = c.level.toLowerCase();
     const isPrimary = ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', 'maternelle', 's1', 's2'].some(k => l.includes(k));
@@ -38,7 +39,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
     if (selectedCycle === 'primaire') return isPrimary;
     if (selectedCycle === 'secondaire') return isSecondary;
     return false;
-  })
+  }))
   const filteredSubjects = subjects.filter(s => s.cycle === selectedCycle)
   const filteredStudents = selectedClass ? students.filter(s => s.class_id === selectedClass) : []
 

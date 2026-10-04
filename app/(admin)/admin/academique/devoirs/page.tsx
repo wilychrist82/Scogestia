@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { DevoirsManager } from '@/components/admin/academique/DevoirsManager'
+import { sortClasses } from '@/lib/classes'
 
 export const dynamic = 'force-dynamic'
 
@@ -92,7 +93,7 @@ export default async function DevoirsPage() {
   return (
     <DevoirsManager 
       homeworks={(homeworksFinal as any) || []} 
-      classes={classes || []} 
+      classes={sortClasses(classes || [])} 
       subjects={subjects || []}
       students={students || []}
     />

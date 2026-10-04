@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { PresencesManager } from '@/components/admin/academique/PresencesManager'
+import { sortClasses } from '@/lib/classes'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,7 +38,7 @@ export default async function PresencesPage() {
     
   return (
     <PresencesManager 
-      classes={classes || []} 
+      classes={sortClasses(classes || [])} 
       students={students || []} 
     />
   )

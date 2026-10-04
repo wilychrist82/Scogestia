@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { RapportsManager } from '@/components/admin/rapports/RapportsManager'
+import { sortClasses } from '@/lib/classes'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,10 +24,12 @@ export default async function RapportsPage() {
   const schoolId = roleData.school_id
 
   // 1. Classes & Effectifs
-  const { data: classes } = await supabase
+  const { data: classesRaw } = await supabase
     .from('classes')
-    .select('id, name')
+    .select('id, name, level')
     .eq('school_id', schoolId)
+
+  const classes = sortClasses(classesRaw || [])
 
   const { count: totalStudents } = await supabase
     .from('students')

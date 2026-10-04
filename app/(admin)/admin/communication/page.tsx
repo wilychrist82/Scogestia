@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { CommunicationManager } from '@/components/admin/communication/CommunicationManager'
 import { Suspense } from 'react'
+import { sortClasses } from '@/lib/classes'
 
 export const dynamic = 'force-dynamic'
 
@@ -65,7 +66,7 @@ export default async function CommunicationPage() {
     <Suspense fallback={<div className="p-8">Chargement...</div>}>
       <CommunicationManager 
         currentUserId={user.id}
-        classes={classes || []} 
+        classes={sortClasses(classes || [])} 
         students={students as { id: string; first_name: string; last_name: string; classes: { name: string } | null }[]}
         teachers={teachers}
         recentCommunications={communications || []}

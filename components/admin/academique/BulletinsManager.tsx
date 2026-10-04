@@ -5,6 +5,7 @@ import { saveBulletinPrimaryGrades, saveBulletinSecondaryGrades, publishBulletin
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 import { createClient } from '@/lib/supabase/client'
+import { sortClasses } from '@/lib/classes'
 
 type ClassItem = { id: string; name: string; level?: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string }
@@ -55,7 +56,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
 
   const printRef = useRef<HTMLDivElement>(null)
 
-  const availableClasses = classes.filter(c => {
+  const availableClasses = sortClasses(classes.filter(c => {
     if (!selectedLevel) return false;
     if (!c.level) return false;
     const l = c.level.toLowerCase();
@@ -66,7 +67,7 @@ export function BulletinsManager({ classes, students, subjects, primaryGrades, s
     if (selectedLevel === 'secondaire') return isSecondary;
     if (selectedLevel === 'maternelle') return ['s1', 's2', 'maternelle'].some(k => l.includes(k));
     return false;
-  })
+  }))
   const availableStudents = selectedClass ? students.filter(s => s.class_id === selectedClass) : []
   const student = students.find(s => s.id === selectedStudent)
   const cls = classes.find(c => c.id === selectedClass)

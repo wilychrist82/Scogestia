@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { NotesManager } from '@/components/admin/academique/NotesManager'
+import { sortClasses } from '@/lib/classes'
 
 export const dynamic = 'force-dynamic'
 
@@ -62,7 +63,7 @@ export default async function NotesPage() {
 
   return (
     <NotesManager 
-      classes={classes || []} 
+      classes={sortClasses(classes || [])} 
       subjects={subjects || []} 
       students={students || []} 
       primaryGrades={primaryGrades || []}

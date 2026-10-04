@@ -1,6 +1,7 @@
 import { ClassesManager } from '@/components/admin/ClassesManager'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { sortClasses } from '@/lib/classes'
 
 export const dynamic = 'force-dynamic' // Ensure fresh data
 
@@ -54,6 +55,6 @@ export default async function ClassesPage() {
   }))
 
   return (
-    <ClassesManager classes={formattedClasses} />
+    <ClassesManager classes={sortClasses(formattedClasses)} />
   )
 }

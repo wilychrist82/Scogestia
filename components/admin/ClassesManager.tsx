@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClass, updateClass, deleteClass } from '@/app/actions/classes'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Presentation } from 'lucide-react'
+import { sortClasses } from '@/lib/classes'
 
 export type ClassItem = {
   id: string
@@ -33,15 +34,16 @@ export function ClassesManager({ classes }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  const filteredClasses = classes.filter(cls => {
+  const filteredClasses = sortClasses(classes.filter(cls => {
     if (levelFilter === 'Toutes') return true;
     const l = (cls.level || '').toLowerCase();
-    if (levelFilter === 'Maternelle') return ['s1', 's2', 'section1', 'section2', 'maternelle'].some(k => l.includes(k));
-    if (levelFilter === 'Primaire') return ['cp1', 'cp2', 'cp', 'ce1', 'ce2', 'ce', 'cm1', 'cm2', 'cm', 'ci', 'primaire'].some(k => l.includes(k));
-    if (levelFilter === 'Collège') return ['6eme', '6ème', '5eme', '5ème', '4eme', '4ème', '3eme', '3ème', 'secondaire', 'college', 'collège'].some(k => l.includes(k));
-    if (levelFilter === 'Lycée') return ['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => l.includes(k));
+    const n = (cls.name || '').toLowerCase();
+    if (levelFilter === 'Maternelle') return ['s1', 's2', 'section1', 'section2', 'maternelle', 'ps', 'ms', 'gs'].some(k => l.includes(k) || n.includes(k));
+    if (levelFilter === 'Primaire') return ['cp1', 'cp2', 'cp', 'ce1', 'ce2', 'ce', 'cm1', 'cm2', 'cm', 'ci', 'primaire'].some(k => l.includes(k) || n.includes(k));
+    if (levelFilter === 'Collège') return ['6eme', '6ème', '5eme', '5ème', '4eme', '4ème', '3eme', '3ème', 'secondaire', 'college', 'collège', '6e', '5e', '4e', '3e'].some(k => l.includes(k) || n.includes(k));
+    if (levelFilter === 'Lycée') return ['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => l.includes(k) || n.includes(k));
     return true;
-  })
+  }))
 
   const openAddModal = () => {
     setClassToEdit(null)

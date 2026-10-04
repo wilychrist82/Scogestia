@@ -2,6 +2,7 @@ import { StudentList } from '@/components/admin/StudentList'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getSchoolSubscriptionStatus } from '@/lib/subscription'
+import { sortClasses } from '@/lib/classes'
 
 export const dynamic = 'force-dynamic'
 
@@ -116,7 +117,7 @@ export default async function StudentsPage({
   return (
     <StudentList 
       students={(students as any) || []} 
-      classes={classes || []}
+      classes={sortClasses(classes || [])}
       totalCount={count || 0}
       currentPage={page}
       itemsPerPage={itemsPerPage}

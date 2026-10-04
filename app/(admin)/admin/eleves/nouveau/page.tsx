@@ -1,6 +1,7 @@
 import { StudentForm } from '@/components/admin/StudentForm'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { sortClasses } from '@/lib/classes'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +29,6 @@ export default async function NewStudentPage() {
     .order('name')
 
   return (
-    <StudentForm classes={classes || []} />
+    <StudentForm classes={sortClasses(classes || [])} />
   )
 }

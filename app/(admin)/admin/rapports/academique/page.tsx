@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AcademiqueRapportsManager } from '@/components/admin/rapports/AcademiqueRapportsManager'
+import { sortClasses } from '@/lib/classes'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,11 +24,12 @@ export default async function AcademiqueRapportsPage() {
   const schoolId = roleData.school_id
 
   // Récupérer les classes
-  const { data: classes } = await supabase
+  const { data: classesRaw } = await supabase
     .from('classes')
-    .select('id, name')
+    .select('id, name, level')
     .eq('school_id', schoolId)
-    .order('name')
+
+  const classes = sortClasses(classesRaw || [])
 
   // Récupérer les moyennes (simulées via les notes si pas de vue pré-calculée)
   // Pour un SaaS réel, on a souvent une table term_summaries. 

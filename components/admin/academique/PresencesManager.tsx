@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from 'react'
 import { fetchMonthlyAttendance, saveMonthlyAttendanceGrid } from '@/app/actions/academique'
 import Link from 'next/link'
+import { sortClasses } from '@/lib/classes'
 
 type ClassItem = { id: string; name: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string; gender: string; status: string }
@@ -298,7 +299,7 @@ export function PresencesManager({ classes, students }: Props) {
                 className="w-full h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] text-[var(--color-on-surface)]"
               >
                 <option value="">Sélectionner une classe...</option>
-                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {sortClasses(classes).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
