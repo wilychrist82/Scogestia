@@ -24,12 +24,55 @@ type ClassItem = {
 type Props = {
   announcements: Announcement[]
   classes: ClassItem[]
+  schoolLogo?: string | null
+  schoolName?: string
 }
 
-export function AnnouncementsManager({ announcements: initialAnnouncements, classes }: Props) {
+function AnnouncementLogo({
+  logoUrl,
+  schoolName,
+  isPublished,
+}: {
+  logoUrl?: string | null
+  schoolName?: string
+  isPublished: boolean
+}) {
+  const [hasError, setHasError] = useState(false)
+
+  if (logoUrl && !hasError) {
+    return (
+      <div className="w-12 h-12 rounded-xl border border-[var(--color-outline-variant)] bg-white p-1 flex items-center justify-center shrink-0 shadow-xs overflow-hidden">
+        <img
+          src={logoUrl}
+          alt={schoolName || 'Logo établissement'}
+          className="w-full h-full object-contain"
+          onError={() => setHasError(true)}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-xs border ${
+        isPublished
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          : 'bg-amber-50 text-amber-700 border-amber-200'
+      }`}
+      title={isPublished ? 'Annonce publiée' : 'Brouillon'}
+    >
+      <span className="material-symbols-outlined text-[24px]">
+        {isPublished ? 'campaign' : 'visibility_off'}
+      </span>
+    </div>
+  )
+}
+
+export function AnnouncementsManager({ announcements: initialAnnouncements, classes, schoolLogo, schoolName }: Props) {
   const [announcements, setAnnouncements] = useState(initialAnnouncements)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [selectedViewAnnouncement, setSelectedViewAnnouncement] = useState<Announcement | null>(null)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -288,37 +331,65 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
               >
                 <div className="p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-4 min-w-0">
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                        a.is_published ? 'bg-[var(--color-primary-container)] text-[var(--color-primary)]' : 'bg-orange-50 text-orange-500'
-                      }`}>
-                        <span className="material-symbols-outlined">{a.is_published ? 'campaign' : 'visibility_off'}</span>
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-[var(--color-on-surface)] text-base leading-snug">{a.title}</h3>
-                        <p className="text-sm text-[var(--color-on-surface-variant)] mt-1.5 line-clamp-2 whitespace-pre-line">{a.content}</p>
+                    <div className="flex items-start gap-4 min-w-0 flex-1">
+                      <AnnouncementLogo
+                        logoUrl={schoolLogo}
+                        schoolName={schoolName}
+                        isPublished={a.is_published}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3
+                            onClick={() => setSelectedViewAnnouncement(a)}
+                            className="font-bold text-[var(--color-on-surface)] text-base leading-snug cursor-pointer hover:text-[var(--color-primary)] transition-colors"
+                          >
+                            {a.title}
+                          </h3>
+                        </div>
+                        <p className="text-sm text-[var(--color-on-surface-variant)] mt-1.5 line-clamp-2 whitespace-pre-line leading-relaxed">
+                          {a.content}
+                        </p>
                         <div className="flex items-center gap-3 mt-3 flex-wrap">
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-[var(--color-surface-bright)] text-[var(--color-on-surface-variant)] border border-[var(--color-outline-variant)]">
                             <span className="material-symbols-outlined text-[14px]">group</span>
                             {getTargetLabel(a)}
                           </span>
-                          <span className="text-[11px] text-[var(--color-on-surface-variant)]">
+                          <span className="text-[11px] text-[var(--color-on-surface-variant)] flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[13px]">schedule</span>
                             {format(new Date(a.published_at || a.created_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
                           </span>
                           {!a.is_published && (
-                            <span className="text-[11px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-md">Brouillon</span>
+                            <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                              Brouillon masqué
+                            </span>
                           )}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedViewAnnouncement(a)}
+                            className="text-[11px] font-semibold text-[var(--color-primary)] hover:underline ml-auto sm:ml-0"
+                          >
+                            Lire l&apos;annonce complète
+                          </button>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <button
+                        onClick={() => setSelectedViewAnnouncement(a)}
+                        className="p-2 rounded-lg hover:bg-[var(--color-surface-bright)] transition-colors text-[var(--color-on-surface-variant)]"
+                        title="Consulter l'annonce"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">visibility</span>
+                      </button>
+                      <button
                         onClick={() => handleTogglePublish(a)}
                         className="p-2 rounded-lg hover:bg-[var(--color-surface-bright)] transition-colors text-[var(--color-on-surface-variant)]"
-                        title={a.is_published ? 'Masquer' : 'Publier'}
+                        title={a.is_published ? 'Masquer aux parents' : 'Publier et notifier'}
                       >
-                        <span className="material-symbols-outlined text-[20px]">{a.is_published ? 'visibility_off' : 'visibility'}</span>
+                        <span className="material-symbols-outlined text-[20px]">
+                          {a.is_published ? 'visibility_off' : 'campaign'}
+                        </span>
                       </button>
                       <button
                         onClick={() => handleEdit(a)}
@@ -341,6 +412,70 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
             ))}
           </div>
         )}
+
+        {/* Modal de consultation détaillée de l'annonce */}
+        {selectedViewAnnouncement && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+            <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl border border-[var(--color-outline-variant)] shadow-2xl max-w-xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-6 border-b border-[var(--color-outline-variant)] flex items-start justify-between gap-4 bg-[var(--color-surface-bright)]">
+                <div className="flex items-center gap-3">
+                  <AnnouncementLogo
+                    logoUrl={schoolLogo}
+                    schoolName={schoolName}
+                    isPublished={selectedViewAnnouncement.is_published}
+                  />
+                  <div>
+                    <h3 className="font-bold text-lg text-[var(--color-on-surface)] leading-snug">
+                      {selectedViewAnnouncement.title}
+                    </h3>
+                    <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">
+                      {schoolName || 'Établissement'} • {format(new Date(selectedViewAnnouncement.published_at || selectedViewAnnouncement.created_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedViewAnnouncement(null)}
+                  className="p-2 rounded-lg hover:bg-[var(--color-surface)] text-[var(--color-on-surface-variant)] transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[22px]">close</span>
+                </button>
+              </div>
+
+              <div className="p-6 max-h-[60vh] overflow-y-auto space-y-4">
+                <div className="flex items-center gap-2 flex-wrap text-xs">
+                  <span className="inline-flex items-center gap-1 font-semibold px-2.5 py-1 rounded-lg bg-[var(--color-surface-bright)] text-[var(--color-on-surface-variant)] border border-[var(--color-outline-variant)]">
+                    <span className="material-symbols-outlined text-[14px]">group</span>
+                    Destinataires : {getTargetLabel(selectedViewAnnouncement)}
+                  </span>
+                  <span className={`inline-flex items-center gap-1 font-bold px-2.5 py-1 rounded-lg border ${
+                    selectedViewAnnouncement.is_published
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
+                    <span className="material-symbols-outlined text-[14px]">
+                      {selectedViewAnnouncement.is_published ? 'check_circle' : 'visibility_off'}
+                    </span>
+                    {selectedViewAnnouncement.is_published ? 'Diffusée aux familles' : 'Brouillon privé'}
+                  </span>
+                </div>
+
+                <div className="text-sm sm:text-base text-[var(--color-on-surface)] whitespace-pre-line leading-relaxed bg-[var(--color-surface)] p-4 rounded-xl border border-[var(--color-outline-variant)]">
+                  {selectedViewAnnouncement.content}
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-[var(--color-outline-variant)] flex justify-end gap-3 bg-[var(--color-surface-bright)]">
+                <button
+                  onClick={() => setSelectedViewAnnouncement(null)}
+                  className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   )

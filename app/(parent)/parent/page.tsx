@@ -64,6 +64,13 @@ export default async function ParentDashboardPage() {
     displayName = `Parent de ${children[0].first_name}`
   }
 
+  // Récupérer les données de l'école (logo, nom)
+  const { data: schoolData } = await supabase
+    .from('schools')
+    .select('name, logo_url')
+    .eq('id', roleData.school_id)
+    .maybeSingle()
+
   // Récupérer les annonces récentes (distinctes des messages directs)
   const { data: announcementsRaw } = await supabase
     .from('announcements')
@@ -146,13 +153,28 @@ export default async function ParentDashboardPage() {
           
           <div className="flex-1 flex flex-col gap-4">
             {announcements.length > 0 ? announcements.map((ann: { id: string; subject: string; content: string; isAnnouncement?: boolean }, idx: number) => (
-              <div key={ann.id} className={`block ${idx !== 0 ? 'pt-4 border-t border-gray-50' : ''}`}>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="material-symbols-outlined text-[14px] text-amber-500">push_pin</span>
-                  <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Annonce</span>
+              <div key={ann.id} className={`flex items-start gap-3 ${idx !== 0 ? 'pt-4 border-t border-gray-100' : ''}`}>
+                {schoolData?.logo_url ? (
+                  <div className="w-10 h-10 rounded-xl overflow-hidden border border-gray-200 bg-white p-1 shrink-0 shadow-xs flex items-center justify-center">
+                    <img
+                      src={schoolData.logo_url}
+                      alt={schoolData.name || 'Logo école'}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0 shadow-xs">
+                    <span className="material-symbols-outlined text-[20px]">campaign</span>
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="material-symbols-outlined text-[13px] text-amber-500">push_pin</span>
+                    <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Annonce officielle</span>
+                  </div>
+                  <h3 className="font-bold text-gray-900 text-sm leading-snug">{ann.subject}</h3>
+                  <p className="text-xs text-gray-600 line-clamp-3 mt-1 whitespace-pre-line leading-relaxed">{ann.content}</p>
                 </div>
-                <h3 className="font-bold text-gray-800 text-sm leading-tight">{ann.subject}</h3>
-                <p className="text-xs text-gray-500 line-clamp-2 mt-1.5">{ann.content}</p>
               </div>
             )) : communications && communications.length > 0 ? communications.map((comm: { id: string; subject: string; content: string }, idx: number) => (
               <Link key={comm.id} href="/parent/messages" className={`block group/item ${idx !== 0 ? 'pt-4 border-t border-gray-50' : ''}`}>
