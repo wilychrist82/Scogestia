@@ -36,6 +36,7 @@ export function ClassDetailsView({ classInfo, students }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [studentToDelete, setStudentToDelete] = useState<ClassStudentItem | null>(null)
+  const [openActionId, setOpenActionId] = useState<string | null>(null)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [genderFilter, setGenderFilter] = useState<'ALL' | 'M' | 'F'>('ALL')
@@ -319,26 +320,54 @@ export function ClassDetailsView({ classInfo, students }: Props) {
                         {student.status || 'actif'}
                       </span>
                     </td>
-                    <td className="py-3 px-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/admin/eleves/${student.id}`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] hover:underline px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors"
-                          title="Consulter la fiche complète"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">visibility</span>
-                          Voir fiche
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => setStudentToDelete(student)}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded-lg border border-transparent hover:border-red-200 transition-colors"
-                          title="Supprimer ou retirer de la classe"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">delete</span>
-                          Supprimer
-                        </button>
-                      </div>
+                    <td className="py-3 px-6 text-right relative">
+                      <button 
+                        type="button"
+                        onClick={() => setOpenActionId(openActionId === student.id ? null : student.id)}
+                        className="p-1.5 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[#eff4ff] rounded-full transition-all duration-300 hover:rotate-90 inline-flex items-center justify-center"
+                        title="Actions"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">more_vert</span>
+                      </button>
+                      
+                      {openActionId === student.id && (
+                        <>
+                          <div 
+                            className="fixed inset-0 z-10" 
+                            onClick={() => setOpenActionId(null)} 
+                          />
+                          <div className="absolute right-6 top-10 w-44 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl shadow-xl z-20 flex flex-col overflow-hidden text-left py-1.5 animate-[fadeIn_0.1s_ease-out]">
+                            <Link 
+                              href={`/admin/eleves/${student.id}`} 
+                              className="px-4 py-2 text-xs font-medium text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2.5 transition-colors"
+                              onClick={() => setOpenActionId(null)}
+                            >
+                              <span className="material-symbols-outlined text-[18px]">visibility</span>
+                              Voir fiche
+                            </Link>
+                            <Link 
+                              href={`/admin/eleves/${student.id}`} 
+                              className="px-4 py-2 text-xs font-medium text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2.5 transition-colors"
+                              onClick={() => setOpenActionId(null)}
+                            >
+                              <span className="material-symbols-outlined text-[18px]">edit</span>
+                              Modifier
+                            </Link>
+                            <div className="border-t border-[var(--color-outline-variant)]/60 my-1" />
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                setOpenActionId(null);
+                                setStudentToDelete(student);
+                              }}
+                              className="px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2.5 transition-colors w-full text-left"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">delete</span>
+                              Supprimer
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
