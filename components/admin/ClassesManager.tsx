@@ -34,14 +34,20 @@ export function ClassesManager({ classes }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
+  const counts = {
+    maternelle: classes.filter(cls => ['s1', 's2', 'section1', 'section2', 'maternelle', 'ps', 'ms', 'gs'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k))).length,
+    primaire: classes.filter(cls => ['cp1', 'cp2', 'cp', 'ce1', 'ce2', 'ce', 'cm1', 'cm2', 'cm', 'ci', 'primaire'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k))).length,
+    college: classes.filter(cls => ['6eme', '6ème', '5eme', '5ème', '4eme', '4ème', '3eme', '3ème', 'college', 'collège', '6e', '5e', '4e', '3e'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k))).length,
+    lycee: classes.filter(cls => ['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k))).length,
+  };
+
   const filteredClasses = sortClasses(classes.filter(cls => {
     if (levelFilter === 'Toutes') return true;
-    const l = (cls.level || '').toLowerCase();
-    const n = (cls.name || '').toLowerCase();
-    if (levelFilter === 'Maternelle') return ['s1', 's2', 'section1', 'section2', 'maternelle', 'ps', 'ms', 'gs'].some(k => l.includes(k) || n.includes(k));
-    if (levelFilter === 'Primaire') return ['cp1', 'cp2', 'cp', 'ce1', 'ce2', 'ce', 'cm1', 'cm2', 'cm', 'ci', 'primaire'].some(k => l.includes(k) || n.includes(k));
-    if (levelFilter === 'Collège') return ['6eme', '6ème', '5eme', '5ème', '4eme', '4ème', '3eme', '3ème', 'secondaire', 'college', 'collège', '6e', '5e', '4e', '3e'].some(k => l.includes(k) || n.includes(k));
-    if (levelFilter === 'Lycée') return ['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => l.includes(k) || n.includes(k));
+    const full = ((cls.level || '') + ' ' + cls.name).toLowerCase();
+    if (levelFilter === 'Maternelle') return ['s1', 's2', 'section1', 'section2', 'maternelle', 'ps', 'ms', 'gs'].some(k => full.includes(k));
+    if (levelFilter === 'Primaire') return ['cp1', 'cp2', 'cp', 'ce1', 'ce2', 'ce', 'cm1', 'cm2', 'cm', 'ci', 'primaire'].some(k => full.includes(k));
+    if (levelFilter === 'Collège') return ['6eme', '6ème', '5eme', '5ème', '4eme', '4ème', '3eme', '3ème', 'college', 'collège', '6e', '5e', '4e', '3e'].some(k => full.includes(k));
+    if (levelFilter === 'Lycée') return ['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => full.includes(k));
     return true;
   }))
 
@@ -124,22 +130,38 @@ export function ClassesManager({ classes }: Props) {
 
       {/* Data Table Card */}
       <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl overflow-hidden shadow-sm">
-        {/* Table Controls */}
-        <div className="p-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
-          <div className="flex gap-2">
-            <select 
-              className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg px-3 py-1.5 text-sm text-[var(--color-on-surface)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none cursor-pointer"
-              value={levelFilter}
-              onChange={(e) => setLevelFilter(e.target.value)}
-            >
-              <option value="Toutes">Tous les niveaux</option>
-              <option value="Maternelle">Maternelle</option>
-              <option value="Primaire">Primaire</option>
-              <option value="Collège">Collège (Secondaire 1)</option>
-              <option value="Lycée">Lycée (Secondaire 2)</option>
-            </select>
+        {/* Table Controls / Level Tabs */}
+        <div className="p-4 border-b border-[var(--color-outline-variant)] flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[var(--color-surface-bright)]">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 hide-scrollbar">
+            {[
+              { id: 'Toutes', label: 'Toutes', count: classes.length },
+              { id: 'Maternelle', label: 'Maternelle', count: counts.maternelle },
+              { id: 'Primaire', label: 'Primaire', count: counts.primaire },
+              { id: 'Collège', label: 'Collège', count: counts.college },
+              { id: 'Lycée', label: 'Lycée', count: counts.lycee },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setLevelFilter(tab.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                  levelFilter === tab.id
+                    ? 'bg-[var(--color-primary)] text-white shadow-sm'
+                    : 'bg-white text-[var(--color-on-surface-variant)] border border-[var(--color-outline-variant)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)]'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-bold ${
+                  levelFilter === tab.id ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-600'
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
           </div>
-          <span className="text-sm text-[var(--color-on-surface-variant)]">{filteredClasses.length} Classes au total</span>
+          <span className="text-xs sm:text-sm font-medium text-[var(--color-on-surface-variant)] whitespace-nowrap">
+            {filteredClasses.length} classe{filteredClasses.length > 1 ? 's' : ''} affichée{filteredClasses.length > 1 ? 's' : ''}
+          </span>
         </div>
 
         {filteredClasses.length === 0 ? (
@@ -167,16 +189,16 @@ export function ClassesManager({ classes }: Props) {
                   <tr key={cls.id} className="border-b border-[var(--color-outline-variant)]/50 hover:bg-[#eff4ff]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
                     <td className="py-3 px-6 font-semibold text-[var(--color-on-surface)]">{cls.name}</td>
                     <td className="py-3 px-6 text-[var(--color-on-surface-variant)]">
-                      {['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => (cls.level || '').toLowerCase().includes(k)) ? (
+                      {['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k)) ? (
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">LYCÉE</span>
-                      ) : ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège'].some(k => (cls.level || '').toLowerCase().includes(k)) ? (
+                      ) : ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k)) ? (
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">COLLÈGE</span>
-                      ) : ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].some(k => (cls.level || '').toLowerCase().includes(k)) ? (
+                      ) : ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k)) ? (
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">PRIMAIRE</span>
-                      ) : ['s1', 's2', 'section1', 'section2', 'maternelle'].some(k => (cls.level || '').toLowerCase().includes(k)) ? (
+                      ) : ['s1', 's2', 'section1', 'section2', 'maternelle', 'ps', 'ms', 'gs'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k)) ? (
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">MATERNELLE</span>
                       ) : (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{cls.level.toUpperCase()}</span>
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{cls.level?.toUpperCase() || 'AUTRE'}</span>
                       )}
                     </td>
                     <td className="py-3 px-6 text-center">
@@ -260,7 +282,7 @@ export function ClassesManager({ classes }: Props) {
                   <input 
                     className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
                     id="className" name="className" 
-                    placeholder="ex: 6ème C" 
+                    placeholder="ex: Seconde A, 6ème C..." 
                     required 
                     defaultValue={classToEdit?.name || ''}
                     type="text"
@@ -281,6 +303,7 @@ export function ClassesManager({ classes }: Props) {
                     <optgroup label="Maternelle">
                       <option value="s1">S1</option>
                       <option value="s2">S2</option>
+                      <option value="Maternelle">Maternelle (Général)</option>
                     </optgroup>
                     <optgroup label="Primaire">
                       <option value="cp1">CP1</option>
@@ -289,18 +312,20 @@ export function ClassesManager({ classes }: Props) {
                       <option value="ce2">CE2</option>
                       <option value="cm1">CM1</option>
                       <option value="cm2">CM2</option>
+                      <option value="Primaire">Primaire (Général)</option>
                     </optgroup>
                     <optgroup label="Secondaire - Collège">
                       <option value="6eme">6ème</option>
                       <option value="5eme">5ème</option>
                       <option value="4eme">4ème</option>
                       <option value="3eme">3ème</option>
+                      <option value="Collège">Collège (Général)</option>
                     </optgroup>
                     <optgroup label="Secondaire - Lycée">
-                      <option value="2nde">Seconde (2nde)</option>
-                      <option value="1ere">Première (1ère)</option>
-                      <option value="tle">Terminale (Tle)</option>
-                      <option value="Lycée">Autre / Général Lycée</option>
+                      <option value="Seconde">Seconde</option>
+                      <option value="Première">Première</option>
+                      <option value="Terminale">Terminale</option>
+                      <option value="Lycée">Lycée (Général)</option>
                     </optgroup>
                   </select>
                 </div>

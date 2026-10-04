@@ -48,8 +48,8 @@ export function EmploisManagerClient({ classes, schoolId, readOnly }: Props) {
     if (!cls) return null
     const match = `${cls.level} ${cls.name}`.toLowerCase()
     
-    // Si la classe est explicitement secondaire, on force null
-    if (match.includes('6ème') || match.includes('6eme') || match.includes('6e') || match.includes('secondaire') || match.includes('college') || match.includes('lycee')) {
+    // Si la classe est explicitement secondaire ou lycée, on force null
+    if (match.includes('6ème') || match.includes('6eme') || match.includes('6e') || match.includes('secondaire') || match.includes('college') || match.includes('lycee') || match.includes('seconde') || match.includes('premiere') || match.includes('première') || match.includes('terminale') || match.includes('2nde') || match.includes('1ere') || match.includes('1ère') || match.includes('tle')) {
       return null
     }
 
