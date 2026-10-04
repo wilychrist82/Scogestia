@@ -33,11 +33,28 @@ export async function createAnnouncement(
 
     const title = (formData.get('title') as string)?.trim()
     const content = (formData.get('content') as string)?.trim()
-    const targetType = (formData.get('targetType') as string) || 'all'
+    const targetAudience = (formData.get('targetAudience') as string) || (formData.get('targetType') as string) || 'parents'
     const targetClassId = (formData.get('targetClassId') as string)?.trim() || null
 
     if (!title || !content) {
       return { error: 'Le titre et le contenu sont requis.' }
+    }
+
+    let targetType = 'all'
+    let targetLevel: string | null = null
+
+    if (targetAudience === 'class') {
+      targetType = 'class'
+      targetLevel = null
+    } else if (targetAudience === 'teachers') {
+      targetType = 'all'
+      targetLevel = 'teachers'
+    } else if (targetAudience === 'all') {
+      targetType = 'all'
+      targetLevel = 'all'
+    } else {
+      targetType = 'all'
+      targetLevel = 'parents'
     }
 
     const adminClient = createAdminClient()
@@ -48,11 +65,12 @@ export async function createAnnouncement(
         title,
         content,
         target_type: targetType,
+        target_level: targetLevel,
         target_class_id: targetType === 'class' && targetClassId ? targetClassId : null,
         is_published: true,
         created_by: user.id,
       })
-      .select('id, title, content, target_type, target_class_id')
+      .select('id, title, content, target_type, target_level, target_class_id')
       .single()
 
     if (error) {
@@ -64,7 +82,7 @@ export async function createAnnouncement(
       return { error: error.message || 'Erreur lors de la création de l\'annonce.' }
     }
 
-    // Déclencher les notifications & alertes sonores (Push FCM + Realtime in-app + Badge)
+    // Déclencher les notifications & alertes sonores ciblées (Push FCM + Realtime in-app + Badge)
     try {
       await dispatchAnnouncementNotifications({
         schoolId: roleData.school_id,
@@ -72,6 +90,7 @@ export async function createAnnouncement(
         title,
         content,
         targetType,
+        targetLevel,
         targetClassId: targetType === 'class' && targetClassId ? targetClassId : null,
       })
     } catch (notifErr) {
@@ -81,6 +100,7 @@ export async function createAnnouncement(
     revalidatePath('/admin/communication')
     revalidatePath('/admin/communication/annonces')
     revalidatePath('/parent')
+    revalidatePath('/enseignant')
     return { success: true }
   } catch (err: unknown) {
     const message = err && typeof err === 'object' && 'message' in err
@@ -92,7 +112,7 @@ export async function createAnnouncement(
 
 export async function updateAnnouncement(
   id: string,
-  data: { title?: string; content?: string; is_published?: boolean; target_type?: string; target_class_id?: string | null }
+  data: { title?: string; content?: string; is_published?: boolean; target_type?: string; target_level?: string | null; target_class_id?: string | null }
 ): Promise<AnnouncementState> {
   try {
     const supabase = await createClient()
@@ -116,6 +136,7 @@ export async function updateAnnouncement(
     if (data.content !== undefined) updatePayload.content = data.content.trim()
     if (data.is_published !== undefined) updatePayload.is_published = data.is_published
     if (data.target_type !== undefined) updatePayload.target_type = data.target_type
+    if (data.target_level !== undefined) updatePayload.target_level = data.target_level
     if (data.target_class_id !== undefined) updatePayload.target_class_id = data.target_class_id
 
     const adminClient = createAdminClient()
@@ -151,6 +172,7 @@ export async function updateAnnouncement(
             title: data.title || currentAnn.title,
             content: data.content || currentAnn.content,
             targetType: data.target_type || currentAnn.target_type,
+            targetLevel: data.target_level !== undefined ? data.target_level : currentAnn.target_level,
             targetClassId: data.target_class_id !== undefined ? data.target_class_id : currentAnn.target_class_id,
           })
         } catch (notifErr) {
@@ -162,6 +184,7 @@ export async function updateAnnouncement(
     revalidatePath('/admin/communication')
     revalidatePath('/admin/communication/annonces')
     revalidatePath('/parent')
+    revalidatePath('/enseignant')
     return { success: true }
   } catch (err: unknown) {
     const message = err && typeof err === 'object' && 'message' in err
@@ -230,6 +253,7 @@ async function dispatchAnnouncementNotifications({
   title,
   content,
   targetType,
+  targetLevel,
   targetClassId,
 }: {
   schoolId: string
@@ -237,32 +261,39 @@ async function dispatchAnnouncementNotifications({
   title: string
   content: string
   targetType: string
+  targetLevel?: string | null
   targetClassId?: string | null
 }) {
   const adminClient = createAdminClient()
   let usersToNotify: string[] = []
 
   if (targetType === 'all') {
-    // 1. Tous les parents de l'école
-    const { data: parentUsers } = await adminClient
-      .from('user_school_roles')
-      .select('user_id')
-      .eq('school_id', schoolId)
-      .eq('role', 'parent')
+    const audience = targetLevel || 'all'
 
-    if (parentUsers) {
-      usersToNotify.push(...parentUsers.map(u => u.user_id))
+    // Si l'audience inclut les parents ('parents' ou 'all')
+    if (audience === 'parents' || audience === 'all') {
+      const { data: parentUsers } = await adminClient
+        .from('user_school_roles')
+        .select('user_id')
+        .eq('school_id', schoolId)
+        .eq('role', 'parent')
+
+      if (parentUsers) {
+        usersToNotify.push(...parentUsers.map(u => u.user_id))
+      }
     }
 
-    // 2. Tous les enseignants de l'école
-    const { data: teacherUsers } = await adminClient
-      .from('user_school_roles')
-      .select('user_id')
-      .eq('school_id', schoolId)
-      .eq('role', 'enseignant')
+    // Si l'audience inclut les enseignants ('teachers' ou 'all')
+    if (audience === 'teachers' || audience === 'all') {
+      const { data: teacherUsers } = await adminClient
+        .from('user_school_roles')
+        .select('user_id')
+        .eq('school_id', schoolId)
+        .eq('role', 'enseignant')
 
-    if (teacherUsers) {
-      usersToNotify.push(...teacherUsers.map(u => u.user_id))
+      if (teacherUsers) {
+        usersToNotify.push(...teacherUsers.map(u => u.user_id))
+      }
     }
   } else if (targetType === 'class' && targetClassId) {
     // 1. Trouver les élèves inscrits dans cette classe

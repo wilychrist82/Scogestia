@@ -93,13 +93,34 @@ export default async function EnseignantDashboardPage() {
     .eq('date', today)
     .eq('status', 'absent')
 
-  // Dernières communications (annonces de l'admin)
-  const { data: communications } = await supabase
-    .from('communications')
+  // Récupérer les informations de l'établissement (logo, nom)
+  const { data: schoolData } = await supabase
+    .from('schools')
+    .select('name, logo_url')
+    .eq('id', roleData.school_id)
+    .maybeSingle()
+
+  // Récupérer les annonces officielles publiées
+  const { data: rawAnnouncements } = await supabase
+    .from('announcements')
     .select('*')
     .eq('school_id', roleData.school_id)
-    .order('created_at', { ascending: false })
-    .limit(3)
+    .eq('is_published', true)
+    .order('published_at', { ascending: false })
+    .limit(10)
+
+  const teacherClassIds = new Set((assignments || []).map((a: any) => a.class_id).filter(Boolean))
+
+  const announcements = (rawAnnouncements || []).filter((a: any) => {
+    // Si c'est pour une classe spécifique, afficher si l'enseignant intervient dans cette classe
+    if (a.target_type === 'class') {
+      return a.target_class_id && teacherClassIds.has(a.target_class_id)
+    }
+    // Si l'annonce est réservée exclusivement aux parents, ne pas l'afficher à l'enseignant
+    if (a.target_level === 'parents') return false
+    // Sinon ('all', 'teachers', ou non spécifié / null comme pour l'AG) : afficher
+    return true
+  }).slice(0, 4)
 
   // Devoirs récents publiés
   const { data: recentDevoirs } = await supabase
@@ -312,22 +333,41 @@ export default async function EnseignantDashboardPage() {
             <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
               <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
                 <span className="material-symbols-outlined text-amber-500 text-[18px]">campaign</span>
-                Annonces
+                Annonces officielles
               </h3>
-              {communications && communications.length > 0 && (
-                <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] font-black flex items-center justify-center">{communications.length}</span>
+              {announcements && announcements.length > 0 && (
+                <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] font-black flex items-center justify-center">
+                  {announcements.length}
+                </span>
               )}
             </div>
             <div className="p-4 flex flex-col gap-3">
-              {communications && communications.length > 0 ? communications.map((comm: any, idx: number) => (
-                <div key={comm.id} className={`p-3 rounded-xl bg-[var(--color-surface-container-low)] ${idx === 0 ? 'border-l-4 border-amber-500' : 'border-l-4 border-[var(--color-outline-variant)]'}`}>
-                  <p className="text-sm font-bold text-[var(--color-on-surface)] line-clamp-1">{comm.subject}</p>
-                  <p className="text-xs text-[var(--color-on-surface-variant)] line-clamp-2 mt-1">
-                    {comm.content === 'Message vocal' ? '🎵 Message vocal' : comm.content}
-                  </p>
-                  <p className="text-[10px] text-[var(--color-on-surface-variant)] mt-2 font-semibold">
-                    {format(new Date(comm.created_at), 'd MMM à HH:mm', { locale: fr })}
-                  </p>
+              {announcements && announcements.length > 0 ? announcements.map((ann: any, idx: number) => (
+                <div
+                  key={ann.id}
+                  className={`p-3.5 rounded-xl bg-[var(--color-surface-container-low)] border border-[var(--color-outline-variant)] flex items-start gap-3 transition-colors ${
+                    idx === 0 ? 'border-l-4 border-l-amber-500' : ''
+                  }`}
+                >
+                  {schoolData?.logo_url ? (
+                    <div className="w-9 h-9 rounded-xl overflow-hidden border border-gray-200 bg-white p-0.5 shrink-0 shadow-xs flex items-center justify-center">
+                      <img src={schoolData.logo_url} alt={schoolData.name || 'École'} className="w-full h-full object-contain" />
+                    </div>
+                  ) : (
+                    <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0 shadow-xs">
+                      <span className="material-symbols-outlined text-[18px]">campaign</span>
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-[var(--color-on-surface)] leading-snug line-clamp-1">{ann.title}</p>
+                    <p className="text-xs text-[var(--color-on-surface-variant)] line-clamp-3 mt-1 whitespace-pre-line leading-relaxed">
+                      {ann.content}
+                    </p>
+                    <p className="text-[10px] text-[var(--color-on-surface-variant)] mt-2 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[12px]">schedule</span>
+                      {format(new Date(ann.published_at || ann.created_at), 'd MMMM à HH:mm', { locale: fr })}
+                    </p>
+                  </div>
                 </div>
               )) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center">

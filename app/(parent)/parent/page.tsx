@@ -88,14 +88,27 @@ export default async function ParentDashboardPage() {
     .order('created_at', { ascending: false })
     .limit(2)
 
-  // Combiner annonces + communications pour la section "À la une"
-  const announcements = (announcementsRaw || []).map((a: Record<string, unknown>) => ({
-    id: a.id as string,
-    subject: a.title as string,
-    content: a.content as string,
-    created_at: (a.published_at || a.created_at) as string,
-    isAnnouncement: true,
-  }))
+  const parentClassIds = new Set(children.map(c => c.class_id).filter(Boolean))
+
+  // Combiner annonces ciblées + communications pour la section "À la une"
+  const announcements = (announcementsRaw || [])
+    .filter((a: any) => {
+      // Si c'est pour une classe spécifique, afficher si l'un des enfants du parent y est inscrit
+      if (a.target_type === 'class') {
+        return a.target_class_id && parentClassIds.has(a.target_class_id)
+      }
+      // Si réservé aux enseignants uniquement, ne pas afficher au parent
+      if (a.target_level === 'teachers') return false
+      // Sinon ('parents', 'all', ou non spécifié / null comme pour l'AG) : afficher
+      return true
+    })
+    .map((a: Record<string, unknown>) => ({
+      id: a.id as string,
+      subject: a.title as string,
+      content: a.content as string,
+      created_at: (a.published_at || a.created_at) as string,
+      isAnnouncement: true,
+    }))
 
   if (children.length === 0) {
     return (

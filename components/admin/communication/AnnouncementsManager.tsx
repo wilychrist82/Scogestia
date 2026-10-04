@@ -10,6 +10,7 @@ type Announcement = {
   title: string
   content: string
   target_type: string
+  target_level?: string | null
   target_class_id: string | null
   is_published: boolean
   published_at: string
@@ -80,13 +81,13 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
   // Form fields
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [targetType, setTargetType] = useState('all')
+  const [targetAudience, setTargetAudience] = useState('parents')
   const [targetClassId, setTargetClassId] = useState('')
 
   const resetForm = () => {
     setTitle('')
     setContent('')
-    setTargetType('all')
+    setTargetAudience('parents')
     setTargetClassId('')
     setEditingId(null)
     setShowForm(false)
@@ -96,7 +97,15 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
   const handleEdit = (a: Announcement) => {
     setTitle(a.title)
     setContent(a.content)
-    setTargetType(a.target_type)
+    if (a.target_type === 'class') {
+      setTargetAudience('class')
+    } else if (a.target_level === 'teachers') {
+      setTargetAudience('teachers')
+    } else if (a.target_level === 'all') {
+      setTargetAudience('all')
+    } else {
+      setTargetAudience('parents')
+    }
     setTargetClassId(a.target_class_id || '')
     setEditingId(a.id)
     setShowForm(true)
@@ -107,19 +116,44 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
     setError(null)
     setSuccess(false)
 
+    let targetType = 'all'
+    let targetLevel: string | null = null
+
+    if (targetAudience === 'class') {
+      targetType = 'class'
+      targetLevel = null
+    } else if (targetAudience === 'teachers') {
+      targetType = 'all'
+      targetLevel = 'teachers'
+    } else if (targetAudience === 'all') {
+      targetType = 'all'
+      targetLevel = 'all'
+    } else {
+      targetType = 'all'
+      targetLevel = 'parents'
+    }
+
     if (editingId) {
       startTransition(async () => {
         const result = await updateAnnouncement(editingId, {
           title,
           content,
           target_type: targetType,
-          target_class_id: targetType === 'class' ? targetClassId : null,
+          target_level: targetLevel,
+          target_class_id: targetAudience === 'class' ? targetClassId : null,
         })
         if (result.error) {
           setError(result.error)
         } else {
           setAnnouncements(prev =>
-            prev.map(a => a.id === editingId ? { ...a, title, content, target_type: targetType, target_class_id: targetType === 'class' ? targetClassId : null } : a)
+            prev.map(a => a.id === editingId ? {
+              ...a,
+              title,
+              content,
+              target_type: targetType,
+              target_level: targetLevel,
+              target_class_id: targetAudience === 'class' ? targetClassId : null
+            } : a)
           )
           setSuccess(true)
           setTimeout(() => setSuccess(false), 3000)
@@ -130,8 +164,8 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
       const formData = new FormData()
       formData.set('title', title)
       formData.set('content', content)
-      formData.set('targetType', targetType)
-      if (targetType === 'class' && targetClassId) formData.set('targetClassId', targetClassId)
+      formData.set('targetAudience', targetAudience)
+      if (targetAudience === 'class' && targetClassId) formData.set('targetClassId', targetClassId)
 
       startTransition(async () => {
         const result = await createAnnouncement({}, formData)
@@ -174,12 +208,13 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
   }
 
   const getTargetLabel = (a: Announcement) => {
-    if (a.target_type === 'all') return 'Toute l\'école'
     if (a.target_type === 'class') {
       const cls = classes.find(c => c.id === a.target_class_id)
-      return cls ? cls.name : 'Classe inconnue'
+      return cls ? `Classe : ${cls.name}` : 'Classe ciblée'
     }
-    return a.target_type
+    if (a.target_level === 'teachers') return '👨‍🏫 Enseignants uniquement'
+    if (a.target_level === 'all') return '🏫 Toute l\'école (Parents & Enseignants)'
+    return '👨‍👩‍👧 Parents d\'élèves'
   }
 
   return (
@@ -261,24 +296,26 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]">Destinataires</label>
+                  <label className="text-sm font-semibold text-[var(--color-on-surface)]">Audience / Destinataires</label>
                   <select
-                    value={targetType}
-                    onChange={e => setTargetType(e.target.value)}
-                    className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                    value={targetAudience}
+                    onChange={e => setTargetAudience(e.target.value)}
+                    className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] font-medium"
                   >
-                    <option value="all">Toute l&apos;école</option>
-                    <option value="class">Une classe spécifique</option>
+                    <option value="parents">👨‍👩‍👧 Parents d&apos;élèves uniquement (Toute l&apos;école)</option>
+                    <option value="all">🏫 Toute la communauté (Parents &amp; Enseignants)</option>
+                    <option value="teachers">👨‍🏫 Enseignants uniquement</option>
+                    <option value="class">🎓 Une classe spécifique (Parents de la classe)</option>
                   </select>
                 </div>
 
-                {targetType === 'class' && (
+                {targetAudience === 'class' && (
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-semibold text-[var(--color-on-surface)]">Classe</label>
+                    <label className="text-sm font-semibold text-[var(--color-on-surface)]">Classe ciblée</label>
                     <select
                       value={targetClassId}
                       onChange={e => setTargetClassId(e.target.value)}
-                      className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                      className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] font-medium"
                       required
                     >
                       <option value="">Sélectionner une classe</option>
