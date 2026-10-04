@@ -42,6 +42,7 @@ export function StudentDetailTabs({ student }: Props) {
   const [editError, setEditError] = useState<string | null>(null)
   
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -49,6 +50,34 @@ export function StudentDetailTabs({ student }: Props) {
 
   const [activeContactView, setActiveContactView] = useState<'list' | 'vocal' | 'sms'>('list')
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
+
+  const handleStudentDelete = () => {
+    startTransition(async () => {
+      const { deleteStudent } = await import('@/app/actions/students')
+      const res = await deleteStudent(student.id)
+      if (res?.error) {
+        toast.error(res.error)
+      } else {
+        toast.success(`Élève ${student.first_name} ${student.last_name} supprimé avec succès.`)
+        setIsDeleteModalOpen(false)
+        router.push('/admin/eleves')
+      }
+    })
+  }
+
+  const handleStudentUnassign = () => {
+    startTransition(async () => {
+      const { removeStudentFromClass } = await import('@/app/actions/students')
+      const res = await removeStudentFromClass(student.id)
+      if (res?.error) {
+        toast.error(res.error)
+      } else {
+        toast.success(`Élève retiré de sa classe avec succès.`)
+        setIsDeleteModalOpen(false)
+        router.refresh()
+      }
+    })
+  }
   
   const handleVoiceMessageSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -225,7 +254,7 @@ export function StudentDetailTabs({ student }: Props) {
               <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">{student.first_name} {student.last_name}</h2>
               <p className="text-[var(--color-on-surface-variant)] mt-1">Matricule: #{student.matricule} • Classe: {student.classes?.name || 'Non assigné'}</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               <button 
                 onClick={() => setIsEditModalOpen(true)}
                 className="h-12 px-4 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors flex items-center gap-2"
@@ -239,6 +268,15 @@ export function StudentDetailTabs({ student }: Props) {
               >
                 <span className="material-symbols-outlined text-sm">mail</span>
                 Contacter
+              </button>
+              <button 
+                type="button"
+                onClick={() => setIsDeleteModalOpen(true)}
+                className="h-12 px-4 rounded-lg border border-red-200 text-red-600 font-semibold text-sm hover:bg-red-50 hover:border-red-300 transition-colors flex items-center gap-2"
+                title="Supprimer l'élève de l'école ou de la classe"
+              >
+                <span className="material-symbols-outlined text-sm">delete</span>
+                Supprimer
               </button>
             </div>
           </div>
@@ -686,6 +724,66 @@ export function StudentDetailTabs({ student }: Props) {
                 </form>
               </div>
             ) : null}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmation de Suppression */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-100">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-2xl">warning</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Supprimer la fiche élève
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Vous êtes sur le point de supprimer le dossier de <strong className="text-gray-900">{student.first_name} {student.last_name}</strong> (Matricule : <span className="font-mono font-semibold">{student.matricule}</span>).
+              </p>
+
+              <div className="space-y-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-xs text-gray-700">
+                <p>
+                  <strong>• Option 1 (Suppression définitive) :</strong> Recommandé si l'élève a quitté l'école (déménagement, changement d'établissement). Supprime définitivement son dossier et toutes ses données associées (notes, présences, etc.).
+                </p>
+                {student.classes?.name && (
+                  <p>
+                    <strong>• Option 2 (Retirer de la classe) :</strong> Retire l'élève de la classe <strong>{student.classes.name}</strong> sans supprimer son compte ni son historique.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row gap-2 justify-end">
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 rounded-lg transition-colors order-3 sm:order-1"
+              >
+                Annuler
+              </button>
+              {student.classes?.name && (
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={handleStudentUnassign}
+                  className="px-4 py-2 text-sm font-semibold text-gray-800 bg-white border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors order-2"
+                >
+                  {isPending ? 'En cours...' : 'Retirer de la classe'}
+                </button>
+              )}
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={handleStudentDelete}
+                className="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center justify-center gap-1.5 order-1 sm:order-3"
+              >
+                <span className="material-symbols-outlined text-[16px]">delete</span>
+                {isPending ? 'Suppression...' : 'Supprimer définitivement'}
+              </button>
+            </div>
           </div>
         </div>
       )}

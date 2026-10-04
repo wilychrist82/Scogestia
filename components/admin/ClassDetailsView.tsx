@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useTransition } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Users, GraduationCap, ArrowLeft, Download, Search, UserCheck } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { deleteStudent, removeStudentFromClass } from '@/app/actions/students'
 
 export type ClassStudentItem = {
   id: string
@@ -30,12 +33,44 @@ type Props = {
 }
 
 export function ClassDetailsView({ classInfo, students }: Props) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [studentToDelete, setStudentToDelete] = useState<ClassStudentItem | null>(null)
+
   const [searchTerm, setSearchTerm] = useState('')
   const [genderFilter, setGenderFilter] = useState<'ALL' | 'M' | 'F'>('ALL')
 
   const boysCount = students.filter(s => s.gender?.toUpperCase() === 'M').length
   const girlsCount = students.filter(s => s.gender?.toUpperCase() === 'F').length
   const totalCount = students.length
+
+  const handleConfirmDelete = () => {
+    if (!studentToDelete) return
+    startTransition(async () => {
+      const res = await deleteStudent(studentToDelete.id)
+      if (res?.error) {
+        toast.error(res.error)
+      } else {
+        toast.success(`Élève ${studentToDelete.last_name} ${studentToDelete.first_name} supprimé avec succès.`)
+        setStudentToDelete(null)
+        router.refresh()
+      }
+    })
+  }
+
+  const handleConfirmUnassign = () => {
+    if (!studentToDelete) return
+    startTransition(async () => {
+      const res = await removeStudentFromClass(studentToDelete.id)
+      if (res?.error) {
+        toast.error(res.error)
+      } else {
+        toast.success(`Élève retiré de la classe avec succès.`)
+        setStudentToDelete(null)
+        router.refresh()
+      }
+    })
+  }
 
   const filteredStudents = useMemo(() => {
     return students.filter(s => {
@@ -285,13 +320,25 @@ export function ClassDetailsView({ classInfo, students }: Props) {
                       </span>
                     </td>
                     <td className="py-3 px-6 text-right">
-                      <Link
-                        href={`/admin/eleves/${student.id}`}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] hover:underline"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">visibility</span>
-                        Voir fiche
-                      </Link>
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/admin/eleves/${student.id}`}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-primary)] hover:underline px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors"
+                          title="Consulter la fiche complète"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">visibility</span>
+                          Voir fiche
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => setStudentToDelete(student)}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded-lg border border-transparent hover:border-red-200 transition-colors"
+                          title="Supprimer ou retirer de la classe"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">delete</span>
+                          Supprimer
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -300,6 +347,62 @@ export function ClassDetailsView({ classInfo, students }: Props) {
           </div>
         )}
       </div>
+
+      {/* Modal de Confirmation de Suppression */}
+      {studentToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-100">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-2xl">warning</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Supprimer l'élève de l'école
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Vous avez sélectionné l'élève <strong className="text-gray-900">{studentToDelete.last_name} {studentToDelete.first_name}</strong> (Matricule : <span className="font-mono font-semibold">{studentToDelete.matricule}</span>).
+              </p>
+
+              <div className="space-y-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-xs text-gray-700">
+                <p>
+                  <strong>• Option 1 (Élève ayant quitté l'établissement) :</strong> Supprime définitivement l'élève de l'école ainsi que toutes ses données associées (notes, présences, etc.).
+                </p>
+                <p>
+                  <strong>• Option 2 :</strong> Retire uniquement l'élève de cette classe sans supprimer son dossier de l'école.
+                </p>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row gap-2 justify-end">
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => setStudentToDelete(null)}
+                className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 rounded-lg transition-colors order-3 sm:order-1"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={handleConfirmUnassign}
+                className="px-4 py-2 text-sm font-semibold text-gray-800 bg-white border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors order-2"
+              >
+                {isPending ? 'En cours...' : 'Retirer de la classe'}
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center justify-center gap-1.5 order-1 sm:order-3"
+              >
+                <span className="material-symbols-outlined text-[16px]">delete</span>
+                {isPending ? 'Suppression...' : 'Supprimer définitivement'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

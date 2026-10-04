@@ -148,6 +148,34 @@ export async function deleteStudent(studentId: string): Promise<ActionState> {
     }
 
     revalidatePath('/admin/eleves');
+    revalidatePath('/admin/classes');
+    revalidatePath('/admin/classes/[id]', 'page');
+    revalidatePath('/admin/academique/presences');
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
+export async function removeStudentFromClass(studentId: string): Promise<ActionState> {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from('students')
+      .update({ class_id: null })
+      .eq('id', studentId)
+      .eq('school_id', school_id);
+
+    if (error) {
+      return { error: `Erreur : ${error.message}` };
+    }
+
+    revalidatePath('/admin/eleves');
+    revalidatePath('/admin/classes');
+    revalidatePath('/admin/classes/[id]', 'page');
+    revalidatePath('/admin/academique/presences');
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
