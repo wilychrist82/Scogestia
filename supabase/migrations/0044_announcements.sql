@@ -22,6 +22,9 @@ create table if not exists public.announcements (
 create index if not exists idx_announcements_school on public.announcements(school_id);
 create index if not exists idx_announcements_published on public.announcements(school_id, is_published, published_at desc);
 
+-- Permissions de base PostgreSQL (indispensable dans Supabase)
+grant all on table public.announcements to postgres, anon, authenticated, service_role;
+
 -- RLS
 alter table public.announcements enable row level security;
 
