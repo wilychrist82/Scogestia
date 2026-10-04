@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { 
-  ArrowLeft, 
   ShieldCheck, 
   Search, 
   CircleDollarSign, 
@@ -16,6 +15,7 @@ import {
   FileSpreadsheet,
   Building2
 } from 'lucide-react'
+import { ParametresNavTabs } from './ParametresNavTabs'
 
 export type ActivityItem = {
   id: string
@@ -78,17 +78,6 @@ export function JournalActivite({ activities, schoolName }: Props) {
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-5xl mx-auto space-y-6">
         
-        {/* Navigation retour */}
-        <div className="flex items-center gap-3">
-          <Link 
-            href="/admin/parametres" 
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-lg transition-colors"
-          >
-            <ArrowLeft size={14} />
-            Retour aux paramètres
-          </Link>
-        </div>
-
         {/* En-tête */}
         <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-2xl border border-[var(--color-outline-variant)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
@@ -108,22 +97,7 @@ export function JournalActivite({ activities, schoolName }: Props) {
         </div>
 
         {/* Navigation Onglets Paramètres */}
-        <div className="flex items-center gap-2 border-b border-[var(--color-outline-variant)]">
-          <Link
-            href="/admin/parametres"
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 transition-colors"
-          >
-            <Building2 size={16} />
-            Établissement & Identité
-          </Link>
-          <Link
-            href="/admin/parametres/journal"
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 border-emerald-600 text-emerald-700 transition-colors"
-          >
-            <ShieldCheck size={16} />
-            Journal d'activités & Audit
-          </Link>
-        </div>
+        <ParametresNavTabs />
 
         {/* Barre de filtre & recherche */}
         <div className="bg-[var(--color-surface-container-lowest)] p-4 rounded-xl border border-[var(--color-outline-variant)] flex flex-col sm:flex-row items-center justify-between gap-3">

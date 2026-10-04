@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Building2, ShieldCheck } from 'lucide-react'
 import { updateSchoolSettings } from '@/app/actions/parametres'
 import { ImageUpload } from '@/components/shared/ImageUpload'
+import { ParametresNavTabs } from './ParametresNavTabs'
 
 type School = {
   id: string
@@ -66,22 +67,7 @@ export function ParametresManager({ school, userAvatar }: Props) {
         </div>
 
         {/* Navigation Onglets Paramètres */}
-        <div className="flex items-center gap-1 overflow-x-auto border-b border-[var(--color-outline-variant)] pb-px -mx-1 px-1 scrollbar-hide">
-          <Link
-            href="/admin/parametres"
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 border-[var(--color-primary)] text-[var(--color-primary)] transition-colors whitespace-nowrap"
-          >
-            <Building2 size={16} />
-            Établissement
-          </Link>
-          <Link
-            href="/admin/parametres/journal"
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 transition-colors whitespace-nowrap"
-          >
-            <ShieldCheck size={16} />
-            Journal d&apos;audit
-          </Link>
-        </div>
+        <ParametresNavTabs />
 
         {error && (
           <div className="bg-[var(--color-status-retard-bg)] text-[var(--color-status-retard-text)] p-3 rounded-xl border border-[var(--color-status-retard-bg)] text-sm font-medium">

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Building2, ShieldCheck, Users, Lock } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { ParametresNavTabs } from './ParametresNavTabs'
 
 type UserRole = {
   id: string
@@ -57,20 +58,7 @@ export function SecuritySettings({ users, schoolId }: Props) {
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto border-b border-[var(--color-outline-variant)] pb-px -mx-1 px-1 scrollbar-hide">
-          <Link href="/admin/parametres" className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 transition-colors whitespace-nowrap">
-            <Building2 size={16} />
-            Établissement
-          </Link>
-          <Link href="/admin/parametres/journal" className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300 transition-colors whitespace-nowrap">
-            <ShieldCheck size={16} />
-            Journal d&apos;audit
-          </Link>
-          <Link href="/admin/parametres/securite" className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 border-[var(--color-primary)] text-[var(--color-primary)] transition-colors whitespace-nowrap">
-            <Lock size={16} />
-            Sécurité & Permissions
-          </Link>
-        </div>
+        <ParametresNavTabs />
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

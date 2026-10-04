@@ -6,6 +6,7 @@ import { updateUserProfile } from '@/app/actions/parametres'
 import { createClient } from '@/lib/supabase/client'
 import { User, Lock, Mail, Phone, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { ParametresNavTabs } from './ParametresNavTabs'
 
 type Props = {
   userId: string
@@ -83,17 +84,6 @@ export function AdminProfileManager({ userId, fullName, email, phone, role, user
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* Navigation retour */}
-        <div className="flex items-center gap-3">
-          <Link 
-            href="/admin/parametres" 
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-lg transition-colors"
-          >
-            <ArrowLeft size={14} />
-            Retour aux paramètres
-          </Link>
-        </div>
-
         {/* En-tête */}
         <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-2xl border border-[var(--color-outline-variant)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -112,6 +102,9 @@ export function AdminProfileManager({ userId, fullName, email, phone, role, user
             </div>
           </div>
         </div>
+
+        {/* Navigation Onglets Paramètres */}
+        <ParametresNavTabs />
 
         {/* Section 1 : Informations personnelles */}
         <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl border border-[var(--color-outline-variant)] shadow-xs overflow-hidden">
