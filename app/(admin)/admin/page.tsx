@@ -6,7 +6,8 @@ import { fr } from 'date-fns/locale'
 import { 
   Users, Presentation, UserCircle, Wallet, CalendarOff,
   UserPlus, PlusSquare, CalendarPlus,
-  Banknote, BookOpenCheck, AlertCircle, ArrowUpRight
+  Banknote, BookOpenCheck, AlertCircle, ArrowUpRight,
+  FileText, Plus
 } from 'lucide-react'
 import { 
   PaymentChart, AttendancePieChart, ClassDistributionPieChart, ClassBarChart,
@@ -16,6 +17,7 @@ import { OnboardingWizard } from '@/components/admin/OnboardingWizard'
 import { ShortcutsButton } from '@/components/admin/ShortcutsButton'
 import { RaccourcisTrigger } from '@/components/admin/RaccourcisTrigger'
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter'
+import { AuraHeroBanner } from '@/components/ui/AuraHeroBanner'
 
 export const dynamic = 'force-dynamic'
 
@@ -155,40 +157,36 @@ export default async function AdminDashboard() {
       {/* ── ONBOARDING WIZARD ── */}
       <OnboardingWizard classesCount={classesCount || 0} staffCount={staffCount || 0} studentCount={studentCount || 0} />
 
-      {/* ── HERO HEADER PRESTIGE (FOND SOMBRE & EFFETS DE LUMIÈRE) ── */}
-      <div className="relative overflow-hidden rounded-[1.75rem] bg-[#070b14] min-h-[160px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xl border border-white/[0.08] ring-1 ring-inset ring-white/[0.04]">
-        {/* Orbes animées prestigieuses */}
-        <div className="absolute -top-16 -left-16 w-80 h-80 bg-emerald-500/20 rounded-full blur-[100px] pointer-events-none animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute -bottom-12 right-10 w-64 h-64 bg-violet-500/15 rounded-full blur-[80px] pointer-events-none animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-32 bg-cyan-500/10 rounded-full blur-[60px] pointer-events-none" />
-        
-        {/* Contenu principal */}
-        <div className="relative z-10 p-6 sm:p-8">
-          <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-3">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">Tableau de bord</p>
+      {/* ── HERO BANNER AURA COUCHER DE SOLEIL & VAGUE FLUIDE (STYLE RÉFÉRENCE CAPTURE) ── */}
+      <AuraHeroBanner
+        badge="TABLEAU DE BORD"
+        title={schoolName}
+        subtitle={`Bienvenue, Wilfried ! Vue d'ensemble de votre établissement · ${todayLabel}`}
+        stats={[
+          { label: 'Élèves', value: studentCount || 0, color: 'text-white' },
+          { label: 'Classes', value: classesCount || 0, color: 'text-white' },
+          { label: 'Recouvrement', value: `${recouvRate}%`, color: 'text-emerald-300' },
+          { label: 'Absents/jour', value: aCount, color: 'text-rose-300' },
+        ]}
+        actions={
+          <div className="flex items-center gap-2">
+            <Link
+              href="/admin/finance/rapports"
+              className="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 font-bold px-4 py-2.5 rounded-xl shadow-md transition-all duration-200 text-xs hover:scale-105 active:scale-95"
+            >
+              <FileText size={15} className="text-slate-700" />
+              <span>Rapport</span>
+            </Link>
+            <Link
+              href="/admin/eleves/nouveau"
+              className="inline-flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 text-xs hover:scale-105 active:scale-95"
+            >
+              <Plus size={15} />
+              <span>Nouvel élève</span>
+            </Link>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight tracking-tight">{schoolName}</h1>
-          <p className="text-white/50 text-sm mt-1.5 capitalize font-medium">{todayLabel}</p>
-        </div>
-
-        {/* Stats rapides en haut à droite avec cartes translucides */}
-        <div className="relative z-10 flex items-center gap-2.5 flex-wrap p-6 sm:p-8 sm:pl-0">
-          {[
-            { label: 'Élèves', value: studentCount || 0, color: 'text-white' },
-            { label: 'Classes', value: classesCount || 0, color: 'text-white' },
-            { label: 'Recouvrement', value: `${recouvRate}%`, color: 'text-emerald-400' },
-            { label: 'Absents/jour', value: aCount, color: 'text-rose-400' },
-          ].map((stat, i) => (
-            <div key={i} className="bg-white/[0.05] border border-white/[0.08] hover:border-white/20 rounded-2xl px-4 py-3 text-center transition-all duration-300 group cursor-default">
-              <p className="text-[9px] text-white/40 font-bold uppercase tracking-[0.15em] mb-1">{stat.label}</p>
-              <p className={`text-xl font-black leading-none ${stat.color} group-hover:scale-105 inline-block transition-transform`}>
-                {stat.value}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
+        }
+      />
 
       {/* ── KPI BENTO GRID VIBRANT & COLORÉ (STYLE ORIGINAL PRESTIGE) ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">

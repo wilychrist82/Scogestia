@@ -31,10 +31,11 @@ import {
   ExternalLink,
   Wallet,
   ArrowUpRight,
-  BellRing,
   UserCheck,
+  BellRing,
 } from 'lucide-react'
 import { FinanceNavTabs } from './FinanceNavTabs'
+import { AuraHeroBanner } from '@/components/ui/AuraHeroBanner'
 
 export type Schedule = {
   id?: string
@@ -251,46 +252,36 @@ export function FinanceDashboard({
       {/* ── BARRE DE NAVIGATION D'ONGLETS FINANCE (CONTRASTE PARFAIT) ── */}
       <FinanceNavTabs basePath={basePath} />
 
-      {/* ── HERO BANNER PRESTIGE SOMBRE (CONTINUITÉ VISUELLE AVEC LE DASHBOARD) ── */}
-      <div className="relative overflow-hidden rounded-[1.75rem] bg-[#070b14] min-h-[160px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xl border border-white/[0.08] ring-1 ring-inset ring-white/[0.04] p-6 sm:p-8">
-        {/* Orbes lumineuses animées */}
-        <div className="absolute -top-16 -left-16 w-80 h-80 bg-emerald-500/20 rounded-full blur-[100px] pointer-events-none animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute -bottom-12 right-10 w-64 h-64 bg-violet-500/15 rounded-full blur-[80px] pointer-events-none animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
-
-        {/* Titre & Identification */}
-        <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 mb-2.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">Centre Financier & Trésorerie</p>
+      {/* ── HERO BANNER AURA COUCHER DE SOLEIL & VAGUE FLUIDE (STYLE RÉFÉRENCE) ── */}
+      <AuraHeroBanner
+        badge="CENTRE FINANCIER & TRÉSORERIE"
+        title={schoolName}
+        subtitle={`Vue d'ensemble de la solvabilité, suivi des encaissements de scolarité et recouvrement · ${academicYear}`}
+        stats={[
+          { label: 'Recouvrement', value: `${stats.taux}%`, color: 'text-emerald-300' },
+          { label: 'Encaissé', value: compact(stats.encaisse), color: 'text-white' },
+          { label: 'Reste', value: compact(stats.reste), color: 'text-amber-300' },
+          { label: 'Impayés', value: compact(stats.impayes), color: 'text-rose-300' },
+        ]}
+        actions={
+          <div className="flex items-center gap-2">
+            <Link
+              href={`${basePath}/rapports`}
+              className="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 font-bold px-4 py-2.5 rounded-xl shadow-md transition-all duration-200 text-xs hover:scale-105 active:scale-95"
+            >
+              <Receipt size={15} className="text-slate-700" />
+              <span>Rapport</span>
+            </Link>
+            <Link
+              href={`${basePath}/caisse`}
+              className="inline-flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 text-xs hover:scale-105 active:scale-95"
+            >
+              <Banknote size={15} />
+              <span>Guichet caisse</span>
+            </Link>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight tracking-tight flex items-center gap-3">
-            <span>{schoolName}</span>
-            <span className="text-xs font-semibold text-white/50 bg-white/[0.06] border border-white/[0.08] px-2.5 py-1 rounded-lg">
-              {academicYear}
-            </span>
-          </h1>
-          <p className="text-white/60 text-xs sm:text-sm mt-1 font-medium max-w-xl">
-            Vue d&apos;ensemble de la solvabilité, suivi des encaissements de scolarité et recouvrement des impayés.
-          </p>
-        </div>
-
-        {/* Capsules de statistiques rapides en verre translucide */}
-        <div className="relative z-10 flex items-center gap-2.5 flex-wrap sm:pl-0">
-          {[
-            { label: 'Recouvrement', value: `${stats.taux}%`, color: 'text-emerald-400' },
-            { label: 'Encaissé', value: compact(stats.encaisse), color: 'text-white' },
-            { label: 'Reste à percevoir', value: compact(stats.reste), color: 'text-amber-400' },
-            { label: 'Impayés', value: compact(stats.impayes), color: 'text-rose-400' },
-          ].map((stat, i) => (
-            <div key={i} className="bg-white/[0.05] border border-white/[0.08] hover:border-white/20 rounded-2xl px-4 py-3 text-center transition-all duration-300 min-w-[95px]">
-              <p className="text-[9px] text-white/40 font-bold uppercase tracking-[0.15em] mb-1">{stat.label}</p>
-              <p className={`text-xl font-black leading-none ${stat.color}`}>
-                {stat.value}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
+        }
+      />
 
       {/* ── 4 CARTES KPI BENTO COLORÉES (STYLE PRESTIGE SCOGESTIA) ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
