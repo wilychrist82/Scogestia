@@ -1,7 +1,7 @@
 'use client'
 
 import { LucideIcon } from 'lucide-react'
-import { AuraHeroBanner } from '@/components/ui/AuraHeroBanner'
+import { FinanceExecutiveBanner } from './FinanceExecutiveBanner'
 
 type Stat = {
   label: string
@@ -27,11 +27,10 @@ export function FinancePageBanner({
   actions,
 }: Props) {
   return (
-    <AuraHeroBanner
+    <FinanceExecutiveBanner
       title={title}
       subtitle={subtitle}
       badge={badge}
-      icon={icon}
       stats={stats}
       actions={actions}
       className="mb-6"
