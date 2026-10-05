@@ -11,13 +11,13 @@ export default async function CaissePage() {
 
   // 1. Authentification et Rôle
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect('/connexion')
 
   const { data: userRole } = await supabase
     .from('user_school_roles')
-    .select('role, school_id')
+    .select('role, school_id, full_name')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
   if (!userRole || !['admin', 'comptable'].includes(userRole.role)) {
     redirect('/admin')
@@ -28,20 +28,12 @@ export default async function CaissePage() {
     .from('schools')
     .select('name, logo_url, signature_url, stamp_url')
     .eq('id', userRole.school_id)
-    .single()
+    .maybeSingle()
 
-  // 2.5 Récupérer le nom du caissier
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('first_name, last_name')
-    .eq('id', user.id)
-    .single()
-  
-  const cashierName = profile ? `${profile.first_name} ${profile.last_name}` : 'La Direction'
+  // 2.5 Nom du caissier depuis user_school_roles
+  const cashierName = userRole.full_name || 'La Direction'
 
-  // 3. Récupérer tous les élèves et leurs échéances (dues) et paiements
-  // Note: On pourrait optimiser en ne chargeant que les élèves avec des dues, 
-  // mais pour l'instant on charge tout et on calcule côté client.
+  // 3. Récupérer tous les élèves et leurs échéances et paiements
   const { data: studentsData } = await supabase
     .from('students')
     .select(`
@@ -61,6 +53,7 @@ export default async function CaissePage() {
   const { data: paymentsData } = await supabase
     .from('payments')
     .select('schedule_id, amount')
+    .eq('school_id', userRole.school_id)
 
   // Assemblage des données
   const studentsMap = new Map<string, any>()

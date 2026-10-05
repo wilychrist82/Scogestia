@@ -2,9 +2,24 @@
 
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useCallback, useTransition } from 'react'
+import { useState, useCallback, useTransition, useEffect } from 'react'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Users } from 'lucide-react'
+import {
+  Users,
+  Search,
+  Upload,
+  Download,
+  UserPlus,
+  MoreVertical,
+  Eye,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle,
+  X,
+  Sparkles,
+  ArrowRight
+} from 'lucide-react'
 import { deleteStudent } from '@/app/actions/students'
 import { ImportStudentsModal } from './ImportStudentsModal'
 
@@ -40,17 +55,28 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '')
   const currentNiveau = searchParams.get('niveau') || 'Tous'
   const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
   const [openActionId, setOpenActionId] = useState<string | null>(null)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 
+  // Fermeture du menu d'action au clic extérieur
+  useEffect(() => {
+    if (!openActionId) return
+    const handleClick = () => setOpenActionId(null)
+    window.addEventListener('click', handleClick)
+    return () => window.removeEventListener('click', handleClick)
+  }, [openActionId])
+
   const handleDelete = (id: string, name: string) => {
-    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer l'élève ${name} ?`)) return
-    
+    if (!window.confirm(`Supprimer l'élève ${name} ? Cette action est irréversible.`)) return
+    setActionError(null)
+
     startTransition(async () => {
       const result = await deleteStudent(id)
       if (result?.error) {
-        alert(result.error)
+        setActionError(result.error)
+      } else {
+        setOpenActionId(null)
       }
     })
   }
@@ -58,6 +84,7 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
   const handleExportCSV = () => {
     if (!students || students.length === 0) return
     const headers = ['Matricule', 'Nom', 'Prénom', 'Classe', 'Statut']
+    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
     const rows = students.map(s => [
       s.matricule,
       s.last_name,
@@ -65,25 +92,26 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
       s.classes?.name || '',
       s.status
     ])
-    
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(r => r.map(cell => `"${cell}"`).join(','))
-    ].join('\n')
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const csvContent = [
+      headers.map(esc).join(';'),
+      ...rows.map(r => r.map(esc).join(';'))
+    ].join('\r\n')
+
+    // BOM UTF-8 + séparateur « ; » pour compatibilité Excel
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
-    link.setAttribute('download', `eleves_scogestia_${new Date().toISOString().split('T')[0]}.csv`)
+    link.download = `eleves_scogestia_${new Date().toISOString().split('T')[0]}.csv`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+    URL.revokeObjectURL(link.href)
   }
 
   const handleFilterChange = useCallback((key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
-    
-    // Auto-switch tab if class is selected
+
     if (key === 'classId' && value) {
       const selectedClass = classes.find(c => c.id === value)
       if (selectedClass && selectedClass.level) {
@@ -93,7 +121,7 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
         else if (['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].includes(level)) newNiveau = 'Primaire'
         else if (['6eme', '5eme', '4eme', '3eme', 'secondaire', 'collège', 'college'].includes(level)) newNiveau = 'Collège'
         else if (['2nde', '1ere', '1ère', 'tle', 'terminale', 'seconde', 'premiere', 'lycee', 'lycée'].includes(level)) newNiveau = 'Lycée'
-        
+
         if (newNiveau !== currentNiveau) {
           params.set('niveau', newNiveau)
         }
@@ -105,78 +133,98 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
     } else {
       params.delete(key)
     }
-    // Reset to page 1 on filter change
+
     if (key !== 'page') params.set('page', '1')
-    
+
     router.push(`/admin/eleves?${params.toString()}`)
   }, [searchParams, router, classes, currentNiveau])
 
   const totalPages = Math.ceil(totalCount / itemsPerPage)
-  const startItem = (currentPage - 1) * itemsPerPage + 1
+  const startItem = totalCount > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0
   const endItem = Math.min(currentPage * itemsPerPage, totalCount)
 
   return (
-    <div className="flex-1 flex flex-col min-h-[calc(100vh-4rem)] animate-in fade-in slide-in-from-bottom-2">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+    <div className="max-w-[1280px] mx-auto space-y-6 pb-8">
+      {/* En-tête de page */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-[var(--color-on-surface)] mb-1">Élèves</h2>
-          <p className="text-base text-[var(--color-on-surface-variant)]">Gérez la liste de tous les élèves inscrits.</p>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Gestion des élèves</h1>
+          <p className="text-sm text-slate-500 mt-1">Consultez, inscrivez et gérez les fiches de vos élèves.</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-          {/* Filter */}
-          <div className="relative w-full sm:w-auto">
-            <select 
-              className="appearance-none w-full sm:w-40 border border-[var(--color-outline-variant)] rounded-lg px-4 py-3 h-12 bg-[var(--color-surface)] text-[var(--color-on-surface)] text-sm font-semibold focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none pr-10 cursor-pointer"
-              onChange={(e) => handleFilterChange('classId', e.target.value)}
-              defaultValue={searchParams.get('classId') || ''}
-            >
-              <option value="">Toutes les classes</option>
-              {classes.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--color-on-surface-variant)]">expand_more</span>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Filtre Classe */}
+          <select
+            className="h-9 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/15 outline-none transition-all cursor-pointer"
+            onChange={(e) => handleFilterChange('classId', e.target.value)}
+            defaultValue={searchParams.get('classId') || ''}
+            aria-label="Filtrer par classe"
+          >
+            <option value="">Toutes les classes</option>
+            {classes.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+
           {/* Import CSV */}
-          <button onClick={() => setIsImportModalOpen(true)} className="bg-[var(--color-surface-container-high)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-sm font-semibold px-4 py-3 h-12 rounded-lg hover:bg-[var(--color-surface-container-highest)] hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shrink-0 shadow-sm active:scale-95">
-            <span className="material-symbols-outlined text-[20px]">upload_file</span>
-            Importer (CSV)
+          <button
+            type="button"
+            onClick={() => setIsImportModalOpen(true)}
+            className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium transition-colors"
+          >
+            <Upload size={14} /> Importer (CSV)
           </button>
+
           {/* Export CSV */}
-          <button onClick={handleExportCSV} className="bg-[var(--color-surface-container-high)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-sm font-semibold px-4 py-3 h-12 rounded-lg hover:bg-[var(--color-surface-container-highest)] hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shrink-0 shadow-sm active:scale-95">
-            <span className="material-symbols-outlined text-[20px]">download</span>
-            Exporter (CSV)
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            disabled={students.length === 0}
+            className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download size={14} /> Exporter
           </button>
-          {/* Primary Button */}
-          <Link href="/admin/eleves/nouveau" className="bg-[var(--color-primary)] text-white text-sm font-semibold px-6 py-3 h-12 rounded-lg hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto shrink-0 shadow-sm active:scale-95 group">
-            <span className="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">person_add</span>
-            Inscrire un élève
+
+          {/* Ajouter élève */}
+          <Link
+            href="/admin/eleves/nouveau"
+            className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium shadow-sm transition-colors"
+          >
+            <UserPlus size={15} /> Inscrire un élève
           </Link>
         </div>
       </div>
 
-      {/* Student Quota Widget */}
+      {actionError && (
+        <div role="alert" className="flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-800 px-4 py-3 text-sm">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <p className="flex-1">{actionError}</p>
+          <button type="button" onClick={() => setActionError(null)} aria-label="Fermer" className="opacity-60 hover:opacity-100">
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Widget Quota Élèves */}
       {studentQuota && (
-        <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] shadow-sm">
+        <div className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 shadow-sm">
-                <Users size={18} />
+              <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                <Users size={17} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-sm text-[var(--color-on-surface)]">Capacité d'accueil élèves</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    studentQuota.isPro 
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200' 
-                      : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                  <span className="font-semibold text-sm text-slate-900">Capacité de votre établissement</span>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                    studentQuota.isPro
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-slate-100 text-slate-700'
                   }`}>
                     Plan {studentQuota.planName}
                   </span>
                 </div>
-                <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">
-                  <strong>{studentQuota.current}</strong> sur <strong>{studentQuota.max}</strong> élèves inscrits au total ({Math.round((studentQuota.current / studentQuota.max) * 100)}%)
+                <p className="text-xs text-slate-500 mt-0.5">
+                  <strong className="text-slate-800 font-semibold">{studentQuota.current}</strong> sur <strong className="text-slate-800 font-semibold">{studentQuota.max}</strong> élèves inscrits ({Math.round((studentQuota.current / studentQuota.max) * 100)}%)
                 </p>
               </div>
             </div>
@@ -184,186 +232,211 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
             {!studentQuota.isPro ? (
               <Link
                 href="/admin/abonnement"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-sm transition-all whitespace-nowrap self-start sm:self-auto"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium transition-colors whitespace-nowrap self-start sm:self-auto"
               >
+                <Sparkles size={13} />
                 <span>Passer au Plan Pro (400 élèves)</span>
-                <span className="text-sm">→</span>
+                <ArrowRight size={12} />
               </Link>
             ) : (
-              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-3 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 self-start sm:self-auto">
-                ✓ Quota étendu (400 max)
+              <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 self-start sm:self-auto">
+                ✓ Quota Pro actif (400 max)
               </span>
             )}
           </div>
 
-          {/* Progress Bar */}
-          <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-            <div 
+          {/* Progress bar */}
+          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div
               className={`h-full rounded-full transition-all duration-500 ${
                 (studentQuota.current / studentQuota.max) >= 0.95
-                  ? 'bg-red-500'
+                  ? 'bg-rose-500'
                   : (studentQuota.current / studentQuota.max) >= 0.75
                     ? 'bg-amber-500'
-                    : 'bg-emerald-500'
+                    : 'bg-emerald-600'
               }`}
               style={{ width: `${Math.min(100, Math.round((studentQuota.current / studentQuota.max) * 100))}%` }}
             />
           </div>
 
           {studentQuota.current >= studentQuota.max && (
-            <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-2 flex items-center gap-1">
-              <span>⚠️ Limite atteinte : vous ne pouvez plus ajouter d'élève sans passer au Plan Pro.</span>
+            <p className="text-xs font-medium text-rose-600 mt-2 flex items-center gap-1">
+              <AlertCircle size={13} />
+              Capacité maximale atteinte. Passez au Plan Pro pour continuer à inscrire des élèves.
             </p>
           )}
         </div>
       )}
 
-      {/* Mobile Search */}
-      <div className="relative sm:hidden mb-6">
-        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)]">search</span>
-        <input 
-          className="w-full pl-10 pr-4 py-3 h-12 border border-[var(--color-outline-variant)] rounded-lg bg-[var(--color-surface)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none text-base" 
-          placeholder="Rechercher un élève..." 
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleFilterChange('search', searchTerm)}
-          type="text"
-        />
-      </div>
-
-      {/* Desktop Search & Tabs */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 border-b border-[var(--color-outline-variant)]">
-        {/* Tabs */}
-        <div className="flex gap-6 overflow-x-auto w-full sm:w-auto hide-scrollbar">
+      {/* Barre d'onglets de niveau et recherche */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 pb-3">
+        {/* Onglets Niveaux */}
+        <div className="flex gap-2 overflow-x-auto w-full sm:w-auto scrollbar-none" role="tablist">
           {['Tous', 'Maternelle', 'Primaire', 'Collège', 'Lycée'].map(niveau => (
             <button
               key={niveau}
+              type="button"
+              role="tab"
+              aria-selected={currentNiveau === niveau}
               onClick={() => handleFilterChange('niveau', niveau)}
-              className={`pb-3 px-2 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                currentNiveau === niveau 
-                  ? 'border-[var(--color-primary)] text-[var(--color-primary)]' 
-                  : 'border-transparent text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]'
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
+                currentNiveau === niveau
+                  ? 'bg-slate-900 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
               {niveau}
             </button>
           ))}
         </div>
-        
-        {/* Desktop Search */}
-        <div className="hidden sm:block w-72 relative pb-3">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)]">search</span>
-          <input 
-            className="w-full pl-10 pr-4 py-2 border border-[var(--color-outline-variant)] rounded-lg bg-[var(--color-surface)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none text-sm" 
-            placeholder="Rechercher un élève..." 
+
+        {/* Champ de recherche */}
+        <div className="w-full sm:w-72 relative">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            className="w-full h-9 pl-9 pr-3 bg-white border border-slate-200 rounded-lg text-sm placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/15 outline-none transition-all"
+            placeholder="Rechercher par nom, matricule…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleFilterChange('search', searchTerm)}
-            type="text"
+            type="search"
+            aria-label="Rechercher un élève"
           />
         </div>
       </div>
 
-      {/* Data Table Card */}
-      <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl overflow-hidden shadow-sm flex-1 flex flex-col">
+      {/* Tableau des élèves */}
+      <section className="bg-white rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden">
         {students.length === 0 ? (
-          <EmptyState 
-            title="Aucun élève trouvé"
-            description="Modifiez vos filtres ou inscrivez un nouvel élève."
-            icon={Users}
-            actionLabel="+ Ajouter un élève"
-            onAction={() => router.push('/admin/eleves/nouveau')}
-          />
+          <div className="p-8">
+            <EmptyState
+              title="Aucun élève trouvé"
+              description="Modifiez vos critères de recherche ou inscrivez un nouvel élève."
+              icon={Users}
+              actionLabel="+ Inscrire un élève"
+              onAction={() => router.push('/admin/eleves/nouveau')}
+            />
+          </div>
         ) : (
           <>
-            <div className="overflow-x-auto min-h-[300px] pb-32">
-              <table className="w-full text-left border-collapse min-w-[800px]">
+            <div className="overflow-x-auto min-h-[300px]">
+              <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="bg-[#eff4ff] border-b border-[var(--color-outline-variant)]">
-                    <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider">Matricule</th>
-                    <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider">Nom & Prénom</th>
-                    <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider">Classe</th>
-                    <th className="py-4 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider text-right">Actions</th>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500">
+                    <th className="py-3 px-5 font-medium">Matricule</th>
+                    <th className="py-3 px-5 font-medium">Nom & Prénom</th>
+                    <th className="py-3 px-5 font-medium">Classe</th>
+                    <th className="py-3 px-5 font-medium">Statut</th>
+                    <th className="py-3 px-5 font-medium text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="text-base text-[var(--color-on-surface)]">
+                <tbody className="divide-y divide-slate-100">
                   {students.map(student => (
-                    <tr key={student.id} className="border-b border-[var(--color-outline-variant)] hover:bg-[#eff4ff]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
-                      <td className="py-3 px-6 font-mono text-sm text-[var(--color-on-surface-variant)]">{student.matricule}</td>
-                      <td className="py-3 px-6 font-medium">{student.last_name} {student.first_name}</td>
-                      <td className="py-3 px-6">{student.classes?.name || 'Non assigné'}</td>
-                      <td className="py-3 px-6 text-right relative">
-                        <button 
-                          onClick={() => setOpenActionId(openActionId === student.id ? null : student.id)}
-                          className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[#eff4ff] rounded-full transition-all duration-300 hover:rotate-90 inline-block"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">more_vert</span>
-                        </button>
-                        
-                        {openActionId === student.id && (
-                          <div className="absolute right-6 top-10 w-40 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg shadow-lg z-10 flex flex-col overflow-hidden text-left py-1 animate-[fadeIn_0.1s_ease-out]">
-                            <Link 
-                              href={`/admin/eleves/${student.id}`} 
-                              className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors"
-                              onClick={() => setOpenActionId(null)}
+                    <tr key={student.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3 px-5 font-mono text-xs text-slate-600 font-medium">
+                        {student.matricule}
+                      </td>
+                      <td className="py-3 px-5 font-medium text-slate-900">
+                        <Link href={`/admin/eleves/${student.id}`} className="hover:text-emerald-700 transition-colors">
+                          {student.last_name} {student.first_name}
+                        </Link>
+                      </td>
+                      <td className="py-3 px-5 text-slate-600">
+                        {student.classes?.name || 'Non assigné'}
+                      </td>
+                      <td className="py-3 px-5">
+                        <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium border ${
+                          student.status === 'actif'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-slate-50 text-slate-600 border-slate-200'
+                        }`}>
+                          {student.status === 'actif' ? 'Inscrit' : student.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-5 text-right relative">
+                        <div className="flex justify-end items-center gap-1.5">
+                          <Link
+                            href={`/admin/eleves/${student.id}`}
+                            className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                            title="Voir la fiche"
+                          >
+                            <Eye size={13} /> Fiche
+                          </Link>
+
+                          <div className="relative" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => setOpenActionId(openActionId === student.id ? null : student.id)}
+                              aria-label="Plus d'actions"
+                              className="w-8 h-8 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 flex items-center justify-center transition-colors"
                             >
-                              <span className="material-symbols-outlined text-[18px]">visibility</span>
-                              Voir
-                            </Link>
-                            <Link 
-                              href={`/admin/eleves/${student.id}`} 
-                              className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors"
-                              onClick={() => setOpenActionId(null)}
-                            >
-                              <span className="material-symbols-outlined text-[18px]">edit</span>
-                              Modifier
-                            </Link>
-                            <button 
-                              onClick={() => {
-                                setOpenActionId(null);
-                                handleDelete(student.id, `${student.first_name} ${student.last_name}`);
-                              }}
-                              disabled={isPending}
-                              className="px-4 py-2 text-sm text-[var(--color-status-retard-text)] hover:bg-red-50 flex items-center gap-2 transition-colors w-full text-left disabled:opacity-50"
-                            >
-                              <span className="material-symbols-outlined text-[18px]">delete</span>
-                              Supprimer
+                              <MoreVertical size={16} />
                             </button>
+
+                            {openActionId === student.id && (
+                              <div
+                                role="menu"
+                                className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-[0_8px_24px_rgba(15,23,42,0.12)] border border-slate-200 p-1 z-20 text-left"
+                              >
+                                <Link
+                                  href={`/admin/eleves/${student.id}`}
+                                  className="w-full px-3 py-2 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                                  onClick={() => setOpenActionId(null)}
+                                >
+                                  <Eye size={14} className="text-slate-400" />
+                                  Détails & Scolarité
+                                </Link>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(student.id, `${student.first_name} ${student.last_name}`)}
+                                  disabled={isPending}
+                                  className="w-full px-3 py-2 rounded-md text-xs font-medium text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors disabled:opacity-50"
+                                >
+                                  <Trash2 size={14} />
+                                  Supprimer l&apos;élève
+                                </button>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+
             {/* Pagination */}
-            <div className="px-6 py-4 flex items-center justify-between border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] mt-auto">
-              <span className="text-sm font-medium text-[var(--color-on-surface-variant)]">
-                Affichage {startItem} à {endItem} sur {totalCount} élèves
+            <div className="px-5 py-3.5 flex items-center justify-between border-t border-slate-100 bg-slate-50/50">
+              <span className="text-xs text-slate-500">
+                Affichage de <strong className="text-slate-800 font-semibold">{startItem}</strong> à <strong className="text-slate-800 font-semibold">{endItem}</strong> sur <strong className="text-slate-800 font-semibold">{totalCount}</strong> élèves
               </span>
-              <div className="flex items-center gap-2">
-                <button 
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
                   onClick={() => handleFilterChange('page', String(currentPage - 1))}
                   disabled={currentPage <= 1}
-                  className="p-2 rounded border border-[var(--color-outline-variant)] text-[var(--color-on-surface-variant)] hover:bg-[#eff4ff] disabled:opacity-50 transition-colors flex items-center justify-center"
+                  aria-label="Page précédente"
+                  className="h-8 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1"
                 >
-                  <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                  <ChevronLeft size={14} /> Précédent
                 </button>
-                <button 
+                <button
+                  type="button"
                   onClick={() => handleFilterChange('page', String(currentPage + 1))}
                   disabled={currentPage >= totalPages}
-                  className="p-2 rounded border border-[var(--color-outline-variant)] text-[var(--color-on-surface-variant)] hover:bg-[#eff4ff] disabled:opacity-50 transition-colors flex items-center justify-center"
+                  aria-label="Page suivante"
+                  className="h-8 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-medium hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-1"
                 >
-                  <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                  Suivant <ChevronRight size={14} />
                 </button>
               </div>
             </div>
           </>
         )}
-      </div>
-      
-      <ImportStudentsModal 
+      </section>
+
+      <ImportStudentsModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         classes={classes}

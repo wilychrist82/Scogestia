@@ -10,18 +10,26 @@ export type ActionState = {
   success?: boolean;
 } | null;
 
-async function getActiveSchoolId() {
+const FINANCE_ROLES = ['admin', 'comptable']
+
+/**
+ * Retourne l'école active de l'utilisateur. Si `roles` est fourni, l'utilisateur doit y avoir au moins un de ces rôles
+ * (sinon l'action est refusée) — indispensable pour les Server Actions, appelables par tout utilisateur connecté.
+ */
+async function getActiveSchoolId(roles?: string[]) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Non authentifié');
 
-  const { data: roleData, error } = await supabase
+  let query = supabase
     .from('user_school_roles')
     .select('school_id')
-    .eq('user_id', user.id)
-    .single();
+    .eq('user_id', user.id);
+  if (roles) query = query.in('role', roles);
 
-  if (error || !roleData) throw new Error('École introuvable');
+  const { data: roleData, error } = await query.limit(1).maybeSingle();
+
+  if (error || !roleData) throw new Error(roles ? 'Action non autorisée pour votre rôle.' : 'École introuvable');
   return roleData.school_id;
 }
 
@@ -53,7 +61,7 @@ export async function generateSchedule(prevState: ActionState, formData: FormDat
   }
 
   try {
-    const school_id = await getActiveSchoolId();
+    const school_id = await getActiveSchoolId(FINANCE_ROLES);
     const supabase = await createClient();
     await assertActiveSubscription(supabase, school_id);
 
@@ -125,7 +133,7 @@ export async function recordPayment(prevState: ActionState, formData: FormData):
   const { schedule_id: scheduleId, amount, payment_method: paymentMethod, transaction_reference: transactionRef } = validatedFields.data;
 
   try {
-    const school_id = await getActiveSchoolId();
+    const school_id = await getActiveSchoolId(FINANCE_ROLES);
     const supabase = await createClient();
     await assertActiveSubscription(supabase, school_id);
     
@@ -141,6 +149,23 @@ export async function recordPayment(prevState: ActionState, formData: FormData):
 
     if (scheduleError || !schedule) {
       return { error: 'Échéance introuvable ou non autorisée.' };
+    }
+
+    // Contrôles serveur : échéance non soldée et montant ≤ reste dû (pas de trop-perçu)
+    if (schedule.status === 'paye') {
+      return { error: 'Cette échéance est déjà soldée.' };
+    }
+
+    const { data: previousPayments, error: prevError } = await supabase
+      .from('payments')
+      .select('amount')
+      .eq('schedule_id', schedule.id);
+    if (prevError) throw prevError;
+
+    const alreadyPaid = (previousPayments || []).reduce((sum, p) => sum + Number(p.amount), 0);
+    const remaining = Number(schedule.amount_due) - alreadyPaid;
+    if (amount > remaining) {
+      return { error: `Le montant dépasse le reste dû (${new Intl.NumberFormat('fr-FR').format(remaining)} FCFA).` };
     }
 
     const receiptNumber = `REC-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
@@ -207,6 +232,7 @@ export async function recordPayment(prevState: ActionState, formData: FormData):
     revalidatePath('/admin/finance/paiements');
     revalidatePath('/admin/finance/echeances');
     revalidatePath('/admin/finance');
+    revalidatePath('/admin');
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
@@ -225,7 +251,7 @@ export async function sendPaymentReminder(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
-  const schoolId = await getActiveSchoolId()
+  const schoolId = await getActiveSchoolId(FINANCE_ROLES)
 
   const formatCFA = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount).replace('XOF', 'FCFA')
@@ -267,7 +293,7 @@ export async function sendBulkPaymentReminders(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
-  const schoolId = await getActiveSchoolId()
+  const schoolId = await getActiveSchoolId(FINANCE_ROLES)
 
   const formatCFA = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount).replace('XOF', 'FCFA')

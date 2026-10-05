@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { Send, Search, Phone, MessageCircle, BellRing, Loader2, CheckCircle2, AlertCircle, PartyPopper, X, ChevronRight } from 'lucide-react'
 import { sendPaymentReminder, sendBulkPaymentReminders } from '@/app/actions/finance'
 
 type ImpayeItem = {
@@ -26,192 +27,248 @@ type Props = {
   impayes: ImpayeItem[]
 }
 
-export function ImpayesManager({ impayes, basePath = "/admin/finance" }: Props & { basePath?: string }) {
+type Feedback = { type: 'success' | 'error', message: string } | null
+
+const formatCFA = (amount: number) =>
+  `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount)} FCFA`
+
+/** Nombre de jours de retard (0 si l'échéance n'est pas encore dépassée). */
+const getDaysLate = (dueDateStr: string) => {
+  const due = new Date(dueDateStr)
+  const today = new Date()
+  due.setHours(0, 0, 0, 0)
+  today.setHours(0, 0, 0, 0)
+  return Math.max(0, Math.round((today.getTime() - due.getTime()) / 86_400_000))
+}
+
+export function ImpayesManager({ impayes, basePath = '/admin/finance' }: Props & { basePath?: string }) {
   const [isSendingBulk, setIsSendingBulk] = useState(false)
   const [sendingId, setSendingId] = useState<string | null>(null)
-  
-  const formatCFA = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount).replace('XOF', 'FCFA')
+  const [query, setQuery] = useState('')
+  const [feedback, setFeedback] = useState<Feedback>(null)
+
+  // On ne garde que les échéances réellement non soldées (reste dû > 0)
+  const rows = useMemo(() => impayes
+    .map(item => {
+      const paid = item.payments?.reduce((acc, p) => acc + Number(p.amount), 0) || 0
+      return {
+        item,
+        remainder: Number(item.amount_due) - paid,
+        daysLate: getDaysLate(item.due_date),
+        parentUserId: item.student?.parent_links?.[0]?.parent_user_id,
+        parentPhone: item.student?.parent_links?.[0]?.parent_user?.phone || null,
+      }
+    })
+    .filter(r => r.remainder > 0), [impayes])
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return rows
+    return rows.filter(({ item }) =>
+      `${item.student?.last_name} ${item.student?.first_name} ${item.student?.matricule} ${item.student?.classes?.name ?? ''}`
+        .toLowerCase().includes(q)
+    )
+  }, [rows, query])
+
+  const totalDu = filtered.reduce((acc, r) => acc + r.remainder, 0)
+
+  const handleBulk = async () => {
+    const reminders = filtered
+      .filter(r => r.parentUserId)
+      .map(r => ({
+        parentUserId: r.parentUserId as string,
+        studentName: `${r.item.student?.first_name} ${r.item.student?.last_name}`,
+        amountDue: r.remainder,
+        daysLate: r.daysLate,
+        label: r.item.label,
+      }))
+
+    if (reminders.length === 0) {
+      setFeedback({ type: 'error', message: "Aucun compte parent n'est associé à ces élèves." })
+      return
+    }
+    setIsSendingBulk(true)
+    setFeedback(null)
+    const result = await sendBulkPaymentReminders(reminders)
+    setIsSendingBulk(false)
+    setFeedback(result.error
+      ? { type: 'error', message: result.error }
+      : { type: 'success', message: `${reminders.length} relance${reminders.length > 1 ? 's' : ''} envoyée${reminders.length > 1 ? 's' : ''} avec succès.` })
   }
 
-  const getDaysLate = (dueDateStr: string) => {
-    const dueDate = new Date(dueDateStr)
-    const today = new Date()
-    const diffTime = Math.abs(today.getTime() - dueDate.getTime())
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  const handleSingle = async (r: typeof rows[number]) => {
+    if (!r.parentUserId) {
+      setFeedback({ type: 'error', message: 'Aucun compte parent associé pour cet élève.' })
+      return
+    }
+    setSendingId(r.item.id)
+    setFeedback(null)
+    const result = await sendPaymentReminder(
+      r.parentUserId,
+      `${r.item.student?.first_name} ${r.item.student?.last_name}`,
+      r.remainder,
+      r.daysLate,
+      r.item.label
+    )
+    setSendingId(null)
+    setFeedback(result.error
+      ? { type: 'error', message: result.error }
+      : { type: 'success', message: 'Relance envoyée avec succès.' })
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
-      <div className="max-w-[1280px] mx-auto space-y-6">
-        
-        {/* Top Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#fff0f0] p-6 rounded-xl border border-[#ffd6d6]">
-          <div>
-            <div className="flex items-center gap-2 text-[var(--color-status-retard-text)]/70 mb-2">
-              <Link href={basePath} className="hover:text-[var(--color-status-retard-text)] transition-colors text-sm font-semibold">
-                Finance
-              </Link>
-              <span className="material-symbols-outlined text-sm">chevron_right</span>
-              <span className="text-sm font-semibold text-[var(--color-status-retard-text)]">Impayés</span>
-            </div>
-            <h2 className="text-3xl font-bold text-[var(--color-status-retard-text)]">Suivi des Impayés</h2>
-            <p className="text-base text-[var(--color-status-retard-text)]/80 mt-1">Gérez les retards de paiement et relancez les parents.</p>
-          </div>
-          <button 
-            disabled={isSendingBulk || impayes.length === 0}
-            onClick={async () => {
-              if (impayes.length === 0) {
-                alert("Aucun impayé pour envoyer des relances.");
-                return;
-              }
-              setIsSendingBulk(true);
-              const reminders = impayes.map(item => {
-                const paid = item.payments?.reduce((acc, p) => acc + Number(p.amount), 0) || 0;
-                const remainder = item.amount_due - paid;
-                const daysLate = getDaysLate(item.due_date);
-                const parentUserId = item.student?.parent_links?.[0]?.parent_user_id;
-                
-                return {
-                  parentUserId: parentUserId || '',
-                  studentName: `${item.student?.first_name} ${item.student?.last_name}`,
-                  amountDue: remainder,
-                  daysLate,
-                  label: item.label
-                };
-              }).filter(r => r.parentUserId);
+    <div className="max-w-[1280px] mx-auto space-y-6 pb-8">
 
-              if (reminders.length === 0) {
-                alert("Aucun parent n'est associé à ces élèves.");
-                setIsSendingBulk(false);
-                return;
-              }
+      {/* En-tête de page */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+        <div>
+          <nav className="flex items-center gap-1 text-xs text-slate-500 mb-1.5" aria-label="Fil d'Ariane">
+            <Link href={basePath} className="hover:text-slate-800 transition-colors">Finance</Link>
+            <ChevronRight size={12} />
+            <span className="text-slate-800 font-medium">Impayés</span>
+          </nav>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Suivi des impayés</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            {rows.length > 0
+              ? <>{rows.length} dossier{rows.length > 1 ? 's' : ''} en retard · <span className="font-medium text-rose-600">{formatCFA(rows.reduce((a, r) => a + r.remainder, 0))}</span> à recouvrer</>
+              : 'Gérez les retards de paiement et relancez les parents.'}
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={isSendingBulk || filtered.length === 0}
+          onClick={handleBulk}
+          className="inline-flex items-center justify-center gap-2 h-9 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed self-start sm:self-auto"
+        >
+          {isSendingBulk ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+          {query ? 'Relancer la sélection' : 'Relancer tout'}
+        </button>
+      </div>
 
-              const result = await sendBulkPaymentReminders(reminders);
-              if (result.error) {
-                alert(result.error);
-              } else {
-                alert("Les relances ont été envoyées avec succès !");
-              }
-              setIsSendingBulk(false);
-            }}
-            className="flex items-center justify-center gap-2 bg-[var(--color-status-retard-text)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:bg-red-700 transition-colors shadow-sm w-full sm:w-auto shrink-0 disabled:opacity-50 cursor-pointer">
-            {isSendingBulk ? (
-              <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
-            ) : (
-              <span className="material-symbols-outlined text-[20px]">send</span>
-            )}
-            Relancer tout
+      {/* Retour d'action */}
+      {feedback && (
+        <div
+          role="status"
+          className={`flex items-start gap-2.5 rounded-lg border px-4 py-3 text-sm ${
+            feedback.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border-rose-200 text-rose-800'
+          }`}
+        >
+          {feedback.type === 'success' ? <CheckCircle2 size={16} className="mt-0.5 shrink-0" /> : <AlertCircle size={16} className="mt-0.5 shrink-0" />}
+          <p className="flex-1">{feedback.message}</p>
+          <button type="button" onClick={() => setFeedback(null)} aria-label="Fermer" className="opacity-60 hover:opacity-100">
+            <X size={14} />
           </button>
         </div>
+      )}
 
-        {/* Data Table Container */}
-        <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] overflow-hidden shadow-sm flex flex-col min-h-[500px]">
-          <div className="p-4 border-b border-[var(--color-outline-variant)] flex flex-col sm:flex-row gap-4 bg-[var(--color-surface-bright)] justify-between items-center">
-            <div className="relative flex-grow max-w-md">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)]">search</span>
-              <input className="w-full pl-10 pr-4 py-2.5 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none transition-all" placeholder="Rechercher (élève, classe)..." type="text"/>
-            </div>
-            <span className="text-sm font-medium text-[var(--color-on-surface-variant)]">{impayes.length} dossiers en retard</span>
+      {/* Tableau */}
+      <section className="bg-white rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden">
+        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 justify-between sm:items-center">
+          <div className="relative w-full sm:max-w-sm">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              className="w-full h-9 pl-9 pr-3 bg-white border border-slate-200 rounded-lg text-sm placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/15 outline-none transition-all"
+              placeholder="Rechercher un élève, un matricule, une classe…"
+              type="search"
+              aria-label="Rechercher dans les impayés"
+            />
           </div>
+          <p className="text-xs text-slate-500">
+            {filtered.length} résultat{filtered.length > 1 ? 's' : ''}
+            {filtered.length > 0 && <> · <span className="font-medium text-slate-700">{formatCFA(totalDu)}</span></>}
+          </p>
+        </div>
 
-          {impayes.length === 0 ? (
-             <div className="p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] flex-1">
-               <span className="material-symbols-outlined text-4xl mb-2 opacity-50">sentiment_satisfied</span>
-               <p className="text-lg font-medium">Aucun impayé trouvé</p>
-               <p className="text-sm">Tous vos élèves sont à jour dans leurs paiements.</p>
+        {rows.length === 0 ? (
+          <div className="py-16 flex flex-col items-center text-center px-4">
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center mb-3">
+              <PartyPopper size={20} />
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-[var(--color-surface-container-low)] border-b border-[var(--color-outline-variant)] text-[var(--color-on-surface-variant)] text-sm">
-                    <th className="py-4 px-6 font-semibold">Élève</th>
-                    <th className="py-4 px-6 font-semibold">Classe</th>
-                    <th className="py-4 px-6 font-semibold">Contact Parent</th>
-                    <th className="py-4 px-6 font-semibold text-right">Reste à payer</th>
-                    <th className="py-4 px-6 font-semibold text-center">Retard</th>
-                    <th className="py-4 px-6 font-semibold text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--color-outline-variant)] text-base">
-                  {impayes.map((item) => {
-                    const paid = item.payments?.reduce((acc, p) => acc + Number(p.amount), 0) || 0
-                    const remainder = item.amount_due - paid
-                    const daysLate = getDaysLate(item.due_date)
-                    const parentPhone = item.student?.parent_links?.[0]?.parent_user?.phone || 'Non renseigné'
-                    
-                    return (
-                      <tr key={item.id} className="hover:bg-[var(--color-surface-container-lowest)]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
-                        <td className="py-3 px-6 font-medium text-[var(--color-on-surface)]">
-                          {item.student?.last_name} {item.student?.first_name}
-                        </td>
-                        <td className="py-3 px-6 text-[var(--color-on-surface-variant)]">
-                          {item.student?.classes?.name || '-'}
-                        </td>
-                        <td className="py-3 px-6 text-[var(--color-on-surface-variant)] flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[16px]">call</span>
-                          {parentPhone}
-                        </td>
-                        <td className="py-3 px-6 text-right font-bold text-[var(--color-status-retard-text)]">{formatCFA(remainder)}</td>
-                        <td className="py-3 px-6 text-center">
-                          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#fce8e6] text-[#d93025]">
-                            {daysLate} jours
-                          </span>
-                        </td>
-                        <td className="py-3 px-6 text-right flex justify-end gap-2">
-                          {parentPhone !== 'Non renseigné' && (
-                            <a 
-                              href={`https://wa.me/${parentPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Bonjour, sauf erreur de notre part, le paiement de "${item.label}" (reste: ${formatCFA(remainder)}) pour votre enfant ${item.student?.first_name} ${item.student?.last_name} est en retard de ${daysLate} jours. Merci de régulariser la situation.`)}`}
+            <p className="text-sm font-medium text-slate-800">Aucun impayé</p>
+            <p className="text-xs text-slate-500 mt-1">Tous les élèves sont à jour dans leurs paiements.</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-16 text-center px-4">
+            <p className="text-sm font-medium text-slate-800">Aucun résultat</p>
+            <p className="text-xs text-slate-500 mt-1">Aucun dossier ne correspond à « {query} ».</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500">
+                  <th className="py-3 px-5 font-medium">Élève</th>
+                  <th className="py-3 px-5 font-medium">Classe</th>
+                  <th className="py-3 px-5 font-medium">Contact parent</th>
+                  <th className="py-3 px-5 font-medium text-right">Reste à payer</th>
+                  <th className="py-3 px-5 font-medium text-center">Retard</th>
+                  <th className="py-3 px-5 font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.map((r) => {
+                  const { item, remainder, daysLate, parentPhone, parentUserId } = r
+                  const waText = `Bonjour, sauf erreur de notre part, le paiement de "${item.label}" (reste : ${formatCFA(remainder)}) pour votre enfant ${item.student?.first_name} ${item.student?.last_name} est en retard de ${daysLate} jour${daysLate > 1 ? 's' : ''}. Merci de régulariser la situation.`
+                  const severity = daysLate > 30 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+
+                  return (
+                    <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3 px-5">
+                        <p className="font-medium text-slate-900">{item.student?.last_name} {item.student?.first_name}</p>
+                        <p className="text-xs text-slate-500">{item.label}</p>
+                      </td>
+                      <td className="py-3 px-5 text-slate-600">{item.student?.classes?.name || '—'}</td>
+                      <td className="py-3 px-5 text-slate-600">
+                        {parentPhone ? (
+                          <span className="inline-flex items-center gap-1.5"><Phone size={13} className="text-slate-400" />{parentPhone}</span>
+                        ) : (
+                          <span className="text-slate-400">Non renseigné</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-5 text-right font-semibold text-rose-600 tabular-nums whitespace-nowrap">{formatCFA(remainder)}</td>
+                      <td className="py-3 px-5 text-center">
+                        <span className={`inline-flex px-2 py-0.5 rounded-md border text-xs font-medium tabular-nums ${severity}`}>
+                          {daysLate} j
+                        </span>
+                      </td>
+                      <td className="py-3 px-5">
+                        <div className="flex justify-end items-center gap-2">
+                          {parentPhone && (
+                            <a
+                              href={`https://wa.me/${parentPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(waText)}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="w-9 h-9 rounded-full bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white flex items-center justify-center transition-colors shadow-sm"
+                              className="w-8 h-8 rounded-lg border border-slate-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 flex items-center justify-center transition-colors"
                               title="Relancer par WhatsApp"
+                              aria-label="Relancer par WhatsApp"
                             >
-                              <span className="material-symbols-outlined text-[20px]">chat</span>
+                              <MessageCircle size={15} />
                             </a>
                           )}
-                          <button 
-                            disabled={sendingId === item.id || !item.student?.parent_links?.[0]?.parent_user_id}
-                            onClick={async () => {
-                              const parentUserId = item.student?.parent_links?.[0]?.parent_user_id;
-                              if (!parentUserId) {
-                                alert("Aucun compte parent associé pour cet élève.");
-                                return;
-                              }
-                              setSendingId(item.id);
-                              const result = await sendPaymentReminder(
-                                parentUserId,
-                                `${item.student?.first_name} ${item.student?.last_name}`,
-                                remainder,
-                                daysLate,
-                                item.label
-                              );
-                              if (result.error) {
-                                alert(result.error);
-                              } else {
-                                alert("Relance envoyée avec succès !");
-                              }
-                              setSendingId(null);
-                            }}
-                            className="text-[var(--color-primary)] hover:text-white hover:bg-[var(--color-primary)] transition-colors p-1 flex items-center gap-1 text-sm font-semibold border border-[var(--color-primary)] rounded px-3 py-1.5 disabled:opacity-50 cursor-pointer" title="Relancer In-App">
-                            {sendingId === item.id ? (
-                              <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
-                            ) : (
-                              <span className="material-symbols-outlined text-[18px]">notifications_active</span>
-                            )}
-                            In-App
+                          <button
+                            type="button"
+                            disabled={sendingId === item.id || !parentUserId}
+                            onClick={() => handleSingle(r)}
+                            title={parentUserId ? 'Envoyer une notification dans l\u2019application' : 'Aucun compte parent associé'}
+                            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {sendingId === item.id ? <Loader2 size={13} className="animate-spin" /> : <BellRing size={13} />}
+                            Relancer
                           </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   )
 }

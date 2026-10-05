@@ -4,19 +4,21 @@ import { LayoutGrid } from 'lucide-react'
 
 export function RaccourcisTrigger() {
   return (
-    <div
-      className="group flex flex-col items-center gap-2 p-3 rounded-xl border border-transparent hover:bg-slate-50 hover:border-slate-200 transition-all duration-200 cursor-pointer"
+    <button
+      type="button"
+      className="group flex items-center gap-3 p-3 rounded-lg border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-colors text-left"
       onClick={() => {
         const event = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })
         window.dispatchEvent(event)
       }}
     >
-      <div className="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center group-hover:bg-slate-600 group-hover:text-white group-hover:scale-110 transition-all duration-200 shadow-sm">
-        <LayoutGrid size={20} />
-      </div>
-      <span className="text-[11px] font-bold text-[var(--color-on-surface)] text-center leading-tight">
-        Raccourcis<br />⌘K
+      <span className="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 group-hover:bg-emerald-700 group-hover:text-white flex items-center justify-center transition-colors shrink-0">
+        <LayoutGrid size={17} />
       </span>
-    </div>
+      <span className="text-xs font-medium text-slate-700 leading-tight">
+        Recherche rapide
+        <kbd className="ml-1.5 text-[10px] font-mono text-slate-500">Ctrl K</kbd>
+      </span>
+    </button>
   )
 }

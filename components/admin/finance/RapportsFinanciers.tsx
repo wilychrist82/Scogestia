@@ -1,6 +1,7 @@
 'use client'
 
-import { TrendingUp, TrendingDown, Banknote, Users, Receipt, AlertTriangle, Download } from 'lucide-react'
+import Link from 'next/link'
+import { TrendingUp, Banknote, Users, Receipt, AlertTriangle, Download, ChevronRight } from 'lucide-react'
 
 type Stats = {
   totalEncaisse: number
@@ -27,31 +28,34 @@ type Props = {
   stats: Stats
   payments: PaymentItem[]
   schedules: ScheduleItem[]
+  basePath?: string
 }
 
 const formatCFA = (amount: number) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 })
-    .format(amount)
-    .replace('XOF', 'FCFA')
+  `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount)} FCFA`
 
 const METHOD_LABELS: Record<string, string> = {
   especes: 'Espèces',
-  mobile_money: 'Mobile Money',
+  tmoney: 'T-Money',
+  flooz: 'Flooz',
+  wave: 'Wave',
   virement: 'Virement bancaire',
   cheque: 'Chèque',
   Autre: 'Autre',
 }
 
-export function RapportsFinanciers({ stats, payments, schedules }: Props) {
+export function RapportsFinanciers({ stats, payments, schedules, basePath = '/admin/finance' }: Props) {
+  // Taux plafonné à 100%
   const tauxRecouvrement = stats.totalAttendu > 0
-    ? Math.round((stats.totalEncaisse / stats.totalAttendu) * 100)
+    ? Math.min(100, Math.round((stats.totalEncaisse / stats.totalAttendu) * 100))
     : 0
 
-  const soldeRestant = stats.totalAttendu - stats.totalEncaisse
+  const soldeRestant = Math.max(0, stats.totalAttendu - stats.totalEncaisse)
 
   // Grouper paiements par mois
   const parMois: Record<string, number> = {}
   payments.forEach(p => {
+    if (!p.paid_at) return
     const mois = new Date(p.paid_at).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
     parMois[mois] = (parMois[mois] || 0) + Number(p.amount)
   })
@@ -59,197 +63,183 @@ export function RapportsFinanciers({ stats, payments, schedules }: Props) {
 
   const handleExport = () => {
     const lines = [
-      'Rapport Financier Scogestia',
-      `Généré le : ${new Date().toLocaleDateString('fr-FR')}`,
+      'RAPPORT FINANCIER SCOGESTIA',
+      `Date d'exportation : ${new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`,
       '',
-      '--- SYNTHÈSE ---',
-      `Total attendu : ${formatCFA(stats.totalAttendu)}`,
-      `Total encaissé : ${formatCFA(stats.totalEncaisse)}`,
-      `Solde restant : ${formatCFA(soldeRestant)}`,
-      `Taux de recouvrement : ${tauxRecouvrement}%`,
-      `Nombre d'impayés : ${stats.nbImpayes}`,
+      '--- SYNTHÈSE GLOBALE ---',
+      `Total attendu       : ${formatCFA(stats.totalAttendu)}`,
+      `Total encaissé      : ${formatCFA(stats.totalEncaisse)}`,
+      `Solde restant       : ${formatCFA(soldeRestant)}`,
+      `Taux de recouvrement: ${tauxRecouvrement}%`,
+      `Dossiers impayés    : ${stats.nbImpayes}`,
       `Nombre de paiements : ${stats.nbPaiements}`,
-      `Nombre d'élèves actifs : ${stats.nbEleves}`,
+      `Élèves actifs       : ${stats.nbEleves}`,
       '',
-      '--- RÉPARTITION PAR MÉTHODE ---',
+      '--- RÉPARTITION PAR MÉTHODE DE PAIEMENT ---',
       ...Object.entries(stats.repartitionMethode).map(
-        ([method, amount]) => `${METHOD_LABELS[method] || method} : ${formatCFA(amount)}`
+        ([method, amount]) => `${(METHOD_LABELS[method] || method).padEnd(20)} : ${formatCFA(amount)}`
       ),
     ]
 
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/plain;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = `rapport-financier-${new Date().toISOString().split('T')[0]}.txt`
+    document.body.appendChild(a)
     a.click()
+    document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }
 
+  const kpis = [
+    { label: 'Total encaissé', value: formatCFA(stats.totalEncaisse), icon: TrendingUp, tint: 'bg-emerald-50 text-emerald-700 border-emerald-100', valueCls: 'text-emerald-700' },
+    { label: 'Total attendu', value: formatCFA(stats.totalAttendu), icon: Banknote, tint: 'bg-slate-100 text-slate-700 border-slate-200', valueCls: 'text-slate-900' },
+    { label: 'Impayés en retard', value: `${stats.nbImpayes} dossier${stats.nbImpayes > 1 ? 's' : ''}`, icon: AlertTriangle, tint: 'bg-rose-50 text-rose-700 border-rose-100', valueCls: 'text-rose-600' },
+    { label: 'Élèves actifs', value: `${stats.nbEleves} élève${stats.nbEleves > 1 ? 's' : ''}`, icon: Users, tint: 'bg-blue-50 text-blue-700 border-blue-100', valueCls: 'text-slate-900' },
+  ]
+
   return (
     <div className="space-y-6 max-w-[1280px] mx-auto pb-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* En-tête */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Rapports Financiers</h1>
-          <p className="text-gray-500">Consultez les bilans, encaissements et statistiques financières.</p>
+          <nav className="flex items-center gap-1 text-xs text-slate-500 mb-1.5" aria-label="Fil d'Ariane">
+            <Link href={basePath} className="hover:text-slate-800 transition-colors">Finance</Link>
+            <ChevronRight size={12} />
+            <span className="text-slate-800 font-medium">Rapports</span>
+          </nav>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Rapports financiers</h1>
+          <p className="text-sm text-slate-500 mt-1">Consultez les bilans, flux de trésorerie et statistiques de recouvrement.</p>
         </div>
         <button
+          type="button"
           onClick={handleExport}
-          className="flex items-center gap-2 bg-[var(--color-primary)] text-white px-5 py-2.5 rounded-lg font-semibold text-sm hover:opacity-90 transition-all shadow-sm w-full sm:w-auto justify-center"
+          className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium transition-colors shadow-2xs self-start sm:self-auto"
         >
-          <Download size={16} />
-          Exporter le rapport
+          <Download size={15} /> Exporter la synthèse
         </button>
       </div>
 
-      {/* KPI Cards */}
+      {/* Cartes KPI */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center shrink-0">
-            <TrendingUp size={22} className="text-green-600" />
+        {kpis.map(({ label, value, icon: Icon, tint, valueCls }) => (
+          <div key={label} className="bg-white rounded-xl border border-slate-200 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-slate-500">{label}</p>
+              <span className={`w-7 h-7 rounded-md border flex items-center justify-center ${tint}`}>
+                <Icon size={14} />
+              </span>
+            </div>
+            <p className={`text-xl font-semibold tabular-nums tracking-tight mt-3 ${valueCls}`}>{value}</p>
           </div>
-          <div>
-            <p className="text-xs text-gray-500 font-medium mb-0.5">Total encaissé</p>
-            <p className="text-xl font-bold text-gray-900 leading-tight">{formatCFA(stats.totalEncaisse)}</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-            <Banknote size={22} className="text-blue-600" />
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 font-medium mb-0.5">Total attendu</p>
-            <p className="text-xl font-bold text-gray-900 leading-tight">{formatCFA(stats.totalAttendu)}</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-red-200 shadow-sm p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center shrink-0">
-            <AlertTriangle size={22} className="text-red-600" />
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 font-medium mb-0.5">Impayés en retard</p>
-            <p className="text-xl font-bold text-red-600 leading-tight">{stats.nbImpayes} dossiers</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
-            <Users size={22} className="text-purple-600" />
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 font-medium mb-0.5">Élèves actifs</p>
-            <p className="text-xl font-bold text-gray-900 leading-tight">{stats.nbEleves}</p>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Taux de recouvrement */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <section className="bg-white rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Taux de recouvrement global</h2>
-            <p className="text-sm text-gray-500">Proportion des paiements effectivement encaissés</p>
+            <h2 className="text-sm font-semibold text-slate-900">Taux de recouvrement global</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Proportion des paiements effectivement encaissés sur l&apos;année</p>
           </div>
-          <span className={`text-3xl font-black ${tauxRecouvrement >= 80 ? 'text-green-600' : tauxRecouvrement >= 50 ? 'text-orange-500' : 'text-red-600'}`}>
+          <span className={`text-2xl font-bold tabular-nums ${tauxRecouvrement >= 80 ? 'text-emerald-700' : tauxRecouvrement >= 50 ? 'text-amber-600' : 'text-rose-600'}`}>
             {tauxRecouvrement}%
           </span>
         </div>
-        <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden">
+        <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
           <div
-            className={`h-4 rounded-full transition-all duration-700 ${tauxRecouvrement >= 80 ? 'bg-green-500' : tauxRecouvrement >= 50 ? 'bg-orange-400' : 'bg-red-500'}`}
+            className={`h-3 rounded-full transition-all duration-700 ${tauxRecouvrement >= 80 ? 'bg-emerald-600' : tauxRecouvrement >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`}
             style={{ width: `${Math.min(tauxRecouvrement, 100)}%` }}
           />
         </div>
-        <div className="flex justify-between mt-2 text-xs text-gray-500">
+        <div className="flex justify-between mt-2.5 text-xs text-slate-500">
           <span>0%</span>
-          <span>Solde restant : <strong className="text-gray-900">{formatCFA(soldeRestant)}</strong></span>
+          <span>Solde restant : <strong className="text-slate-800 font-semibold">{formatCFA(soldeRestant)}</strong></span>
           <span>100%</span>
         </div>
-      </div>
+      </section>
 
-      {/* Grille bas */}
+      {/* Grille détaillée */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Paiements par méthode */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Répartition par méthode de paiement</h2>
+        <section className="bg-white rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-6">
+          <h2 className="text-sm font-semibold text-slate-900 mb-1">Répartition par moyen de paiement</h2>
+          <p className="text-xs text-slate-500 mb-4">Volume total encaissé par canal</p>
+
           {Object.keys(stats.repartitionMethode).length === 0 ? (
-            <p className="text-gray-400 text-sm italic text-center py-8">Aucun paiement enregistré.</p>
+            <p className="text-slate-400 text-xs italic text-center py-8">Aucun paiement enregistré.</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {Object.entries(stats.repartitionMethode).map(([method, amount]) => {
-                const pct = Math.round((amount / stats.totalEncaisse) * 100)
+                const pct = stats.totalEncaisse > 0 ? Math.round((amount / stats.totalEncaisse) * 100) : 0
                 return (
                   <div key={method}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium text-gray-700">{METHOD_LABELS[method] || method}</span>
-                      <span className="text-gray-900 font-bold">{formatCFA(amount)} <span className="text-gray-400 font-normal">({pct}%)</span></span>
+                    <div className="flex justify-between text-xs mb-1.5">
+                      <span className="font-medium text-slate-700">{METHOD_LABELS[method] || method}</span>
+                      <span className="text-slate-900 font-semibold tabular-nums">
+                        {formatCFA(amount)} <span className="text-slate-400 font-normal">({pct}%)</span>
+                      </span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2">
-                      <div
-                        className="h-2 rounded-full bg-[var(--color-primary)]"
-                        style={{ width: `${pct}%` }}
-                      />
+                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                      <div className="h-2 rounded-full bg-emerald-700" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 )
               })}
             </div>
           )}
-        </div>
+        </section>
 
         {/* Historique mensuel */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Encaissements par mois</h2>
+        <section className="bg-white rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-6">
+          <h2 className="text-sm font-semibold text-slate-900 mb-1">Encaissements mensuels récents</h2>
+          <p className="text-xs text-slate-500 mb-4">Évolution des encaissements sur les derniers mois</p>
+
           {derniersMois.length === 0 ? (
-            <p className="text-gray-400 text-sm italic text-center py-8">Aucun paiement enregistré.</p>
+            <p className="text-slate-400 text-xs italic text-center py-8">Aucun paiement enregistré.</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {derniersMois.map(([mois, montant]) => {
-                const maxMontant = Math.max(...derniersMois.map(([, m]) => m))
+                const maxMontant = Math.max(...derniersMois.map(([, m]) => m)) || 1
                 const pct = Math.round((montant / maxMontant) * 100)
                 return (
                   <div key={mois}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium text-gray-700 capitalize">{mois}</span>
-                      <span className="text-gray-900 font-bold">{formatCFA(montant)}</span>
+                    <div className="flex justify-between text-xs mb-1.5">
+                      <span className="font-medium text-slate-700 capitalize">{mois}</span>
+                      <span className="text-slate-900 font-semibold tabular-nums">{formatCFA(montant)}</span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2">
-                      <div
-                        className="h-2 rounded-full bg-green-500"
-                        style={{ width: `${pct}%` }}
-                      />
+                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                      <div className="h-2 rounded-full bg-emerald-600" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 )
               })}
             </div>
           )}
-        </div>
+        </section>
       </div>
 
-      {/* Récapitulatif */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      {/* Récapitulatif chiffres clés */}
+      <section className="bg-white rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Receipt size={20} className="text-[var(--color-primary)]" />
-          <h2 className="text-lg font-bold text-gray-900">Récapitulatif global</h2>
+          <Receipt size={17} className="text-emerald-700" />
+          <h2 className="text-sm font-semibold text-slate-900">Indicateurs de gestion</h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Paiements reçus', value: stats.nbPaiements.toString(), color: 'text-green-600' },
-            { label: 'Dossiers impayés', value: stats.nbImpayes.toString(), color: 'text-red-600' },
-            { label: 'Élèves actifs', value: stats.nbEleves.toString(), color: 'text-blue-600' },
-            { label: 'Taux recouvrement', value: `${tauxRecouvrement}%`, color: tauxRecouvrement >= 80 ? 'text-green-600' : 'text-orange-500' },
+            { label: 'Paiements enregistrés', value: stats.nbPaiements.toString(), color: 'text-slate-900' },
+            { label: 'Dossiers en retard', value: stats.nbImpayes.toString(), color: stats.nbImpayes > 0 ? 'text-rose-600' : 'text-slate-900' },
+            { label: 'Élèves actifs', value: stats.nbEleves.toString(), color: 'text-slate-900' },
+            { label: 'Recouvrement', value: `${tauxRecouvrement}%`, color: 'text-emerald-700' },
           ].map(item => (
-            <div key={item.label} className="text-center p-4 bg-gray-50 rounded-xl">
-              <p className={`text-2xl font-black ${item.color}`}>{item.value}</p>
-              <p className="text-xs text-gray-500 mt-1 font-medium">{item.label}</p>
+            <div key={item.label} className="p-3.5 bg-slate-50 border border-slate-100 rounded-lg text-center">
+              <p className={`text-xl font-bold tabular-nums ${item.color}`}>{item.value}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{item.label}</p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   )
 }

@@ -22,6 +22,14 @@ export default async function PaiementsPage() {
 
   const schoolId = roleData.school_id
 
+  const { data: school } = await supabase
+    .from('schools')
+    .select('name, city')
+    .eq('id', schoolId)
+    .maybeSingle()
+
+  // NB : auth.users n'est pas exposée par PostgREST — l'ancien embed `recorded_by_user:auth.users(...)`
+  // faisait échouer toute la requête (liste toujours vide). On ne le sélectionne donc plus.
   const { data: payments, error } = await supabase
     .from('payments')
     .select(`
@@ -30,18 +38,17 @@ export default async function PaiementsPage() {
       payment_method,
       transaction_reference,
       paid_at,
-      schedule:payment_schedules(label),
+      schedule:payment_schedules(label, amount_due, payments(amount)),
       student:students(
         last_name,
         first_name,
         classes(name)
-      ),
-      recorded_by_user:auth.users(raw_user_meta_data)
+      )
     `)
     .eq('school_id', schoolId)
     .order('paid_at', { ascending: false })
 
-  // Fetch pending schedules for the modal
+  // Échéances à encaisser (avec les paiements déjà reçus pour afficher le reste dû)
   const { data: pendingSchedules } = await supabase
     .from('payment_schedules')
     .select(`
@@ -49,20 +56,24 @@ export default async function PaiementsPage() {
       label,
       amount_due,
       status,
-      student:students(last_name, first_name, matricule)
+      student:students(last_name, first_name, matricule),
+      payments(amount)
     `)
     .eq('school_id', schoolId)
     .in('status', ['en_attente', 'partiel', 'en_retard'])
     .order('due_date', { ascending: true })
 
   if (error) {
-    console.error("Erreur de récupération des paiements:", error)
+    console.error('Erreur de récupération des paiements:', error)
   }
 
   return (
-    <PaiementsManager 
-      payments={(error ? [] : payments as any) || []} 
-      pendingSchedules={(pendingSchedules as any) || []} 
+    <PaiementsManager
+      payments={(error ? [] : payments as any) || []}
+      pendingSchedules={(pendingSchedules as any) || []}
+      schoolName={school?.name || 'Établissement'}
+      schoolCity={(school as any)?.city || ''}
+      loadError={Boolean(error)}
     />
   )
 }

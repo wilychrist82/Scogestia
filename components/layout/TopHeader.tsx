@@ -144,7 +144,7 @@ export function TopHeader({
         <button 
           type="button"
           onClick={onMenuClick} 
-          className="relative text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 p-2 rounded-xl transition-all flex-shrink-0 active:scale-95"
+          className="md:hidden relative text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 p-2 rounded-xl transition-all flex-shrink-0 active:scale-95"
           aria-label="Ouvrir le menu de navigation"
         >
           <Menu size={20} />
