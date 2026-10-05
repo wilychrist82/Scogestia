@@ -87,28 +87,8 @@ const mainNavItems: NavItem[] = [
       { label: 'Bulletins & Livrets', href: '/admin/academique/bulletins' },
     ]
   },
-  { 
-    label: 'Communication', 
-    href: '/admin/communication', 
-    icon: MessageSquare,
-    hasDropdown: true,
-    subItems: [
-      { label: 'Messagerie directe', href: '/admin/communication', icon: MessageSquare },
-      { label: 'Diffuser une annonce', href: '/admin/communication/annonces', icon: Megaphone },
-      { label: 'Historique des envois', href: '/admin/communication/historique', icon: History },
-    ]
-  },
-  { 
-    label: 'Rapports', 
-    href: '/admin/rapports', 
-    icon: FileText, 
-    hasDropdown: true,
-    subItems: [
-      { label: 'Rapport global', href: '/admin/rapports' },
-      { label: 'Rapports académiques', href: '/admin/rapports/academique' },
-      { label: 'Bilans financiers', href: '/admin/rapports/finance' }
-    ]
-  },
+  { label: 'Communication', href: '/admin/communication', icon: MessageSquare },
+  { label: 'Rapports', href: '/admin/rapports', icon: FileText },
   { label: 'Abonnement', href: '/admin/abonnement', icon: CreditCard },
   { label: 'Paramètres', href: '/admin/parametres', icon: Settings },
 ]

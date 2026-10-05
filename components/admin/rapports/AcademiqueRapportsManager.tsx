@@ -3,6 +3,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { ExportButtons } from '@/components/ui/ExportButtons'
 import Link from 'next/link'
+import { RapportsNavTabs } from './RapportsNavTabs'
 
 type ClassStat = {
   id: string
@@ -37,13 +38,18 @@ export function AcademiqueRapportsManager({ classStats }: Props) {
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-[1280px] mx-auto space-y-6">
         
+        {/* Navigation Tabs */}
+        <div className="print:hidden">
+          <RapportsNavTabs />
+        </div>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] print:shadow-none print:border-none print:p-0">
           <div>
             <div className="flex items-center gap-2 text-[var(--color-on-surface-variant)] mb-2 print:hidden">
-              <Link href="/admin/rapports" className="hover:text-[var(--color-primary)]">Rapports</Link>
+              <span className="text-sm font-semibold text-[var(--color-on-surface)]">Rapports</span>
               <span className="text-[var(--color-on-surface-variant)]">/</span>
-              <span className="text-sm font-semibold text-[var(--color-on-surface)]">Académique</span>
+              <span className="text-sm font-semibold text-[var(--color-primary)]">Rapports Académiques</span>
             </div>
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Rapports Académiques</h2>
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Analyse des performances et taux de réussite par classe.</p>

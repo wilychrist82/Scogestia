@@ -479,3 +479,115 @@ export async function markAsRead(ids: string[]) {
   return { success: true }
 }
 
+export async function deleteCommunicationPermanently(id: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const { data: roleRows } = await supabase
+    .from('user_school_roles')
+    .select('school_id, role')
+    .eq('user_id', user.id)
+    .in('role', ['admin', 'super_admin', 'directeur'])
+    .limit(1)
+
+  const roleData = roleRows?.[0]
+  if (!roleData || !roleData.school_id) {
+    return { error: 'Permission refusée. Seul un administrateur peut supprimer un message.' }
+  }
+
+  const adminClient = createAdminClient()
+  const { error } = await adminClient
+    .from('communications')
+    .delete()
+    .eq('id', id)
+    .eq('school_id', roleData.school_id)
+
+  if (error) {
+    console.error('Error deleting communication:', error)
+    return { error: 'Erreur lors de la suppression du message' }
+  }
+
+  revalidatePath('/admin/communication')
+  revalidatePath('/admin/communication/historique')
+  revalidatePath('/parent/messages')
+  revalidatePath('/enseignant/messages')
+
+  return { success: true }
+}
+
+export async function deleteMultipleCommunications(ids: string[]) {
+  if (!ids || ids.length === 0) return { success: true }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const { data: roleRows } = await supabase
+    .from('user_school_roles')
+    .select('school_id, role')
+    .eq('user_id', user.id)
+    .in('role', ['admin', 'super_admin', 'directeur'])
+    .limit(1)
+
+  const roleData = roleRows?.[0]
+  if (!roleData || !roleData.school_id) {
+    return { error: 'Permission refusée. Seul un administrateur peut supprimer des messages.' }
+  }
+
+  const adminClient = createAdminClient()
+  const { error } = await adminClient
+    .from('communications')
+    .delete()
+    .in('id', ids)
+    .eq('school_id', roleData.school_id)
+
+  if (error) {
+    console.error('Error deleting communications:', error)
+    return { error: 'Erreur lors de la suppression des messages' }
+  }
+
+  revalidatePath('/admin/communication')
+  revalidatePath('/admin/communication/historique')
+  revalidatePath('/parent/messages')
+  revalidatePath('/enseignant/messages')
+
+  return { success: true }
+}
+
+export async function clearAllCommunicationsHistory() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const { data: roleRows } = await supabase
+    .from('user_school_roles')
+    .select('school_id, role')
+    .eq('user_id', user.id)
+    .in('role', ['admin', 'super_admin', 'directeur'])
+    .limit(1)
+
+  const roleData = roleRows?.[0]
+  if (!roleData || !roleData.school_id) {
+    return { error: "Permission refusée. Seul un administrateur peut vider l'historique." }
+  }
+
+  const adminClient = createAdminClient()
+  const { error } = await adminClient
+    .from('communications')
+    .delete()
+    .eq('school_id', roleData.school_id)
+
+  if (error) {
+    console.error('Error clearing communications:', error)
+    return { error: "Erreur lors du nettoyage de l'historique" }
+  }
+
+  revalidatePath('/admin/communication')
+  revalidatePath('/admin/communication/historique')
+  revalidatePath('/parent/messages')
+  revalidatePath('/enseignant/messages')
+
+  return { success: true }
+}
+

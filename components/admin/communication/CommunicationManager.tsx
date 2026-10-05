@@ -12,6 +12,7 @@ import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { MessageActions } from '@/components/ui/MessageActions'
 import { ReadReceiptTrigger } from '@/components/ui/ReadReceiptTrigger'
 import toast from 'react-hot-toast'
+import { CommunicationNavTabs } from './CommunicationNavTabs'
 
 type ClassItem = { id: string; name: string }
 type StudentItem = { id: string; first_name: string; last_name: string; classes: { name: string } | null }
@@ -87,11 +88,16 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-[1280px] mx-auto space-y-6">
         
+        {/* Navigation Tabs */}
+        <CommunicationNavTabs />
+
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)]">
           <div>
             <div className="flex items-center gap-2 text-[var(--color-on-surface-variant)] mb-2">
               <span className="text-sm font-semibold text-[var(--color-on-surface)]">Communication</span>
+              <span>/</span>
+              <span className="text-sm font-semibold text-[var(--color-primary)]">Messagerie directe</span>
             </div>
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Centre de Communication</h2>
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">

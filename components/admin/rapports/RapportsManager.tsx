@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { ExportButtons } from '@/components/ui/ExportButtons'
+import { RapportsNavTabs } from './RapportsNavTabs'
 
 type Props = {
   totalStudents: number
@@ -52,11 +53,18 @@ export function RapportsManager({ totalStudents, totalClasses, totalExpected, to
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-[1280px] mx-auto space-y-6">
         
+        {/* Navigation Tabs */}
+        <div className="print:hidden">
+          <RapportsNavTabs />
+        </div>
+
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] print:shadow-none print:border-none print:p-0">
           <div>
             <div className="flex items-center gap-2 text-[var(--color-on-surface-variant)] mb-2 print:hidden">
               <span className="text-sm font-semibold text-[var(--color-on-surface)]">Rapports</span>
+              <span>/</span>
+              <span className="text-sm font-semibold text-[var(--color-primary)]">Rapport Global</span>
             </div>
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Rapport Global</h2>
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Synthèse des effectifs, de la finance et de l'assiduité.</p>

@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { createAnnouncement, updateAnnouncement, deleteAnnouncement } from '@/app/actions/announcements'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { CommunicationNavTabs } from './CommunicationNavTabs'
 
 type Announcement = {
   id: string
@@ -220,6 +221,9 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-[1280px] mx-auto space-y-6">
+
+        {/* Navigation Tabs */}
+        <CommunicationNavTabs />
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)]">
