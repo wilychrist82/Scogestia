@@ -59,6 +59,7 @@ type Props = {
   initialCommunications: CommunicationItem[]
   classes: ClassItem[]
   roles: RoleItem[]
+  schoolId?: string
 }
 
 type ModalType = 
@@ -67,7 +68,7 @@ type ModalType =
   | { type: 'clear_all' }
   | null
 
-export function CommunicationHistoryManager({ initialCommunications, classes, roles }: Props) {
+export function CommunicationHistoryManager({ initialCommunications, classes, roles, schoolId }: Props) {
   const [communications, setCommunications] = useState<CommunicationItem[]>(initialCommunications)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState('all')
@@ -172,7 +173,7 @@ export function CommunicationHistoryManager({ initialCommunications, classes, ro
     if (modalState.type === 'single') {
       const targetId = modalState.id
       startTransition(async () => {
-        const res = await deleteCommunicationPermanently(targetId)
+        const res = await deleteCommunicationPermanently(targetId, schoolId)
         if (res.error) {
           toast.error(res.error)
         } else {
@@ -189,7 +190,7 @@ export function CommunicationHistoryManager({ initialCommunications, classes, ro
     } else if (modalState.type === 'bulk') {
       const idsToDelete = Array.from(selectedIds)
       startTransition(async () => {
-        const res = await deleteMultipleCommunications(idsToDelete)
+        const res = await deleteMultipleCommunications(idsToDelete, schoolId)
         if (res.error) {
           toast.error(res.error)
         } else {
@@ -201,7 +202,7 @@ export function CommunicationHistoryManager({ initialCommunications, classes, ro
       })
     } else if (modalState.type === 'clear_all') {
       startTransition(async () => {
-        const res = await clearAllCommunicationsHistory()
+        const res = await clearAllCommunicationsHistory(schoolId)
         if (res.error) {
           toast.error(res.error)
         } else {

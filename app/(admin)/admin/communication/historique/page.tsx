@@ -45,6 +45,7 @@ export default async function CommunicationHistoryPage() {
       initialCommunications={communicationsRaw || []}
       classes={sortClasses(classesRaw || [])}
       roles={rolesRaw || []}
+      schoolId={schoolId}
     />
   )
 }

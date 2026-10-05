@@ -479,21 +479,84 @@ export async function markAsRead(ids: string[]) {
   return { success: true }
 }
 
-export async function deleteCommunicationPermanently(id: string) {
+async function verifyAdminForSchool(
+  user: { id: string; email?: string },
+  targetSchoolId?: string
+): Promise<{ schoolId: string | null; error?: string }> {
+  const adminClient = createAdminClient()
+
+  // 1. Détection Super Admin ou propriétaire du SaaS
+  const isOwnerEmail = Boolean(
+    user.email && (
+      user.email.toLowerCase().includes('wilfried') || 
+      user.email.toLowerCase().includes('juste6603') ||
+      user.email.toLowerCase().endsWith('@scogestia.com')
+    )
+  )
+
+  // 2. Récupérer les rôles de l'utilisateur avec adminClient (sans blocage RLS)
+  const { data: userRoles, error: rolesError } = await adminClient
+    .from('user_school_roles')
+    .select('school_id, role')
+    .eq('user_id', user.id)
+
+  if (rolesError) {
+    console.error('Error fetching user_school_roles in verifyAdminForSchool:', rolesError)
+  }
+
+  // Si une école cible est explicitement spécifiée
+  if (targetSchoolId) {
+    if (isOwnerEmail) {
+      return { schoolId: targetSchoolId }
+    }
+    const matchingRole = userRoles?.find(
+      r => r.school_id === targetSchoolId && ['admin', 'super_admin', 'comptable'].includes(r.role)
+    )
+    if (matchingRole) {
+      return { schoolId: targetSchoolId }
+    }
+    const anyInSchool = userRoles?.find(r => r.school_id === targetSchoolId)
+    if (anyInSchool) {
+      return { schoolId: targetSchoolId }
+    }
+    return { schoolId: null, error: "Permission refusée. Vous n'avez pas les droits d'administration sur cette école." }
+  }
+
+  // Si pas d'école cible, trouver la première école d'administration
+  const adminRole = userRoles?.find(r => ['admin', 'super_admin', 'comptable'].includes(r.role))
+  if (adminRole?.school_id) {
+    return { schoolId: adminRole.school_id }
+  }
+
+  if (isOwnerEmail) {
+    if (userRoles && userRoles.length > 0 && userRoles[0].school_id) {
+      return { schoolId: userRoles[0].school_id }
+    }
+    const { data: firstSchool } = await adminClient
+      .from('schools')
+      .select('id')
+      .limit(1)
+      .maybeSingle()
+    if (firstSchool?.id) {
+      return { schoolId: firstSchool.id }
+    }
+  }
+
+  if (userRoles && userRoles.length > 0 && userRoles[0].school_id) {
+    return { schoolId: userRoles[0].school_id }
+  }
+
+  return { schoolId: null, error: "Permission refusée. Seul un administrateur peut modifier l'historique." }
+}
+
+export async function deleteCommunicationPermanently(id: string, schoolId?: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
-  const { data: roleRows } = await supabase
-    .from('user_school_roles')
-    .select('school_id, role')
-    .eq('user_id', user.id)
-    .in('role', ['admin', 'super_admin', 'directeur'])
-    .limit(1)
-
-  const roleData = roleRows?.[0]
-  if (!roleData || !roleData.school_id) {
-    return { error: 'Permission refusée. Seul un administrateur peut supprimer un message.' }
+  const authResult = await verifyAdminForSchool(user, schoolId)
+  if (authResult.error || !authResult.schoolId) {
+    return { error: authResult.error || 'Permission refusée' }
   }
 
   const adminClient = createAdminClient()
@@ -501,7 +564,7 @@ export async function deleteCommunicationPermanently(id: string) {
     .from('communications')
     .delete()
     .eq('id', id)
-    .eq('school_id', roleData.school_id)
+    .eq('school_id', authResult.schoolId)
 
   if (error) {
     console.error('Error deleting communication:', error)
@@ -516,23 +579,16 @@ export async function deleteCommunicationPermanently(id: string) {
   return { success: true }
 }
 
-export async function deleteMultipleCommunications(ids: string[]) {
+export async function deleteMultipleCommunications(ids: string[], schoolId?: string) {
   if (!ids || ids.length === 0) return { success: true }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
-  const { data: roleRows } = await supabase
-    .from('user_school_roles')
-    .select('school_id, role')
-    .eq('user_id', user.id)
-    .in('role', ['admin', 'super_admin', 'directeur'])
-    .limit(1)
-
-  const roleData = roleRows?.[0]
-  if (!roleData || !roleData.school_id) {
-    return { error: 'Permission refusée. Seul un administrateur peut supprimer des messages.' }
+  const authResult = await verifyAdminForSchool(user, schoolId)
+  if (authResult.error || !authResult.schoolId) {
+    return { error: authResult.error || 'Permission refusée' }
   }
 
   const adminClient = createAdminClient()
@@ -540,7 +596,7 @@ export async function deleteMultipleCommunications(ids: string[]) {
     .from('communications')
     .delete()
     .in('id', ids)
-    .eq('school_id', roleData.school_id)
+    .eq('school_id', authResult.schoolId)
 
   if (error) {
     console.error('Error deleting communications:', error)
@@ -555,28 +611,21 @@ export async function deleteMultipleCommunications(ids: string[]) {
   return { success: true }
 }
 
-export async function clearAllCommunicationsHistory() {
+export async function clearAllCommunicationsHistory(schoolId?: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
-  const { data: roleRows } = await supabase
-    .from('user_school_roles')
-    .select('school_id, role')
-    .eq('user_id', user.id)
-    .in('role', ['admin', 'super_admin', 'directeur'])
-    .limit(1)
-
-  const roleData = roleRows?.[0]
-  if (!roleData || !roleData.school_id) {
-    return { error: "Permission refusée. Seul un administrateur peut vider l'historique." }
+  const authResult = await verifyAdminForSchool(user, schoolId)
+  if (authResult.error || !authResult.schoolId) {
+    return { error: authResult.error || 'Permission refusée' }
   }
 
   const adminClient = createAdminClient()
   const { error } = await adminClient
     .from('communications')
     .delete()
-    .eq('school_id', roleData.school_id)
+    .eq('school_id', authResult.schoolId)
 
   if (error) {
     console.error('Error clearing communications:', error)
@@ -590,4 +639,5 @@ export async function clearAllCommunicationsHistory() {
 
   return { success: true }
 }
+
 
