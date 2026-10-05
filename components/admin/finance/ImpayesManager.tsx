@@ -2,8 +2,10 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { Send, Search, Phone, MessageCircle, BellRing, Loader2, CheckCircle2, AlertCircle, PartyPopper, X, ChevronRight } from 'lucide-react'
+import { Send, Search, Phone, MessageCircle, BellRing, Loader2, CheckCircle2, AlertCircle, PartyPopper, X, ChevronRight, AlertTriangle } from 'lucide-react'
 import { sendPaymentReminder, sendBulkPaymentReminders } from '@/app/actions/finance'
+import { FinanceNavTabs } from './FinanceNavTabs'
+import { FinancePageBanner } from './FinancePageBanner'
 
 type ImpayeItem = {
   id: string
@@ -116,34 +118,35 @@ export function ImpayesManager({ impayes, basePath = '/admin/finance' }: Props &
       : { type: 'success', message: 'Relance envoyée avec succès.' })
   }
 
-  return (
-    <div className="max-w-[1280px] mx-auto space-y-6 pb-8">
+  const totalImpayes = rows.reduce((a, r) => a + r.remainder, 0)
 
-      {/* En-tête de page */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <nav className="flex items-center gap-1 text-xs text-slate-500 mb-1.5" aria-label="Fil d'Ariane">
-            <Link href={basePath} className="hover:text-slate-800 transition-colors">Finance</Link>
-            <ChevronRight size={12} />
-            <span className="text-slate-800 font-medium">Impayés</span>
-          </nav>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Suivi des impayés</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {rows.length > 0
-              ? <>{rows.length} dossier{rows.length > 1 ? 's' : ''} en retard · <span className="font-medium text-rose-600">{formatCFA(rows.reduce((a, r) => a + r.remainder, 0))}</span> à recouvrer</>
-              : 'Gérez les retards de paiement et relancez les parents.'}
-          </p>
-        </div>
-        <button
-          type="button"
-          disabled={isSendingBulk || filtered.length === 0}
-          onClick={handleBulk}
-          className="inline-flex items-center justify-center gap-2 h-9 px-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed self-start sm:self-auto"
-        >
-          {isSendingBulk ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-          {query ? 'Relancer la sélection' : 'Relancer tout'}
-        </button>
-      </div>
+  return (
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-8 px-1">
+      {/* Barre de navigation d'onglets */}
+      <FinanceNavTabs basePath={basePath} />
+
+      {/* Bannière Prestige Sombre */}
+      <FinancePageBanner
+        title="Gestion & Suivi des Impayés"
+        subtitle="Identifiez les échéances échues, calculez les retards et lancez les relances par WhatsApp ou notification."
+        badge="RECOUVREMENT & CONTENTIEUX"
+        icon={AlertTriangle}
+        stats={[
+          { label: 'Total Impayés', value: formatCFA(totalImpayes), color: 'text-rose-400' },
+          { label: 'Dossiers', value: rows.length, color: 'text-white' },
+        ]}
+        actions={
+          <button
+            type="button"
+            disabled={isSendingBulk || filtered.length === 0}
+            onClick={handleBulk}
+            className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md transition-colors disabled:opacity-50"
+          >
+            {isSendingBulk ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+            <span>{query ? 'Relancer la sélection' : 'Relancer tous les parents'}</span>
+          </button>
+        }
+      />
 
       {/* Retour d'action */}
       {feedback && (

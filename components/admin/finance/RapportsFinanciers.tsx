@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { TrendingUp, Banknote, Users, Receipt, AlertTriangle, Download, ChevronRight } from 'lucide-react'
+import { TrendingUp, Banknote, Users, Receipt, AlertTriangle, Download, ChevronRight, FileText } from 'lucide-react'
+import { FinanceNavTabs } from './FinanceNavTabs'
+import { FinancePageBanner } from './FinancePageBanner'
 
 type Stats = {
   totalEncaisse: number
@@ -100,26 +102,31 @@ export function RapportsFinanciers({ stats, payments, schedules, basePath = '/ad
   ]
 
   return (
-    <div className="space-y-6 max-w-[1280px] mx-auto pb-8">
-      {/* En-tête */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <nav className="flex items-center gap-1 text-xs text-slate-500 mb-1.5" aria-label="Fil d'Ariane">
-            <Link href={basePath} className="hover:text-slate-800 transition-colors">Finance</Link>
-            <ChevronRight size={12} />
-            <span className="text-slate-800 font-medium">Rapports</span>
-          </nav>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Rapports financiers</h1>
-          <p className="text-sm text-slate-500 mt-1">Consultez les bilans, flux de trésorerie et statistiques de recouvrement.</p>
-        </div>
-        <button
-          type="button"
-          onClick={handleExport}
-          className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium transition-colors shadow-2xs self-start sm:self-auto"
-        >
-          <Download size={15} /> Exporter la synthèse
-        </button>
-      </div>
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-8 px-1">
+      {/* Barre de navigation d'onglets */}
+      <FinanceNavTabs basePath={basePath} />
+
+      {/* Bannière Prestige Sombre */}
+      <FinancePageBanner
+        title="Rapports & Synthèse Financière"
+        subtitle="Consultez les bilans d'encaissement, les flux de trésorerie consolidés et téléchargez la synthèse."
+        badge="BILANS & AUDIT FINANCIER"
+        icon={FileText}
+        stats={[
+          { label: 'Total Encaissé', value: formatCFA(stats.totalEncaisse), color: 'text-emerald-400' },
+          { label: 'Élèves', value: stats.nbEleves, color: 'text-white' },
+        ]}
+        actions={
+          <button
+            type="button"
+            onClick={handleExport}
+            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-white text-xs font-bold transition-colors shadow-2xs"
+          >
+            <Download size={14} />
+            <span>Exporter la synthèse</span>
+          </button>
+        }
+      />
 
       {/* Cartes KPI */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

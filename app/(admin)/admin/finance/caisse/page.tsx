@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { CashRegister } from '@/components/comptable/CashRegister'
+import { FinanceNavTabs } from '@/components/admin/finance/FinanceNavTabs'
+import { FinancePageBanner } from '@/components/admin/finance/FinancePageBanner'
+import { Banknote } from 'lucide-react'
 
 export const metadata = {
   title: 'Caisse (Encaissements) | Scogestia'
@@ -95,13 +98,18 @@ export default async function CaissePage() {
   const formattedStudents = Array.from(studentsMap.values())
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Caisse (Encaissements)</h1>
-        <p className="text-gray-500 mt-2">
-          Recherchez un élève pour encaisser ses frais de scolarité, cantine, transport, etc.
-        </p>
-      </div>
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-6">
+      <FinanceNavTabs basePath="/admin/finance" />
+      <FinancePageBanner
+        title="Guichet de Caisse (Encaissements)"
+        subtitle="Recherchez un élève pour enregistrer un versement direct et éditer un reçu de paiement officiel."
+        badge="OPÉRATIONS DE CAISSE"
+        icon={Banknote}
+        stats={[
+          { label: 'Élèves actifs', value: formattedStudents.length, color: 'text-white' },
+          { label: 'Guichet', value: 'Ouvert', color: 'text-emerald-400' },
+        ]}
+      />
 
       <CashRegister 
         students={formattedStudents} 

@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState, useTransition, FormEvent } from 'react'
 import Link from 'next/link'
-import { Plus, MessageCircle, Trash2, MoreVertical, X, ChevronRight, Loader2, AlertCircle, Receipt, Search } from 'lucide-react'
+import { Plus, MessageCircle, Trash2, MoreVertical, X, ChevronRight, Loader2, AlertCircle, Receipt, Search, Calendar } from 'lucide-react'
 import { generateSchedule, deleteSchedule } from '@/app/actions/finance'
+import { FinanceNavTabs } from './FinanceNavTabs'
+import { FinancePageBanner } from './FinancePageBanner'
 
 type ClassItem = { id: string; name: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string }
@@ -111,28 +113,34 @@ export function EcheancesManager({ schedules, classes, students, basePath = '/ad
     })
   }
 
-  return (
-    <div className="max-w-[1280px] mx-auto space-y-6 pb-8">
+  const totalMontant = schedules.reduce((a, s) => a + Number(s.amount_due || 0), 0)
 
-      {/* En-tête de page */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <nav className="flex items-center gap-1 text-xs text-slate-500 mb-1.5" aria-label="Fil d'Ariane">
-            <Link href={basePath} className="hover:text-slate-800 transition-colors">Finance</Link>
-            <ChevronRight size={12} />
-            <span className="text-slate-800 font-medium">Échéances</span>
-          </nav>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Échéances de paiement</h1>
-          <p className="text-sm text-slate-500 mt-1">Consultez et générez les frais scolaires pour vos élèves.</p>
-        </div>
-        <button
-          type="button"
-          onClick={openAddModal}
-          className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium shadow-sm transition-colors self-start sm:self-auto"
-        >
-          <Plus size={15} /> Générer une échéance
-        </button>
-      </div>
+  return (
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-8 px-1">
+      {/* Barre de navigation d'onglets */}
+      <FinanceNavTabs basePath={basePath} />
+
+      {/* Bannière Prestige Sombre */}
+      <FinancePageBanner
+        title="Échéancier & Frais Scolaires"
+        subtitle="Planifiez les tranches de scolarité, cantine et transport par classe ou pour l'ensemble des élèves."
+        badge="PLANIFICATION FINANCIÈRE"
+        icon={Calendar}
+        stats={[
+          { label: 'Total Engagé', value: formatCFA(totalMontant), color: 'text-blue-400' },
+          { label: 'Échéances', value: schedules.length, color: 'text-white' },
+        ]}
+        actions={
+          <button
+            type="button"
+            onClick={openAddModal}
+            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md transition-colors"
+          >
+            <Plus size={14} />
+            <span>Générer une échéance</span>
+          </button>
+        }
+      />
 
       {actionError && (
         <div role="alert" className="flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-800 px-4 py-3 text-sm">

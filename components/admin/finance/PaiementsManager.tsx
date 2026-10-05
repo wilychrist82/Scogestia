@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useState, useTransition, FormEvent } from 'react'
 import Link from 'next/link'
-import { Download, Plus, Search, FileText, X, ChevronRight, Loader2, AlertCircle, Wallet, BellRing } from 'lucide-react'
+import { Download, Plus, Search, FileText, X, ChevronRight, Loader2, AlertCircle, Wallet, BellRing, Receipt } from 'lucide-react'
 import { recordPayment } from '@/app/actions/finance'
 import { generatePaymentReceipt } from '@/lib/pdf/receipt'
+import { FinanceNavTabs } from './FinanceNavTabs'
+import { FinancePageBanner } from './FinancePageBanner'
 
 type PaymentItem = {
   id: string
@@ -165,43 +167,46 @@ export function PaiementsManager({
   }
 
   return (
-    <div className="max-w-[1280px] mx-auto space-y-6 pb-8">
+    <div className="max-w-[1400px] mx-auto space-y-6 pb-8 px-1">
+      {/* Barre de navigation d'onglets */}
+      <FinanceNavTabs basePath={basePath} />
 
-      {/* En-tête de page */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <nav className="flex items-center gap-1 text-xs text-slate-500 mb-1.5" aria-label="Fil d'Ariane">
-            <Link href={basePath} className="hover:text-slate-800 transition-colors">Finance</Link>
-            <ChevronRight size={12} />
-            <span className="text-slate-800 font-medium">Paiements</span>
-          </nav>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Historique des paiements</h1>
-          <p className="text-sm text-slate-500 mt-1">Consultez, exportez et enregistrez les paiements reçus.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={`${basePath}/impayes`}
-            className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium transition-colors"
-          >
-            <BellRing size={15} /> Relances
-          </Link>
-          <button
-            type="button"
-            onClick={handleExportCSV}
-            disabled={filteredPayments.length === 0}
-            className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download size={15} /> Exporter
-          </button>
-          <button
-            type="button"
-            onClick={openModal}
-            className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium shadow-sm transition-colors"
-          >
-            <Plus size={15} /> Enregistrer un paiement
-          </button>
-        </div>
-      </div>
+      {/* Bannière Prestige Sombre */}
+      <FinancePageBanner
+        title="Journal & Historique des Paiements"
+        subtitle="Consultez tous les versements reçus, filtrez par élève ou classe et éditez les reçus de caisse officiels."
+        badge="COMPTABILITÉ & REÇUS"
+        icon={Receipt}
+        stats={[
+          { label: 'Total Encaissé', value: formatCFA(totalFiltered), color: 'text-emerald-400' },
+          { label: 'Paiements', value: filteredPayments.length, color: 'text-white' },
+        ]}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={`${basePath}/impayes`}
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-white text-xs font-bold transition-colors"
+            >
+              <BellRing size={14} /> Relances
+            </Link>
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              disabled={filteredPayments.length === 0}
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-white text-xs font-bold transition-colors disabled:opacity-50"
+            >
+              <Download size={14} /> Exporter Excel
+            </button>
+            <button
+              type="button"
+              onClick={openModal}
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition-colors"
+            >
+              <Plus size={14} /> Nouveau paiement
+            </button>
+          </div>
+        }
+      />
 
       {loadError && (
         <div role="alert" className="flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-800 px-4 py-3 text-sm">
