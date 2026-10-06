@@ -29,6 +29,8 @@ export const metadata: Metadata = {
     'scogestia',
     'Sco-ges',
     'scoges',
+    'Eco Gestia',
+    'Ecogestia',
     'logiciel de gestion scolaire',
     'application gestion école',
     'ERP scolaire',
@@ -39,6 +41,7 @@ export const metadata: Metadata = {
     'logiciel pour établissement scolaire',
     'bulletin scolaire automatique',
     'gestion administrative ecole',
+    'application école primaire collège lycée',
   ],
   authors: [{ name: 'Scogestia', url: 'https://www.scogestia.com' }],
   creator: 'Scogestia',
@@ -101,13 +104,13 @@ const jsonLd = {
     {
       '@type': 'SoftwareApplication',
       'name': 'Scogestia',
-      'alternateName': ['Sco-ges', 'Scoges', 'Scogestia ERP'],
+      'alternateName': ['Sco-ges', 'Scoges', 'Eco Gestia', 'Ecogestia', 'Scogestia ERP'],
       'applicationCategory': 'BusinessApplication',
       'operatingSystem': 'Web, Android, iOS',
       'url': 'https://www.scogestia.com',
       'image': 'https://www.scogestia.com/hero-landing.png',
       'description':
-        'Scogestia est le logiciel de gestion scolaire tout-en-un pour établissements scolaires : gestion des notes, bulletins, finances, inscriptions et portail parents.',
+        'Scogestia est le logiciel de gestion scolaire tout-en-un pour écoles, collèges, lycées et universités : gestion des notes, bulletins, finances, inscriptions et portail parents.',
       'offers': {
         '@type': 'Offer',
         'price': '0',
@@ -126,16 +129,61 @@ const jsonLd = {
     {
       '@type': 'Organization',
       'name': 'Scogestia',
-      'alternateName': 'Sco-ges',
+      'alternateName': ['Sco-ges', 'Eco Gestia'],
       'url': 'https://www.scogestia.com',
       'logo': 'https://www.scogestia.com/logo-scogestia.png',
     },
     {
       '@type': 'WebSite',
       'name': 'Scogestia',
-      'alternateName': 'Sco-ges',
+      'alternateName': ['Sco-ges', 'Eco Gestia'],
       'url': 'https://www.scogestia.com',
     },
+    {
+      '@type': 'FAQPage',
+      'mainEntity': [
+        {
+          '@type': 'Question',
+          'name': "Pourquoi choisir Scogestia comme logiciel de gestion d'école ?",
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': "Scogestia (Sco-ges / Eco Gestia) est le logiciel moderne tout-en-un conçu pour les établissements scolaires (primaires, collèges, lycées). Il regroupe la gestion complète des élèves, les bulletins de notes automatisés, la comptabilité des frais scolaires et la communication avec les parents dans une interface ultra-simple."
+          }
+        },
+        {
+          '@type': 'Question',
+          'name': "Comment fonctionne la gestion des notes et la génération des bulletins scolaires ?",
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': "Les enseignants saisissent les notes par matière et par trimestre. Scogestia calcule instantanément les moyennes, coefficients et rangs des élèves, et génère en un clic des bulletins scolaires conformes et téléchargeables en PDF prêts pour impression."
+          }
+        },
+        {
+          '@type': 'Question',
+          'name': "Comment l'application facilite-t-elle le recouvrement des frais de scolarité ?",
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': "Scogestia permet de suivre l'état des paiements élève par élève, d'éditer des reçus officiels instantanés, de relancer automatiquement les impayés et d'accepter les paiements par Mobile Money et cartes bancaires."
+          }
+        },
+        {
+          '@type': 'Question',
+          'name': "Les parents d'élèves ont-ils un accès pour suivre la scolarité de leurs enfants ?",
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': "Oui, chaque parent dispose d'un portail dédié sécurisé pour consulter les notes, les bulletins trimestriels, les retards, les absences et l'échéancier des paiements, en recevant également des alertes directes."
+          }
+        },
+        {
+          '@type': 'Question',
+          'name': "Scogestia est-il adapté aux écoles d'Afrique de l'Ouest ?",
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': "Oui, Scogestia est spécialement optimisé pour les systèmes éducatifs d'Afrique de l'Ouest (Togo, Bénin, Côte d'Ivoire, Sénégal, etc.) avec le support du Franc CFA (XOF), des modes d'évaluation francophones et des paiements Mobile Money (TMoney, Flooz, etc.)."
+          }
+        }
+      ]
+    }
   ],
 };
 

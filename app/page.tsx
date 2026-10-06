@@ -77,6 +77,10 @@ export default function Home() {
               Témoignages
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
             </Link>
+            <Link href="#faq" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+              FAQ
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+            </Link>
             <Link href="#contact" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
               Contact
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
@@ -121,6 +125,7 @@ export default function Home() {
                 <Link href="#comment-ca-marche" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Comment ça marche</Link>
                 <Link href="#tarifs" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Tarifs</Link>
                 <Link href="#temoignages" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Témoignages</Link>
+                <Link href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">FAQ</Link>
                 <Link href="#contact" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Contact</Link>
                 <hr className="border-slate-100 my-2" />
                 <Link 
@@ -661,10 +666,38 @@ export default function Home() {
               variants={staggerContainer}
             >
               {[
-                { q: "Faut-il installer un logiciel sur mon ordinateur ?", a: "Absolument pas ! Scogestia est un logiciel 100% web (en nuage). Vous n'avez besoin que d'un navigateur internet (Chrome, Safari, Edge) et d'une connexion internet. Vous pouvez vous connecter depuis n'importe quel ordinateur, tablette ou smartphone en toute simplicité." },
-                { q: "Mes données sont-elles réellement en sécurité ?", a: "Oui, la sécurité est notre priorité absolue. Nous utilisons une architecture moderne qui garantit que vos données sont strictement isolées et cryptées. De plus, des sauvegardes automatiques sont effectuées quotidiennement sur des serveurs sécurisés pour prévenir toute perte." },
-                { q: "Les parents doivent-ils payer pour utiliser l'application ?", a: "Non, l'accès parent est inclus dans votre abonnement. L'école paie la licence, et les parents bénéficient d'un accès totalement gratuit à leur portail dédié pour suivre les notes, l'assiduité et la comptabilité de leurs enfants en temps réel." },
-                { q: "Comment se passe l'intégration de mes listes d'élèves (depuis Excel) ?", a: "C'est extrêmement rapide. Nous vous fournissons un modèle Excel pré-formaté. Il vous suffit d'y coller vos listes actuelles et de l'importer en un clic via notre outil d'importation massive. Notre équipe de support Premium est également là pour le faire à votre place lors de la configuration initiale !" }
+                { 
+                  q: "Pourquoi choisir Scogestia comme logiciel de gestion d'école ?", 
+                  a: "Scogestia (Sco-ges / Eco Gestia) est l'application moderne tout-en-un conçue pour les écoles primaires, collèges, lycées et universités. Elle regroupe la gestion complète des élèves, l'automatisation des bulletins de notes, la comptabilité et le suivi des frais de scolarité, ainsi que la communication directe avec les parents via WhatsApp et SMS." 
+                },
+                { 
+                  q: "Comment fonctionne la gestion des notes et la génération des bulletins scolaires ?", 
+                  a: "Les enseignants saisissent les notes par matière et période sur leur espace. Scogestia calcule automatiquement les moyennes pondérées, coefficients et rangs des élèves, et génère en un clic des bulletins scolaires conformes, téléchargeables en PDF prêts pour impression ou consultation en ligne par les parents." 
+                },
+                { 
+                  q: "Comment l'application facilite-t-elle le recouvrement des frais de scolarité ?", 
+                  a: "Fini les impayés oubliés ! Scogestia permet de définir les échéances de paiement, de suivre l'état financier élève par élève, d'émettre des reçus instantanés et d'accepter les paiements digitaux par Mobile Money (TMoney, Flooz) et carte bancaire avec réconciliation automatique." 
+                },
+                { 
+                  q: "Les parents d'élèves ont-ils un accès dédié pour suivre leurs enfants ?", 
+                  a: "Oui, chaque parent dispose d'un portail parent sécurisé pour consulter les notes, les bulletins trimestriels, les absences et retards, ainsi que le récapitulatif des paiements de scolarité, sans aucun frais supplémentaire pour les familles." 
+                },
+                { 
+                  q: "Scogestia (Sco-ges / Eco Gestia) est-il adapté aux écoles d'Afrique de l'Ouest ?", 
+                  a: "Parfaitement ! Scogestia a été développé spécifiquement pour répondre aux réalités des établissements scolaires francophones d'Afrique de l'Ouest (Togo, Bénin, Côte d'Ivoire, Sénégal, etc.) : support de la devise Franc CFA (XOF), bulletins conformes aux ministères de l'Éducation et paiements Mobile Money locaux." 
+                },
+                { 
+                  q: "Faut-il installer un logiciel sur mon ordinateur ?", 
+                  a: "Absolument pas ! Scogestia est une application 100% cloud sécurisée. Vous n'avez besoin que d'un navigateur internet (Chrome, Safari, Edge) sur ordinateur, tablette ou smartphone, avec une interface réactive et accessible 24h/24." 
+                },
+                { 
+                  q: "Comment se passe l'intégration de mes listes d'élèves (depuis Excel) ?", 
+                  a: "L'importation est immédiate. Vous téléchargez notre modèle Excel pré-rempli, vous y copiez vos listes existantes et Scogestia crée les classes, élèves et matières en quelques secondes grâce à notre importateur intelligent." 
+                },
+                { 
+                  q: "Mes données scolaires sont-elles réellement en sécurité ?", 
+                  a: "La sécurité est notre priorité absolue. Vos données sont isolées, chiffrées de bout en bout et sauvegardées quotidiennement sur des serveurs haute disponibilité sécurisés, protégés contre toute perte accidentelle." 
+                }
               ].map((faq, i) => (
                 <motion.details key={i} variants={fadeIn} className="group bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 overflow-hidden cursor-pointer hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-emerald-200 transition-all duration-300">
                    <summary className="flex items-center justify-between p-6 md:p-8 font-bold text-lg text-slate-900 hover:text-emerald-700 transition-colors select-none">
