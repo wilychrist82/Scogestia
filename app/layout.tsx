@@ -17,6 +17,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.scogestia.com'),
   title: "Scogestia - ERP Scolaire",
   description: "Plateforme de gestion scolaire",
   appleWebApp: {
