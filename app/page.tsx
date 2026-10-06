@@ -153,10 +153,6 @@ export default function Home() {
                 animate="visible"
                 variants={staggerContainer}
               >
-                <motion.div variants={fadeIn} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs sm:text-sm font-semibold mb-6 shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Scogestia (Sco-ges) — Logiciel de Gestion Scolaire Tout-en-Un
-                </motion.div>
 
                 <motion.h1 variants={fadeIn} className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.05] mb-6 font-sans">
                   Gérez votre école
