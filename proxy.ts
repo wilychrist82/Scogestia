@@ -35,6 +35,8 @@ export async function proxy(request: NextRequest) {
 
   // Allow auth routes and public landing page to be accessed by non-authenticated users
   const isAuthRoute = pathname === '/' || 
+                      pathname === '/sitemap.xml' ||
+                      pathname === '/robots.txt' ||
                       pathname.startsWith('/connexion') || 
                       pathname.startsWith('/inscription-ecole') || 
                       pathname.startsWith('/activer-parent') ||
@@ -157,6 +159,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3|wav|ico)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3|wav|ico|xml|txt)$).*)',
   ],
 }
