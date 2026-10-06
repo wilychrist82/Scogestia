@@ -148,6 +148,11 @@ export default function Home() {
                 animate="visible"
                 variants={staggerContainer}
               >
+                <motion.div variants={fadeIn} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs sm:text-sm font-semibold mb-6 shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Scogestia (Sco-ges) — Logiciel de Gestion Scolaire Tout-en-Un
+                </motion.div>
+
                 <motion.h1 variants={fadeIn} className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.05] mb-6 font-sans">
                   Gérez votre école
                   <br />
@@ -157,7 +162,7 @@ export default function Home() {
                 </motion.h1>
                 
                 <motion.p variants={fadeIn} className="text-lg text-slate-400 mb-10 max-w-xl leading-relaxed">
-                  Le premier ERP scolaire nouvelle génération en Afrique. Gagnez du temps, maîtrisez vos finances et rassurez les parents.
+                  Le logiciel et ERP scolaire nouvelle génération pour moderniser votre établissement : inscriptions, suivi des notes, bulletins automatiques, gestion des frais et communication parents.
                 </motion.p>
                 
                 <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
