@@ -88,7 +88,7 @@ export function welcomeEmailHtml({
           <!-- Footer -->
           <tr>
             <td style="background:#f8f9ff;padding:24px 40px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;border-top:none;text-align:center;">
-              <p style="color:#94a3b8;font-size:12px;margin:0 0 8px 0;">Une question ? Écrivez-nous à <a href="mailto:support@scogestia.com" style="color:#065F46;">support@scogestia.com</a></p>
+              <p style="color:#94a3b8;font-size:12px;margin:0 0 8px 0;">Une question ? Écrivez-nous à <a href="mailto:contact@scogestia.com" style="color:#065F46;">contact@scogestia.com</a></p>
               <p style="color:#cbd5e1;font-size:11px;margin:0;">© ${new Date().getFullYear()} Scogestia. Tous droits réservés.</p>
             </td>
           </tr>

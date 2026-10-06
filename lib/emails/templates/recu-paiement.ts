@@ -99,7 +99,7 @@ export function recuPaiementEmailHtml({
                 Conservez cet email comme preuve de paiement.
               </p>
               <p style="color:#94a3b8;font-size:12px;margin:0 0 8px 0;">
-                Problème ? <a href="mailto:support@scogestia.com" style="color:#065F46;">support@scogestia.com</a>
+                Problème ? <a href="mailto:contact@scogestia.com" style="color:#065F46;">contact@scogestia.com</a>
               </p>
               <p style="color:#cbd5e1;font-size:11px;margin:0;">© ${new Date().getFullYear()} Scogestia. Tous droits réservés.</p>
             </td>

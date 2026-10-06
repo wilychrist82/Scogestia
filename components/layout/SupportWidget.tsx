@@ -160,7 +160,7 @@ export function SupportWidget({
 
                   {/* Contact email */}
                   <a
-                    href="mailto:support@scogestia.com"
+                    href="mailto:contact@scogestia.com"
                     className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-xs font-bold text-white transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                     style={{
                       background: 'linear-gradient(135deg, #059669 0%, #065F46 100%)',

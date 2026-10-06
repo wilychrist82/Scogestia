@@ -812,7 +812,9 @@ export default function Home() {
                 </li>
                 <li className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-[#006039]" />
-                  <span className="text-slate-400">contact@scogestia.com</span>
+                  <a href="mailto:contact@scogestia.com" className="text-slate-400 hover:text-white transition-colors">
+                    contact@scogestia.com
+                  </a>
                 </li>
               </ul>
             </div>
