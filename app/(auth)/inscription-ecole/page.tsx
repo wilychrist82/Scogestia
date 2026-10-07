@@ -28,26 +28,30 @@ export default function RegisterPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-emerald-900/30 via-transparent to-transparent"></div>
         
         <div className="relative z-10 w-full max-w-md flex flex-col items-center">
-          <Link href="/" className="inline-flex flex-col items-center mb-12">
-            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl mb-6">
-              <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="h-16 sm:h-20 w-auto object-contain" />
+          <Link href="/" className="inline-flex flex-col items-center mb-8 group">
+            <div className="relative mb-4 flex items-center justify-center">
+              <div className="absolute inset-0 bg-emerald-400/20 blur-xl rounded-full"></div>
+              <img 
+                src="/logo-scogestia-transparent.png" 
+                alt="Scogestia Logo" 
+                className="relative h-20 sm:h-24 w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.45)] transition-transform duration-300 group-hover:scale-105" 
+              />
             </div>
-            <p className="text-emerald-300 font-medium tracking-widest text-xs uppercase text-center border-b border-emerald-500/30 pb-4">
+            <p className="text-emerald-300 font-medium tracking-widest text-xs uppercase text-center border-b border-emerald-500/30 pb-3">
               La gestion scolaire simplifiée
             </p>
           </Link>
 
-          <p className="text-lg text-emerald-50 mb-10 leading-relaxed text-center sm:text-left">
+          <p className="text-lg text-emerald-50 mb-8 leading-relaxed text-center">
             Rejoignez des centaines d'écoles qui gèrent déjà leur établissement plus efficacement.
           </p>
 
-          <div className="mt-8 w-full relative rounded-[2rem] overflow-hidden shadow-[0_30px_80px_-15px_rgba(0,0,0,0.7)] border border-emerald-400/30 group bg-white transform transition-transform duration-700 hover:-translate-y-2">
-             <div className="relative w-full overflow-hidden">
-                <img src="/hero-landing.png" alt="Scogestia Interface" className="w-full h-auto object-contain transform group-hover:scale-[1.03] transition-transform duration-1000 ease-out" />
-                {/* Filtre subtil pour adoucir le blanc et l'intégrer au fond vert sombre */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-[#004d2e]/20 via-transparent to-[#004d2e]/10 pointer-events-none"></div>
-                <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,40,20,0.1)] pointer-events-none rounded-[2rem]"></div>
-             </div>
+          <div className="w-full relative flex justify-center items-center">
+            <img 
+              src="/image_landing_page1.png" 
+              alt="Scogestia - Gestion scolaire" 
+              className="w-full max-w-sm h-auto object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.6)] transform hover:scale-[1.02] transition-transform duration-500" 
+            />
           </div>
         </div>
       </div>
