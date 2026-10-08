@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { TrendingUp, Banknote, Users, Receipt, AlertTriangle, Download, ChevronRight, FileText } from 'lucide-react'
+import { TrendingUp, Banknote, Users, Receipt, AlertTriangle, ChevronRight, FileText, Printer, FileSpreadsheet } from 'lucide-react'
 import { FinanceNavTabs } from './FinanceNavTabs'
 import { FinancePageBanner } from './FinancePageBanner'
+import { FinancialReportDocument, SchoolInfo } from './FinancialReportDocument'
 
 type Stats = {
   totalEncaisse: number
@@ -27,6 +29,8 @@ type ScheduleItem = {
 }
 
 type Props = {
+  school?: SchoolInfo
+  userFullName?: string
   stats: Stats
   payments: PaymentItem[]
   schedules: ScheduleItem[]
@@ -46,7 +50,10 @@ const METHOD_LABELS: Record<string, string> = {
   Autre: 'Autre',
 }
 
-export function RapportsFinanciers({ stats, payments, schedules, basePath = '/admin/finance' }: Props) {
+export function RapportsFinanciers({ school, userFullName, stats, payments, schedules, basePath = '/admin/finance' }: Props) {
+  const [showDocumentModal, setShowDocumentModal] = useState(false)
+  const [isExportingExcel, setIsExportingExcel] = useState(false)
+
   // Taux plafonné à 100%
   const tauxRecouvrement = stats.totalAttendu > 0
     ? Math.min(100, Math.round((stats.totalEncaisse / stats.totalAttendu) * 100))
@@ -63,35 +70,61 @@ export function RapportsFinanciers({ stats, payments, schedules, basePath = '/ad
   })
   const derniersMois = Object.entries(parMois).slice(-6)
 
-  const handleExport = () => {
-    const lines = [
-      'RAPPORT FINANCIER SCOGESTIA',
-      `Date d'exportation : ${new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`,
-      '',
-      '--- SYNTHÈSE GLOBALE ---',
-      `Total attendu       : ${formatCFA(stats.totalAttendu)}`,
-      `Total encaissé      : ${formatCFA(stats.totalEncaisse)}`,
-      `Solde restant       : ${formatCFA(soldeRestant)}`,
-      `Taux de recouvrement: ${tauxRecouvrement}%`,
-      `Dossiers impayés    : ${stats.nbImpayes}`,
-      `Nombre de paiements : ${stats.nbPaiements}`,
-      `Élèves actifs       : ${stats.nbEleves}`,
-      '',
-      '--- RÉPARTITION PAR MÉTHODE DE PAIEMENT ---',
-      ...Object.entries(stats.repartitionMethode).map(
-        ([method, amount]) => `${(METHOD_LABELS[method] || method).padEnd(20)} : ${formatCFA(amount)}`
-      ),
-    ]
+  // Export Excel direct
+  const handleExportExcel = async () => {
+    setIsExportingExcel(true)
+    try {
+      const xlsx = await import('xlsx')
+      const wb = xlsx.utils.book_new()
+      const schoolName = school?.name || 'Scogestia'
+      const academicYear = school?.current_academic_year || '2024-2025'
+      const dateStr = new Date().toLocaleDateString('fr-FR')
 
-    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `rapport-financier-${new Date().toISOString().split('T')[0]}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+      const wsData = [
+        ['RÉPUBLIQUE SCOGESTIA - ÉTABLISSEMENT ' + schoolName.toUpperCase()],
+        ['BILAN ET SYNTHÈSE FINANCIÈRE OFFICIELLE'],
+        [`Année Scolaire : ${academicYear}`, `Date d'exportation : ${dateStr}`],
+        [`Édité par : ${userFullName || 'Direction'}`],
+        [],
+        ['--- SYNTHÈSE GLOBALE ---'],
+        ['Indicateur', 'Montant / Valeur', 'Observations'],
+        ['Total Attendu (Prévisionnel)', stats.totalAttendu, 'Somme globale des échéances'],
+        ['Total Encaissé (Réalisé)', stats.totalEncaisse, 'Montant effectif perçu'],
+        ['Solde Restant à Recouvrer', soldeRestant, 'Créances restantes'],
+        ['Taux de Recouvrement', `${tauxRecouvrement}%`, 'Niveau d\'avancement'],
+        ['Effectif Élèves Actifs', stats.nbEleves, 'Nombre total d\'élèves inscrits'],
+        ['Dossiers en Retard (Impayés)', stats.nbImpayes, 'Dossiers à relancer'],
+        ['Nombre de Règlements Enregistrés', stats.nbPaiements, 'Transactions enregistrées'],
+        [],
+        ['--- RÉPARTITION PAR MODE DE RÈGLEMENT ---'],
+        ['Mode de Règlement', 'Montant Encaissé (FCFA)', 'Part (%)'],
+        ...Object.entries(stats.repartitionMethode).map(([method, amount]) => {
+          const pct = stats.totalEncaisse > 0 ? Math.round((amount / stats.totalEncaisse) * 100) : 0
+          return [METHOD_LABELS[method] || method, amount, `${pct}%`]
+        }),
+        ['TOTAL GÉNÉRAL', stats.totalEncaisse, '100%'],
+      ]
+
+      if (derniersMois.length > 0) {
+        wsData.push([])
+        wsData.push(['--- ENCAISSEMENTS MENSUELS RÉCENTS ---'])
+        wsData.push(['Mois', 'Montant Encaissé (FCFA)'])
+        derniersMois.forEach(([m, amt]) => {
+          wsData.push([m, amt])
+        })
+      }
+
+      const ws = xlsx.utils.aoa_to_sheet(wsData)
+      ws['!cols'] = [{ wch: 35 }, { wch: 25 }, { wch: 35 }]
+      xlsx.utils.book_append_sheet(wb, ws, 'Bilan Financier')
+
+      const sanitizedSchool = schoolName.replace(/[^a-zA-Z0-9]/g, '_')
+      xlsx.writeFile(wb, `Bilan_Financier_${sanitizedSchool}_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    } catch (err) {
+      console.error('[Excel Export Error]', err)
+    } finally {
+      setIsExportingExcel(false)
+    }
   }
 
   const kpis = [
@@ -109,7 +142,7 @@ export function RapportsFinanciers({ stats, payments, schedules, basePath = '/ad
       {/* Bannière Prestige Sombre */}
       <FinancePageBanner
         title="Rapports & Synthèse Financière"
-        subtitle="Consultez les bilans d'encaissement, les flux de trésorerie consolidés et téléchargez la synthèse."
+        subtitle="Consultez les bilans d'encaissement, les flux de trésorerie consolidés et éditez le bilan officiel."
         badge="BILANS & AUDIT FINANCIER"
         icon={FileText}
         stats={[
@@ -117,14 +150,28 @@ export function RapportsFinanciers({ stats, payments, schedules, basePath = '/ad
           { label: 'Élèves', value: stats.nbEleves, color: 'text-white' },
         ]}
         actions={
-          <button
-            type="button"
-            onClick={handleExport}
-            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-white text-xs font-bold transition-colors shadow-2xs"
-          >
-            <Download size={14} />
-            <span>Exporter la synthèse</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setShowDocumentModal(true)}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs font-bold transition-all shadow-sm cursor-pointer"
+              title="Ouvrir la fiche officielle de comptabilité avec en-tête et signatures"
+            >
+              <Printer size={14} className="text-blue-600" />
+              <span>Bilan Officiel (PDF / Imprimer)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              disabled={isExportingExcel}
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-600 border border-emerald-500/30 text-white text-xs font-bold transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
+              title="Télécharger le fichier Excel (.xlsx)"
+            >
+              <FileSpreadsheet size={14} />
+              <span>{isExportingExcel ? 'Export...' : 'Export Excel (.xlsx)'}</span>
+            </button>
+          </div>
         }
       />
 
@@ -247,6 +294,17 @@ export function RapportsFinanciers({ stats, payments, schedules, basePath = '/ad
           ))}
         </div>
       </section>
+
+      {/* Modal Bilan Officiel Imprimable / PDF */}
+      {showDocumentModal && (
+        <FinancialReportDocument
+          school={school}
+          userFullName={userFullName}
+          stats={stats}
+          payments={payments}
+          onClose={() => setShowDocumentModal(false)}
+        />
+      )}
     </div>
   )
 }

@@ -12,7 +12,7 @@ export default async function RapportsFinancePage() {
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('school_id')
+    .select('school_id, full_name')
     .eq('user_id', user.id)
     .limit(1).maybeSingle()
 
@@ -22,6 +22,13 @@ export default async function RapportsFinancePage() {
 
   const schoolId = roleData.school_id
   const today = new Date().toISOString().split('T')[0]
+
+  // Récupérer les informations de l'école (logo, adresse, année scolaire, signatures...)
+  const { data: school } = await supabase
+    .from('schools')
+    .select('id, name, city, phone, email, current_academic_year, director_name, signature_url, stamp_url, logo_url')
+    .eq('id', schoolId)
+    .maybeSingle()
 
   // Récupérer les paiements
   const { data: payments } = await supabase
@@ -58,6 +65,8 @@ export default async function RapportsFinancePage() {
 
   return (
     <RapportsFinanciers
+      school={school || undefined}
+      userFullName={roleData.full_name || user.user_metadata?.full_name || 'La Direction'}
       stats={stats}
       payments={(payments || []) as any}
       schedules={(schedules || []) as any}
