@@ -1,0 +1,24 @@
+name: Supabase 24/7 Keep-Alive
+
+on:
+  schedule:
+    # S'exécute toutes les 6 heures pour garantir que Supabase ne s'endorme jamais
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Permet le déclenchement manuel depuis l'interface GitHub
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Scogestia Health & Supabase
+        run: |
+          echo "Sending keep-alive ping to maintain 24/7 database readiness..."
+          # Si l'URL du site en production est définie dans les secrets
+          if [ -n "${{ secrets.PRODUCTION_APP_URL }}" ]; then
+            curl -f -s "${{ secrets.PRODUCTION_APP_URL }}/api/health" || echo "Ping production endpoint completed."
+          fi
+          # Ping direct sur l'instance Supabase si configurée
+          if [ -n "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" ] && [ -n "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
+            curl -f -s -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}/rest/v1/schools?select=id&limit=1" || echo "Direct DB ping completed."
+          fi
+          echo "Keep-alive finished successfully."

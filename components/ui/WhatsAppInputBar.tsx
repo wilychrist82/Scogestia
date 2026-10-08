@@ -4,6 +4,7 @@ import { useState, useRef, FormEvent, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import EmojiPicker from 'emoji-picker-react'
+import { FileText, X, ChevronLeft, Mic, Loader2, Smile, Keyboard, Paperclip, Camera, Send } from 'lucide-react'
 
 interface Props {
   /** Appelé avec { text, audioUrl, fileUrl, fileType, originalFileName } lors de la soumission */
@@ -272,7 +273,7 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
               <img src={filePreviewUrl} alt="Preview" className="w-12 h-12 object-cover rounded-md border" />
             ) : (
               <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center">
-                <span className="material-symbols-outlined text-gray-500">description</span>
+                <FileText className="w-6 h-6 text-gray-500" />
               </div>
             )}
             <div className="flex flex-col min-w-0">
@@ -283,9 +284,9 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
           <button 
             type="button"
             onClick={cancelFile}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            <X className="w-5 h-5" />
           </button>
         </div>
       )}
@@ -303,15 +304,13 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
             }}
             className="flex items-center gap-2 text-gray-500 text-sm animate-pulse ml-2 cursor-pointer hover:text-red-500 transition-colors z-10"
           >
-            <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+            <ChevronLeft className="w-5 h-5" />
             Annuler
           </button>
 
           {/* Waveform + timer aligné à droite */}
           <div className="flex-1 flex justify-end items-center gap-3 pr-4">
-            <span className="material-symbols-outlined text-[16px] text-red-500 animate-pulse shrink-0">
-              radio_button_checked
-            </span>
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping shrink-0" />
             <span className="text-sm font-mono font-bold text-gray-700 shrink-0">
               {formatTime(recordingSeconds)}
             </span>
@@ -326,7 +325,7 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
             className="shrink-0 w-12 h-12 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shadow-md scale-110 transition-transform cursor-pointer"
             title="Relâcher pour envoyer"
           >
-            <span className="material-symbols-outlined text-[25px]">mic</span>
+            <Mic className="w-6 h-6" />
           </button>
         </div>
       )}
@@ -334,7 +333,7 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
       {/* ── Upload en cours ── */}
       {isUploading && (
         <div className="flex items-center gap-2 px-4 py-4 text-[14px] text-[var(--color-primary)] font-semibold h-[68px]">
-          <span className="material-symbols-outlined text-[18px] animate-spin">sync</span>
+          <Loader2 className="w-5 h-5 animate-spin" />
           Envoi du vocal en cours…
         </div>
       )}
@@ -353,9 +352,11 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
               className="shrink-0 self-end mb-[10px] ml-2 text-gray-400 hover:text-gray-600 transition-colors"
               title="Émojis"
             >
-              <span className="material-symbols-outlined text-[26px]">
-                {showEmojiPicker ? 'keyboard' : 'sentiment_satisfied'}
-              </span>
+              {showEmojiPicker ? (
+                <Keyboard className="w-6 h-6" />
+              ) : (
+                <Smile className="w-6 h-6" />
+              )}
             </button>
 
             {/* Textarea */}
@@ -382,7 +383,7 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
               className="shrink-0 self-end mb-[10px] text-gray-400 hover:text-gray-600 transition-colors"
               title="Joindre un fichier"
             >
-              <span className="material-symbols-outlined text-[24px]">attach_file</span>
+              <Paperclip className="w-5 h-5" />
             </button>
             <input
               ref={fileInputRef}
@@ -399,7 +400,7 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
               className="shrink-0 self-end mb-[10px] ml-1 mr-2 text-gray-400 hover:text-gray-600 transition-colors"
               title="Photo / Caméra"
             >
-              <span className="material-symbols-outlined text-[24px]">photo_camera</span>
+              <Camera className="w-5 h-5" />
             </button>
             <input
               ref={cameraInputRef}
@@ -421,7 +422,7 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
               className="shrink-0 w-12 h-12 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shadow-md hover:brightness-110 active:scale-95 transition-all disabled:opacity-60"
               title="Envoyer le message"
             >
-              <span className="material-symbols-outlined text-[22px] ml-0.5">send</span>
+              <Send className="w-5 h-5 ml-0.5" />
             </button>
           ) : (
             /* Micro → vocal (Maintenir pour parler) */
@@ -432,7 +433,7 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
               className="shrink-0 w-12 h-12 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shadow-md hover:brightness-110 transition-all disabled:opacity-60 touch-none cursor-pointer"
               title="Maintenir pour enregistrer"
             >
-              <span className="material-symbols-outlined text-[25px]">mic</span>
+              <Mic className="w-6 h-6" />
             </button>
           )}
         </div>

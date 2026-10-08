@@ -5,6 +5,7 @@ import { sendCommunication } from '@/app/actions/communication'
 import { WhatsAppInputBar } from '@/components/ui/WhatsAppInputBar'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
+import { Shield, GraduationCap, Info } from 'lucide-react'
 
 type Teacher = {
   id: string
@@ -103,7 +104,7 @@ export function ParentMessageForm({ teachers = [], selectedChild }: Props) {
                 : 'bg-[var(--color-surface-container)] text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-high)]'
             }`}
           >
-            <span className="material-symbols-outlined text-[14px]">admin_panel_settings</span>
+            <Shield className="w-3.5 h-3.5" />
             Admin
           </button>
           {teachers.length > 0 && (
@@ -116,7 +117,7 @@ export function ParentMessageForm({ teachers = [], selectedChild }: Props) {
                   : 'bg-[var(--color-surface-container)] text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-high)]'
               }`}
             >
-              <span className="material-symbols-outlined text-[14px]">school</span>
+              <GraduationCap className="w-3.5 h-3.5" />
               Enseignant
             </button>
           )}
@@ -127,7 +128,7 @@ export function ParentMessageForm({ teachers = [], selectedChild }: Props) {
       {recipientType === 'enseignant' && (
         teachers.length === 0 ? (
           <div className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-y border-amber-200 flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px] text-amber-600">info</span>
+            <Info className="w-4 h-4 text-amber-600 shrink-0" />
             <span>Aucun enseignant n'est encore assigné à la classe de cet enfant. Vous pouvez contacter l'Administration.</span>
           </div>
         ) : (

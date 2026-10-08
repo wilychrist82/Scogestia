@@ -67,29 +67,30 @@ export async function generateDues(prevState: any, formData: FormData): Promise<
     return { error: 'Aucun élève actif trouvé pour cette sélection.' }
   }
 
-  // 3. Préparer le bulk insert
+  // 3. Préparer le bulk insert dans payment_schedules
   const duesToInsert = studentsToBill.map(studentId => ({
     school_id: schoolId,
     student_id: studentId,
     label,
-    amount,
+    amount_due: amount,
     due_date: dueDate,
     status: 'en_attente',
-    created_by: user.id
   }))
 
   const { error: insertError } = await supabase
-    .from('dues')
+    .from('payment_schedules')
     .insert(duesToInsert)
 
   if (insertError) {
     return { error: 'Erreur lors de la création des échéances : ' + insertError.message }
   }
 
-  redirect('/comptable/echeances')
+  revalidatePath('/admin/finance/echeances')
+  revalidatePath('/admin/finance')
+  redirect('/admin/finance/echeances')
 }
 
-export async function sendManualReminder(dueId: string): Promise<{ error?: string, success?: boolean }> {
+export async function sendManualReminder(scheduleId: string): Promise<{ error?: string, success?: boolean }> {
   const supabase = await createClient()
 
   // 1. Authentification et vérification du rôle
@@ -107,11 +108,11 @@ export async function sendManualReminder(dueId: string): Promise<{ error?: strin
 
   // 2. Récupérer l'échéance et le numéro du parent
   const { data: due, error: dueError } = await supabase
-    .from('dues')
+    .from('payment_schedules')
     .select(`
       id,
       label,
-      amount,
+      amount_due,
       status,
       school_id,
       student:students!inner(
@@ -122,7 +123,7 @@ export async function sendManualReminder(dueId: string): Promise<{ error?: strin
         )
       )
     `)
-    .eq('id', dueId)
+    .eq('id', scheduleId)
     .eq('school_id', roleData.school_id)
     .single()
 
@@ -134,21 +135,21 @@ export async function sendManualReminder(dueId: string): Promise<{ error?: strin
   if (!parentPhone) return { error: 'Aucun numéro de téléphone trouvé pour le parent' }
 
   // 3. Envoyer le SMS via l'Edge Function
-  const message = `Rappel Scogestia: Votre paiement de ${due.amount.toLocaleString('fr-FR')} FCFA pour "${due.label}" est en attente. Merci de régulariser la situation.`
+  const message = `Rappel Scogestia: Votre paiement de ${Number(due.amount_due).toLocaleString('fr-FR')} FCFA pour "${due.label}" est en attente. Merci de régulariser la situation.`
   
   const { error: invokeError } = await supabase.functions.invoke('send-sms', {
     body: { phone: parentPhone, message }
   })
 
   // 4. Logger dans payment_reminders
-  const status = invokeError ? 'failed' : 'sent'
-  const { error: logError } = await supabase
+  const status = invokeError ? 'failed' : 'envoye'
+  await supabase
     .from('payment_reminders')
     .insert({
-      due_id: due.id,
-      type: 'manual',
-      status: status,
-      error_details: invokeError ? JSON.stringify(invokeError) : null
+      school_id: roleData.school_id,
+      schedule_id: due.id,
+      channel: 'sms',
+      status: status
     })
 
   if (invokeError) {
@@ -156,7 +157,8 @@ export async function sendManualReminder(dueId: string): Promise<{ error?: strin
     return { error: 'Le SMS n\'a pas pu être envoyé.' }
   }
 
-  revalidatePath('/comptable')
+  revalidatePath('/admin/finance/echeances')
+  revalidatePath('/admin/finance')
   return { success: true }
 }
 

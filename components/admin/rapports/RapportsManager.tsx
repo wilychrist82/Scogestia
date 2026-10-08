@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { ExportButtons } from '@/components/ui/ExportButtons'
 import { RapportsNavTabs } from './RapportsNavTabs'
+import { Users, Banknote, TrendingUp, ClipboardCheck } from 'lucide-react'
 
 type Props = {
   totalStudents: number
@@ -77,7 +78,7 @@ export function RapportsManager({ totalStudents, totalClasses, totalExpected, to
           <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] shadow-sm">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-[#e8f0fe] text-[#1a73e8] flex items-center justify-center">
-                <span className="material-symbols-outlined">group</span>
+                <Users className="w-5 h-5" />
               </div>
               <h3 className="font-semibold text-[var(--color-on-surface-variant)]">Effectif Total</h3>
             </div>
@@ -88,7 +89,7 @@ export function RapportsManager({ totalStudents, totalClasses, totalExpected, to
           <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] shadow-sm">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-[#e6f4ea] text-[#1e8e3e] flex items-center justify-center">
-                <span className="material-symbols-outlined">payments</span>
+                <Banknote className="w-5 h-5" />
               </div>
               <h3 className="font-semibold text-[var(--color-on-surface-variant)]">Total Encaissé</h3>
             </div>
@@ -99,7 +100,7 @@ export function RapportsManager({ totalStudents, totalClasses, totalExpected, to
           <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] shadow-sm">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-[#fce8e6] text-[#d93025] flex items-center justify-center">
-                <span className="material-symbols-outlined">trending_up</span>
+                <TrendingUp className="w-5 h-5" />
               </div>
               <h3 className="font-semibold text-[var(--color-on-surface-variant)]">Recouvrement</h3>
             </div>
@@ -112,7 +113,7 @@ export function RapportsManager({ totalStudents, totalClasses, totalExpected, to
           <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] shadow-sm">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-lg bg-[#fff8e1] text-[#f57f17] flex items-center justify-center">
-                <span className="material-symbols-outlined">fact_check</span>
+                <ClipboardCheck className="w-5 h-5" />
               </div>
               <h3 className="font-semibold text-[var(--color-on-surface-variant)]">Assiduité Globale</h3>
             </div>

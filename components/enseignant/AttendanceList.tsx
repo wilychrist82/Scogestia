@@ -3,6 +3,7 @@
 import React, { useState, useTransition } from 'react'
 import { saveClassAttendance, AttendanceStatus, AttendanceSavePayload } from '@/app/actions/attendance'
 import { useRouter } from 'next/navigation'
+import { Calendar, CheckCircle2, Clock, XCircle, Loader2, Save } from 'lucide-react'
 
 type Student = {
   id: string
@@ -75,7 +76,7 @@ export function AttendanceList({ classId, className, date, students, initialAtte
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
           <p className="font-semibold text-sm text-[var(--color-on-surface-variant)] mb-1 flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm">calendar_today</span>
+            <Calendar className="w-4 h-4 text-slate-500" />
             {capitalizedDate}
           </p>
           <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Appel : {className}</h2>
@@ -165,7 +166,7 @@ export function AttendanceList({ classId, className, date, students, initialAtte
                         : 'text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-highest)]'
                     }`}
                   >
-                    {status === 'present' && <span className="material-symbols-outlined text-[18px]">check_circle</span>}
+                    {status === 'present' && <CheckCircle2 className="w-4 h-4" />}
                     Présent
                   </button>
                   
@@ -178,7 +179,7 @@ export function AttendanceList({ classId, className, date, students, initialAtte
                         : 'text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-highest)]'
                     }`}
                   >
-                    {status === 'retard' && <span className="material-symbols-outlined text-[18px]">schedule</span>}
+                    {status === 'retard' && <Clock className="w-4 h-4" />}
                     Retard
                   </button>
                   
@@ -191,7 +192,7 @@ export function AttendanceList({ classId, className, date, students, initialAtte
                         : 'text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-highest)]'
                     }`}
                   >
-                    {(status === 'absent' || status === 'absent_justifie') && <span className="material-symbols-outlined text-[18px]">cancel</span>}
+                    {(status === 'absent' || status === 'absent_justifie') && <XCircle className="w-4 h-4" />}
                     Absent
                   </button>
                 </div>
@@ -220,9 +221,11 @@ export function AttendanceList({ classId, className, date, students, initialAtte
           disabled={isPending}
           className="px-8 py-3 rounded-lg font-semibold text-sm bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity flex items-center gap-2 min-h-[48px] disabled:opacity-50"
         >
-          <span className="material-symbols-outlined text-[20px]">
-            {isPending ? 'progress_activity' : 'save'}
-          </span>
+          {isPending ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <Save className="w-5 h-5" />
+          )}
           {isPending ? "Enregistrement..." : "Enregistrer l'appel"}
         </button>
       </div>

@@ -142,8 +142,8 @@ export function ReceiptPrint({ data, onClose }: { data: ReceiptData, onClose: ()
         {/* En-tête de la modale (non imprimable) */}
         <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50 print:hidden">
           <h3 className="font-bold text-gray-800">Reçu généré avec succès</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800">
-            <span className="material-symbols-outlined">close</span>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-800 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+            <X className="w-5 h-5" />
           </button>
         </div>
 

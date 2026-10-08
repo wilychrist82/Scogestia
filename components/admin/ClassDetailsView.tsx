@@ -4,7 +4,7 @@ import { useState, useMemo, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Users, GraduationCap, ArrowLeft, Download, Search, UserCheck } from 'lucide-react'
+import { Users, GraduationCap, ArrowLeft, Download, Search, UserCheck, UserPlus, Eye, Edit2, Trash2, MoreVertical, AlertTriangle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { deleteStudent, removeStudentFromClass } from '@/app/actions/students'
 
@@ -170,7 +170,7 @@ export function ClassDetailsView({ classInfo, students }: Props) {
             href="/admin/eleves/nouveau"
             className="px-4 py-2.5 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-lg hover:opacity-90 hover:shadow-md transition-all flex items-center gap-2"
           >
-            <span className="material-symbols-outlined text-[18px]">person_add</span>
+            <UserPlus className="w-4 h-4" />
             Inscrire un élève
           </Link>
         </div>
@@ -191,7 +191,7 @@ export function ClassDetailsView({ classInfo, students }: Props) {
 
         <div className="bg-[var(--color-surface-container-lowest)] p-4 rounded-xl border border-[var(--color-outline-variant)] shadow-sm">
           <div className="flex items-center gap-2 text-indigo-600 mb-1">
-            <span className="material-symbols-outlined text-[18px]">male</span>
+            <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
             <span className="text-xs font-bold uppercase tracking-wider">Garçons</span>
           </div>
           <p className="text-2xl font-bold text-[var(--color-on-surface)]">{boysCount}</p>
@@ -202,7 +202,7 @@ export function ClassDetailsView({ classInfo, students }: Props) {
 
         <div className="bg-[var(--color-surface-container-lowest)] p-4 rounded-xl border border-[var(--color-outline-variant)] shadow-sm">
           <div className="flex items-center gap-2 text-pink-600 mb-1">
-            <span className="material-symbols-outlined text-[18px]">female</span>
+            <span className="w-2 h-2 rounded-full bg-pink-600"></span>
             <span className="text-xs font-bold uppercase tracking-wider">Filles</span>
           </div>
           <p className="text-2xl font-bold text-[var(--color-on-surface)]">{girlsCount}</p>
@@ -327,7 +327,7 @@ export function ClassDetailsView({ classInfo, students }: Props) {
                         className="p-1.5 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[#eff4ff] rounded-full transition-all duration-300 hover:rotate-90 inline-flex items-center justify-center"
                         title="Actions"
                       >
-                        <span className="material-symbols-outlined text-[20px]">more_vert</span>
+                        <MoreVertical className="w-4 h-4" />
                       </button>
                       
                       {openActionId === student.id && (
@@ -342,7 +342,7 @@ export function ClassDetailsView({ classInfo, students }: Props) {
                               className="px-4 py-2 text-xs font-medium text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2.5 transition-colors"
                               onClick={() => setOpenActionId(null)}
                             >
-                              <span className="material-symbols-outlined text-[18px]">visibility</span>
+                              <Eye className="w-4 h-4" />
                               Voir fiche
                             </Link>
                             <Link 
@@ -350,7 +350,7 @@ export function ClassDetailsView({ classInfo, students }: Props) {
                               className="px-4 py-2 text-xs font-medium text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2.5 transition-colors"
                               onClick={() => setOpenActionId(null)}
                             >
-                              <span className="material-symbols-outlined text-[18px]">edit</span>
+                              <Edit2 className="w-4 h-4" />
                               Modifier
                             </Link>
                             <div className="border-t border-[var(--color-outline-variant)]/60 my-1" />
@@ -362,7 +362,7 @@ export function ClassDetailsView({ classInfo, students }: Props) {
                               }}
                               className="px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2.5 transition-colors w-full text-left"
                             >
-                              <span className="material-symbols-outlined text-[18px]">delete</span>
+                              <Trash2 className="w-4 h-4" />
                               Supprimer
                             </button>
                           </div>
@@ -383,7 +383,7 @@ export function ClassDetailsView({ classInfo, students }: Props) {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-100">
             <div className="p-6">
               <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined text-2xl">warning</span>
+                <AlertTriangle className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
                 Supprimer l'élève de l'école
@@ -425,7 +425,7 @@ export function ClassDetailsView({ classInfo, students }: Props) {
                 onClick={handleConfirmDelete}
                 className="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center justify-center gap-1.5 order-1 sm:order-3"
               >
-                <span className="material-symbols-outlined text-[16px]">delete</span>
+                <Trash2 className="w-4 h-4" />
                 {isPending ? 'Suppression...' : 'Supprimer définitivement'}
               </button>
             </div>

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { Building2, ShieldCheck, Users, Lock } from 'lucide-react'
+import { Building2, ShieldCheck, Users, Lock, Shield, CheckCircle2, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { ParametresNavTabs } from './ParametresNavTabs'
@@ -82,7 +82,7 @@ export function SecuritySettings({ users, schoolId }: Props) {
         <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden">
           <div className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
             <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
-              <span className="material-symbols-outlined text-[var(--color-primary)]">admin_panel_settings</span>
+              <Shield className="w-5 h-5 text-[var(--color-primary)]" />
               Personnel ({staffUsers.length})
             </h3>
             <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">Administrateurs, comptables et enseignants ayant accès au système.</p>
@@ -143,7 +143,7 @@ export function SecuritySettings({ users, schoolId }: Props) {
         <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden">
           <div className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
             <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
-              <span className="material-symbols-outlined text-[var(--color-primary)]">verified_user</span>
+              <ShieldCheck className="w-5 h-5 text-[var(--color-primary)]" />
               Matrice des Permissions
             </h3>
             <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">Droits d&apos;accès par rôle dans Scogestia.</p>
@@ -182,9 +182,9 @@ export function SecuritySettings({ users, schoolId }: Props) {
                     {(['admin', 'comptable', 'enseignant', 'parent'] as const).map(role => (
                       <td key={role} className="p-4 text-center">
                         {row[role] ? (
-                          <span className="material-symbols-outlined text-[18px] text-[#1e8e3e]">check_circle</span>
+                          <CheckCircle2 className="w-4 h-4 text-[#1e8e3e] mx-auto inline-block" />
                         ) : (
-                          <span className="material-symbols-outlined text-[18px] text-gray-300">cancel</span>
+                          <X className="w-4 h-4 text-gray-300 mx-auto inline-block" />
                         )}
                       </td>
                     ))}

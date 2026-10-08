@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { FileText, ListOrdered } from 'lucide-react'
 
 export function ResultatsTabs() {
   const pathname = usePathname()
@@ -22,7 +23,7 @@ export function ResultatsTabs() {
             : 'text-gray-500 hover:text-gray-700'
         }`}
       >
-        <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+        <FileText className="w-4 h-4" />
         Bulletins Officiels
       </Link>
       <Link 
@@ -33,7 +34,7 @@ export function ResultatsTabs() {
             : 'text-gray-500 hover:text-gray-700'
         }`}
       >
-        <span className="material-symbols-outlined text-[18px]">format_list_numbered</span>
+        <ListOrdered className="w-4 h-4" />
         Détail des notes
       </Link>
     </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-
+import { Info, DoorOpen } from 'lucide-react'
 import { StaticTimetable } from '@/components/ui/StaticTimetable'
 
 type TimetableEntry = {
@@ -132,7 +132,7 @@ export function PlanningDashboard({ timetables, mainClass }: Props) {
               <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-md">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <span className="material-symbols-outlined text-amber-500">info</span>
+                    <Info className="w-5 h-5 text-amber-500" />
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-amber-700 font-medium">
@@ -187,7 +187,7 @@ export function PlanningDashboard({ timetables, mainClass }: Props) {
                             </div>
                             {slot.room_name && (
                               <div className="text-[10px] mt-0.5 truncate flex items-center gap-1 opacity-80">
-                                <span className="material-symbols-outlined text-[12px]">meeting_room</span>
+                                <DoorOpen className="w-3 h-3" />
                                 {slot.room_name}
                               </div>
                             )}

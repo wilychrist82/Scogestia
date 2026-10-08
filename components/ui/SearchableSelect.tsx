@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { ChevronDown, ChevronUp, Search } from 'lucide-react'
 
 type Option = {
   value: string
@@ -40,28 +41,30 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Rech
       <input type="hidden" value={value} required={required} onChange={() => {}} />
       
       <div 
-        className={`w-full min-h-[48px] px-4 py-2 border rounded-lg bg-[var(--color-surface)] flex items-center justify-between cursor-pointer transition-colors ${isOpen ? 'border-[var(--color-primary)] ring-1 ring-[var(--color-primary)]' : 'border-[var(--color-outline-variant)]'}`}
+        className={`w-full min-h-[44px] px-3.5 py-2 border rounded-xl bg-white flex items-center justify-between cursor-pointer transition-all ${isOpen ? 'border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/10' : 'border-slate-200 hover:border-slate-300'}`}
         onClick={() => {
           setIsOpen(!isOpen)
           if (!isOpen) setSearch('')
         }}
       >
-        <span className={`truncate ${!selectedOption ? 'text-[var(--color-on-surface-variant)]' : 'text-[var(--color-on-surface)]'}`}>
+        <span className={`truncate text-sm font-medium ${!selectedOption ? 'text-slate-400' : 'text-slate-800'}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <span className="material-symbols-outlined text-[var(--color-on-surface-variant)]">
-          {isOpen ? 'expand_less' : 'expand_more'}
-        </span>
+        {isOpen ? (
+          <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
+        )}
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          <div className="sticky top-0 p-2 bg-[var(--color-surface-container-lowest)] border-b border-[var(--color-outline-variant)]">
-            <div className="relative">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] text-sm">search</span>
+        <div className="absolute z-50 w-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto animate-in fade-in duration-150">
+          <div className="sticky top-0 p-2 bg-white border-b border-slate-100">
+            <div className="relative flex items-center">
+              <Search className="w-4 h-4 absolute left-3 text-slate-400" />
               <input
                 type="text"
-                className="w-full h-10 pl-9 pr-4 text-sm border border-[var(--color-outline-variant)] rounded focus:outline-none focus:border-[var(--color-primary)]"
+                className="w-full h-9 pl-9 pr-3 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[var(--color-primary)] focus:bg-white transition-all placeholder:text-slate-400 font-medium"
                 placeholder="Taper pour rechercher..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}

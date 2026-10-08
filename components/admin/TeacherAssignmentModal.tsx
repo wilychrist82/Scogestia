@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect, FormEvent } from 'react'
 import { getTeacherAssignments, assignTeacherToClass, removeTeacherAssignment, getSchoolClassesAndSubjects } from '@/app/actions/staff'
+import { X, PlusCircle, ListOrdered, UserCheck, BookOpen, Trash2, Loader2 } from 'lucide-react'
 
 type Props = {
   isOpen: boolean
@@ -95,7 +96,7 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
             <p className="text-sm text-[var(--color-on-surface-variant)] mt-1">{teacherName}</p>
           </div>
           <button onClick={onClose} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
-            <span className="material-symbols-outlined">close</span>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -109,7 +110,7 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
           {/* Formulaire d'ajout */}
           <div className="bg-[var(--color-surface-container-highest)] p-5 rounded-xl border border-[var(--color-outline-variant)]">
             <h3 className="text-sm font-bold text-[var(--color-on-surface)] mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px]">add_circle</span>
+              <PlusCircle className="w-5 h-5 text-[var(--color-primary)]" />
               Ajouter une classe
             </h3>
             <form onSubmit={handleAssign} className="flex flex-col sm:flex-row gap-4 items-end">
@@ -169,17 +170,17 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
           {/* Liste des affectations */}
           <div>
             <h3 className="text-sm font-bold text-[var(--color-on-surface)] mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px]">list_alt</span>
+              <ListOrdered className="w-5 h-5 text-[var(--color-primary)]" />
               Classes assignées
             </h3>
             
             {isLoading ? (
               <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]"></div>
+                <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
               </div>
             ) : assignments.length === 0 ? (
-              <div className="text-center py-8 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] border-dashed rounded-xl">
-                <span className="material-symbols-outlined text-[32px] text-[var(--color-on-surface-variant)] mb-2">assignment_ind</span>
+              <div className="text-center py-8 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] border-dashed rounded-xl flex flex-col items-center">
+                <UserCheck className="w-8 h-8 text-[var(--color-on-surface-variant)] mb-2" />
                 <p className="text-sm text-[var(--color-on-surface-variant)]">Aucune classe n'est assignée à cet enseignant.</p>
               </div>
             ) : (
@@ -191,18 +192,18 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
                         {assignment.classes?.name}
                         {assignment.classes?.level && <span className="text-xs font-normal px-2 py-0.5 bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)] rounded-full">{assignment.classes.level}</span>}
                       </h4>
-                      <p className="text-sm text-[var(--color-on-surface-variant)] mt-1 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">book</span>
+                      <p className="text-sm text-[var(--color-on-surface-variant)] mt-1 flex items-center gap-1.5">
+                        <BookOpen className="w-4 h-4 text-[var(--color-primary)]" />
                         {assignment.subject_name}
                       </p>
                     </div>
                     <button 
                       onClick={() => handleRemove(assignment.id)}
                       disabled={isPending}
-                      className="p-2 text-[var(--color-status-retard-text)] hover:bg-red-50 rounded-full transition-colors disabled:opacity-50"
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50"
                       title="Retirer cette classe"
                     >
-                      <span className="material-symbols-outlined text-[20px]">delete</span>
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}

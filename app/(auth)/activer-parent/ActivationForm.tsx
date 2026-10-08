@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useTransition, useRef, KeyboardEvent, useEffect } from 'react'
+import { useState, useTransition, useRef, KeyboardEvent } from 'react'
 import { activateParentAccount } from '@/app/actions/invitations'
 import { useRouter } from 'next/navigation'
+import { BookOpen, Phone, Lock, Eye, EyeOff, ArrowRight, Loader2, AlertCircle } from 'lucide-react'
 
 export function ActivationForm({ initialCode = '' }: { initialCode?: string }) {
   const router = useRouter()
@@ -92,24 +93,25 @@ export function ActivationForm({ initialCode = '' }: { initialCode?: string }) {
   }
 
   return (
-    <main className="w-full max-w-md bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-4 md:p-8 shadow-sm flex flex-col gap-6">
+    <main className="w-full max-w-md bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-2xl p-6 md:p-8 shadow-sm flex flex-col gap-6">
       {/* Header & Logo */}
       <div className="flex flex-col items-center text-center gap-2">
-        <div className="w-20 h-20 bg-[var(--color-primary-container)] rounded-xl flex items-center justify-center text-[var(--color-on-primary-container)] mb-2">
-          <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>auto_stories</span>
+        <div className="w-16 h-16 bg-blue-50 text-[var(--color-primary)] rounded-2xl flex items-center justify-center mb-2 shadow-sm border border-blue-100">
+          <BookOpen className="w-8 h-8" />
         </div>
-        <h1 className="text-2xl font-bold text-[var(--color-primary)]">Activer mon compte</h1>
+        <h1 className="text-2xl font-bold text-[var(--color-on-surface)]">Activer mon compte</h1>
         <p className="text-[var(--color-on-surface-variant)] text-sm">Créez votre accès parent avec votre numéro de téléphone pour suivre la scolarité de votre enfant.</p>
       </div>
 
       {error && (
-        <div className="bg-[var(--color-status-retard-bg)] text-[var(--color-status-retard-text)] p-3 rounded-md text-sm text-center border border-[var(--color-status-retard-text)]/20 font-medium">
-          {error}
+        <div className="flex items-center gap-2.5 bg-red-50 text-red-700 p-3.5 rounded-xl text-sm border border-red-200 font-medium animate-in fade-in">
+          <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+          <span>{error}</span>
         </div>
       )}
 
       {/* Form Area */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5 mt-2">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         
         {/* Contact Input (Phone only) */}
         <div className="flex flex-col gap-1.5">
@@ -117,9 +119,7 @@ export function ActivationForm({ initialCode = '' }: { initialCode?: string }) {
             Numéro de téléphone
           </label>
           <div className="relative flex items-center">
-            <span className="material-symbols-outlined absolute left-3 text-[var(--color-on-surface-variant)]">
-              call
-            </span>
+            <Phone className="w-4 h-4 absolute left-3.5 text-slate-400" />
             <input 
               id="phone-input" 
               type="tel"
@@ -127,7 +127,7 @@ export function ActivationForm({ initialCode = '' }: { initialCode?: string }) {
               required 
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              className="w-full h-12 pl-10 pr-3 rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] text-[var(--color-on-surface)] focus:ring-2 focus:ring-[var(--color-primary-container)] focus:border-[var(--color-primary-container)] text-base outline-none transition-all font-medium"
+              className="w-full h-11 pl-10 pr-3 rounded-xl border border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-blue-100 focus:border-[var(--color-primary)] text-sm outline-none transition-all font-medium placeholder:text-slate-400"
             />
           </div>
         </div>
@@ -138,7 +138,7 @@ export function ActivationForm({ initialCode = '' }: { initialCode?: string }) {
             Créer un mot de passe
           </label>
           <div className="relative flex items-center">
-            <span className="material-symbols-outlined absolute left-3 text-[var(--color-on-surface-variant)]">lock</span>
+            <Lock className="w-4 h-4 absolute left-3.5 text-slate-400" />
             <input 
               id="password-input" 
               type={showPassword ? "text" : "password"}
@@ -147,21 +147,22 @@ export function ActivationForm({ initialCode = '' }: { initialCode?: string }) {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-12 pl-10 pr-10 rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] text-[var(--color-on-surface)] focus:ring-2 focus:ring-[var(--color-primary-container)] focus:border-[var(--color-primary-container)] text-base outline-none transition-all font-medium"
+              className="w-full h-11 pl-10 pr-10 rounded-xl border border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-blue-100 focus:border-[var(--color-primary)] text-sm outline-none transition-all font-medium placeholder:text-slate-400"
             />
             <button 
               type="button" 
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors p-1"
+              className="absolute right-3 text-slate-400 hover:text-slate-600 transition-colors p-1"
+              aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
             >
-              <span className="material-symbols-outlined text-[20px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-          <span className="text-xs text-[var(--color-on-surface-variant)]">Ce mot de passe vous servira pour vos prochaines connexions. (Min 6 caractères)</span>
+          <span className="text-xs text-[var(--color-on-surface-variant)]">Ce mot de passe vous servira pour vos prochaines connexions (min 6 caractères).</span>
         </div>
 
         {/* OTP Input */}
-        <div className="flex flex-col gap-1.5 mt-2">
+        <div className="flex flex-col gap-1.5 mt-1">
           <label className="text-sm font-semibold text-[var(--color-on-surface)]">
             Code d'activation de l'école
           </label>
@@ -176,7 +177,7 @@ export function ActivationForm({ initialCode = '' }: { initialCode?: string }) {
                 value={digit}
                 onChange={(e) => handleOtpChange(index, e.target.value)}
                 onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                className="w-full h-12 md:h-14 text-center text-xl font-bold rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] text-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-container)] focus:border-[var(--color-primary-container)] outline-none uppercase transition-all shadow-sm"
+                className="w-full h-12 md:h-13 text-center text-lg font-bold rounded-xl border border-slate-200 bg-white text-[var(--color-primary)] focus:ring-2 focus:ring-blue-100 focus:border-[var(--color-primary)] outline-none uppercase transition-all shadow-sm"
               />
             ))}
           </div>
@@ -186,10 +187,19 @@ export function ActivationForm({ initialCode = '' }: { initialCode?: string }) {
         <button 
           type="submit" 
           disabled={isPending}
-          className="w-full h-12 bg-[var(--color-primary)] text-white font-semibold text-base rounded-lg hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50 shadow-md"
+          className="w-full h-11 bg-[var(--color-primary)] text-white font-semibold text-sm rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50 shadow-sm"
         >
-          {isPending ? 'Activation en cours...' : 'Activer mon accès'}
-          {!isPending && <span className="material-symbols-outlined text-[20px]">arrow_forward</span>}
+          {isPending ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Activation en cours...</span>
+            </>
+          ) : (
+            <>
+              <span>Activer mon accès</span>
+              <ArrowRight className="w-4 h-4" />
+            </>
+          )}
         </button>
       </form>
     </main>

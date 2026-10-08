@@ -4,6 +4,7 @@ import { useState, useTransition, FormEvent } from 'react'
 import { savePrimaryGrades, saveSecondaryGrades } from '@/app/actions/academique'
 import Link from 'next/link'
 import { sortClasses } from '@/lib/classes'
+import { ChevronRight, Table, Save, Loader2 } from 'lucide-react'
 
 type ClassItem = { id: string; name: string; level?: string }
 type SubjectItem = { id: string; name: string; cycle: string }
@@ -100,7 +101,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
               <Link href="#" onClick={(e) => {e.preventDefault(); window.history.back()}} className="hover:text-[var(--color-primary)] transition-colors text-sm font-semibold">
                 Retour
               </Link>
-              <span className="material-symbols-outlined text-sm">chevron_right</span>
+              <ChevronRight className="w-4 h-4 text-sm" />
               <span className="text-sm font-semibold text-[var(--color-on-surface)]">Saisie des Notes</span>
             </div>
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Grille de saisie</h2>
@@ -220,7 +221,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
           {/* Grid */}
           {!selectedClass || !selectedSubject ? (
             <div className="p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] flex-1 min-h-[300px]">
-              <span className="material-symbols-outlined text-4xl mb-2 opacity-50">table</span>
+              <Table className="w-10 h-10 mb-2 opacity-50 text-[var(--color-primary)]" />
               <p className="text-lg font-medium">Sélectionnez une classe et une matière</p>
             </div>
           ) : filteredStudents.length === 0 ? (
@@ -319,7 +320,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
               
               <div className="p-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end">
                 <button type="submit" disabled={isPending} className="px-6 py-3 rounded-lg text-sm font-semibold bg-[var(--color-primary)] text-white hover:opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm">
-                  {isPending ? <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> : <span className="material-symbols-outlined text-[18px]">save</span>}
+                  {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   Enregistrer les notes
                 </button>
               </div>

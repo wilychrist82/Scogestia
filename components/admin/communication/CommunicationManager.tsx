@@ -13,6 +13,7 @@ import { MessageActions } from '@/components/ui/MessageActions'
 import { ReadReceiptTrigger } from '@/components/ui/ReadReceiptTrigger'
 import toast from 'react-hot-toast'
 import { CommunicationNavTabs } from './CommunicationNavTabs'
+import { AlertCircle, CheckCircle2, Users, School, History, Ban, FileText, Mic } from 'lucide-react'
 
 type ClassItem = { id: string; name: string }
 type StudentItem = { id: string; first_name: string; last_name: string; classes: { name: string } | null }
@@ -108,14 +109,14 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
 
         {error && (
           <div className="bg-[var(--color-status-retard-bg)] text-[var(--color-status-retard-text)] p-4 rounded-xl border border-[var(--color-status-retard-text)] text-sm font-semibold flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px]">error</span>
+            <AlertCircle className="w-5 h-5" />
             {error}
           </div>
         )}
 
         {success && (
           <div className="bg-[#e6f4ea] text-[#1e8e3e] p-4 rounded-xl border border-[#ceead6] text-sm font-semibold flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px]">check_circle</span>
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
             Message envoyé avec succès.
           </div>
         )}
@@ -127,9 +128,11 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
             <div className="p-3 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[var(--color-primary-container)] text-[var(--color-primary)] flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[20px]">
-                    {recipientType === 'all' || recipientType === 'class' || recipientType === 'parent' ? 'family_restroom' : 'school'}
-                  </span>
+                  {recipientType === 'all' || recipientType === 'class' || recipientType === 'parent' ? (
+                    <Users className="w-5 h-5" />
+                  ) : (
+                    <School className="w-5 h-5" />
+                  )}
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm font-bold text-[var(--color-on-surface)]">
@@ -241,7 +244,7 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
           <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden flex flex-col h-full">
             <div className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
               <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[var(--color-on-surface-variant)]">history</span>
+                <History className="w-5 h-5 text-[var(--color-on-surface-variant)]" />
                 Historique Récent
               </h3>
             </div>
@@ -297,7 +300,7 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
 
                           {isDeletedForEveryone ? (
                             <div className="px-3 py-2 text-[14px] text-gray-500 italic flex items-center gap-2">
-                              <span className="material-symbols-outlined text-[18px]">block</span>
+                              <Ban className="w-4 h-4" />
                               Ce message a été supprimé
                             </div>
                           ) : (
@@ -343,7 +346,7 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
                                           <video src={fileUrl} controls className="max-w-full h-auto rounded-lg max-h-48 border border-black/10" />
                                         ) : (
                                           <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-black/5 rounded-lg hover:bg-black/10 transition-colors">
-                                            <span className="material-symbols-outlined text-[20px]">description</span>
+                                            <FileText className="w-5 h-5 text-gray-600" />
                                             <span className="text-sm font-semibold truncate max-w-[150px]" title={fileName}>{fileName}</span>
                                           </a>
                                         )}
@@ -355,8 +358,8 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
                               {comm.audio_url && (
                                 <div className={`flex items-center gap-2 px-3 py-2 min-w-[200px] pr-6 ${
                                   comm.content && comm.content !== 'Message vocal' ? 'border-t border-black/5' : ''
-                                }`}>
-                                  <span className="material-symbols-outlined text-[20px] text-[var(--color-primary)] shrink-0">mic</span>
+                                }}`}>
+                                  <Mic className="w-5 h-5 text-[var(--color-primary)] shrink-0" />
                                   <audio src={comm.audio_url} controls className="h-7 w-full flex-1" style={{ colorScheme: 'light' }} />
                                 </div>
                               )}

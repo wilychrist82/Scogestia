@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, KeyboardEvent } from 'react'
 import { saveGrade, syncOfflineGrades, GradeSavePayload } from '@/app/actions/grades'
+import { WifiOff, CheckCircle2, Loader2, AlertCircle, CloudOff } from 'lucide-react'
 
 type Student = {
   id: string
@@ -199,35 +200,35 @@ export function GradesGrid({ classId, subjectName, term, students, initialGrades
         </div>
         
         {offlineQueue.length > 0 && (
-          <div className="bg-[#fff3e0] text-[#e65100] px-4 py-2 rounded-lg font-semibold flex items-center gap-2">
-            <span className="material-symbols-outlined">wifi_off</span>
-            {offlineQueue.length} notes en attente (Hors-ligne)
+          <div className="bg-amber-50 text-amber-800 border border-amber-200 px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2">
+            <WifiOff className="w-4 h-4 text-amber-600" />
+            <span>{offlineQueue.length} notes en attente (Hors-ligne)</span>
           </div>
         )}
       </div>
 
       {/* Grid */}
-      <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg overflow-hidden flex flex-col shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-max">
-            <thead className="bg-[var(--color-surface-container-low)] border-b-2 border-[var(--color-outline-variant)]">
+            <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="py-3 px-4 font-semibold text-sm text-[var(--color-on-surface)] sticky left-0 bg-[var(--color-surface-container-low)] z-10 w-64 border-r border-[var(--color-outline-variant)]">
+                <th className="py-3 px-4 font-semibold text-xs text-slate-600 sticky left-0 bg-slate-50 z-10 w-64 border-r border-slate-200">
                   Élève
                 </th>
                 {columns.map(col => (
-                  <th key={col.key} className="py-3 px-4 min-w-[140px] border-r border-[var(--color-outline-variant)]">
-                    <div className="font-semibold text-sm text-[var(--color-on-surface)]">{col.label}</div>
-                    <div className="text-xs text-[var(--color-on-surface-variant)] font-normal">{col.coeff} • /20</div>
+                  <th key={col.key} className="py-3 px-4 min-w-[140px] border-r border-slate-200">
+                    <div className="font-semibold text-xs text-slate-800">{col.label}</div>
+                    <div className="text-[11px] text-slate-500 font-normal">{col.coeff} • /20</div>
                   </th>
                 ))}
-                <th className="py-3 px-4 min-w-[100px] text-right font-semibold text-sm text-[var(--color-on-surface)]">
+                <th className="py-3 px-4 min-w-[100px] text-right font-semibold text-xs text-slate-800">
                   Moyenne
                 </th>
               </tr>
             </thead>
             
-            <tbody className="text-base text-[var(--color-on-surface)]">
+            <tbody className="text-sm text-slate-900 divide-y divide-slate-100">
               {students.map((student, rIdx) => {
                 
                 // Calcul Moyenne ligne
@@ -246,14 +247,14 @@ export function GradesGrid({ classId, subjectName, term, students, initialGrades
                 const avg = sumCoeff > 0 ? (sumGrades / sumCoeff).toFixed(2) : '--'
 
                 return (
-                  <tr key={student.id} className="border-b border-[var(--color-outline-variant)] hover:bg-[var(--color-surface-container-high)] transition-colors odd:bg-[var(--color-surface-bright)] even:bg-[var(--color-surface-container-lowest)]">
+                  <tr key={student.id} className="hover:bg-slate-50/80 transition-colors bg-white">
                     
                     {/* Colonne Élève figée */}
-                    <td className="py-2 px-4 sticky left-0 bg-inherit border-r border-[var(--color-outline-variant)] flex items-center gap-3 font-semibold">
-                      <div className="w-8 h-8 rounded-full bg-[var(--color-secondary-container)] text-[var(--color-on-secondary-container)] flex items-center justify-center text-xs">
+                    <td className="py-2.5 px-4 sticky left-0 bg-inherit border-r border-slate-100 flex items-center gap-2.5 font-medium text-slate-800">
+                      <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-xs font-semibold shrink-0">
                         {student.first_name[0]}{student.last_name[0]}
                       </div>
-                      {student.first_name} {student.last_name}
+                      <span className="truncate">{student.first_name} {student.last_name}</span>
                     </td>
 
                     {/* Cellules Édition */}
@@ -262,19 +263,19 @@ export function GradesGrid({ classId, subjectName, term, students, initialGrades
                       const status = cellStatus[cellKey] || 'idle'
                       const val = grades[student.id][col.key]
 
-                      let inputClass = "w-full h-10 px-3 pr-8 rounded bg-[var(--color-surface-container-lowest)] border focus:border-2 text-right transition-colors "
+                      let inputClass = "w-full h-9 px-2.5 pr-7 rounded-lg text-sm text-right transition-colors outline-none font-medium "
                       
                       // Couleurs d'état
                       if (status === 'error') {
-                        inputClass += "border-[var(--color-error)] text-[var(--color-error)] focus:border-[var(--color-error)] bg-[var(--color-error-container)]"
+                        inputClass += "border border-rose-300 text-rose-900 focus:border-rose-500 bg-rose-50/50"
                       } else if (status === 'saving') {
-                        inputClass += "border-[var(--color-primary)] focus:border-[var(--color-primary)]"
+                        inputClass += "border border-blue-400 focus:border-blue-500 bg-blue-50/20 text-slate-900"
                       } else {
-                        inputClass += "border-[var(--color-outline-variant)] focus:border-[var(--color-primary)]"
+                        inputClass += "border border-slate-200 focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20 bg-white text-slate-900"
                       }
 
                       return (
-                        <td key={col.key} className="py-2 px-4 border-r border-[var(--color-outline-variant)]">
+                        <td key={col.key} className="py-2 px-3 border-r border-slate-100">
                           <div className="relative flex items-center group">
                             <input
                               ref={el => { inputRefs.current[rIdx][cIdx] = el }}
@@ -292,16 +293,24 @@ export function GradesGrid({ classId, subjectName, term, students, initialGrades
                             
                             {/* Indicateurs (coche, erreur, spinner) */}
                             {status === 'saved' && (
-                              <span className="absolute right-2 material-symbols-outlined text-[18px] text-[var(--color-primary)]" title="Sauvegardé">check_circle</span>
+                              <span className="absolute right-2" title="Sauvegardé">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              </span>
                             )}
                             {status === 'saving' && (
-                              <span className="absolute right-2 material-symbols-outlined text-[18px] text-[var(--color-on-surface-variant)] animate-spin" title="Enregistrement...">progress_activity</span>
+                              <span className="absolute right-2" title="Enregistrement...">
+                                <Loader2 className="w-3.5 h-3.5 text-slate-400 animate-spin" />
+                              </span>
                             )}
                             {status === 'error' && (
-                              <span className="absolute right-2 material-symbols-outlined text-[18px] text-[var(--color-error)]" title="Erreur">error</span>
+                              <span className="absolute right-2" title="Erreur (doit être entre 0 et 20)">
+                                <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
+                              </span>
                             )}
                             {status === 'offline_queued' && (
-                              <span className="absolute right-2 material-symbols-outlined text-[18px] text-[#e65100]" title="En attente de réseau">cloud_off</span>
+                              <span className="absolute right-2" title="En attente de réseau">
+                                <CloudOff className="w-3.5 h-3.5 text-amber-600" />
+                              </span>
                             )}
                           </div>
                         </td>
@@ -309,8 +318,16 @@ export function GradesGrid({ classId, subjectName, term, students, initialGrades
                     })}
 
                     {/* Colonne Moyenne */}
-                    <td className="py-2 px-4 text-right font-semibold bg-[var(--color-surface-container-lowest)] text-[var(--color-primary)]">
-                      {avg}
+                    <td className="py-2 px-4 text-right font-semibold text-slate-800">
+                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${
+                        avg !== '--' && parseFloat(avg) >= 10
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : avg !== '--'
+                            ? 'bg-rose-50 text-rose-700'
+                            : 'text-slate-400'
+                      }`}>
+                        {avg}
+                      </span>
                     </td>
                   </tr>
                 )
@@ -320,12 +337,24 @@ export function GradesGrid({ classId, subjectName, term, students, initialGrades
         </div>
         
         {/* Footer info */}
-        <div className="bg-[var(--color-surface-container)] p-4 border-t border-[var(--color-outline-variant)] flex justify-between items-center text-xs font-semibold text-[var(--color-on-surface-variant)]">
-          <span>{students.length} Élèves inscrits</span>
+        <div className="bg-slate-50 px-4 py-3 border-t border-slate-200 flex justify-between items-center text-xs font-medium text-slate-500">
+          <span>{students.length} Élève(s) inscrit(s)</span>
           <div className="flex items-center gap-4">
-            {savedCount > 0 && <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px] text-[var(--color-primary)]">check_circle</span> {savedCount} Sauvegardé(s)</span>}
-            {savingCount > 0 && <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span> En cours</span>}
-            {errorCount > 0 && <span className="flex items-center gap-1 text-[var(--color-error)]"><span className="material-symbols-outlined text-[14px]">error</span> Erreur</span>}
+            {savedCount > 0 && (
+              <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+                <CheckCircle2 className="w-3.5 h-3.5" /> {savedCount} Sauvegardé(s)
+              </span>
+            )}
+            {savingCount > 0 && (
+              <span className="flex items-center gap-1.5 text-blue-700 font-semibold">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> En cours...
+              </span>
+            )}
+            {errorCount > 0 && (
+              <span className="flex items-center gap-1.5 text-rose-600 font-semibold">
+                <AlertCircle className="w-3.5 h-3.5" /> {errorCount} Erreur(s)
+              </span>
+            )}
           </div>
         </div>
       </div>

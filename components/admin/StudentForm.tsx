@@ -6,6 +6,7 @@ import { createStudent } from '@/app/actions/students'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { sortClasses } from '@/lib/classes'
+import { ChevronRight, FileSpreadsheet, UserPlus, ChevronDown, ArrowLeft, Plus, Save, Loader2 } from 'lucide-react'
 
 type Props = {
   classes: { id: string, name: string, level?: string }[]
@@ -64,7 +65,7 @@ export function StudentForm({ classes }: Props) {
           <Link href="/admin/eleves" className="hover:text-[var(--color-primary)] transition-colors text-sm font-semibold">
             Élèves
           </Link>
-          <span className="material-symbols-outlined text-sm">chevron_right</span>
+          <ChevronRight className="w-4 h-4 text-sm" />
           <span className="text-sm font-semibold text-[var(--color-on-surface)]">Nouvelle Inscription</span>
         </div>
         <h1 className="text-3xl font-bold text-[var(--color-on-surface)]">Inscription d'un Élève</h1>
@@ -74,7 +75,7 @@ export function StudentForm({ classes }: Props) {
       {/* Excel Import Callout */}
       <div className="mb-6 p-4 rounded-xl bg-blue-50 border border-blue-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm">
         <div className="flex items-center gap-2.5 text-blue-900">
-          <span className="material-symbols-outlined text-blue-600 text-xl">upload_file</span>
+          <FileSpreadsheet className="w-5 h-5 text-blue-600 shrink-0" />
           <span>Vous devez inscrire plusieurs élèves ou des classes entières (Lycée, Collège, Primaire) ?</span>
         </div>
         <Link
@@ -95,7 +96,7 @@ export function StudentForm({ classes }: Props) {
       <form onSubmit={handleSubmit} className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl overflow-hidden shadow-sm">
         <div className="p-6 md:p-8 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]/50">
           <h2 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2">
-            <span className="material-symbols-outlined text-[var(--color-primary)]">person_add</span>
+            <UserPlus className="w-5 h-5 text-[var(--color-primary)]" />
             Informations Générales
           </h2>
         </div>
@@ -169,7 +170,7 @@ export function StudentForm({ classes }: Props) {
                     <option value="">Jour</option>
                     {days.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
-                  <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none text-sm">expand_more</span>
+                  <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none" />
                 </div>
                 {/* Mois */}
                 <div className="relative">
@@ -182,7 +183,7 @@ export function StudentForm({ classes }: Props) {
                     <option value="">Mois</option>
                     {months.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
                   </select>
-                  <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none text-sm">expand_more</span>
+                  <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none" />
                 </div>
                 {/* Année */}
                 <div className="relative">
@@ -195,7 +196,7 @@ export function StudentForm({ classes }: Props) {
                     <option value="">Année</option>
                     {years.map(y => <option key={y} value={y}>{y}</option>)}
                   </select>
-                  <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none text-sm">expand_more</span>
+                  <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -239,7 +240,7 @@ export function StudentForm({ classes }: Props) {
                     </optgroup>
                   )}
                 </select>
-                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none">expand_more</span>
+                <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none" />
               </div>
             </div>
           </div>
@@ -251,7 +252,7 @@ export function StudentForm({ classes }: Props) {
             href="/admin/eleves"
             className="w-full sm:w-auto h-[48px] px-6 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors flex items-center justify-center gap-2"
           >
-            <span className="material-symbols-outlined text-sm">arrow_back</span>
+            <ArrowLeft className="w-4 h-4" />
             Retour
           </Link>
           <button 
@@ -261,7 +262,7 @@ export function StudentForm({ classes }: Props) {
             className="w-full sm:w-auto h-[48px] px-6 rounded-lg bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[var(--color-surface-container-highest)] transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 border border-[var(--color-outline-variant)]" 
             type="submit"
           >
-            <span className="material-symbols-outlined text-sm">{isPending ? 'hourglass_empty' : 'add'}</span>
+            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
             Enregistrer et Nouveau
           </button>
           <button 
@@ -269,7 +270,7 @@ export function StudentForm({ classes }: Props) {
             className="w-full sm:w-auto h-[48px] px-6 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-50" 
             type="submit"
           >
-            <span className="material-symbols-outlined text-sm">{isPending ? 'hourglass_empty' : 'save'}</span>
+            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {isPending ? 'Enregistrement...' : "Enregistrer l'élève"}
           </button>
         </div>

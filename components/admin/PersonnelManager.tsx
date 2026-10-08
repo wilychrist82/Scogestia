@@ -4,6 +4,7 @@ import { useState, useTransition, FormEvent } from 'react'
 import { inviteStaff, deleteStaff, editStaff } from '@/app/actions/staff'
 import { TeacherAssignmentModal } from '@/components/admin/TeacherAssignmentModal'
 import toast from 'react-hot-toast'
+import { UserPlus, Search, Clock, MoreVertical, Edit2, ListOrdered, Trash2, ChevronLeft, ChevronRight, X, MailCheck, Copy } from 'lucide-react'
 
 export type StaffItem = {
   id: string
@@ -140,7 +141,7 @@ export function PersonnelManager({ staffList }: Props) {
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Gérez le personnel administratif et enseignant de votre établissement.</p>
           </div>
           <button onClick={openAddModal} className="flex items-center justify-center gap-2 bg-[var(--color-primary-container)] text-[var(--color-on-primary)] h-12 px-6 rounded-full text-sm font-semibold hover:bg-[var(--color-primary)] hover:text-white hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 active:scale-95 w-full sm:w-auto shrink-0 shadow-sm group">
-            <span className="material-symbols-outlined group-hover:rotate-12 transition-transform" data-icon="person_add">person_add</span>
+            <UserPlus className="w-5 h-5 group-hover:scale-110 transition-transform" />
             Inviter un membre
           </button>
         </div>
@@ -154,7 +155,7 @@ export function PersonnelManager({ staffList }: Props) {
         {/* Filters & Search */}
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <div className="relative flex-grow">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)]" data-icon="search">search</span>
+            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)]" />
             <input className="w-full pl-10 pr-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none transition-all" placeholder="Rechercher par nom..." type="text"/>
           </div>
           <div className="flex gap-2">
@@ -207,8 +208,8 @@ export function PersonnelManager({ staffList }: Props) {
                           Actif
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)] border border-[var(--color-outline-variant)]">
-                          <span className="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--color-surface-variant)] text-[var(--color-on-surface-variant)] border border-[var(--color-outline-variant)]">
+                          <Clock className="w-3.5 h-3.5" />
                           Inactif
                         </span>
                       )}
@@ -218,7 +219,7 @@ export function PersonnelManager({ staffList }: Props) {
                         onClick={() => setOpenActionId(openActionId === staff.id ? null : staff.id)}
                         className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[var(--color-surface-container-high)] rounded-full transition-all duration-300 hover:rotate-90 inline-block"
                       >
-                        <span className="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
+                        <MoreVertical className="w-5 h-5" />
                       </button>
 
                       {openActionId === staff.id && (
@@ -232,7 +233,7 @@ export function PersonnelManager({ staffList }: Props) {
                               setIsEditModalOpen(true);
                             }}
                           >
-                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                            <Edit2 className="w-4 h-4" />
                             Modifier
                           </button>
                           
@@ -246,7 +247,7 @@ export function PersonnelManager({ staffList }: Props) {
                                 setIsAssignmentModalOpen(true);
                               }}
                             >
-                              <span className="material-symbols-outlined text-[18px]">assignment</span>
+                              <ListOrdered className="w-4 h-4" />
                               Affectations
                             </button>
                           )}
@@ -256,9 +257,9 @@ export function PersonnelManager({ staffList }: Props) {
                               handleDelete(staff.id, staff.full_name);
                             }}
                             disabled={isPending}
-                            className="px-4 py-2 text-sm text-[var(--color-status-retard-text)] hover:bg-red-50 flex items-center gap-2 transition-colors w-full text-left disabled:opacity-50"
+                            className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors w-full text-left disabled:opacity-50"
                           >
-                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                            <Trash2 className="w-4 h-4" />
                             Supprimer
                           </button>
                         </div>
@@ -284,10 +285,10 @@ export function PersonnelManager({ staffList }: Props) {
             </span>
             <div className="flex gap-1">
               <button className="p-1 rounded-md text-[var(--color-outline)] hover:text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)] transition-colors disabled:opacity-50" disabled>
-                <span className="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+                <ChevronLeft className="w-5 h-5" />
               </button>
               <button className="p-1 rounded-md text-[var(--color-outline)] hover:text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)] transition-colors disabled:opacity-50" disabled>
-                <span className="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+                <ChevronRight className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -304,14 +305,14 @@ export function PersonnelManager({ staffList }: Props) {
                 Inviter un membre du personnel
               </h2>
               <button onClick={() => {setIsModalOpen(false); setGeneratedCode(null);}} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
-                <span className="material-symbols-outlined">close</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {generatedCode ? (
               <div className="p-6 flex flex-col items-center text-center space-y-4">
                 <div className="w-16 h-16 bg-[#e8f0fe] rounded-full flex items-center justify-center mb-2">
-                  <span className="material-symbols-outlined text-[32px] text-[var(--color-primary)]">mark_email_read</span>
+                  <MailCheck className="w-8 h-8 text-[var(--color-primary)]" />
                 </div>
                 <h3 className="text-lg font-bold text-[var(--color-on-surface)]">Invitation générée avec succès</h3>
                 <p className="text-sm text-[var(--color-on-surface-variant)]">Envoyez ce code au membre du personnel pour qu'il active son compte via WhatsApp ou SMS.</p>
@@ -327,7 +328,7 @@ export function PersonnelManager({ staffList }: Props) {
                     }}
                     className="flex items-center gap-2 bg-white text-[var(--color-primary)] px-3 py-2 rounded-lg border border-[var(--color-primary)] text-sm font-bold hover:bg-[#eff4ff]"
                   >
-                    <span className="material-symbols-outlined text-[18px]">content_copy</span>
+                    <Copy className="w-4 h-4" />
                     Copier le lien
                   </button>
                 </div>
@@ -445,7 +446,7 @@ export function PersonnelManager({ staffList }: Props) {
                 Modifier le membre
               </h2>
               <button onClick={() => { setIsEditModalOpen(false); setStaffToEdit(null); }} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
-                <span className="material-symbols-outlined">close</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
 

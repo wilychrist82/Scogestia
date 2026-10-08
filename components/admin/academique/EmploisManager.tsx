@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { StaticTimetable } from '@/components/ui/StaticTimetable'
+import { ChevronRight, CalendarDays } from 'lucide-react'
 
 type ClassItem = { id: string; name: string; level: string }
 
@@ -37,7 +38,7 @@ export function EmploisManager({ classes }: Props) {
               <span className="hover:text-[var(--color-primary)] transition-colors text-sm font-semibold">
                 Académique
               </span>
-              <span className="material-symbols-outlined text-sm">chevron_right</span>
+              <ChevronRight className="w-4 h-4 text-sm" />
               <span className="text-sm font-semibold text-[var(--color-on-surface)]">Emplois du temps</span>
             </div>
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Emplois du temps</h2>
@@ -69,7 +70,7 @@ export function EmploisManager({ classes }: Props) {
           <StaticTimetable level={timetableLevel} />
         ) : (
           <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] min-h-[400px]">
-            <span className="material-symbols-outlined text-4xl mb-2 opacity-50">calendar_month</span>
+            <CalendarDays className="w-10 h-10 mb-2 opacity-50 text-[var(--color-primary)]" />
             <p className="text-lg font-medium">Sélectionnez une classe pour afficher son emploi du temps</p>
           </div>
         )}

@@ -5,6 +5,7 @@ import { createAnnouncement, updateAnnouncement, deleteAnnouncement } from '@/ap
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { CommunicationNavTabs } from './CommunicationNavTabs'
+import { Megaphone, EyeOff, CheckCircle2, FileEdit, Plus, Users, Clock, Eye, Edit2, Trash2, X } from 'lucide-react'
 
 type Announcement = {
   id: string
@@ -63,9 +64,7 @@ function AnnouncementLogo({
       }`}
       title={isPublished ? 'Annonce publiée' : 'Brouillon'}
     >
-      <span className="material-symbols-outlined text-[24px]">
-        {isPublished ? 'campaign' : 'visibility_off'}
-      </span>
+      {isPublished ? <Megaphone className="w-6 h-6" /> : <EyeOff className="w-6 h-6" />}
     </div>
   )
 }
@@ -242,7 +241,7 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
             onClick={() => { resetForm(); setShowForm(true) }}
             className="flex items-center gap-2 bg-[var(--color-primary)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:opacity-90 transition-colors shadow-sm w-full sm:w-auto shrink-0"
           >
-            <span className="material-symbols-outlined text-[20px]">campaign</span>
+            <Megaphone className="w-5 h-5" />
             Nouvelle Annonce
           </button>
         </div>
@@ -255,7 +254,7 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
         )}
         {success && (
           <div className="bg-[#e6f4ea] text-[#1e8e3e] p-3 rounded-xl border border-[#ceead6] text-sm font-medium flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px]">check_circle</span>
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
             Annonce enregistrée avec succès.
           </div>
         )}
@@ -265,7 +264,7 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
           <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden">
             <div className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
               <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[var(--color-primary)]">edit_note</span>
+                <FileEdit className="w-5 h-5 text-[var(--color-primary)]" />
                 {editingId ? 'Modifier l\'annonce' : 'Nouvelle annonce'}
               </h3>
             </div>
@@ -347,7 +346,7 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
         {announcements.length === 0 ? (
           <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] p-12 text-center">
             <div className="w-16 h-16 bg-[var(--color-primary-container)] rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="material-symbols-outlined text-[32px] text-[var(--color-primary)]">campaign</span>
+              <Megaphone className="w-8 h-8 text-[var(--color-primary)]" />
             </div>
             <h3 className="text-lg font-bold text-[var(--color-on-surface)] mb-2">Aucune annonce publiée</h3>
             <p className="text-sm text-[var(--color-on-surface-variant)] max-w-md mx-auto mb-6">
@@ -357,7 +356,7 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
               onClick={() => { resetForm(); setShowForm(true) }}
               className="inline-flex items-center gap-2 bg-[var(--color-primary)] text-white px-6 py-3 rounded-full text-sm font-semibold hover:opacity-90 transition-colors"
             >
-              <span className="material-symbols-outlined text-[18px]">add</span>
+              <Plus className="w-4 h-4" />
               Publier une annonce
             </button>
           </div>
@@ -392,11 +391,11 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
                         </p>
                         <div className="flex items-center gap-3 mt-3 flex-wrap">
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-[var(--color-surface-bright)] text-[var(--color-on-surface-variant)] border border-[var(--color-outline-variant)]">
-                            <span className="material-symbols-outlined text-[14px]">group</span>
+                            <Users className="w-3.5 h-3.5" />
                             {getTargetLabel(a)}
                           </span>
                           <span className="text-[11px] text-[var(--color-on-surface-variant)] flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[13px]">schedule</span>
+                            <Clock className="w-3.5 h-3.5" />
                             {format(new Date(a.published_at || a.created_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
                           </span>
                           {!a.is_published && (
@@ -421,30 +420,28 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
                         className="p-2 rounded-lg hover:bg-[var(--color-surface-bright)] transition-colors text-[var(--color-on-surface-variant)]"
                         title="Consulter l'annonce"
                       >
-                        <span className="material-symbols-outlined text-[20px]">visibility</span>
+                        <Eye className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleTogglePublish(a)}
                         className="p-2 rounded-lg hover:bg-[var(--color-surface-bright)] transition-colors text-[var(--color-on-surface-variant)]"
                         title={a.is_published ? 'Masquer aux parents' : 'Publier et notifier'}
                       >
-                        <span className="material-symbols-outlined text-[20px]">
-                          {a.is_published ? 'visibility_off' : 'campaign'}
-                        </span>
+                        {a.is_published ? <EyeOff className="w-5 h-5" /> : <Megaphone className="w-5 h-5" />}
                       </button>
                       <button
                         onClick={() => handleEdit(a)}
                         className="p-2 rounded-lg hover:bg-[var(--color-surface-bright)] transition-colors text-[var(--color-on-surface-variant)]"
                         title="Modifier"
                       >
-                        <span className="material-symbols-outlined text-[20px]">edit</span>
+                        <Edit2 className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleDelete(a.id)}
                         className="p-2 rounded-lg hover:bg-[#fce8e6] transition-colors text-[var(--color-on-surface-variant)] hover:text-[#d93025]"
                         title="Supprimer"
                       >
-                        <span className="material-symbols-outlined text-[20px]">delete</span>
+                        <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
@@ -478,14 +475,14 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
                   onClick={() => setSelectedViewAnnouncement(null)}
                   className="p-2 rounded-lg hover:bg-[var(--color-surface)] text-[var(--color-on-surface-variant)] transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[22px]">close</span>
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="p-6 max-h-[60vh] overflow-y-auto space-y-4">
                 <div className="flex items-center gap-2 flex-wrap text-xs">
                   <span className="inline-flex items-center gap-1 font-semibold px-2.5 py-1 rounded-lg bg-[var(--color-surface-bright)] text-[var(--color-on-surface-variant)] border border-[var(--color-outline-variant)]">
-                    <span className="material-symbols-outlined text-[14px]">group</span>
+                    <Users className="w-3.5 h-3.5" />
                     Destinataires : {getTargetLabel(selectedViewAnnouncement)}
                   </span>
                   <span className={`inline-flex items-center gap-1 font-bold px-2.5 py-1 rounded-lg border ${
@@ -493,9 +490,11 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                       : 'bg-amber-50 text-amber-700 border-amber-200'
                   }`}>
-                    <span className="material-symbols-outlined text-[14px]">
-                      {selectedViewAnnouncement.is_published ? 'check_circle' : 'visibility_off'}
-                    </span>
+                    {selectedViewAnnouncement.is_published ? (
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    ) : (
+                      <EyeOff className="w-3.5 h-3.5" />
+                    )}
                     {selectedViewAnnouncement.is_published ? 'Diffusée aux familles' : 'Brouillon privé'}
                   </span>
                 </div>

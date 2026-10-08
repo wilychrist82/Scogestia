@@ -3,6 +3,7 @@
 import { useState, useTransition, FormEvent } from 'react'
 import { saveSchoolSubject } from '@/app/actions/academique'
 import Link from 'next/link'
+import { ChevronRight, Plus, BookOpen, Trash2, X, Loader2 } from 'lucide-react'
 
 export type SubjectItem = {
   id: string
@@ -69,14 +70,14 @@ export function MatieresManager({ subjects }: Props) {
               <Link href="/admin/academique" className="hover:text-[var(--color-primary)] transition-colors text-sm font-semibold">
                 Académique
               </Link>
-              <span className="material-symbols-outlined text-sm">chevron_right</span>
+              <ChevronRight className="w-4 h-4 text-sm" />
               <span className="text-sm font-semibold text-[var(--color-on-surface)]">Matières</span>
             </div>
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Gestion des Matières</h2>
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Configurez les matières par cycle pour les livrets et bulletins.</p>
           </div>
           <button onClick={openAddModal} className="flex items-center justify-center gap-2 bg-[var(--color-primary)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:opacity-90 transition-colors shadow-sm w-full sm:w-auto shrink-0">
-            <span className="material-symbols-outlined text-[20px]">add</span>
+            <Plus className="w-5 h-5" />
             Nouvelle matière
           </button>
         </div>
@@ -105,7 +106,7 @@ export function MatieresManager({ subjects }: Props) {
 
           {filteredSubjects.length === 0 ? (
              <div className="p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] flex-1">
-               <span className="material-symbols-outlined text-4xl mb-2 opacity-50">book</span>
+               <BookOpen className="w-10 h-10 mb-2 opacity-50 text-[var(--color-primary)]" />
                <p className="text-lg font-medium">Aucune matière configurée</p>
                <p className="text-sm">Ajoutez des matières pour commencer à saisir les notes.</p>
             </div>
@@ -139,8 +140,8 @@ export function MatieresManager({ subjects }: Props) {
                         </td>
                       )}
                       <td className="py-3 px-6 text-right">
-                        <button className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-status-retard-text)] rounded-full transition-colors" title="Supprimer">
-                          <span className="material-symbols-outlined text-[20px]">delete</span>
+                        <button className="p-2 text-[var(--color-on-surface-variant)] hover:text-red-600 rounded-full transition-colors" title="Supprimer">
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </td>
                     </tr>
@@ -159,7 +160,7 @@ export function MatieresManager({ subjects }: Props) {
             <div className="flex justify-between items-center p-6 border-b border-[var(--color-outline-variant)]">
               <h3 className="text-xl font-bold text-[var(--color-on-surface)]">Ajouter une matière</h3>
               <button type="button" onClick={() => setIsModalOpen(false)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)]">
-                <span className="material-symbols-outlined">close</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
             
@@ -225,7 +226,7 @@ export function MatieresManager({ subjects }: Props) {
                   Annuler
                 </button>
                 <button type="submit" disabled={isPending} className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-primary)] text-white hover:opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2">
-                  {isPending ? <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> : null}
+                  {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   Enregistrer
                 </button>
               </div>

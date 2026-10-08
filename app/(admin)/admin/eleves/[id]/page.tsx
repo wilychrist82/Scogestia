@@ -55,6 +55,34 @@ export default async function StudentDetailPage({
     )
   }
 
+  // Fetch grades
+  const { data: grades } = await supabase
+    .from('grades')
+    .select('*')
+    .eq('student_id', id)
+    .order('created_at', { ascending: false })
+
+  // Fetch attendances
+  const { data: attendances } = await supabase
+    .from('attendance')
+    .select('*')
+    .eq('student_id', id)
+    .order('date', { ascending: false })
+
+  // Fetch payment schedules
+  const { data: schedules } = await supabase
+    .from('payment_schedules')
+    .select('*')
+    .eq('student_id', id)
+    .order('due_date', { ascending: true })
+
+  // Fetch payments
+  const { data: payments } = await supabase
+    .from('payments')
+    .select('*, schedule:payment_schedules(label)')
+    .eq('student_id', id)
+    .order('paid_at', { ascending: false })
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Breadcrumb */}
@@ -62,11 +90,17 @@ export default async function StudentDetailPage({
         <Link href="/admin/eleves" className="hover:text-[var(--color-primary)] font-semibold transition-colors">
           Élèves
         </Link>
-        <span className="material-symbols-outlined text-sm">chevron_right</span>
+        <span className="text-slate-400">/</span>
         <span className="text-[var(--color-on-surface)] font-semibold">{student.first_name} {student.last_name}</span>
       </div>
 
-      <StudentDetailTabs student={student as any} />
+      <StudentDetailTabs 
+        student={student as any} 
+        grades={grades || []}
+        attendances={attendances || []}
+        schedules={schedules || []}
+        payments={payments || []}
+      />
     </div>
   )
 }

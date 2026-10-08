@@ -3,6 +3,7 @@
 import { useTransition, useState } from 'react'
 import { ImageUpload } from '@/components/shared/ImageUpload'
 import { updateTeacherProfile } from '@/app/actions/enseignant'
+import { Loader2, Save } from 'lucide-react'
 
 export function TeacherParametres({ userAvatar, userFullName }: { userAvatar: string, userFullName: string }) {
   const [isPending, startTransition] = useTransition()
@@ -65,12 +66,12 @@ export function TeacherParametres({ userAvatar, userFullName }: { userAvatar: st
               <button 
                 type="submit" 
                 disabled={isPending}
-                className="h-12 px-8 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                className="h-11 px-6 bg-[var(--color-primary)] text-white font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 text-sm shadow-sm"
               >
                 {isPending ? (
-                  <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <span className="material-symbols-outlined text-[20px]">save</span>
+                  <Save className="w-4 h-4" />
                 )}
                 {isPending ? 'Enregistrement...' : 'Enregistrer'}
               </button>

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { ChevronDown, Receipt, MoreVertical, Download, Edit2 } from 'lucide-react'
 
 type Due = {
   id: string
@@ -85,7 +86,7 @@ export function DuesList({ dues, classes }: Props) {
                 <option key={c.id} value={c.name}>{c.name}</option>
               ))}
             </select>
-            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none text-[20px]">expand_more</span>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none w-5 h-5" />
           </div>
           
           <div className="relative w-full sm:w-auto">
@@ -100,7 +101,7 @@ export function DuesList({ dues, classes }: Props) {
               <option value="en_retard">En retard</option>
               <option value="partiel">Partiel</option>
             </select>
-            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none text-[20px]">expand_more</span>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none w-5 h-5" />
           </div>
         </div>
       </div>
@@ -124,7 +125,7 @@ export function DuesList({ dues, classes }: Props) {
               {filteredDues.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-[var(--color-on-surface-variant)]">
-                    <span className="material-symbols-outlined text-4xl text-gray-300 mb-2 block">receipt_long</span>
+                    <Receipt className="w-10 h-10 text-gray-300 mb-2 mx-auto" />
                     Aucune échéance trouvée.
                   </td>
                 </tr>
@@ -146,7 +147,7 @@ export function DuesList({ dues, classes }: Props) {
                         onClick={() => setOpenActionId(openActionId === due.id ? null : due.id)}
                         className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[#eff4ff] rounded-full transition-all duration-300 hover:rotate-90 inline-block"
                       >
-                        <span className="material-symbols-outlined text-[20px]">more_vert</span>
+                        <MoreVertical className="w-5 h-5" />
                       </button>
                       
                       {openActionId === due.id && (
@@ -156,7 +157,7 @@ export function DuesList({ dues, classes }: Props) {
                               onClick={() => handleDownloadReceipt(due)}
                               className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors text-left"
                             >
-                              <span className="material-symbols-outlined text-[18px]">download</span>
+                              <Download className="w-4 h-4" />
                               Télécharger Reçu
                             </button>
                           )}
@@ -164,7 +165,7 @@ export function DuesList({ dues, classes }: Props) {
                             onClick={() => setOpenActionId(null)}
                             className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors text-left"
                           >
-                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                            <Edit2 className="w-4 h-4" />
                             Modifier le statut
                           </button>
                         </div>

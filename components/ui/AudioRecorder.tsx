@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Loader2, Mic, X, Square, Disc } from 'lucide-react'
 
 interface Props {
   onAudioReady: (url: string | null) => void
@@ -82,7 +83,7 @@ export function AudioRecorder({ onAudioReady, compact = false }: Props) {
   if (isUploading) {
     return (
       <div className="flex items-center gap-1.5 text-xs text-[var(--color-primary)] font-semibold">
-        <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
+        <Loader2 className="w-4 h-4 animate-spin" />
         Envoi…
       </div>
     )
@@ -92,7 +93,7 @@ export function AudioRecorder({ onAudioReady, compact = false }: Props) {
   if (audioUrl) {
     return (
       <div className="flex items-center gap-2 bg-[#dcf8c6] border border-[#b7dfb0] rounded-xl px-3 py-2 max-w-[220px]">
-        <span className="material-symbols-outlined text-[18px] text-[var(--color-primary)]">mic</span>
+        <Mic className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
         <audio src={audioUrl} controls className="h-7 flex-1 min-w-0" />
         <button
           type="button"
@@ -100,7 +101,7 @@ export function AudioRecorder({ onAudioReady, compact = false }: Props) {
           className="shrink-0 text-red-500 hover:text-red-700 transition-colors"
           title="Supprimer"
         >
-          <span className="material-symbols-outlined text-[18px]">close</span>
+          <X className="w-4 h-4" />
         </button>
       </div>
     )
@@ -112,12 +113,12 @@ export function AudioRecorder({ onAudioReady, compact = false }: Props) {
       <button
         type="button"
         onClick={stopRecording}
-        className="flex items-center gap-2 bg-red-500 text-white rounded-full px-3 py-2 text-xs font-semibold hover:bg-red-600 transition-colors"
+        className="flex items-center gap-2 bg-red-500 text-white rounded-full px-3 py-2 text-xs font-semibold hover:bg-red-600 transition-colors shadow-sm"
         title="Arrêter l'enregistrement"
       >
-        <span className="material-symbols-outlined text-[18px] animate-pulse">radio_button_checked</span>
+        <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
         {formatTime(recordingSeconds)}
-        <span className="material-symbols-outlined text-[18px]">stop</span>
+        <Square className="w-3.5 h-3.5 fill-white" />
       </button>
     )
   }
@@ -129,10 +130,10 @@ export function AudioRecorder({ onAudioReady, compact = false }: Props) {
       <button
         type="button"
         onClick={startRecording}
-        className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container)] transition-colors shrink-0"
+        className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container)] hover:text-[var(--color-primary)] transition-colors shrink-0"
         title="Enregistrer un message vocal"
       >
-        <span className="material-symbols-outlined text-[22px]">mic</span>
+        <Mic className="w-5 h-5" />
       </button>
     )
   }
@@ -144,7 +145,7 @@ export function AudioRecorder({ onAudioReady, compact = false }: Props) {
       onClick={startRecording}
       className="flex items-center gap-2 px-4 py-2 border border-[var(--color-outline-variant)] text-[var(--color-on-surface-variant)] rounded-lg hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors text-sm font-semibold w-full sm:w-auto justify-center"
     >
-      <span className="material-symbols-outlined text-[18px]">mic</span>
+      <Mic className="w-4 h-4" />
       Ajouter un message vocal
     </button>
   )

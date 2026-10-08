@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { ChariowProduct } from '@/lib/chariow/api'
 import { ChariowCheckout } from './ChariowCheckout'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, PackageX } from 'lucide-react'
 
 type Props = {
   plans: ChariowProduct[]
@@ -16,7 +16,7 @@ export function AbonnementManager({ plans }: Props) {
   if (!plans || plans.length === 0) {
     return (
       <div className="bg-[var(--color-surface-container-lowest)] p-8 rounded-xl border border-[var(--color-outline-variant)] text-center shadow-sm">
-        <span className="material-symbols-outlined text-4xl text-[var(--color-on-surface-variant)] mb-2">production_quantity_limits</span>
+        <PackageX className="w-10 h-10 text-[var(--color-on-surface-variant)] mb-2 mx-auto" />
         <p className="text-[var(--color-on-surface-variant)]">Aucun plan d'abonnement disponible pour le moment.</p>
       </div>
     )

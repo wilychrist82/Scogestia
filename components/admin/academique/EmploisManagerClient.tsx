@@ -5,7 +5,7 @@ import { TimetableGrid } from '@/components/admin/academique/TimetableGrid'
 import { StaticTimetable } from '@/components/ui/StaticTimetable'
 import { getTimetableSlots } from '@/app/actions/timetable'
 import type { TimetableSlot } from '@/app/actions/timetable'
-import { Calendar, ChevronDown } from 'lucide-react'
+import { Calendar, ChevronDown, ChevronRight } from 'lucide-react'
 import { sortClasses } from '@/lib/classes'
 
 type ClassItem = { id: string; name: string; level: string }
@@ -75,7 +75,7 @@ export function EmploisManagerClient({ classes, schoolId, readOnly }: Props) {
               <span className="hover:text-[var(--color-primary)] transition-colors text-sm font-semibold">
                 Académique
               </span>
-              <span className="material-symbols-outlined text-sm">chevron_right</span>
+              <ChevronRight className="w-4 h-4 text-sm" />
               <span className="text-sm font-semibold text-[var(--color-on-surface)]">Emplois du temps</span>
             </div>
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Emplois du temps</h2>

@@ -10,6 +10,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { MessageSquare, AlertCircle, Shield, Users, Ban, FileText, Mic, History, ChevronDown } from 'lucide-react'
 
 type Student = {
   id: string
@@ -181,7 +182,7 @@ export function EnseignantCommunication({ currentUserId, students, communication
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)]">
           <div>
             <div className="flex items-center gap-2 text-[var(--color-on-surface-variant)] mb-2">
-              <span className="material-symbols-outlined text-[var(--color-primary)]">forum</span>
+              <MessageSquare className="w-5 h-5 text-[var(--color-primary)]" />
               <span className="text-sm font-semibold text-[var(--color-on-surface)]">Messagerie</span>
             </div>
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Mes Messages</h2>
@@ -193,7 +194,7 @@ export function EnseignantCommunication({ currentUserId, students, communication
 
         {error && (
           <div className="bg-[var(--color-status-retard-bg)] text-[var(--color-status-retard-text)] p-4 rounded-xl border border-[var(--color-status-retard-text)] text-sm font-semibold flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px]">error</span>
+            <AlertCircle className="w-5 h-5" />
             {error}
           </div>
         )}
@@ -207,9 +208,11 @@ export function EnseignantCommunication({ currentUserId, students, communication
             <div className="p-3 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[var(--color-primary-container)] text-[var(--color-primary)] flex items-center justify-center">
-                  <span className="material-symbols-outlined text-[20px]">
-                    {recipientType === 'admin' ? 'admin_panel_settings' : 'family_restroom'}
-                  </span>
+                  {recipientType === 'admin' ? (
+                    <Shield className="w-5 h-5" />
+                  ) : (
+                    <Users className="w-5 h-5" />
+                  )}
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm font-bold text-[var(--color-on-surface)]">
@@ -293,7 +296,7 @@ export function EnseignantCommunication({ currentUserId, students, communication
 
                             {isDeletedForEveryone ? (
                               <div className="px-3 py-2 text-[14px] text-gray-500 italic flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[18px]">block</span>
+                                <Ban className="w-4 h-4" />
                                 Ce message a été supprimé
                               </div>
                             ) : (
@@ -338,7 +341,7 @@ export function EnseignantCommunication({ currentUserId, students, communication
                                             <video src={fileUrl} controls className="max-w-full h-auto rounded-lg max-h-48 border border-black/10" />
                                           ) : (
                                             <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-black/5 rounded-lg hover:bg-black/10 transition-colors">
-                                              <span className="material-symbols-outlined text-[20px]">description</span>
+                                              <FileText className="w-5 h-5 text-gray-600" />
                                               <span className="text-sm font-semibold truncate max-w-[150px]" title={fileName}>{fileName}</span>
                                             </a>
                                           )}
@@ -351,7 +354,7 @@ export function EnseignantCommunication({ currentUserId, students, communication
                                   <div className={`flex items-center gap-2 px-3 py-2 min-w-[180px] pr-6 ${
                                     comm.content && comm.content !== 'Message vocal' ? 'border-t border-black/5' : ''
                                   }`}>
-                                    <span className="material-symbols-outlined text-[20px] text-[var(--color-primary)] shrink-0">mic</span>
+                                    <Mic className="w-5 h-5 text-[var(--color-primary)] shrink-0" />
                                     <audio src={comm.audio_url} controls className="h-7 w-full flex-1" style={{ colorScheme: 'light' }} />
                                   </div>
                                 )}
@@ -406,12 +409,10 @@ export function EnseignantCommunication({ currentUserId, students, communication
               onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
             >
               <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[var(--color-on-surface-variant)]">history</span>
+                <History className="w-5 h-5 text-[var(--color-on-surface-variant)]" />
                 Historique Récent
               </h3>
-              <span className={`material-symbols-outlined text-[var(--color-on-surface-variant)] transition-transform duration-300 ${isHistoryExpanded ? 'rotate-180' : ''}`}>
-                expand_more
-              </span>
+              <ChevronDown className={`w-5 h-5 text-[var(--color-on-surface-variant)] transition-transform duration-300 ${isHistoryExpanded ? 'rotate-180' : ''}`} />
             </div>
             {isHistoryExpanded && (
               <div className="p-4 flex flex-col gap-4 flex-1 bg-[var(--color-surface)] overflow-y-auto max-h-[480px]">
@@ -449,7 +450,7 @@ export function EnseignantCommunication({ currentUserId, students, communication
 
                           {isDeletedForEveryone ? (
                             <div className="px-3 py-2 text-[14px] text-gray-500 italic flex items-center gap-2">
-                              <span className="material-symbols-outlined text-[18px]">block</span>
+                              <Ban className="w-4 h-4" />
                               Ce message a été supprimé
                             </div>
                           ) : (
@@ -494,7 +495,7 @@ export function EnseignantCommunication({ currentUserId, students, communication
                                           <video src={fileUrl} controls className="max-w-full h-auto rounded-lg max-h-48 border border-black/10" />
                                         ) : (
                                           <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-black/5 rounded-lg hover:bg-black/10 transition-colors">
-                                            <span className="material-symbols-outlined text-[20px]">description</span>
+                                            <FileText className="w-5 h-5 text-gray-600" />
                                             <span className="text-sm font-semibold truncate max-w-[150px]" title={fileName}>{fileName}</span>
                                           </a>
                                         )}
@@ -506,8 +507,8 @@ export function EnseignantCommunication({ currentUserId, students, communication
                               {comm.audio_url && (
                                 <div className={`flex items-center gap-2 px-3 py-2 min-w-[180px] pr-6 ${
                                   comm.content && comm.content !== 'Message vocal' ? 'border-t border-black/5' : ''
-                                }`}>
-                                  <span className="material-symbols-outlined text-[20px] text-[var(--color-primary)] shrink-0">mic</span>
+                                }}`}>
+                                  <Mic className="w-5 h-5 text-[var(--color-primary)] shrink-0" />
                                   <audio src={comm.audio_url} controls className="h-7 w-full flex-1" style={{ colorScheme: 'light' }} />
                                 </div>
                               )}

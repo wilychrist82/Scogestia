@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { deleteCommunication } from '@/app/actions/communication'
 import toast from 'react-hot-toast'
+import { ChevronDown, Trash2, Trash } from 'lucide-react'
 
 interface Props {
   messageId: string
@@ -47,24 +48,24 @@ export function MessageActions({ messageId, isSentByMe }: Props) {
         className="w-6 h-6 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-gray-500 backdrop-blur-sm"
         title="Options du message"
       >
-        <span className="material-symbols-outlined text-[16px]">keyboard_arrow_down</span>
+        <ChevronDown className="w-3.5 h-3.5" />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-7 mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
+        <div className="absolute right-0 top-7 mt-1 w-44 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-50 animate-in fade-in duration-100">
           <button 
             onClick={() => handleDelete('for_me')}
-            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+            className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
           >
-            <span className="material-symbols-outlined text-[18px]">delete</span>
+            <Trash className="w-3.5 h-3.5 text-slate-400" />
             Effacer pour moi
           </button>
           {isSentByMe && (
             <button 
               onClick={() => handleDelete('for_everyone')}
-              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-gray-50"
+              className="w-full text-left px-3.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 flex items-center gap-2 border-t border-slate-50 transition-colors"
             >
-              <span className="material-symbols-outlined text-[18px]">delete_forever</span>
+              <Trash2 className="w-3.5 h-3.5 text-rose-500" />
               Effacer pour tous
             </button>
           )}

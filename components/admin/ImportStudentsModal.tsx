@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import Papa from 'papaparse'
 import * as XLSX from 'xlsx'
 import { extractClassFromFilename } from '@/lib/student-import-utils'
+import { FileSpreadsheet, X, Info, Download, Sparkles, CheckCircle2, Loader2, CloudUpload, Upload } from 'lucide-react'
 
 type Props = {
   isOpen: boolean
@@ -158,21 +159,21 @@ export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClas
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <span className="material-symbols-outlined text-emerald-600">upload_file</span>
+            <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
             Importer des élèves
           </h3>
           <button 
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
           >
-            <span className="material-symbols-outlined">close</span>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-6 space-y-5">
           <div className="bg-blue-50 text-blue-800 p-4 rounded-xl text-sm leading-relaxed border border-blue-100">
             <p className="font-semibold mb-2 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-base">info</span>
+              <Info className="w-4 h-4 text-blue-700 shrink-0" />
               Instructions & Répartition par classe
             </p>
             <ul className="list-disc pl-5 space-y-1 opacity-90">
@@ -186,7 +187,7 @@ export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClas
               onClick={generateTemplate}
               className="mt-3 text-blue-700 font-semibold hover:text-blue-900 underline underline-offset-2 flex items-center gap-1 transition-colors"
             >
-              <span className="material-symbols-outlined text-sm">download</span>
+              <Download className="w-4 h-4" />
               Télécharger le modèle Excel pré-rempli
             </button>
           </div>
@@ -213,7 +214,7 @@ export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClas
             </select>
             {detectedClass && selectedClassId === 'auto' && (
               <p className="text-xs text-emerald-700 font-medium flex items-center gap-1 mt-1">
-                <span className="material-symbols-outlined text-sm text-emerald-600">auto_awesome</span>
+                <Sparkles className="w-4 h-4 text-emerald-600" />
                 Classe détectée d'après le nom du fichier : <strong>{detectedClass}</strong>
               </p>
             )}
@@ -231,7 +232,7 @@ export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClas
           {file ? (
             <div className="border-2 border-emerald-500 bg-emerald-50/50 rounded-xl p-5 text-center space-y-4">
               <div className="mx-auto w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                <span className="material-symbols-outlined text-2xl">task_alt</span>
+                <CheckCircle2 className="w-7 h-7 text-emerald-600" />
               </div>
               <div className="space-y-1">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
@@ -252,12 +253,12 @@ export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClas
                 >
                   {isUploading ? (
                     <>
-                      <span className="material-symbols-outlined animate-spin">refresh</span>
+                      <Loader2 className="w-5 h-5 animate-spin" />
                       <span>Enregistrement en cours...</span>
                     </>
                   ) : (
                     <>
-                      <span className="material-symbols-outlined">cloud_upload</span>
+                      <CloudUpload className="w-5 h-5" />
                       <span>Confirmer et lancer l'importation</span>
                     </>
                   )}
@@ -285,7 +286,7 @@ export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClas
               }`}
             >
               <div className="mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3 bg-emerald-100 text-emerald-600 group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined">file_upload</span>
+                <Upload className="w-6 h-6 text-emerald-600" />
               </div>
               <p className="font-semibold text-slate-700">
                 Cliquez pour sélectionner un fichier (ou glissez-déposez-le ici)
@@ -316,7 +317,7 @@ export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClas
           >
             {isUploading ? (
               <>
-                <span className="material-symbols-outlined animate-spin text-sm">refresh</span>
+                <Loader2 className="w-4 h-4 animate-spin text-sm" />
                 Enregistrement...
               </>
             ) : (

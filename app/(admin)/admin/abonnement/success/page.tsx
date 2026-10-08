@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Loader2, CheckCircle2, Clock, AlertTriangle } from 'lucide-react'
 
 export default function AbonnementSuccessPage() {
   const router = useRouter()
@@ -55,8 +56,8 @@ export default function AbonnementSuccessPage() {
         
         {status === 'verifying' && (
           <div className="flex flex-col items-center">
-            <div className="w-16 h-16 bg-[#e8f0fe] rounded-full flex items-center justify-center mb-6 text-[#1a73e8] animate-pulse">
-              <span className="material-symbols-outlined text-[32px] animate-spin">progress_activity</span>
+            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-6 text-[var(--color-primary)]">
+              <Loader2 className="w-8 h-8 animate-spin" />
             </div>
             <h2 className="text-2xl font-bold text-[var(--color-on-surface)] mb-2">Vérification du paiement...</h2>
             <p className="text-[var(--color-on-surface-variant)] text-sm">
@@ -67,8 +68,8 @@ export default function AbonnementSuccessPage() {
 
         {status === 'success' && (
           <div className="flex flex-col items-center animate-in zoom-in duration-300">
-            <div className="w-20 h-20 bg-[#e6f4ea] rounded-full flex items-center justify-center mb-6 text-[#1e8e3e]">
-              <span className="material-symbols-outlined text-[40px]">check_circle</span>
+            <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 text-emerald-600">
+              <CheckCircle2 className="w-10 h-10" />
             </div>
             <h2 className="text-2xl font-bold text-[var(--color-on-surface)] mb-2">Paiement Réussi !</h2>
             <p className="text-[var(--color-on-surface-variant)] text-sm mb-8">
@@ -85,8 +86,8 @@ export default function AbonnementSuccessPage() {
 
         {status === 'pending' && (
           <div className="flex flex-col items-center">
-            <div className="w-20 h-20 bg-[#fff8e1] rounded-full flex items-center justify-center mb-6 text-[#f57f17]">
-              <span className="material-symbols-outlined text-[40px]">schedule</span>
+            <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mb-6 text-amber-600">
+              <Clock className="w-10 h-10" />
             </div>
             <h2 className="text-2xl font-bold text-[var(--color-on-surface)] mb-2">Paiement en attente</h2>
             <p className="text-[var(--color-on-surface-variant)] text-sm mb-8">
@@ -103,8 +104,8 @@ export default function AbonnementSuccessPage() {
 
         {status === 'failed' && (
           <div className="flex flex-col items-center">
-            <div className="w-20 h-20 bg-[#fce8e6] rounded-full flex items-center justify-center mb-6 text-[#d93025]">
-              <span className="material-symbols-outlined text-[40px]">error</span>
+            <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-6 text-rose-600">
+              <AlertTriangle className="w-10 h-10" />
             </div>
             <h2 className="text-2xl font-bold text-[var(--color-on-surface)] mb-2">Échec de la vérification</h2>
             <p className="text-[var(--color-on-surface-variant)] text-sm mb-8">

@@ -3,18 +3,37 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { format, startOfWeek, endOfWeek } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { 
+  Book, 
+  Calculator, 
+  BookOpen, 
+  Landmark, 
+  FlaskConical, 
+  Languages, 
+  Trophy,
+  Calendar,
+  School,
+  DoorOpen,
+  Edit3,
+  UserCheck,
+  FileText,
+  Megaphone,
+  Clock,
+  BellOff,
+  MessageSquare
+} from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
 // Palette de couleurs par matière
-const subjectColors: Record<string, { bg: string; text: string; light: string; icon: string }> = {
-  default:      { bg: 'from-indigo-600 to-indigo-900',  text: 'text-indigo-100', light: 'bg-indigo-50 text-indigo-700 border-indigo-100', icon: 'book' },
-  math:         { bg: 'from-blue-600 to-blue-900',      text: 'text-blue-100',   light: 'bg-blue-50 text-blue-700 border-blue-100',       icon: 'calculate' },
-  français:     { bg: 'from-rose-600 to-rose-900',      text: 'text-rose-100',   light: 'bg-rose-50 text-rose-700 border-rose-100',         icon: 'menu_book' },
-  histoire:     { bg: 'from-amber-600 to-amber-900',    text: 'text-amber-100',  light: 'bg-amber-50 text-amber-700 border-amber-100',     icon: 'history_edu' },
-  sciences:     { bg: 'from-emerald-600 to-emerald-900',text: 'text-emerald-100',light: 'bg-emerald-50 text-emerald-700 border-emerald-100',icon: 'science' },
-  anglais:      { bg: 'from-sky-600 to-sky-900',        text: 'text-sky-100',    light: 'bg-sky-50 text-sky-700 border-sky-100',           icon: 'language' },
-  sport:        { bg: 'from-orange-500 to-orange-900',  text: 'text-orange-100', light: 'bg-orange-50 text-orange-700 border-orange-100',  icon: 'sports_soccer' },
+const subjectColors: Record<string, { bg: string; text: string; light: string; icon: any }> = {
+  default:      { bg: 'from-indigo-600 to-indigo-900',  text: 'text-indigo-100', light: 'bg-indigo-50 text-indigo-700 border-indigo-100', icon: Book },
+  math:         { bg: 'from-blue-600 to-blue-900',      text: 'text-blue-100',   light: 'bg-blue-50 text-blue-700 border-blue-100',       icon: Calculator },
+  français:     { bg: 'from-rose-600 to-rose-900',      text: 'text-rose-100',   light: 'bg-rose-50 text-rose-700 border-rose-100',         icon: BookOpen },
+  histoire:     { bg: 'from-amber-600 to-amber-900',    text: 'text-amber-100',  light: 'bg-amber-50 text-amber-700 border-amber-100',     icon: Landmark },
+  sciences:     { bg: 'from-emerald-600 to-emerald-900',text: 'text-emerald-100',light: 'bg-emerald-50 text-emerald-700 border-emerald-100',icon: FlaskConical },
+  anglais:      { bg: 'from-sky-600 to-sky-900',        text: 'text-sky-100',    light: 'bg-sky-50 text-sky-700 border-sky-100',           icon: Languages },
+  sport:        { bg: 'from-orange-500 to-orange-900',  text: 'text-orange-100', light: 'bg-orange-50 text-orange-700 border-orange-100',  icon: Trophy },
 }
 
 function getSubjectStyle(name: string) {
@@ -163,7 +182,7 @@ export default async function EnseignantDashboardPage() {
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight">{roleData.full_name}</h1>
             <div className="flex items-center gap-2 mt-2">
-              <span className="material-symbols-outlined text-emerald-400 text-[15px]">calendar_today</span>
+              <Calendar className="text-emerald-400 w-4 h-4" />
               <span className="text-white/45 text-sm font-semibold capitalize">{todayLabel}</span>
             </div>
           </div>
@@ -207,7 +226,7 @@ export default async function EnseignantDashboardPage() {
 
           {(!assignments || assignments.length === 0) ? (
             <div className="rounded-2xl border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] p-12 text-center flex flex-col items-center">
-              <span className="material-symbols-outlined text-[48px] text-[var(--color-on-surface-variant)] opacity-30 mb-4">school</span>
+              <School className="w-12 h-12 text-[var(--color-on-surface-variant)] opacity-30 mb-4" />
               <p className="text-base font-bold text-[var(--color-on-surface)]">Aucune classe assignée</p>
               <p className="text-sm text-[var(--color-on-surface-variant)] mt-1">Contactez l'administration pour être affecté à des classes.</p>
             </div>
@@ -215,11 +234,12 @@ export default async function EnseignantDashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {assignments.map((assignment: any) => {
                 const style = getSubjectStyle(assignment.subject_name)
+                const SubjectIcon = style.icon
                 return (
                   <div key={assignment.id} className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${style.bg} p-5 shadow-lg flex flex-col gap-4 group hover:-translate-y-1 transition-transform duration-300`}>
                     {/* Blob décoratif */}
-                    <div className="absolute -right-6 -bottom-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                      <span className="material-symbols-outlined text-white" style={{ fontSize: '100px' }}>{style.icon}</span>
+                    <div className="absolute -right-6 -bottom-6 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+                      <SubjectIcon className="w-28 h-28 text-white" />
                     </div>
 
                     {/* Header */}
@@ -228,12 +248,12 @@ export default async function EnseignantDashboardPage() {
                         <p className={`text-[10px] font-bold uppercase tracking-[0.15em] ${style.text} opacity-70 mb-1`}>Matière</p>
                         <h3 className="text-lg font-black text-white leading-tight">{assignment.subject_name}</h3>
                         <div className="flex items-center gap-1.5 mt-2">
-                          <span className="material-symbols-outlined text-white/60 text-[14px]">door_front</span>
+                          <DoorOpen className="text-white/60 w-3.5 h-3.5" />
                           <span className="text-sm font-bold text-white/80">{assignment.classes?.name}</span>
                         </div>
                       </div>
                       <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-white text-[20px]">{style.icon}</span>
+                        <SubjectIcon className="w-5 h-5 text-white" />
                       </div>
                     </div>
 
@@ -243,21 +263,21 @@ export default async function EnseignantDashboardPage() {
                         href={`/enseignant/notes?classId=${assignment.class_id}&subject=${encodeURIComponent(assignment.subject_name)}`}
                         className="flex flex-col items-center gap-1.5 bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl py-2.5 transition-all active:scale-95"
                       >
-                        <span className="material-symbols-outlined text-white text-[20px]">edit_square</span>
+                        <Edit3 className="text-white w-4 h-4" />
                         <span className="text-[10px] font-bold text-white/80 text-center leading-tight">Notes</span>
                       </Link>
                       <Link
                         href={`/enseignant/presences?classId=${assignment.class_id}`}
                         className="flex flex-col items-center gap-1.5 bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl py-2.5 transition-all active:scale-95"
                       >
-                        <span className="material-symbols-outlined text-white text-[20px]">how_to_reg</span>
+                        <UserCheck className="text-white w-4 h-4" />
                         <span className="text-[10px] font-bold text-white/80 text-center leading-tight">Appel</span>
                       </Link>
                       <Link
                         href={`/enseignant/devoirs?classId=${assignment.class_id}`}
                         className="flex flex-col items-center gap-1.5 bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl py-2.5 transition-all active:scale-95"
                       >
-                        <span className="material-symbols-outlined text-white text-[20px]">assignment</span>
+                        <FileText className="text-white w-4 h-4" />
                         <span className="text-[10px] font-bold text-white/80 text-center leading-tight">Devoirs</span>
                       </Link>
                     </div>
@@ -272,7 +292,7 @@ export default async function EnseignantDashboardPage() {
             <div className="rounded-2xl overflow-hidden border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] shadow-sm">
               <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
                 <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[var(--color-primary)] text-[20px]">assignment</span>
+                  <FileText className="text-[var(--color-primary)] w-4 h-4" />
                   Derniers devoirs publiés
                 </h3>
                 <Link href="/enseignant/devoirs" className="text-xs font-bold text-[var(--color-primary)] hover:underline">Voir tout</Link>
@@ -284,7 +304,7 @@ export default async function EnseignantDashboardPage() {
                   return (
                     <div key={devoir.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-[var(--color-surface-container-low)] transition-colors">
                       <div className="w-9 h-9 rounded-xl bg-[var(--color-surface-container-low)] flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-[var(--color-primary)] text-[18px]">assignment</span>
+                        <FileText className="text-[var(--color-primary)] w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-[var(--color-on-surface)] truncate">{devoir.title}</p>
@@ -313,15 +333,15 @@ export default async function EnseignantDashboardPage() {
             </div>
             <div className="p-4 grid grid-cols-2 gap-3">
               {[
-                { href: '/enseignant/notes',    icon: 'edit_square',  label: 'Saisir notes',  color: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border-emerald-100' },
-                { href: '/enseignant/presences',icon: 'how_to_reg',   label: 'Faire appel',   color: 'bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white border-blue-100' },
-                { href: '/enseignant/devoirs',  icon: 'assignment',   label: 'Publier devoir',color: 'bg-violet-50 text-violet-700 hover:bg-violet-600 hover:text-white border-violet-100' },
-                { href: '/enseignant/messages', icon: 'forum',        label: 'Messages',      color: 'bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white border-rose-100' },
+                { href: '/enseignant/notes',    icon: Edit3,         label: 'Saisir notes',  color: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border-emerald-100' },
+                { href: '/enseignant/presences',icon: UserCheck,     label: 'Faire appel',   color: 'bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white border-blue-100' },
+                { href: '/enseignant/devoirs',  icon: FileText,      label: 'Publier devoir',color: 'bg-violet-50 text-violet-700 hover:bg-violet-600 hover:text-white border-violet-100' },
+                { href: '/enseignant/messages', icon: MessageSquare, label: 'Messages',      color: 'bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white border-rose-100' },
               ].map((item) => (
                 <Link key={item.href} href={item.href}
                   className={`flex flex-col items-center gap-2 p-3 rounded-xl border ${item.color} transition-all duration-200 active:scale-95 group`}
                 >
-                  <span className="material-symbols-outlined text-[24px]">{item.icon}</span>
+                  <item.icon className="w-5 h-5" />
                   <span className="text-[11px] font-bold text-center leading-tight">{item.label}</span>
                 </Link>
               ))}
@@ -332,7 +352,7 @@ export default async function EnseignantDashboardPage() {
           <div className="rounded-2xl overflow-hidden border border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)] shadow-sm">
             <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
               <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
-                <span className="material-symbols-outlined text-amber-500 text-[18px]">campaign</span>
+                <Megaphone className="text-amber-500 w-4 h-4" />
                 Annonces officielles
               </h3>
               {announcements && announcements.length > 0 && (
@@ -355,7 +375,7 @@ export default async function EnseignantDashboardPage() {
                     </div>
                   ) : (
                     <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0 shadow-xs">
-                      <span className="material-symbols-outlined text-[18px]">campaign</span>
+                      <Megaphone className="w-4 h-4" />
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
@@ -364,14 +384,14 @@ export default async function EnseignantDashboardPage() {
                       {ann.content}
                     </p>
                     <p className="text-[10px] text-[var(--color-on-surface-variant)] mt-2 font-semibold flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[12px]">schedule</span>
+                      <Clock className="w-3 h-3" />
                       {format(new Date(ann.published_at || ann.created_at), 'd MMMM à HH:mm', { locale: fr })}
                     </p>
                   </div>
                 </div>
               )) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <span className="material-symbols-outlined text-[36px] text-[var(--color-on-surface-variant)] opacity-30 mb-2">notifications_none</span>
+                  <BellOff className="w-9 h-9 text-[var(--color-on-surface-variant)] opacity-30 mb-2" />
                   <p className="text-sm font-bold text-[var(--color-on-surface)]">Aucune annonce</p>
                   <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">Vous êtes à jour.</p>
                 </div>

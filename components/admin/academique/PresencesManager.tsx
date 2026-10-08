@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from 'react'
 import { fetchMonthlyAttendance, saveMonthlyAttendanceGrid } from '@/app/actions/academique'
 import Link from 'next/link'
 import { sortClasses } from '@/lib/classes'
+import { ChevronRight, School, Calendar, CalendarDays, CheckCircle2, FileText, ClipboardCheck, X, Table, BarChart3, Printer } from 'lucide-react'
 
 type ClassItem = { id: string; name: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string; gender: string; status: string }
@@ -275,7 +276,7 @@ export function PresencesManager({ classes, students }: Props) {
               <Link href="/admin/academique" className="hover:text-[var(--color-primary)] transition-colors text-sm font-semibold">
                 Académique
               </Link>
-              <span className="material-symbols-outlined text-sm">chevron_right</span>
+              <ChevronRight className="w-4 h-4 text-sm" />
               <span className="text-sm font-semibold text-[var(--color-on-surface)]">Registre d'Appel</span>
             </div>
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Registre d'Appel Journalier</h2>
@@ -290,7 +291,7 @@ export function PresencesManager({ classes, students }: Props) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-[var(--color-on-surface)] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-base text-[var(--color-primary)]">school</span>
+                <School className="w-4 h-4 text-[var(--color-primary)]" />
                 Classe
               </label>
               <select 
@@ -304,7 +305,7 @@ export function PresencesManager({ classes, students }: Props) {
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-[var(--color-on-surface)] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-base text-[var(--color-primary)]">calendar_month</span>
+                <Calendar className="w-4 h-4 text-[var(--color-primary)]" />
                 Mois
               </label>
               <select 
@@ -317,7 +318,7 @@ export function PresencesManager({ classes, students }: Props) {
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-[var(--color-on-surface)] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-base text-[var(--color-primary)]">event</span>
+                <CalendarDays className="w-4 h-4 text-[var(--color-primary)]" />
                 Année
               </label>
               <select 
@@ -332,7 +333,7 @@ export function PresencesManager({ classes, students }: Props) {
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-[var(--color-on-surface)] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-base text-blue-600">date_range</span>
+                <Calendar className="w-4 h-4 text-blue-600" />
                 Période du :
               </label>
               <input 
@@ -346,7 +347,7 @@ export function PresencesManager({ classes, students }: Props) {
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-[var(--color-on-surface)] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-base text-blue-600">event_available</span>
+                <CalendarDays className="w-4 h-4 text-blue-600" />
                 Au :
               </label>
               <input 
@@ -363,7 +364,7 @@ export function PresencesManager({ classes, students }: Props) {
           <div className="mt-4 pt-3 border-t border-[var(--color-outline-variant)] flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 flex-wrap">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 text-blue-800 font-semibold border border-blue-200">
-                <span className="material-symbols-outlined text-[15px]">date_range</span>
+                <Calendar className="w-3.5 h-3.5" />
                 <span>
                   Période : {periodStart ? new Date(periodStart + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—'} au {periodEnd ? new Date(periodEnd + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                 </span>
@@ -398,7 +399,7 @@ export function PresencesManager({ classes, students }: Props) {
         
         {success && (
           <div className="bg-[#e6f4ea] text-[#1e8e3e] p-3 rounded text-sm font-medium flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px]">check_circle</span>
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
             Registre sauvegardé avec succès.
           </div>
         )}
@@ -455,7 +456,7 @@ export function PresencesManager({ classes, students }: Props) {
                   onClick={() => setIsRecapOpen(true)}
                   className="hidden md:flex bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors items-center gap-2"
                 >
-                  <span className="material-symbols-outlined text-sm">summarize</span>
+                  <FileText className="w-4 h-4" />
                   Récapitulation
                 </button>
               </div>
@@ -570,14 +571,14 @@ export function PresencesManager({ classes, students }: Props) {
                 onClick={() => setIsRecapOpen(true)}
                 className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
               >
-                <span className="material-symbols-outlined text-sm">summarize</span>
+                <FileText className="w-4 h-4" />
                 Récapitulation du mois
               </button>
             </div>
           </div>
         ) : (
           <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] min-h-[400px]">
-            <span className="material-symbols-outlined text-4xl mb-2 opacity-50">fact_check</span>
+            <ClipboardCheck className="w-10 h-10 mb-2 opacity-50 text-[var(--color-primary)]" />
             <p className="text-lg font-medium">Sélectionnez une classe pour afficher le registre</p>
             <p className="text-sm">La grille d'appel du mois apparaîtra ici.</p>
           </div>
@@ -590,11 +591,11 @@ export function PresencesManager({ classes, students }: Props) {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-blue-600">
               <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <span className="material-symbols-outlined">summarize</span>
+                <FileText className="w-5 h-5" />
                 Récapitulation du mois - {MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}
               </h3>
               <button onClick={() => setIsRecapOpen(false)} className="text-blue-100 hover:text-white transition-colors">
-                <span className="material-symbols-outlined">close</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -603,7 +604,7 @@ export function PresencesManager({ classes, students }: Props) {
               {/* Paramètres de la période */}
               <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
                 <h4 className="font-semibold text-blue-900 mb-4 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">date_range</span>
+                  <Calendar className="w-4 h-4 text-blue-700" />
                   Définir la période du cours
                 </h4>
                 <div className="flex flex-wrap items-end gap-4">
@@ -635,7 +636,7 @@ export function PresencesManager({ classes, students }: Props) {
               {/* Tableau croisé */}
               <div>
                 <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">table_view</span>
+                  <Table className="w-4 h-4 text-gray-700" />
                   Tableau Croisé (Effectifs et Présences)
                 </h4>
                 <div className="overflow-x-auto rounded-xl border border-gray-200">
@@ -681,7 +682,7 @@ export function PresencesManager({ classes, students }: Props) {
               {/* Indicateurs de performance */}
               <div>
                 <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sm">analytics</span>
+                  <BarChart3 className="w-4 h-4 text-gray-700" />
                   Récapitulatif du mois de {MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}
                 </h4>
                 <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 sm:p-6">
@@ -746,7 +747,7 @@ export function PresencesManager({ classes, students }: Props) {
                 onClick={() => window.print()}
                 className="px-6 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm flex items-center gap-2"
               >
-                <span className="material-symbols-outlined text-sm">print</span>
+                <Printer className="w-4 h-4" />
                 Imprimer
               </button>
             </div>

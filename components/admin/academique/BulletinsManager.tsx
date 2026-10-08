@@ -6,6 +6,7 @@ import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 import { createClient } from '@/lib/supabase/client'
 import { sortClasses } from '@/lib/classes'
+import { ShieldCheck, FileDown, GraduationCap } from 'lucide-react'
 
 type ClassItem = { id: string; name: string; level?: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string }
@@ -442,7 +443,7 @@ export function BulletinsManager({
               <div className="relative w-24 h-24 text-blue-800 flex flex-col items-center justify-center opacity-90" style={{ border: '4px double #1e40af', borderRadius: '50%' }}>
                 <span className="text-[9px] font-black uppercase tracking-widest mt-1">Direction</span>
                 <div className="w-10 h-px bg-blue-800 my-0.5"></div>
-                <span className="material-symbols-outlined text-lg">verified</span>
+                <ShieldCheck className="w-5 h-5 text-blue-800" />
                 <div className="w-10 h-px bg-blue-800 my-0.5"></div>
                 <span className="text-[7.5px] font-bold uppercase text-center px-1 leading-tight">
                   {stampText}
@@ -1114,7 +1115,7 @@ export function BulletinsManager({
                 disabled={publishStatus === 'loading'}
                 className="h-11 px-6 bg-[#004532] text-white font-bold rounded-lg hover:opacity-90 disabled:opacity-50 transition-colors flex items-center gap-2 shadow-sm"
               >
-                <span className="material-symbols-outlined">picture_as_pdf</span>
+                <FileDown className="w-5 h-5" />
                 {publishStatus === 'loading' ? 'Génération...' : 'Bulletins de la classe'}
               </button>
             )}
@@ -1161,7 +1162,7 @@ export function BulletinsManager({
           </div>
         ) : (
           <div className="bg-[var(--color-surface-container-lowest)] p-12 rounded-xl border border-[var(--color-outline-variant)] flex flex-col items-center justify-center text-[var(--color-on-surface-variant)] shadow-sm">
-            <span className="material-symbols-outlined text-4xl mb-4 opacity-50">history_edu</span>
+            <GraduationCap className="w-12 h-12 mb-4 opacity-50" />
             <p className="text-lg font-medium">Sélectionnez un niveau, une classe et un élève</p>
             <p className="text-sm mt-1">Le bulletin s'affichera ici. Vous pourrez y saisir les notes directement.</p>
           </div>

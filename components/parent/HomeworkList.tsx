@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Trash2, Download } from 'lucide-react'
 
 export function HomeworkList({ 
   homeworks, 
@@ -50,7 +51,7 @@ export function HomeworkList({
               className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors"
               title="Supprimer / Cacher ce devoir"
             >
-              <span className="material-symbols-outlined text-[18px]">delete</span>
+              <Trash2 className="w-4 h-4" />
             </button>
 
             <div className="flex justify-between items-start mb-2 pr-10">
@@ -72,12 +73,12 @@ export function HomeworkList({
             
             {hw.attachment_url && (
               <a 
-                href={hw.attachment_url.startsWith('http') ? hw.attachment_url : `https://mxttnddswkntrryshqzl.supabase.co/storage/v1/object/public/homework-attachments/${hw.attachment_url}`}
+                href={hw.attachment_url.startsWith('http') ? hw.attachment_url : `${process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://juhlayflzogtomarshpx.supabase.co'}/storage/v1/object/public/homework-attachments/${hw.attachment_url}`}
                 target="_blank" 
                 rel="noreferrer" 
                 className="flex items-center justify-center gap-2 w-full py-2.5 mt-2 bg-gradient-to-r from-[#e8f0fe] to-[#f3e8fd] text-[var(--color-primary)] rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity"
               >
-                <span className="material-symbols-outlined text-[18px]">download</span>
+                <Download className="w-4 h-4" />
                 Ouvrir la pièce jointe
               </a>
             )}

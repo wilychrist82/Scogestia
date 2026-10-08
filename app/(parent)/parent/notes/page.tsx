@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ResultatsTabs } from '@/components/parent/ResultatsTabs'
+import { UserX, ArrowLeft, BookOpen } from 'lucide-react'
 
 import { resolveStudentId } from '@/lib/parent-utils'
 import { ChildSwitchBar } from '@/components/parent/ChildSwitchBar'
@@ -24,7 +25,9 @@ export default async function ParentNotesPage({
   if (!selectedChildId) {
     return (
       <div className="p-6 text-center flex flex-col items-center justify-center min-h-[70vh]">
-        <span className="material-symbols-outlined text-5xl text-gray-300 mb-4">person_search</span>
+        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+          <UserX className="w-8 h-8 text-slate-400" />
+        </div>
         <h2 className="text-xl font-bold text-[var(--color-on-surface)] mb-2">Aucun élève lié</h2>
         <p className="text-[var(--color-on-surface-variant)] mb-6">Vous n'avez aucun enfant lié à votre compte.</p>
         <Link href="/parent" className="bg-[var(--color-primary)] text-white px-6 py-2 rounded-full font-semibold">
@@ -73,8 +76,8 @@ export default async function ParentNotesPage({
   return (
     <div className="p-4 space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-2">
       <div className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-sm border border-[var(--color-outline-variant)]">
-        <Link href="/parent" className="text-[var(--color-on-surface-variant)]">
-          <span className="material-symbols-outlined">arrow_back</span>
+        <Link href="/parent" className="text-[var(--color-on-surface-variant)] hover:text-emerald-700 transition-colors p-1 rounded-lg">
+          <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
           <h1 className="text-xl font-bold text-[var(--color-on-surface)]">Résultats Scolaires</h1>
@@ -96,8 +99,8 @@ export default async function ParentNotesPage({
 
       {sortedTerms.length === 0 ? (
         <div className="bg-white p-8 rounded-xl shadow-sm border border-[var(--color-outline-variant)] text-center flex flex-col items-center">
-          <div className="w-16 h-16 bg-[#e8f0fe] rounded-full flex items-center justify-center mb-4">
-            <span className="material-symbols-outlined text-[32px] text-[#1a73e8]">grading</span>
+          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
+            <BookOpen className="w-8 h-8 text-blue-600" />
           </div>
           <h2 className="text-lg font-bold text-[var(--color-on-surface)] mb-1">Aucune note</h2>
           <p className="text-[var(--color-on-surface-variant)] text-sm">Les notes de cet élève n'ont pas encore été saisies.</p>

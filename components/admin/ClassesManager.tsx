@@ -4,7 +4,7 @@ import { useState, useTransition, FormEvent } from 'react'
 import Link from 'next/link'
 import { createClass, updateClass, deleteClass } from '@/app/actions/classes'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Presentation } from 'lucide-react'
+import { Presentation, Plus, Users, MoreVertical, Eye, Edit2, Trash2, X } from 'lucide-react'
 import { sortClasses } from '@/lib/classes'
 
 export type ClassItem = {
@@ -117,7 +117,7 @@ export function ClassesManager({ classes }: Props) {
           onClick={openAddModal}
           className="bg-[var(--color-primary)] hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5 text-white px-6 py-3 rounded-lg font-semibold text-sm flex items-center gap-2 transition-all duration-300 shadow-sm active:scale-95 group"
         >
-          <span className="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">add</span>
+          <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
           Ajouter une classe
         </button>
       </div>
@@ -203,7 +203,7 @@ export function ClassesManager({ classes }: Props) {
                     </td>
                     <td className="py-3 px-6 text-center">
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                        <span className="material-symbols-outlined text-[14px]">groups</span>
+                        <Users className="w-3.5 h-3.5" />
                         {cls.student_count ?? 0} élève{(cls.student_count ?? 0) > 1 ? 's' : ''}
                       </span>
                     </td>
@@ -213,7 +213,7 @@ export function ClassesManager({ classes }: Props) {
                         onClick={() => setOpenActionId(openActionId === cls.id ? null : cls.id)}
                         className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[#eff4ff] rounded-full transition-all duration-300 hover:rotate-90 inline-block"
                       >
-                        <span className="material-symbols-outlined text-[20px]">more_vert</span>
+                        <MoreVertical className="w-5 h-5" />
                       </button>
 
                       {openActionId === cls.id && (
@@ -223,7 +223,7 @@ export function ClassesManager({ classes }: Props) {
                             className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors w-full text-left"
                             onClick={() => setOpenActionId(null)}
                           >
-                            <span className="material-symbols-outlined text-[18px]">visibility</span>
+                            <Eye className="w-4 h-4" />
                             Voir
                           </Link>
                           <button 
@@ -233,7 +233,7 @@ export function ClassesManager({ classes }: Props) {
                               openEditModal(cls);
                             }}
                           >
-                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                            <Edit2 className="w-4 h-4" />
                             Modifier
                           </button>
                           <button 
@@ -244,7 +244,7 @@ export function ClassesManager({ classes }: Props) {
                             disabled={isPending}
                             className="px-4 py-2 text-sm text-[var(--color-status-retard-text)] hover:bg-red-50 flex items-center gap-2 transition-colors w-full text-left disabled:opacity-50"
                           >
-                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                            <Trash2 className="w-4 h-4" />
                             Supprimer
                           </button>
                         </div>
@@ -268,7 +268,7 @@ export function ClassesManager({ classes }: Props) {
                 {classToEdit ? 'Modifier la classe' : 'Ajouter une nouvelle classe'}
               </h2>
               <button onClick={() => setIsModalOpen(false)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
-                <span className="material-symbols-outlined">close</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
             {/* Modal Body (Form) */}

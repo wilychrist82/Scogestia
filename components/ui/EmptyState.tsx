@@ -26,13 +26,10 @@ export function EmptyState({
       {actionLabel && onAction && (
         <button 
           onClick={onAction}
-          className="bg-[var(--color-primary)] text-white px-6 py-2 rounded-lg font-medium hover:bg-[var(--color-primary)]/90 transition-colors"
+          className="bg-[var(--color-primary)] text-white px-6 py-2.5 rounded-xl font-medium hover:bg-[var(--color-primary)]/90 transition-colors shadow-sm inline-flex items-center gap-2"
         >
           {actionLabel}
         </button>
-      )}
-      {!actionLabel && (
-         <p className="text-xs text-gray-400 italic">Module en cours de finalisation (Phase 5)</p>
       )}
     </div>
   )

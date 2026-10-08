@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { ExportButtons } from '@/components/ui/ExportButtons'
 import Link from 'next/link'
 import { RapportsNavTabs } from './RapportsNavTabs'
+import { Wallet, TrendingUp, BarChart3 } from 'lucide-react'
 
 type MonthlyData = {
   month: string
@@ -74,7 +75,7 @@ export function FinanceRapportsManager({ monthlyData, classData, totalCollected 
             <p className="text-4xl font-black mt-1">{formatFCFA(totalCollected)}</p>
           </div>
           <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
-            <span className="material-symbols-outlined text-[32px]">account_balance_wallet</span>
+            <Wallet className="w-8 h-8 text-white" />
           </div>
         </div>
 
@@ -100,7 +101,7 @@ export function FinanceRapportsManager({ monthlyData, classData, totalCollected 
                 </ResponsiveContainer>
               ) : (
                 <div className="text-center text-[var(--color-on-surface-variant)] opacity-60 flex flex-col items-center">
-                  <span className="material-symbols-outlined text-4xl mb-2">show_chart</span>
+                  <TrendingUp className="w-10 h-10 mb-2 opacity-50" />
                   <p className="text-sm font-medium">Aucun encaissement à afficher pour l'évolution</p>
                 </div>
               )}
@@ -130,7 +131,7 @@ export function FinanceRapportsManager({ monthlyData, classData, totalCollected 
                 </ResponsiveContainer>
               ) : (
                 <div className="text-center text-[var(--color-on-surface-variant)] opacity-60 flex flex-col items-center">
-                  <span className="material-symbols-outlined text-4xl mb-2">bar_chart</span>
+                  <BarChart3 className="w-10 h-10 mb-2 opacity-50" />
                   <p className="text-sm font-medium">Aucun encaissement par classe</p>
                 </div>
               )}

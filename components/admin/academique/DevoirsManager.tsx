@@ -3,6 +3,7 @@
 import { useState, useTransition, FormEvent } from 'react'
 import { publishHomework, deleteHomework } from '@/app/actions/academique'
 import Link from 'next/link'
+import { ChevronRight, PlusCircle, CheckCircle2, Search, BookOpen, Paperclip, Trash2, X, Camera, FileText, Download } from 'lucide-react'
 
 type ClassItem = { id: string; name: string; level: string }
 type SubjectItem = { id: string; name: string; cycle: string }
@@ -97,21 +98,21 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
               <Link href="/admin/academique" className="hover:text-[var(--color-primary)] transition-colors text-sm font-semibold">
                 Académique
               </Link>
-              <span className="material-symbols-outlined text-sm">chevron_right</span>
+              <ChevronRight className="w-4 h-4" />
               <span className="text-sm font-semibold text-[var(--color-on-surface)]">Devoirs</span>
             </div>
             <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Devoirs et Travaux</h2>
             <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Publiez les devoirs à faire à la maison pour vos élèves.</p>
           </div>
           <button onClick={openAddModal} className="flex items-center justify-center gap-2 bg-[var(--color-primary)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:opacity-90 transition-colors shadow-sm w-full sm:w-auto shrink-0">
-            <span className="material-symbols-outlined text-[20px]">assignment_add</span>
+            <PlusCircle className="w-5 h-5" />
             Publier un devoir
           </button>
         </div>
 
         {successMsg && (
           <div className="bg-[#e0f7fa] text-[#006064] p-4 rounded-xl border border-[#b2ebf2] flex items-center gap-3">
-            <span className="material-symbols-outlined">check_circle</span>
+            <CheckCircle2 className="w-5 h-5 text-[#006064] shrink-0" />
             <span className="font-medium text-sm">{successMsg}</span>
           </div>
         )}
@@ -120,7 +121,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
         <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] overflow-hidden shadow-sm flex flex-col min-h-[500px]">
           <div className="p-4 border-b border-[var(--color-outline-variant)] flex flex-col sm:flex-row gap-4 bg-[var(--color-surface-bright)] justify-between items-center">
             <div className="relative flex-grow max-w-md">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)]">search</span>
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)]" />
               <input className="w-full pl-10 pr-4 py-2.5 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none transition-all" placeholder="Rechercher un devoir..." type="text"/>
             </div>
             <span className="text-sm font-medium text-[var(--color-on-surface-variant)]">{homeworks.length} devoirs</span>
@@ -128,7 +129,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
 
           {homeworks.length === 0 ? (
              <div className="p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] flex-1">
-               <span className="material-symbols-outlined text-4xl mb-2 opacity-50">menu_book</span>
+               <BookOpen className="w-10 h-10 mb-2 opacity-50" />
                <p className="text-lg font-medium">Aucun devoir publié</p>
                <p className="text-sm">Commencez par publier un devoir pour une classe.</p>
             </div>
@@ -152,7 +153,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                   <div className="flex gap-2 mt-auto">
                     {hw.attachment_url && (
                       <a href={hw.attachment_url.startsWith('http') ? hw.attachment_url : `https://mxttnddswkntrryshqzl.supabase.co/storage/v1/object/public/homework-attachments/${hw.attachment_url}`} target="_blank" rel="noreferrer" className="flex-1 bg-[#f0f4ff] text-[var(--color-primary)] border border-[#cce0ff] hover:bg-[#e0edff] py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1">
-                        <span className="material-symbols-outlined text-[18px]">attachment</span> Pièce jointe
+                        <Paperclip className="w-4 h-4" /> Pièce jointe
                       </a>
                     )}
                     <button 
@@ -164,7 +165,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                       onClick={() => handleDelete(hw.id)}
                       disabled={isDeleting}
                       className="px-3 bg-[var(--color-surface-bright)] text-[var(--color-status-retard-text)] border border-[var(--color-outline-variant)] hover:border-[var(--color-status-retard-text)] hover:bg-[#fff0f0] rounded-lg transition-colors flex items-center justify-center disabled:opacity-50">
-                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -180,11 +181,11 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
           <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-lg rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[var(--color-outline-variant)] flex flex-col overflow-hidden">
             <div className="px-6 py-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
               <h2 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[var(--color-primary)]">assignment_add</span>
+                <PlusCircle className="w-5 h-5 text-[var(--color-primary)]" />
                 Publier un devoir
               </h2>
               <button onClick={() => setIsModalOpen(false)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
-                <span className="material-symbols-outlined">close</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
             
@@ -247,7 +248,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                       }}
                       className="flex-1 flex items-center justify-center gap-2 bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] border border-[var(--color-outline-variant)] py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-[#eff4ff] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-all"
                     >
-                      <span className="material-symbols-outlined text-[20px]">photo_camera</span>
+                      <Camera className="w-5 h-5" />
                       Prendre une photo
                     </button>
 
@@ -263,7 +264,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                       }}
                       className="flex-1 flex items-center justify-center gap-2 bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] border border-[var(--color-outline-variant)] py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-[#eff4ff] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-all"
                     >
-                      <span className="material-symbols-outlined text-[20px]">attach_file</span>
+                      <Paperclip className="w-5 h-5" />
                       Joindre un document
                     </button>
                   </div>
@@ -285,7 +286,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                     }}
                   />
                   <div id="attachment_label" className="hidden mt-2 text-sm text-[var(--color-primary)] font-medium flex items-center gap-2 bg-[#eff4ff] p-2 rounded-lg border border-[var(--color-primary)]/20">
-                    <span className="material-symbols-outlined text-[18px]">draft</span>
+                    <FileText className="w-4 h-4" />
                     Fichier sélectionné
                   </div>
                 </div>
@@ -370,11 +371,11 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
           <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-lg rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[var(--color-outline-variant)] flex flex-col overflow-hidden">
             <div className="px-6 py-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
               <h2 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[var(--color-primary)]">assignment</span>
+                <BookOpen className="w-5 h-5 text-[var(--color-primary)]" />
                 Détails du devoir
               </h2>
               <button onClick={() => setSelectedHomework(null)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
-                <span className="material-symbols-outlined">close</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
             
@@ -409,7 +410,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
               {selectedHomework.attachment_url && (
                 <div className="mt-4 pt-4 border-t border-[var(--color-outline-variant)]">
                   <a href={selectedHomework.attachment_url.startsWith('http') ? selectedHomework.attachment_url : `https://mxttnddswkntrryshqzl.supabase.co/storage/v1/object/public/homework-attachments/${selectedHomework.attachment_url}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 w-full bg-[#f0f4ff] text-[var(--color-primary)] border border-[#cce0ff] hover:bg-[#e0edff] py-2.5 rounded-lg text-sm font-semibold transition-colors">
-                    <span className="material-symbols-outlined text-[18px]">download</span> Télécharger la pièce jointe
+                    <Download className="w-4 h-4" /> Télécharger la pièce jointe
                   </a>
                 </div>
               )}

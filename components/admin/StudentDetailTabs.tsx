@@ -4,7 +4,12 @@ import { useState, useTransition, useRef } from 'react'
 import Link from 'next/link'
 import { generateParentCode } from '@/app/actions/invitations'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { FileEdit, CalendarDays, Banknote, Camera, User, GraduationCap, CalendarCheck, CreditCard } from 'lucide-react'
+import { 
+  FileEdit, CalendarDays, Banknote, Camera, User, GraduationCap, 
+  CalendarCheck, CreditCard, CheckCircle2, Clock, CalendarOff, Receipt, Plus,
+  Loader2, Edit3, Mail, Trash2, Users, Copy, Key, HeartPulse, X, Mic, 
+  ChevronRight, MessageSquare, Info, ArrowLeft, Send, AlertTriangle
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
@@ -30,9 +35,19 @@ type Student = {
 
 type Props = {
   student: Student
+  grades?: any[]
+  attendances?: any[]
+  schedules?: any[]
+  payments?: any[]
 }
 
-export function StudentDetailTabs({ student }: Props) {
+export function StudentDetailTabs({ 
+  student, 
+  grades = [], 
+  attendances = [], 
+  schedules = [], 
+  payments = [] 
+}: Props) {
   const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'presences' | 'paiements'>('info')
   const [isPending, startTransition] = useTransition()
   const [invitationCode, setInvitationCode] = useState<string | null>(null)
@@ -238,7 +253,7 @@ export function StudentDetailTabs({ student }: Props) {
             )}
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               {isUploading ? (
-                <span className="material-symbols-outlined text-white animate-spin">refresh</span>
+                <Loader2 className="w-7 h-7 text-white animate-spin" />
               ) : (
                 <Camera className="text-white" size={28} />
               )}
@@ -257,25 +272,25 @@ export function StudentDetailTabs({ student }: Props) {
             <div className="flex gap-3 flex-wrap">
               <button 
                 onClick={() => setIsEditModalOpen(true)}
-                className="h-12 px-4 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors flex items-center gap-2"
+                className="h-11 px-4 rounded-xl border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors flex items-center gap-2"
               >
-                <span className="material-symbols-outlined text-sm">edit</span>
+                <Edit3 className="w-4 h-4" />
                 Modifier
               </button>
               <button 
                 onClick={() => { setIsContactModalOpen(true); setActiveContactView('list'); }}
-                className="h-12 px-4 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors flex items-center gap-2"
+                className="h-11 px-4 rounded-xl bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors flex items-center gap-2"
               >
-                <span className="material-symbols-outlined text-sm">mail</span>
+                <Mail className="w-4 h-4" />
                 Contacter
               </button>
               <button 
                 type="button"
                 onClick={() => setIsDeleteModalOpen(true)}
-                className="h-12 px-4 rounded-lg border border-red-200 text-red-600 font-semibold text-sm hover:bg-red-50 hover:border-red-300 transition-colors flex items-center gap-2"
+                className="h-11 px-4 rounded-xl border border-red-200 text-red-600 font-semibold text-sm hover:bg-red-50 hover:border-red-300 transition-colors flex items-center gap-2"
                 title="Supprimer l'élève de l'école ou de la classe"
               >
-                <span className="material-symbols-outlined text-sm">delete</span>
+                <Trash2 className="w-4 h-4" />
                 Supprimer
               </button>
             </div>
@@ -341,7 +356,7 @@ export function StudentDetailTabs({ student }: Props) {
           {/* Personal Info */}
           <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6 lg:col-span-2 space-y-6">
             <h3 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2">
-              <span className="material-symbols-outlined text-[var(--color-primary)]">person</span>
+              <User className="w-5 h-5 text-[var(--color-primary)]" />
               Détails Personnels
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -377,7 +392,7 @@ export function StudentDetailTabs({ student }: Props) {
             {/* Parent Contact */}
             <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6">
               <h3 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2 mb-4">
-                <span className="material-symbols-outlined text-[var(--color-primary)]">family_restroom</span>
+                <Users className="w-5 h-5 text-[var(--color-primary)]" />
                 Contact Parent
               </h3>
               <div className="space-y-4">
@@ -400,7 +415,7 @@ export function StudentDetailTabs({ student }: Props) {
                         }}
                         className="w-full mt-3 h-10 bg-white border border-[var(--color-primary)] text-[var(--color-primary)] rounded-lg font-semibold text-sm flex items-center justify-center gap-2 hover:bg-[#e6eeff] transition-colors"
                       >
-                        <span className="material-symbols-outlined text-[18px]">content_copy</span>
+                        <Copy className="w-4 h-4" />
                         Copier le lien pour WhatsApp
                       </button>
 
@@ -414,7 +429,7 @@ export function StudentDetailTabs({ student }: Props) {
                         disabled={isPending}
                         className="h-10 px-4 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors flex items-center gap-2 disabled:opacity-50"
                       >
-                        <span className="material-symbols-outlined text-[18px]">{isPending ? 'hourglass_empty' : 'vpn_key'}</span>
+                        {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
                         {isPending ? 'Génération...' : 'Générer un code d\'activation'}
                       </button>
                     </div>
@@ -426,7 +441,7 @@ export function StudentDetailTabs({ student }: Props) {
             {/* Medical Info */}
             <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6">
               <h3 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2 mb-4">
-                <span className="material-symbols-outlined text-[var(--color-status-retard-text)]">medical_information</span>
+                <HeartPulse className="w-5 h-5 text-[var(--color-status-retard-text)]" />
                 Info Médicale
               </h3>
               <div className="space-y-4">
@@ -437,33 +452,319 @@ export function StudentDetailTabs({ student }: Props) {
         </div>
       )}
 
+      {/* Onglet 2 : Notes Scolaires Réelles */}
       {activeTab === 'notes' && (
-        <div className="pt-4">
-          <EmptyState 
-            title="Module Notes (Bientôt disponible)"
-            description="L'affichage détaillé des notes par matière, ainsi que les moyennes trimestrielles, seront intégrés lors de la prochaine phase."
-            icon={FileEdit}
-          />
+        <div className="pt-4 space-y-6">
+          {grades.length === 0 ? (
+            <EmptyState 
+              title="Aucune note enregistrée"
+              description="Aucune évaluation n'a encore été saisie pour cet élève dans le système."
+              actionLabel="Accéder à la saisie des notes"
+              onAction={() => router.push('/admin/academique/notes')}
+              icon={FileEdit}
+            />
+          ) : (
+            <div className="space-y-6">
+              {(() => {
+                // Grouper les notes par trimestre
+                const terms: Record<string, any[]> = {}
+                grades.forEach(g => {
+                  const t = g.term || 'Trimestre 1'
+                  if (!terms[t]) terms[t] = []
+                  terms[t].push(g)
+                })
+
+                return Object.entries(terms).map(([termName, termGrades]) => {
+                  // Calcul moyenne du trimestre
+                  let totalWeighted = 0
+                  let totalCoef = 0
+                  termGrades.forEach(g => {
+                    const scoreOn20 = (Number(g.score || 0) / Number(g.max_score || 20)) * 20
+                    const coef = Number(g.coefficient || 1)
+                    totalWeighted += scoreOn20 * coef
+                    totalCoef += coef
+                  })
+                  const avg = totalCoef > 0 ? (totalWeighted / totalCoef).toFixed(2) : '0.00'
+                  const isPass = Number(avg) >= 10
+
+                  return (
+                    <div key={termName} className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                      <div className="px-6 py-4 bg-slate-50/70 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-slate-800 text-base">{termName}</span>
+                          <span className="text-xs px-2.5 py-1 rounded-full bg-slate-200/70 text-slate-700 font-semibold">
+                            {termGrades.length} note{termGrades.length > 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-500 font-medium">Moyenne trimestrielle :</span>
+                          <span className={`text-sm font-black px-3 py-1 rounded-lg ${
+                            isPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                          }`}>
+                            {avg} / 20
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                          <thead className="bg-slate-50/40 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                            <tr>
+                              <th className="px-6 py-3 font-semibold">Matière</th>
+                              <th className="px-4 py-3 font-semibold">Type d'évaluation</th>
+                              <th className="px-4 py-3 font-semibold text-center">Note brute</th>
+                              <th className="px-4 py-3 font-semibold text-center">Coef</th>
+                              <th className="px-4 py-3 font-semibold text-center">Note / 20</th>
+                              <th className="px-6 py-3 font-semibold">Appréciation</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {termGrades.map(g => {
+                              const noteOn20 = ((Number(g.score || 0) / Number(g.max_score || 20)) * 20).toFixed(1)
+                              const isGood = Number(noteOn20) >= 10
+
+                              return (
+                                <tr key={g.id} className="hover:bg-slate-50/50 transition-colors">
+                                  <td className="px-6 py-3.5 font-bold text-slate-800">{g.subject_name || 'Matière'}</td>
+                                  <td className="px-4 py-3.5 text-xs text-slate-600 capitalize">
+                                    <span className="px-2 py-0.5 rounded-md bg-slate-100 font-medium">
+                                      {g.evaluation_type || 'Devoir'}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3.5 text-center font-semibold text-slate-700">
+                                    {g.score} <span className="text-xs text-slate-400">/ {g.max_score || 20}</span>
+                                  </td>
+                                  <td className="px-4 py-3.5 text-center text-xs font-semibold text-slate-500">
+                                    {g.coefficient || 1}
+                                  </td>
+                                  <td className="px-4 py-3.5 text-center">
+                                    <span className={`font-bold px-2.5 py-1 rounded-md text-xs ${
+                                      isGood ? 'bg-emerald-50 text-emerald-700 font-bold' : 'bg-rose-50 text-rose-700 font-bold'
+                                    }`}>
+                                      {noteOn20} / 20
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-3.5 text-xs text-slate-500 italic">
+                                    {g.remarks || '—'}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )
+                })
+              })()}
+            </div>
+          )}
         </div>
       )}
 
+      {/* Onglet 3 : Suivi des Présences Réelles */}
       {activeTab === 'presences' && (
-        <div className="pt-4">
-          <EmptyState 
-            title="Module Présences (Bientôt disponible)"
-            description="Le suivi journalier des présences, retards et justifications sera ajouté très prochainement."
-            icon={CalendarDays}
-          />
+        <div className="pt-4 space-y-6">
+          {attendances.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-10 text-center flex flex-col items-center justify-center shadow-sm">
+              <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle2 size={32} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-1">Assiduité exemplaire</h3>
+              <p className="text-sm text-slate-500 max-w-sm">
+                Aucune absence ni aucun retard n'a été enregistré pour cet élève.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Synthèse Bento */}
+              {(() => {
+                const absences = attendances.filter(a => a.status === 'absent')
+                const retards = attendances.filter(a => a.status === 'retard')
+
+                return (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-rose-50/70 border border-rose-100 rounded-2xl p-5 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                        <CalendarOff size={24} />
+                      </div>
+                      <div>
+                        <span className="text-2xl font-black text-rose-700">{absences.length}</span>
+                        <p className="text-xs font-semibold text-rose-600 uppercase tracking-wide">Absences au total</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-amber-50/70 border border-amber-100 rounded-2xl p-5 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                        <Clock size={24} />
+                      </div>
+                      <div>
+                        <span className="text-2xl font-black text-amber-700">{retards.length}</span>
+                        <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide">Retards au total</p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Tableau de l'historique */}
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 font-bold text-slate-800 text-sm">
+                  Historique des présences
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {attendances.map(a => {
+                    const isAbsent = a.status === 'absent'
+                    return (
+                      <div key={a.id} className="p-4 px-6 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <span className={`w-2.5 h-2.5 rounded-full ${isAbsent ? 'bg-rose-500' : 'bg-amber-500'}`} />
+                          <div>
+                            <span className="font-semibold text-slate-800 text-sm capitalize">
+                              {a.status === 'absent' ? 'Absence' : 'Retard'}
+                            </span>
+                            <p className="text-xs text-slate-400">
+                              {new Date(a.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          {a.justified ? (
+                            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-100">
+                              Justifié
+                            </span>
+                          ) : (
+                            <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">
+                              Non justifié
+                            </span>
+                          )}
+                          {a.reason && <p className="text-xs text-slate-500 mt-1 italic">{a.reason}</p>}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
+      {/* Onglet 4 : Finances & Paiements Réels */}
       {activeTab === 'paiements' && (
-        <div className="pt-4">
-          <EmptyState 
-            title="Module Paiements (Bientôt disponible)"
-            description="L'historique des transactions, les reçus et les échéanciers pour cet élève apparaîtront ici."
-            icon={Banknote}
-          />
+        <div className="pt-4 space-y-6">
+          {schedules.length === 0 && payments.length === 0 ? (
+            <EmptyState 
+              title="Aucune donnée financière"
+              description="Aucune échéance de frais scolaires ni aucun paiement n'a encore été rattaché à cet élève."
+              actionLabel="Créer une échéance"
+              onAction={() => router.push('/admin/finance/echeances')}
+              icon={Banknote}
+            />
+          ) : (
+            <div className="space-y-6">
+              {/* Synthèse Financière */}
+              {(() => {
+                const totalAttendu = schedules.reduce((acc, s) => acc + Number(s.amount_due || 0), 0)
+                const totalEncaisse = payments.reduce((acc, p) => acc + Number(p.amount || 0), 0)
+                const resteDu = Math.max(0, totalAttendu - totalEncaisse)
+
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/80">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Total Attendu</p>
+                      <span className="text-2xl font-black text-slate-800">{totalAttendu.toLocaleString('fr-FR')} <span className="text-sm font-semibold text-slate-500">FCFA</span></span>
+                    </div>
+
+                    <div className="bg-emerald-50/70 rounded-2xl p-5 border border-emerald-100">
+                      <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-1">Déjà Encaissé</p>
+                      <span className="text-2xl font-black text-emerald-700">{totalEncaisse.toLocaleString('fr-FR')} <span className="text-sm font-semibold text-emerald-600">FCFA</span></span>
+                    </div>
+
+                    <div className={`rounded-2xl p-5 border ${
+                      resteDu > 0 ? 'bg-amber-50/70 border-amber-100' : 'bg-emerald-50/70 border-emerald-100'
+                    }`}>
+                      <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${
+                        resteDu > 0 ? 'text-amber-700' : 'text-emerald-700'
+                      }`}>
+                        Reste à payer
+                      </p>
+                      <span className={`text-2xl font-black ${
+                        resteDu > 0 ? 'text-amber-700' : 'text-emerald-700'
+                      }`}>
+                        {resteDu.toLocaleString('fr-FR')} <span className="text-sm font-semibold">FCFA</span>
+                      </span>
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Échéancier */}
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 font-bold text-slate-800 text-sm flex justify-between items-center">
+                  <span>Échéancier scolaire</span>
+                  <Link href="/admin/finance/echeances" className="text-xs text-[var(--color-primary)] hover:underline font-semibold">
+                    Gérer les échéances
+                  </Link>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {schedules.map(s => {
+                    const isPaid = s.status === 'paye'
+                    return (
+                      <div key={s.id} className="p-4 px-6 flex items-center justify-between gap-4">
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm">{s.label}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            Échéance : {new Date(s.due_date).toLocaleDateString('fr-FR')}
+                          </p>
+                        </div>
+                        <div className="text-right flex items-center gap-3">
+                          <span className="font-bold text-sm text-slate-800">{Number(s.amount_due).toLocaleString('fr-FR')} FCFA</span>
+                          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                            isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {isPaid ? 'Soldé' : 'En attente'}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Historique des paiements */}
+              {payments.length > 0 && (
+                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-slate-100 font-bold text-slate-800 text-sm">
+                    Historique des reçus d'encaissement
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {payments.map(p => (
+                      <div key={p.id} className="p-4 px-6 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                            <Receipt size={18} />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-800 text-sm">
+                              {p.schedule?.label || 'Paiement scolarité'}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              {new Date(p.paid_at).toLocaleDateString('fr-FR')} • Reçu n° {p.receipt_number || p.id.slice(0, 8)}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="font-black text-emerald-600 text-sm">
+                          +{Number(p.amount).toLocaleString('fr-FR')} FCFA
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -473,11 +774,11 @@ export function StudentDetailTabs({ student }: Props) {
           <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-lg rounded-xl shadow-lg border border-[var(--color-outline-variant)] flex flex-col overflow-hidden">
             <div className="px-6 py-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
               <h2 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[var(--color-primary)]">edit</span>
+                <Edit3 className="w-5 h-5 text-[var(--color-primary)]" />
                 Modifier les informations
               </h2>
               <button onClick={() => setIsEditModalOpen(false)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
-                <span className="material-symbols-outlined">close</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
             
@@ -590,11 +891,11 @@ export function StudentDetailTabs({ student }: Props) {
           <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-md rounded-xl shadow-lg border border-[var(--color-outline-variant)] flex flex-col overflow-hidden">
             <div className="px-6 py-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
               <h2 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[var(--color-primary)]">contact_mail</span>
+                <Mail className="w-5 h-5 text-[var(--color-primary)]" />
                 Contacter le parent
               </h2>
               <button onClick={() => { setIsContactModalOpen(false); setActiveContactView('list'); }} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
-                <span className="material-symbols-outlined">close</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
             
@@ -611,14 +912,14 @@ export function StudentDetailTabs({ student }: Props) {
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
-                        <span className="material-symbols-outlined">mic</span>
+                        <Mic className="w-5 h-5" />
                       </div>
                       <div className="text-left">
                         <p className="font-semibold text-[var(--color-on-surface)] text-sm">Message Vocal</p>
                         <p className="text-xs text-[var(--color-on-surface-variant)]">Message vocal via l'application</p>
                       </div>
                     </div>
-                    <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
+                    <ChevronRight className="w-5 h-5 text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]" />
                   </button>
 
                 <button 
@@ -627,14 +928,14 @@ export function StudentDetailTabs({ student }: Props) {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
-                      <span className="material-symbols-outlined">sms</span>
+                      <MessageSquare className="w-5 h-5" />
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-[var(--color-on-surface)] text-sm">Envoyer un SMS</p>
                       <p className="text-xs text-[var(--color-on-surface-variant)]">Écrire un SMS via la plateforme</p>
                     </div>
                   </div>
-                  <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
+                  <ChevronRight className="w-5 h-5 text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]" />
                 </button>
 
                 <a 
@@ -655,7 +956,7 @@ export function StudentDetailTabs({ student }: Props) {
                       <p className="text-xs text-[var(--color-on-surface-variant)]">Ouvrir l'application WhatsApp</p>
                     </div>
                   </div>
-                  <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[#25D366]">chevron_right</span>
+                  <ChevronRight className="w-5 h-5 text-[var(--color-on-surface-variant)] group-hover:text-[#25D366]" />
                 </a>
 
                 <a 
@@ -665,19 +966,19 @@ export function StudentDetailTabs({ student }: Props) {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
-                      <span className="material-symbols-outlined">mail</span>
+                      <Mail className="w-5 h-5" />
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-[var(--color-on-surface)] text-sm">Envoyer un Email</p>
                       <p className="text-xs text-[var(--color-on-surface-variant)]">Ouvrir votre boîte mail</p>
                     </div>
                   </div>
-                  <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]">chevron_right</span>
+                  <ChevronRight className="w-5 h-5 text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]" />
                 </a>
               </div>
               
               <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
-                <span className="material-symbols-outlined text-amber-600 text-lg">info</span>
+                <Info className="w-5 h-5 text-amber-600 shrink-0" />
                 <p className="text-xs text-amber-800 leading-tight">
                   Ces options utiliseront les coordonnées renseignées par le parent une fois son compte activé (voir section <b>Contact Parent</b>).
                 </p>
@@ -689,7 +990,7 @@ export function StudentDetailTabs({ student }: Props) {
                   onClick={() => setActiveContactView('list')}
                   className="flex items-center gap-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors text-sm font-semibold mb-2"
                 >
-                  <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                  <ArrowLeft className="w-4 h-4" />
                   Retour aux options
                 </button>
                 <h3 className="font-semibold text-[var(--color-on-surface)]">Enregistrer un message vocal pour le parent de {student.first_name}</h3>
@@ -704,7 +1005,7 @@ export function StudentDetailTabs({ student }: Props) {
                       disabled={isPending || !audioUrl}
                       className="bg-[var(--color-primary)] text-white px-6 py-2.5 rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
                     >
-                      <span className="material-symbols-outlined text-[18px]">send</span>
+                      <Send className="w-4 h-4" />
                       {isPending ? 'Envoi en cours...' : 'Envoyer le message vocal'}
                     </button>
                   </div>
@@ -716,7 +1017,7 @@ export function StudentDetailTabs({ student }: Props) {
                   onClick={() => setActiveContactView('list')}
                   className="flex items-center gap-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors text-sm font-semibold mb-2"
                 >
-                  <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                  <ArrowLeft className="w-4 h-4" />
                   Retour aux options
                 </button>
                 <h3 className="font-semibold text-[var(--color-on-surface)]">
@@ -741,7 +1042,7 @@ export function StudentDetailTabs({ student }: Props) {
                       disabled={isPending}
                       className="bg-[var(--color-primary)] text-white px-6 py-2.5 rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
                     >
-                      <span className="material-symbols-outlined text-[18px]">send</span>
+                      <Send className="w-4 h-4" />
                       {isPending ? 'Envoi en cours...' : 'Envoyer le SMS'}
                     </button>
                   </div>
@@ -758,7 +1059,7 @@ export function StudentDetailTabs({ student }: Props) {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-100">
             <div className="p-6">
               <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined text-2xl">warning</span>
+                <AlertTriangle className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
                 Supprimer la fiche élève
@@ -804,7 +1105,7 @@ export function StudentDetailTabs({ student }: Props) {
                 onClick={handleStudentDelete}
                 className="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center justify-center gap-1.5 order-1 sm:order-3"
               >
-                <span className="material-symbols-outlined text-[16px]">delete</span>
+                <Trash2 className="w-4 h-4" />
                 {isPending ? 'Suppression...' : 'Supprimer définitivement'}
               </button>
             </div>

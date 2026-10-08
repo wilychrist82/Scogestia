@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Image as ImageIcon, Loader2, Upload } from 'lucide-react'
 
 type Props = {
   bucket: string
@@ -77,7 +78,7 @@ export function ImageUpload({ bucket, folder = 'uploads', defaultUrl, onUploadSu
           </div>
         ) : (
           <div className="w-16 h-16 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 shrink-0">
-            <span className="material-symbols-outlined">image</span>
+            <ImageIcon className="w-6 h-6" />
           </div>
         )}
         <div className="flex-1">
@@ -96,9 +97,9 @@ export function ImageUpload({ bucket, folder = 'uploads', defaultUrl, onUploadSu
             className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
           >
             {isUploading ? (
-              <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <span className="material-symbols-outlined text-[18px]">upload</span>
+              <Upload className="w-4 h-4" />
             )}
             {isUploading ? 'Téléchargement...' : label}
           </button>

@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { processCashPayment } from '@/app/actions/cash_register'
 import { ReceiptPrint } from './ReceiptPrint'
+import { Search, ChevronRight, Loader2 } from 'lucide-react'
 
 type DueData = {
   id: string
@@ -114,7 +115,7 @@ export function CashRegister({ students, schoolData, cashierName }: Props) {
       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
         <h2 className="text-lg font-bold text-gray-800 mb-4">Rechercher un élève</h2>
         <div className="relative">
-          <span className="material-symbols-outlined absolute left-3 top-3 text-gray-400">search</span>
+          <Search className="w-5 h-5 absolute left-3 top-3.5 text-gray-400" />
           <input 
             type="text" 
             placeholder="Nom ou prénom de l'élève..." 
@@ -136,7 +137,7 @@ export function CashRegister({ students, schoolData, cashierName }: Props) {
                   <div className="font-semibold text-gray-800">{student.first_name} {student.last_name}</div>
                   <div className="text-xs text-gray-500">Classe : {student.class_name}</div>
                 </div>
-                <span className="material-symbols-outlined text-gray-400">chevron_right</span>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
               </button>
             )) : (
               <div className="p-4 text-center text-sm text-gray-500">Aucun élève trouvé.</div>
@@ -273,7 +274,7 @@ export function CashRegister({ students, schoolData, cashierName }: Props) {
                   disabled={isPending}
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center gap-2"
                 >
-                  {isPending && <span className="material-symbols-outlined animate-spin text-[16px]">sync</span>}
+                  {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                   Valider le paiement
                 </button>
               </div>

@@ -4,7 +4,7 @@ import { useState, useTransition, useRef } from 'react'
 import { linkChildWithCode } from '@/app/actions/invitations'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { X, UserPlus, Loader2, Sparkles, CheckCircle2, ClipboardPaste } from 'lucide-react'
+import { X, UserPlus, Loader2, Sparkles, CheckCircle2, ClipboardPaste, AlertCircle } from 'lucide-react'
 
 type Props = {
   isOpen: boolean
@@ -169,7 +169,7 @@ export function LinkChildModal({ isOpen, onClose, onSuccess }: Props) {
 
           {error && (
             <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
-              <span className="material-symbols-outlined text-[16px] text-red-600 shrink-0">error</span>
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
               <span>{error}</span>
             </div>
           )}

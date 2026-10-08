@@ -4,6 +4,20 @@ import Link from 'next/link'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { AddChildButton } from '@/components/parent/AddChildButton'
+import { 
+  Calendar, 
+  Megaphone, 
+  Pin, 
+  GraduationCap, 
+  Award, 
+  FileText, 
+  CheckSquare, 
+  Wallet, 
+  CreditCard, 
+  ArrowRight, 
+  Baby,
+  BookOpen
+} from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -114,7 +128,7 @@ export default async function ParentDashboardPage() {
     return (
       <div className="p-6 text-center text-[var(--color-on-surface-variant)] flex flex-col items-center justify-center h-full min-h-[60vh]">
         <div className="w-24 h-24 bg-[var(--color-primary-container)] rounded-full flex items-center justify-center mb-6">
-          <span className="material-symbols-outlined text-[48px] text-[var(--color-primary)]">child_care</span>
+          <Baby className="w-12 h-12 text-[var(--color-primary)]" />
         </div>
         <h2 className="text-2xl font-bold text-[var(--color-on-surface)] mb-3">Bienvenue sur Scogestia</h2>
         <p className="text-base text-gray-500 max-w-sm leading-relaxed mb-6">
@@ -138,7 +152,7 @@ export default async function ParentDashboardPage() {
             <p className="text-white/80 text-xs sm:text-base leading-relaxed max-w-md hidden sm:block">Bienvenue sur votre portail parent. Retrouvez ici toutes les informations essentielles de la scolarité de vos enfants.</p>
             
             <div className="mt-2 sm:mt-6 inline-flex items-center gap-1.5 sm:gap-2 bg-white/10 backdrop-blur-md px-2.5 py-1 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl border border-white/10 shadow-inner">
-              <span className="material-symbols-outlined text-emerald-400 text-[14px] sm:text-[18px]">calendar_today</span>
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
               <span className="text-white text-[9px] sm:text-sm font-semibold capitalize">{format(new Date(), 'EEEE d MMMM', { locale: fr })}</span>
             </div>
           </div>
@@ -156,7 +170,7 @@ export default async function ParentDashboardPage() {
           <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary-container)] rounded-bl-full opacity-30 -z-10 group-hover:scale-110 transition-transform duration-500"></div>
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[var(--color-primary)]">campaign</span>
+              <Megaphone className="w-5 h-5 text-[var(--color-primary)]" />
               À la une
             </h2>
             <Link href="/parent/messages" className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-primary)] bg-[var(--color-primary-container)]/50 px-3 py-1.5 rounded-full hover:bg-[var(--color-primary-container)] transition-colors">
@@ -177,12 +191,12 @@ export default async function ParentDashboardPage() {
                   </div>
                 ) : (
                   <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0 shadow-xs">
-                    <span className="material-symbols-outlined text-[20px]">campaign</span>
+                    <Megaphone className="w-5 h-5" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 mb-1">
-                    <span className="material-symbols-outlined text-[13px] text-amber-500">push_pin</span>
+                    <Pin className="w-3 h-3 text-amber-500 fill-amber-500" />
                     <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Annonce officielle</span>
                   </div>
                   <h3 className="font-bold text-gray-900 text-sm leading-snug">{ann.subject}</h3>
@@ -219,7 +233,7 @@ export default async function ParentDashboardPage() {
                    <h3 className="text-lg sm:text-xl font-black text-gray-900 leading-tight truncate">{child.first_name}</h3>
                    <h4 className="text-xs sm:text-sm text-gray-500 font-medium truncate">{child.last_name}</h4>
                    <div className="inline-flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-lg mt-2 border border-gray-100">
-                     <span className="material-symbols-outlined text-[14px] text-gray-500">school</span>
+                     <GraduationCap className="w-3.5 h-3.5 text-gray-500" />
                      <span className="text-[11px] font-bold text-gray-700">{child.classes?.name}</span>
                    </div>
                  </div>
@@ -228,25 +242,25 @@ export default async function ParentDashboardPage() {
               <div className="flex-1 grid grid-cols-4 gap-2 sm:gap-3">
                 <Link href={`/parent/notes?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group/action">
                   <div className="w-full aspect-square max-h-[70px] bg-blue-50/80 text-blue-600 rounded-[1rem] sm:rounded-[1.25rem] flex items-center justify-center active:scale-90 transition-all duration-300 shadow-sm border border-blue-100/50 group-hover/action:bg-blue-600 group-hover/action:text-white group-hover/action:shadow-blue-200">
-                    <span className="material-symbols-outlined text-[24px]">grading</span>
+                    <BookOpen className="w-6 h-6" />
                   </div>
                   <span className="text-[10px] sm:text-[11px] font-bold text-gray-600 group-hover/action:text-blue-600 transition-colors">Notes</span>
                 </Link>
                 <Link href={`/parent/presences?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group/action">
                   <div className="w-full aspect-square max-h-[70px] bg-orange-50/80 text-orange-500 rounded-[1rem] sm:rounded-[1.25rem] flex items-center justify-center active:scale-90 transition-all duration-300 shadow-sm border border-orange-100/50 group-hover/action:bg-orange-500 group-hover/action:text-white group-hover/action:shadow-orange-200">
-                    <span className="material-symbols-outlined text-[24px]">fact_check</span>
+                    <CheckSquare className="w-6 h-6" />
                   </div>
                   <span className="text-[10px] sm:text-[11px] font-bold text-gray-600 group-hover/action:text-orange-500 transition-colors">Absences</span>
                 </Link>
                 <Link href={`/parent/devoirs?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group/action">
                   <div className="w-full aspect-square max-h-[70px] bg-purple-50/80 text-purple-600 rounded-[1rem] sm:rounded-[1.25rem] flex items-center justify-center active:scale-90 transition-all duration-300 shadow-sm border border-purple-100/50 group-hover/action:bg-purple-600 group-hover/action:text-white group-hover/action:shadow-purple-200">
-                    <span className="material-symbols-outlined text-[24px]">assignment</span>
+                    <FileText className="w-6 h-6" />
                   </div>
                   <span className="text-[10px] sm:text-[11px] font-bold text-gray-600 group-hover/action:text-purple-600 transition-colors">Devoirs</span>
                 </Link>
                 <Link href={`/parent/bulletins?child=${child.id}`} className="flex flex-col items-center justify-center gap-2 group/action">
                   <div className="w-full aspect-square max-h-[70px] bg-emerald-50/80 text-emerald-600 rounded-[1rem] sm:rounded-[1.25rem] flex items-center justify-center active:scale-90 transition-all duration-300 shadow-sm border border-emerald-100/50 group-hover/action:bg-emerald-600 group-hover/action:text-white group-hover/action:shadow-emerald-200">
-                    <span className="material-symbols-outlined text-[24px]">workspace_premium</span>
+                    <Award className="w-6 h-6" />
                   </div>
                   <span className="text-[10px] sm:text-[11px] font-bold text-gray-600 group-hover/action:text-emerald-600 transition-colors">Bulletins</span>
                 </Link>
@@ -263,15 +277,15 @@ export default async function ParentDashboardPage() {
           <Link href={`/parent/paiements${children && children.length > 0 ? `?child=${children[0].id}` : ''}`} className="block relative overflow-hidden bg-gradient-to-br from-[#1e293b] to-[#0f172a] rounded-[2rem] p-6 sm:p-8 shadow-xl text-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 border border-slate-700/50 group min-h-[180px] lg:min-h-[200px] flex flex-col justify-between">
             <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/10 rounded-bl-[100px] -z-0 group-hover:scale-125 transition-transform duration-700"></div>
             <div className="absolute bottom-[-30px] right-[-10px] text-emerald-400/5 -z-0 group-hover:rotate-[-10deg] group-hover:scale-110 transition-transform duration-500">
-              <span className="material-symbols-outlined" style={{ fontSize: '160px' }}>account_balance_wallet</span>
+              <Wallet className="w-36 h-36" />
             </div>
             
             <div className="relative z-10 flex justify-between items-start">
               <div className="bg-white/10 backdrop-blur-sm p-3 rounded-2xl border border-white/10 shadow-inner">
-                <span className="material-symbols-outlined text-emerald-400 text-[28px]">payments</span>
+                <CreditCard className="w-7 h-7 text-emerald-400" />
               </div>
               <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm group-hover:bg-emerald-500 group-hover:text-white transition-colors text-white/70">
-                <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                <ArrowRight className="w-5 h-5" />
               </div>
             </div>
             

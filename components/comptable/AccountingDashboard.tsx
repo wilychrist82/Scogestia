@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { sendManualReminder } from '@/app/actions/accounting'
+import { Wallet, Banknote, TrendingUp, Download, Send, Loader2 } from 'lucide-react'
 
 type UnpaidDue = {
   id: string
@@ -90,7 +91,7 @@ export function AccountingDashboard({ totalExpected, totalCollected, unpaidDues 
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider">Total Attendu</span>
             <div className="w-10 h-10 rounded-full bg-[var(--color-surface-container)] flex items-center justify-center text-[var(--color-primary)]">
-              <span className="material-symbols-outlined">account_balance_wallet</span>
+              <Wallet className="w-5 h-5" />
             </div>
           </div>
           <div>
@@ -104,7 +105,7 @@ export function AccountingDashboard({ totalExpected, totalCollected, unpaidDues 
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-semibold opacity-90 uppercase tracking-wider">Total Encaissé</span>
             <div className="w-10 h-10 rounded-full bg-[var(--color-primary-container)] bg-opacity-30 flex items-center justify-center">
-              <span className="material-symbols-outlined">payments</span>
+              <Banknote className="w-5 h-5" />
             </div>
           </div>
           <div>
@@ -118,7 +119,7 @@ export function AccountingDashboard({ totalExpected, totalCollected, unpaidDues 
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider">Taux de Recouvrement</span>
             <div className="w-10 h-10 rounded-full bg-[var(--color-secondary-container)] flex items-center justify-center text-[var(--color-on-secondary-container)]">
-              <span className="material-symbols-outlined">trending_up</span>
+              <TrendingUp className="w-5 h-5" />
             </div>
           </div>
           <div>
@@ -166,7 +167,7 @@ export function AccountingDashboard({ totalExpected, totalCollected, unpaidDues 
               onClick={handleExportCSV}
               className="text-[var(--color-primary)] text-sm font-semibold hover:underline flex items-center gap-1"
             >
-              Export CSV <span className="material-symbols-outlined text-sm">download</span>
+              Export CSV <Download className="w-4 h-4 ml-1" />
             </button>
           </div>
           
@@ -217,7 +218,11 @@ export function AccountingDashboard({ totalExpected, totalCollected, unpaidDues 
                             className="text-[var(--color-primary)] hover:bg-[var(--color-surface-container)] p-2 rounded-md transition-colors disabled:opacity-50" 
                             title="Relancer"
                           >
-                            <span className="material-symbols-outlined">{isPending && loadingDueId === due.id ? 'hourglass_empty' : 'send'}</span>
+                            {isPending && loadingDueId === due.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Send className="w-4 h-4" />
+                            )}
                           </button>
                         </td>
                       </tr>

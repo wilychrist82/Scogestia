@@ -3,6 +3,8 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { generateDues } from '@/app/actions/accounting'
+import toast from 'react-hot-toast'
+import { ChevronDown, Info, Receipt, Loader2 } from 'lucide-react'
 
 type ClassData = { id: string, name: string }
 type StudentData = { id: string, first_name: string, last_name: string, class_id: string }
@@ -43,6 +45,9 @@ export function DuesGenerator({ classes, students }: Props) {
       const result = await generateDues(null, formData)
       if (result?.error) {
         setError(result.error)
+        toast.error(result.error)
+      } else {
+        toast.success("Échéances générées avec succès !")
       }
     })
   }
@@ -108,7 +113,7 @@ export function DuesGenerator({ classes, students }: Props) {
                   ))}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[var(--color-on-surface-variant)]">
-                  <span className="material-symbols-outlined">expand_more</span>
+                  <ChevronDown className="w-4 h-4" />
                 </div>
               </div>
             </div>
@@ -128,7 +133,7 @@ export function DuesGenerator({ classes, students }: Props) {
                   ))}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[var(--color-on-surface-variant)]">
-                  <span className="material-symbols-outlined">expand_more</span>
+                  <ChevronDown className="w-4 h-4" />
                 </div>
               </div>
             </div>
@@ -182,7 +187,7 @@ export function DuesGenerator({ classes, students }: Props) {
         {/* Information Note */}
         <div className="bg-[var(--color-surface-container)] p-4 rounded-lg mt-6 border border-[var(--color-outline-variant)]/50">
           <div className="flex items-start gap-3">
-            <span className="material-symbols-outlined text-[var(--color-primary)] mt-0.5">info</span>
+            <Info className="w-5 h-5 text-[var(--color-primary)] mt-0.5 shrink-0" />
             <div>
               <h4 className="text-sm font-semibold text-[var(--color-on-background)]">Note d'information</h4>
               <p className="text-sm text-[var(--color-on-surface-variant)] mt-1">La génération s'appliquera aux statuts actifs uniquement. Les notifications seront envoyées automatiquement aux parents liés si la configuration de l'établissement le permet.</p>
@@ -205,7 +210,7 @@ export function DuesGenerator({ classes, students }: Props) {
             disabled={isPending}
             className="px-6 py-3 bg-[var(--color-primary)] text-white font-semibold text-sm rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity h-[48px] shadow-sm disabled:opacity-50"
           >
-            <span className="material-symbols-outlined text-[20px]">{isPending ? 'hourglass_empty' : 'receipt_long'}</span>
+            {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Receipt className="w-5 h-5" />}
             {isPending ? 'Génération...' : 'Générer les échéances'}
           </button>
         </div>

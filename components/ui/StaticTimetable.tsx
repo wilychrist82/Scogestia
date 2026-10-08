@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { CalendarDays } from 'lucide-react'
 
 type TimetableLevel = 'maternelle' | 'cp' | 'ce' | 'cm' | null
 
@@ -12,7 +13,7 @@ export function StaticTimetable({ level }: StaticTimetableProps) {
   if (!level) {
     return (
       <div className="flex flex-col items-center justify-center p-12 bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)]">
-        <span className="material-symbols-outlined text-5xl text-gray-400 mb-4">calendar_month</span>
+        <CalendarDays className="w-12 h-12 text-slate-300 mb-4" />
         <h3 className="text-xl font-bold text-gray-800 mb-2">Bientôt disponible</h3>
         <p className="text-gray-500 text-center max-w-md">
           L'emploi du temps pour cette classe n'est pas standardisé ou est en cours de configuration. Il sera disponible très prochainement.

@@ -3,6 +3,7 @@
 import { useState, useTransition, FormEvent } from 'react'
 import { updateUserProfile } from '@/app/actions/parametres'
 import { ImageUpload } from '@/components/shared/ImageUpload'
+import { CheckCircle2, User } from 'lucide-react'
 
 type Props = {
   userId: string
@@ -55,7 +56,7 @@ export function UserProfileManager({ userId, userAvatar, role }: Props) {
         
         {success && (
           <div className="bg-[#e6f4ea] text-[#1e8e3e] p-3 rounded-xl border border-[#ceead6] text-sm font-medium flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px]">check_circle</span>
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
             Profil mis à jour avec succès.
           </div>
         )}
@@ -63,7 +64,7 @@ export function UserProfileManager({ userId, userAvatar, role }: Props) {
         <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden flex flex-col">
           <div className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
             <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
-              <span className="material-symbols-outlined text-[var(--color-primary)]">person</span>
+              <User className="w-5 h-5 text-[var(--color-primary)]" />
               Informations personnelles
             </h3>
           </div>

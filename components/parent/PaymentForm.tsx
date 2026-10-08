@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { CheckCircle2, Lock, Loader2, ShieldCheck } from 'lucide-react'
 
 type Props = {
   dueId: string
@@ -123,7 +124,7 @@ export function PaymentForm({ dueId, label, amount }: Props) {
                 <span className="text-xl text-[var(--color-on-surface)] font-medium">T-Money</span>
               </div>
               {selectedMethod === 'tmoney' && (
-                <span className="material-symbols-outlined text-[var(--color-primary)]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)] fill-[var(--color-primary)] text-white" />
               )}
             </div>
           </label>
@@ -146,7 +147,7 @@ export function PaymentForm({ dueId, label, amount }: Props) {
                 <span className="text-xl text-[var(--color-on-surface)] font-medium">Flooz</span>
               </div>
               {selectedMethod === 'flooz' && (
-                <span className="material-symbols-outlined text-[var(--color-primary)]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)] fill-[var(--color-primary)] text-white" />
               )}
             </div>
           </label>
@@ -169,7 +170,7 @@ export function PaymentForm({ dueId, label, amount }: Props) {
                 <span className="text-xl text-[var(--color-on-surface)] font-medium">Wave</span>
               </div>
               {selectedMethod === 'wave' && (
-                <span className="material-symbols-outlined text-[var(--color-primary)]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)] fill-[var(--color-primary)] text-white" />
               )}
             </div>
           </label>
@@ -192,7 +193,7 @@ export function PaymentForm({ dueId, label, amount }: Props) {
                 <span className="text-xl text-[var(--color-on-surface)] font-medium">Orange Money</span>
               </div>
               {selectedMethod === 'orange' && (
-                <span className="material-symbols-outlined text-[var(--color-primary)]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)] fill-[var(--color-primary)] text-white" />
               )}
             </div>
           </label>
@@ -215,7 +216,7 @@ export function PaymentForm({ dueId, label, amount }: Props) {
                 <span className="text-xl text-[var(--color-on-surface)] font-medium">MTN MoMo</span>
               </div>
               {selectedMethod === 'momo' && (
-                <span className="material-symbols-outlined text-[var(--color-primary)]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)] fill-[var(--color-primary)] text-white" />
               )}
             </div>
           </label>
@@ -229,11 +230,11 @@ export function PaymentForm({ dueId, label, amount }: Props) {
           disabled={isPending || !selectedMethod}
           className="w-full h-12 min-h-[48px] bg-[var(--color-primary)] text-white text-xl font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-[var(--color-primary-container)] transition-colors active:scale-95 disabled:opacity-50"
         >
-          <span className="material-symbols-outlined">{isPending ? 'hourglass_empty' : 'lock'}</span>
+          {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
           {isPending ? 'Redirection...' : 'Confirmer le paiement'}
         </button>
-        <p className="text-center text-xs text-[var(--color-on-surface-variant)] mt-3 flex items-center justify-center gap-1">
-          <span className="material-symbols-outlined text-[14px]">shield</span>
+        <p className="text-center text-xs text-[var(--color-on-surface-variant)] mt-3 flex items-center justify-center gap-1.5">
+          <ShieldCheck className="w-4 h-4 text-emerald-600" />
           Paiement sécurisé et crypté
         </p>
       </div>

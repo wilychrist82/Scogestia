@@ -2,7 +2,7 @@
 
 import { useState, useTransition, FormEvent } from 'react'
 import Link from 'next/link'
-import { Building2, ShieldCheck } from 'lucide-react'
+import { Building2, ShieldCheck, CheckCircle2 } from 'lucide-react'
 import { updateSchoolSettings } from '@/app/actions/parametres'
 import { ImageUpload } from '@/components/shared/ImageUpload'
 import { ParametresNavTabs } from './ParametresNavTabs'
@@ -77,7 +77,7 @@ export function ParametresManager({ school, userAvatar }: Props) {
         
         {success && (
           <div className="bg-[#e6f4ea] text-[#1e8e3e] p-3 rounded-xl border border-[#ceead6] text-sm font-medium flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px]">check_circle</span>
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
             Paramètres enregistrés avec succès.
           </div>
         )}
@@ -85,7 +85,7 @@ export function ParametresManager({ school, userAvatar }: Props) {
         <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden flex flex-col">
           <div className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
             <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
-              <span className="material-symbols-outlined text-[var(--color-primary)]">account_balance</span>
+              <Building2 className="w-5 h-5 text-[var(--color-primary)]" />
               Informations de l'Établissement
             </h3>
           </div>

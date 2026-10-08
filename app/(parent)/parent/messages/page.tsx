@@ -10,6 +10,7 @@ import { MessageActions } from '@/components/ui/MessageActions'
 
 import { resolveStudentId } from '@/lib/parent-utils'
 import { ChildSwitchBar } from '@/components/parent/ChildSwitchBar'
+import { Inbox, Ban, FileText, Mic, UserX } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -150,7 +151,7 @@ export default async function ParentMessagesPage({
         <div className="space-y-4 max-w-3xl mx-auto w-full">
           {!messages || messages.length === 0 ? (
             <div className="bg-[var(--color-surface-container-lowest)] p-12 rounded-xl border border-[var(--color-outline-variant)] text-center my-auto">
-              <span className="material-symbols-outlined text-5xl text-[var(--color-on-surface-variant)] mb-4 opacity-50">drafts</span>
+              <Inbox className="w-12 h-12 text-[var(--color-on-surface-variant)] mb-4 opacity-40 mx-auto" />
               <h3 className="text-xl font-bold text-[var(--color-on-surface)]">Aucun message</h3>
               <p className="text-[var(--color-on-surface-variant)] mt-2">Vous n'avez reçu aucun message pour le moment.</p>
             </div>
@@ -189,7 +190,7 @@ export default async function ParentMessagesPage({
 
                       {isDeletedForEveryone ? (
                         <div className="px-3 py-2 text-[14px] text-gray-500 italic flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[18px]">block</span>
+                          <Ban className="w-4 h-4" />
                           Ce message a été supprimé
                         </div>
                       ) : (
@@ -238,7 +239,7 @@ export default async function ParentMessagesPage({
                                       <video src={fileUrl} controls className="max-w-full h-auto rounded-lg max-h-48 border border-black/10" />
                                     ) : (
                                       <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-black/5 rounded-lg hover:bg-black/10 transition-colors">
-                                        <span className="material-symbols-outlined text-[20px]">description</span>
+                                        <FileText className="w-4 h-4 text-slate-500" />
                                         <span className="text-sm font-semibold truncate max-w-[150px]" title={fileName}>{fileName}</span>
                                       </a>
                                     )}
@@ -253,7 +254,7 @@ export default async function ParentMessagesPage({
                             <div className={`flex items-center gap-2 px-3 py-2 min-w-[200px] pr-6 ${
                               msg.content && msg.content !== 'Message vocal' ? 'border-t border-black/5' : ''
                             }`}>
-                              <span className="material-symbols-outlined text-[22px] text-[var(--color-primary)] shrink-0">mic</span>
+                              <Mic className="w-5 h-5 text-[var(--color-primary)] shrink-0" />
                               <audio
                                 src={msg.audio_url}
                                 controls

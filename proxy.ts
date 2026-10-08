@@ -47,12 +47,14 @@ export async function proxy(request: NextRequest) {
                       pathname.startsWith('/conditions-utilisation') ||
                       pathname.startsWith('/mentions-legales') ||
                       pathname.startsWith('/api/auth') ||
+                      pathname === '/api/health' ||
+                      pathname.startsWith('/api/health') ||
                       // Endpoints machine-à-machine : authentifiés par leur propre mécanisme (signature / secret)
                       pathname.startsWith('/api/webhooks') ||
                       pathname.startsWith('/api/cron');
 
-  // Les webhooks et le cron ne doivent JAMAIS être redirigés, même si une session existe
-  if (pathname.startsWith('/api/webhooks') || pathname.startsWith('/api/cron')) {
+  // Les webhooks, le cron et le health check ne doivent JAMAIS être redirigés, même si une session existe
+  if (pathname.startsWith('/api/webhooks') || pathname.startsWith('/api/cron') || pathname.startsWith('/api/health')) {
     return supabaseResponse
   }
 

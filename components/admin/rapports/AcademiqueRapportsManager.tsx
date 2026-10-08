@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { ExportButtons } from '@/components/ui/ExportButtons'
 import Link from 'next/link'
 import { RapportsNavTabs } from './RapportsNavTabs'
+import { BarChart3, Table } from 'lucide-react'
 
 type ClassStat = {
   id: string
@@ -73,7 +74,7 @@ export function AcademiqueRapportsManager({ classStats }: Props) {
                 </ResponsiveContainer>
               ) : (
                 <div className="text-center text-[var(--color-on-surface-variant)] opacity-60 flex flex-col items-center">
-                  <span className="material-symbols-outlined text-4xl mb-2">analytics</span>
+                  <BarChart3 className="w-10 h-10 mb-2 opacity-50" />
                   <p className="text-sm font-medium">Aucune donnée académique disponible</p>
                 </div>
               )}
@@ -84,7 +85,7 @@ export function AcademiqueRapportsManager({ classStats }: Props) {
         <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden">
           <div className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
             <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
-              <span className="material-symbols-outlined text-[var(--color-on-surface-variant)]">table</span>
+              <Table className="w-5 h-5 text-[var(--color-on-surface-variant)]" />
               Détails par classe
             </h3>
           </div>

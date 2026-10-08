@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ChariowProduct } from '@/lib/chariow/api'
 import { parsePhoneNumberFromString } from 'libphonenumber-js'
+import { X, Loader2, Lock } from 'lucide-react'
 
 type Props = {
   plan: ChariowProduct
@@ -73,7 +74,7 @@ export function ChariowCheckout({ plan, onClose }: Props) {
             <p className="text-sm text-[var(--color-on-surface-variant)] mt-1">Plan {plan.name}</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-full text-[var(--color-on-surface-variant)] transition-colors">
-            <span className="material-symbols-outlined">close</span>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -141,12 +142,12 @@ export function ChariowCheckout({ plan, onClose }: Props) {
           >
             {isLoading ? (
               <>
-                <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+                <Loader2 className="w-5 h-5 animate-spin" />
                 Génération du lien...
               </>
             ) : (
               <>
-                <span className="material-symbols-outlined text-[20px]">lock</span>
+                <Lock className="w-5 h-5" />
                 Payer {plan.price != null && plan.price > 0 
                   ? Number(plan.price).toLocaleString('fr-FR') 
                   : (plan.name?.toLowerCase().includes('pro') 
