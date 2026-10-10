@@ -123,8 +123,48 @@ export default async function AdminDashboard() {
     const cName = (s.classes as any)?.name || 'Sans classe'
     classCounts[cName] = (classCounts[cName] || 0) + 1
   })
-  const colors = ['#059669', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899']
-  const classDistributionData: ClassDistributionData[] = Object.entries(classCounts).map(([name, value], i) => ({
+  const classOrderPriority = [
+    // Maternelle / Préscolaire
+    'tps', 'toute petite section',
+    'ps', 'petite section', 'ps1', 'ps2', 'maternelle',
+    'ms', 'moyenne section',
+    'gs', 'grande section',
+    'ci', 'cours d\'initiation',
+    // Primaire
+    'cp1', 'cp 1', 'cp', 'cours préparatoire 1',
+    'cp2', 'cp 2', 'cours préparatoire 2',
+    'ce1', 'ce 1', 'cours élémentaire 1',
+    'ce2', 'ce 2', 'cours élémentaire 2',
+    'cm1', 'cm 1', 'cours moyen 1',
+    'cm2', 'cm 2', 'cours moyen 2',
+    // Collège
+    '6eme', '6ème', '6e', 'sixième',
+    '5eme', '5ème', '5e', 'cinquième',
+    '4eme', '4ème', '4e', 'quatrième',
+    '3eme', '3ème', '3e', 'troisième',
+    // Lycée
+    '2nde', 'seconde', '2nd', '2nde a', '2nde c', '2nde s',
+    '1ere', '1ère', 'première', '1ere a', '1ere c', '1ere d', '1ere s',
+    'tle', 'terminale', 'term', 'tle a', 'tle c', 'tle d', 'tle s',
+  ]
+
+  function getClassOrder(className: string): number {
+    const normalized = className.trim().toLowerCase().replace(/[\s\-_]+/g, ' ')
+    const index = classOrderPriority.findIndex(p => {
+      return normalized === p || normalized.startsWith(p + ' ') || normalized.startsWith(p)
+    })
+    return index !== -1 ? index : 999
+  }
+
+  const colors = ['#059669', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4', '#e11d48']
+  const sortedClassEntries = Object.entries(classCounts).sort(([nameA], [nameB]) => {
+    const orderA = getClassOrder(nameA)
+    const orderB = getClassOrder(nameB)
+    if (orderA !== orderB) return orderA - orderB
+    return nameA.localeCompare(nameB, 'fr')
+  })
+
+  const classDistributionData: ClassDistributionData[] = sortedClassEntries.map(([name, value], i) => ({
     name, value, color: colors[i % colors.length]
   }))
 
@@ -347,271 +387,273 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* ── ALERTES STRATÉGIQUES ROW (PÉDAGOGIQUE & FINANCE) : VISIBILITÉ IMMÉDIATE ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-        {/* Surveillance Pédagogique (< 10/20) */}
-        <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
-          <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-              <div>
-                <h3 className="font-bold text-slate-900 text-base tracking-tight flex items-center gap-2">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"></span>
-                  </span>
-                  Surveillance Pédagogique
-                </h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">Élèves en difficulté (Moyenne &lt; 10/20)</p>
-              </div>
-              <Link href="/admin/academique/surveillance" className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 hover:text-amber-800 uppercase tracking-widest bg-amber-50 px-3 py-1.5 rounded-full hover:bg-amber-100 transition-colors">
-                Module complet <ArrowUpRight size={12} />
-              </Link>
-            </div>
-            <div className="flex-1 p-4 flex flex-col gap-2">
-              {lowAverageStudents.length > 0 ? lowAverageStudents.map((item, i) => (
-                <Link key={i} href={`/admin/eleves/${item.id}`} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors group/item">
-                  <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm flex-shrink-0 border border-amber-100 group-hover/item:bg-amber-100">
-                    <GraduationCap size={18} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 truncate">
-                      {(item.student as any)?.last_name} {(item.student as any)?.first_name}
-                    </p>
-                    <p className="text-[11px] text-slate-500">{((item.student as any)?.classes as any)?.name || 'Classe'}</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md font-black text-xs bg-rose-50 text-rose-600 border border-rose-200">
-                      {item.average} / 20
-                    </span>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{item.gradeCount} note{item.gradeCount > 1 ? 's' : ''}</p>
-                  </div>
-                </Link>
-              )) : (
-                <div className="flex-1 flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-3 border border-emerald-100">
-                    <BookOpenCheck className="w-6 h-6 text-emerald-500" />
-                  </div>
-                  <p className="font-bold text-slate-900 text-sm">Excellence pédagogique 🎓</p>
-                  <p className="text-xs text-slate-500 mt-1">Aucun élève sous la moyenne recensé.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Impayés urgents */}
-        <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
-          <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-              <div>
-                <h3 className="font-bold text-slate-900 text-base tracking-tight flex items-center gap-2">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span>
-                  </span>
-                  Impayés urgents
-                </h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">Échéances dépassées à relancer</p>
-              </div>
-              <Link href="/admin/finance/impayes" className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors">
-                Voir tout <ArrowUpRight size={12} />
-              </Link>
-            </div>
-            <div className="flex-1 p-4 flex flex-col gap-2">
-              {(overdueDues || []).length > 0 ? overdueDues?.map((row, i) => (
-                <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors">
-                  <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-sm flex-shrink-0 border border-rose-100">
-                    {(row.student as any)?.last_name?.charAt(0)}{(row.student as any)?.first_name?.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 truncate">
-                      {(row.student as any)?.last_name} {(row.student as any)?.first_name?.charAt(0)}.
-                    </p>
-                    <p className="text-[11px] text-slate-500">{((row.student as any)?.classes as any)?.name || 'Classe'}</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-black text-rose-600 tabular-nums">{nf.format(row.amount)} FCFA</p>
-                    <p className="text-[10px] text-slate-400">{new Date(row.due_date).toLocaleDateString('fr-FR')}</p>
-                  </div>
-                </div>
-              )) : (
-                <div className="flex-1 flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-3 border border-emerald-100">
-                    <AlertCircle className="w-6 h-6 text-emerald-500" />
-                  </div>
-                  <p className="font-bold text-slate-900 text-sm">Aucun retard 🎉</p>
-                  <p className="text-xs text-slate-500 mt-1">Tous les paiements sont à jour.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      {/* ── GRAPHIQUES PRINCIPAUX ROW ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      {/* ── SECTION PRINCIPALE 2 COLONNES (STRUCTURE EXACTE DEMANDÉE PAR WILFRIED) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         
-        {/* Effectifs des classes (Bar Chart) */}
-        <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
-          <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-              <div>
-                <h3 className="font-bold text-slate-900 text-base tracking-tight">Effectif des classes</h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">Répartition détaillée des élèves par classe</p>
-              </div>
-            </div>
-            <div className="flex-1 p-6">
-              <ClassBarChart data={classDistributionData} />
-            </div>
-          </div>
-        </div>
+        {/* ── COLONNE GAUCHE ── */}
+        <div className="space-y-6 flex flex-col">
 
-        {/* Recouvrement paiements */}
-        <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
-          <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-              <div>
-                <h3 className="font-bold text-slate-900 text-base tracking-tight">Recouvrement des paiements</h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">Mensuel — Année scolaire {academicYear}</p>
-              </div>
-              <div className="flex items-center gap-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shadow-[0_0_8px_rgba(16,185,129,0.4)]"/>Encaissé</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shadow-[0_0_8px_rgba(244,63,94,0.4)]"/>Attendu</span>
-              </div>
-            </div>
-            <div className="flex-1 p-6">
-              <PaymentChart data={paymentData} />
-            </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t border-slate-100 px-6 py-4 gap-4 bg-slate-50/30">
-              <div className="flex gap-10">
+          {/* 1. Effectifs des classes (Bar Chart ordonné de la Maternelle à la Terminale) */}
+          <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
+            <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
                 <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Total attendu</p>
-                  <p className="text-xl font-black text-slate-800">{nf.format(totalAttendu)} FCFA</p>
+                  <h3 className="font-bold text-slate-900 text-base tracking-tight">Effectif des classes</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">Répartition chronologique des élèves par niveau (Maternelle → Terminale)</p>
                 </div>
+              </div>
+              <div className="flex-1 p-6">
+                <ClassBarChart data={classDistributionData} />
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Présences du jour (Camembert / Donut) */}
+          <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
+            <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
+              <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+                <h3 className="font-bold text-slate-900 tracking-tight">Présences du jour</h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5 capitalize">{format(new Date(), 'EEEE d MMMM', { locale: fr })}</p>
+              </div>
+              <div className="p-5 flex flex-col sm:flex-row items-center gap-5">
+                <div className="w-full sm:w-1/2 shrink-0">
+                  <AttendancePieChart data={attendanceData} />
+                </div>
+                <div className="w-full sm:w-1/2 space-y-3">
+                  {attendanceData.map((d, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
+                        <span className="text-sm font-medium text-slate-700">{d.name}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-bold text-slate-900 tabular-nums">{d.value}</span>
+                        <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full font-semibold">
+                          {totalAtt > 0 ? Math.round((d.value/totalAtt)*100) : 0}%
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="border-t border-slate-100 pt-3 flex justify-between text-sm">
+                    <span className="text-slate-500 font-medium">Total relevé</span>
+                    <span className="font-bold text-slate-900 tabular-nums">{totalAtt}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Activités récentes (Derniers encaissements) */}
+          <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
+            <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
                 <div>
-                  <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest mb-1">Total encaissé</p>
-                  <p className="text-xl font-black text-emerald-600">{nf.format(totalEncaisse)} FCFA</p>
+                  <h3 className="font-bold text-slate-900 tracking-tight">Activités récentes</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">Derniers encaissements enregistrés</p>
                 </div>
+                <Link href="/admin/finance/paiements" className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors">
+                  Voir tout <ArrowUpRight size={12} />
+                </Link>
               </div>
-              <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-2xl border border-slate-100 shadow-xs">
-                <CircularProgress percentage={recouvRate} />
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-tight">Taux de<br/>recouvrement</p>
+              <div className="p-5 flex flex-col gap-2.5">
+                {recentPayments.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mb-3 border border-slate-200">
+                      <Wallet className="w-5 h-5 text-slate-400" />
+                    </div>
+                    <p className="font-bold text-slate-800 text-sm">Aucune activité récente</p>
+                    <p className="text-xs text-slate-400 mt-1">Les encaissements enregistrés apparaîtront ici.</p>
+                  </div>
+                ) : recentPayments.map((p, i) => {
+                  const studentName = (p.student as any)
+                    ? `${(p.student as any).last_name || ''} ${(p.student as any).first_name?.charAt(0) || ''}.`.trim()
+                    : 'Élève'
+                  return (
+                    <div key={i} className="flex gap-3 items-center p-2.5 rounded-xl hover:bg-slate-50 transition-colors">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 border border-emerald-100">
+                        <Banknote size={16} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-900 truncate">{studentName}</p>
+                        <p className="text-xs text-emerald-700 font-bold">{nf.format(p.amount)} FCFA</p>
+                      </div>
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* ── RÉPARTITION & PRÉSENCES DETAIL ROW ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-        {/* Présences du jour */}
-        <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
-          <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-            <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-              <h3 className="font-bold text-slate-900 tracking-tight">Présences du jour</h3>
-              <p className="text-xs text-slate-500 font-medium mt-0.5 capitalize">{format(new Date(), 'EEEE d MMMM', { locale: fr })}</p>
-            </div>
-            <div className="p-5 flex flex-col sm:flex-row items-center gap-5">
-              <div className="w-full sm:w-1/2 shrink-0">
-                <AttendancePieChart data={attendanceData} />
-              </div>
-              <div className="w-full sm:w-1/2 space-y-3">
-                {attendanceData.map((d, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
-                      <span className="text-sm font-medium text-slate-700">{d.name}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-bold text-slate-900 tabular-nums">{d.value}</span>
-                      <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full font-semibold">
-                        {totalAtt > 0 ? Math.round((d.value/totalAtt)*100) : 0}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                <div className="border-t border-slate-100 pt-3 flex justify-between text-sm">
-                  <span className="text-slate-500 font-medium">Total relevé</span>
-                  <span className="font-bold text-slate-900 tabular-nums">{totalAtt}</span>
+          {/* 4. Surveillance Pédagogique (Élèves en difficulté < 10/20) */}
+          <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
+            <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base tracking-tight flex items-center gap-2">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"></span>
+                    </span>
+                    Surveillance Pédagogique
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">Élèves en difficulté (Moyenne &lt; 10/20)</p>
                 </div>
+                <Link href="/admin/academique/surveillance" className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 hover:text-amber-800 uppercase tracking-widest bg-amber-50 px-3 py-1.5 rounded-full hover:bg-amber-100 transition-colors">
+                  Module complet <ArrowUpRight size={12} />
+                </Link>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Répartition par classe */}
-        <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
-          <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-            <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-              <h3 className="font-bold text-slate-900 tracking-tight">Répartition par classe</h3>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">{studentCount || 0} élèves au total</p>
-            </div>
-            <div className="p-5 flex flex-col sm:flex-row items-center gap-5">
-              <div className="w-full sm:w-1/2 shrink-0">
-                <ClassDistributionPieChart data={classDistributionData} />
-              </div>
-              <div className="w-full sm:w-1/2 space-y-2.5 max-h-[200px] overflow-y-auto pr-1">
-                {classDistributionData.length === 0 && (
-                  <p className="text-xs text-slate-400 py-4 text-center">Aucune classe renseignée.</p>
-                )}
-                {classDistributionData.map((d, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
-                      <span className="text-sm text-slate-700 truncate max-w-[120px]" title={d.name}>{d.name}</span>
-                    </div>
-                    <span className="text-sm font-bold text-slate-900 tabular-nums">{d.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Activités récentes */}
-        <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
-          <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-              <div>
-                <h3 className="font-bold text-slate-900 tracking-tight">Activités récentes</h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">Derniers encaissements</p>
-              </div>
-              <Link href="/admin/finance/paiements" className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors">
-                Voir tout <ArrowUpRight size={12} />
-              </Link>
-            </div>
-            <div className="p-5 flex flex-col gap-2.5">
-              {recentPayments.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mb-3 border border-slate-200">
-                    <Wallet className="w-5 h-5 text-slate-400" />
-                  </div>
-                  <p className="font-bold text-slate-800 text-sm">Aucune activité</p>
-                  <p className="text-xs text-slate-400 mt-1">Les encaissements enregistrés apparaîtront ici.</p>
-                </div>
-              ) : recentPayments.map((p, i) => {
-                const studentName = (p.student as any)
-                  ? `${(p.student as any).last_name || ''} ${(p.student as any).first_name?.charAt(0) || ''}.`.trim()
-                  : 'Élève'
-                return (
-                  <div key={i} className="flex gap-3 items-center p-2.5 rounded-xl hover:bg-slate-50 transition-colors">
-                    <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 border border-emerald-100">
-                      <Banknote size={16} />
+              <div className="flex-1 p-4 flex flex-col gap-2">
+                {lowAverageStudents.length > 0 ? lowAverageStudents.map((item, i) => (
+                  <Link key={i} href={`/admin/eleves/${item.id}`} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors group/item">
+                    <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm flex-shrink-0 border border-amber-100 group-hover/item:bg-amber-100">
+                      <GraduationCap size={18} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 truncate">{studentName}</p>
-                      <p className="text-xs text-emerald-700 font-bold">{nf.format(p.amount)} FCFA</p>
+                      <p className="text-sm font-semibold text-slate-900 truncate">
+                        {(item.student as any)?.last_name} {(item.student as any)?.first_name}
+                      </p>
+                      <p className="text-[11px] text-slate-500">{((item.student as any)?.classes as any)?.name || 'Classe'}</p>
                     </div>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                    <div className="text-right flex-shrink-0">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md font-black text-xs bg-rose-50 text-rose-600 border border-rose-200">
+                        {item.average} / 20
+                      </span>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{item.gradeCount} note{item.gradeCount > 1 ? 's' : ''}</p>
+                    </div>
+                  </Link>
+                )) : (
+                  <div className="flex-1 flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-3 border border-emerald-100">
+                      <BookOpenCheck className="w-6 h-6 text-emerald-500" />
+                    </div>
+                    <p className="font-bold text-slate-900 text-sm">Excellence pédagogique 🎓</p>
+                    <p className="text-xs text-slate-500 mt-1">Aucun élève sous la moyenne recensé.</p>
                   </div>
-                )
-              })}
+                )}
+              </div>
             </div>
           </div>
+
         </div>
+
+        {/* ── COLONNE DROITE ── */}
+        <div className="space-y-6 flex flex-col">
+
+          {/* 1. Recouvrement des paiements (Courbe Encaissé vs Attendu) */}
+          <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
+            <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base tracking-tight">Recouvrement des paiements</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">Mensuel — Année scolaire {academicYear}</p>
+                </div>
+                <div className="flex items-center gap-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shadow-[0_0_8px_rgba(16,185,129,0.4)]"/>Encaissé</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shadow-[0_0_8px_rgba(244,63,94,0.4)]"/>Attendu</span>
+                </div>
+              </div>
+              <div className="flex-1 p-6">
+                <PaymentChart data={paymentData} />
+              </div>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t border-slate-100 px-6 py-4 gap-4 bg-slate-50/30">
+                <div className="flex gap-10">
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Total attendu</p>
+                    <p className="text-xl font-black text-slate-800">{nf.format(totalAttendu)} FCFA</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest mb-1">Total encaissé</p>
+                    <p className="text-xl font-black text-emerald-600">{nf.format(totalEncaisse)} FCFA</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-2xl border border-slate-100 shadow-xs">
+                  <CircularProgress percentage={recouvRate} />
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-tight">Taux de<br/>recouvrement</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Répartition par classe (Diagramme en anneau / rond) */}
+          <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
+            <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
+              <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+                <h3 className="font-bold text-slate-900 tracking-tight">Répartition par classe</h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">{studentCount || 0} élèves au total</p>
+              </div>
+              <div className="p-5 flex flex-col sm:flex-row items-center gap-5">
+                <div className="w-full sm:w-1/2 shrink-0">
+                  <ClassDistributionPieChart data={classDistributionData} />
+                </div>
+                <div className="w-full sm:w-1/2 space-y-2.5 max-h-[200px] overflow-y-auto pr-1">
+                  {classDistributionData.length === 0 && (
+                    <p className="text-xs text-slate-400 py-4 text-center">Aucune classe renseignée.</p>
+                  )}
+                  {classDistributionData.map((d, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
+                        <span className="text-sm text-slate-700 truncate max-w-[120px]" title={d.name}>{d.name}</span>
+                      </div>
+                      <span className="text-sm font-bold text-slate-900 tabular-nums">{d.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Impayés urgents (Échéances dépassées) */}
+          <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
+            <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base tracking-tight flex items-center gap-2">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span>
+                    </span>
+                    Impayés urgents
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">Échéances dépassées à relancer</p>
+                </div>
+                <Link href="/admin/finance/impayes" className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors">
+                  Voir tout <ArrowUpRight size={12} />
+                </Link>
+              </div>
+              <div className="flex-1 p-4 flex flex-col gap-2">
+                {(overdueDues || []).length > 0 ? overdueDues?.map((row, i) => (
+                  <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors">
+                    <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-sm flex-shrink-0 border border-rose-100">
+                      {(row.student as any)?.last_name?.charAt(0)}{(row.student as any)?.first_name?.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 truncate">
+                        {(row.student as any)?.last_name} {(row.student as any)?.first_name?.charAt(0)}.
+                      </p>
+                      <p className="text-[11px] text-slate-500">{((row.student as any)?.classes as any)?.name || 'Classe'}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-black text-rose-600 tabular-nums">{nf.format(row.amount)} FCFA</p>
+                      <p className="text-[10px] text-slate-400">{new Date(row.due_date).toLocaleDateString('fr-FR')}</p>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="flex-1 flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-3 border border-emerald-100">
+                      <AlertCircle className="w-6 h-6 text-emerald-500" />
+                    </div>
+                    <p className="font-bold text-slate-900 text-sm">Aucun retard 🎉</p>
+                    <p className="text-xs text-slate-500 mt-1">Tous les paiements sont à jour.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+        </div>
+
       </div>
 
       {/* ── ACTIONS RAPIDES COLORÉES & INTERACTIVES (INDIVIDUAL COLORS ON HOVER) ── */}

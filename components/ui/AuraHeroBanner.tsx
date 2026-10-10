@@ -127,21 +127,21 @@ export function AuraHeroBanner({
 
       {/* ── CONTENU DROITE : ACTIONS & STATS TRANSLUCIDES ── */}
       <div className="relative z-10 flex flex-wrap items-center gap-3 self-start lg:self-center">
-        {/* Capsules de statistiques en verre fumé translucide (flottant sur l'aura) */}
+        {/* Capsules de statistiques en verre dépoli nacré translucide (contraste net sans effet bleu sur bleu) */}
         {stats && stats.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap">
             {stats.map((stat, i) => (
               <div
                 key={i}
-                className="bg-black/25 hover:bg-black/35 backdrop-blur-md border border-white/15 hover:border-white/30 rounded-2xl px-3.5 sm:px-4 py-2.5 text-center transition-all duration-300 shadow-md group cursor-default min-w-[85px] sm:min-w-[95px]"
+                className="bg-white/[0.14] hover:bg-white/[0.22] backdrop-blur-xl border border-white/30 hover:border-white/50 rounded-2xl px-3.5 sm:px-4 py-2.5 text-center transition-all duration-300 shadow-[0_8px_20px_rgba(0,0,0,0.25)] ring-1 ring-inset ring-white/20 group cursor-default min-w-[85px] sm:min-w-[95px]"
               >
-                <p className="text-[9px] text-white/70 font-black uppercase tracking-[0.15em] mb-0.5">
+                <p className="text-[9.5px] text-white/90 font-black uppercase tracking-[0.14em] mb-0.5">
                   {stat.label}
                 </p>
                 <p
                   className={`text-lg sm:text-xl font-black leading-none ${
                     stat.color || 'text-white'
-                  } group-hover:scale-105 inline-block transition-transform drop-shadow-xs`}
+                  } group-hover:scale-105 inline-block transition-transform drop-shadow-sm`}
                 >
                   {stat.value}
                 </p>

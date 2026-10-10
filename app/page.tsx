@@ -178,7 +178,7 @@ export default function Home() {
                 </motion.h1>
                 
                 <motion.p variants={fadeIn} className="text-lg text-slate-300 mb-10 max-w-xl leading-relaxed">
-                  Le logiciel de gestion scolaire tout-en-un pour écoles, collèges et lycées d'Afrique : inscriptions, suivi des notes, bulletins automatiques, caisse certifiée et communication directe avec les parents via WhatsApp et SMS.
+                  Le logiciel de gestion scolaire tout-en-un conçu pour le <span className="text-white font-semibold">préscolaire, l'école primaire, le collège et le lycée</span> : inscriptions, suivi des notes, bulletins automatiques, caisse certifiée et communication directe à travers la plateforme Scogestia (messages vocaux & audios, SMS et WhatsApp) entre l'établissement, les enseignants et les parents d'élèves.
                 </motion.p>
                 
                 <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
@@ -580,12 +580,13 @@ export default function Home() {
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-3">Espace Direction</h3>
                 <p className="text-slate-600 text-sm mb-6 leading-relaxed flex-1">
-                  Pilotez votre école : effectifs, inscriptions, comptabilité, caisse certifiée, validation des bulletins et relances d'impayés.
+                  Pilotez votre établissement en toute sérénité : effectifs, inscriptions, comptabilité, caisse certifiée, édition et validation des bulletins scolaires automatiques et relances d'impayés.
                 </p>
                 <div className="space-y-2 mb-8 text-xs font-semibold text-slate-700">
                   <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Vision 360° en temps réel</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Journal et rapports financiers</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Export Excel et bilans PDF</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Bulletins automatiques & bilans officiels</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Journal de caisse et rapports financiers</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Export Excel et bilans comptables PDF</div>
                 </div>
                 <Link
                   href="/connexion"
@@ -603,12 +604,13 @@ export default function Home() {
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-3">Espace Professeur</h3>
                 <p className="text-slate-600 text-sm mb-6 leading-relaxed flex-1">
-                  Consacrez-vous à la pédagogie : saisie rapide des devoirs, notes trimestrielles, appel des présences et appréciations scolaires.
+                  Consacrez-vous à la pédagogie : saisie rapide des devoirs, notes trimestrielles, appel numérique quotidien avec fermeture du registre d'appel et calcul automatique instantané des présences.
                 </p>
                 <div className="space-y-2 mb-8 text-xs font-semibold text-slate-700">
                   <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-blue-600" /> Saisie des notes sur mobile & PC</div>
                   <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-blue-600" /> Appel numérique quotidien</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-blue-600" /> Cahier de textes numérique</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-blue-600" /> Fermeture du registre & calcul automatique</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-blue-600" /> Cahier de textes et suivi des cours</div>
                 </div>
                 <Link
                   href="/connexion"
@@ -626,12 +628,13 @@ export default function Home() {
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-3">Espace Parent</h3>
                 <p className="text-slate-600 text-sm mb-6 leading-relaxed flex-1">
-                  Suivez la scolarité de vos enfants 24h/24 : consultation des notes, bulletins en direct, retards et solde des frais scolaires.
+                  Suivez la scolarité de vos enfants 24h/24 : consultation des notes, bulletins en direct, retards et alertes par messages audios et SMS directement intégrés à la plateforme Scogestia.
                 </p>
                 <div className="space-y-2 mb-8 text-xs font-semibold text-slate-700">
-                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-600" /> Bulletins téléchargeables</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-600" /> Alertes SMS et WhatsApp</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-600" /> Historique clair des paiements</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-600" /> Bulletins téléchargeables en direct</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-600" /> Alertes messages audios & SMS via Scogestia</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-600" /> Notifications WhatsApp directes</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-600" /> Historique clair des paiements et solde</div>
                 </div>
                 <div className="flex flex-col gap-2">
                   <Link
