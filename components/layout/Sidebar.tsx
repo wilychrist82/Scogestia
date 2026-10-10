@@ -79,12 +79,14 @@ const mainNavItems: NavItem[] = [
     icon: BookOpen, 
     hasDropdown: true,
     subItems: [
+      { label: 'Surveillance des notes', href: '/admin/academique/surveillance' },
       { label: 'Matières', href: '/admin/academique/matieres' },
       { label: 'Emplois du temps', href: '/admin/academique/emplois' },
       { label: 'Présences', href: '/admin/academique/presences' },
       { label: 'Devoirs', href: '/admin/academique/devoirs' },
       { label: 'Saisie des notes', href: '/admin/academique/notes' },
       { label: 'Bulletins & Livrets', href: '/admin/academique/bulletins' },
+      { label: 'Promotion fin d\'année', href: '/admin/academique/promotion' },
     ]
   },
   { label: 'Communication', href: '/admin/communication', icon: MessageSquare },

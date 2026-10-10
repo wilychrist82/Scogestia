@@ -32,15 +32,15 @@ export function AuraHeroBanner({
 }: Props) {
   return (
     <div
-      className={`relative overflow-hidden rounded-[1.75rem] min-h-[145px] sm:min-h-[155px] flex flex-col lg:flex-row lg:items-center justify-between gap-5 p-6 sm:p-8 shadow-[0_20px_50px_rgba(24,14,52,0.35)] border border-white/[0.12] ring-1 ring-inset ring-white/[0.06] bg-[#180E34] ${className}`}
+      className={`relative overflow-hidden rounded-[1.75rem] min-h-[145px] sm:min-h-[155px] flex flex-col lg:flex-row lg:items-center justify-between gap-5 p-6 sm:p-8 shadow-[0_20px_50px_rgba(7,13,30,0.4)] border border-white/[0.12] ring-1 ring-inset ring-white/[0.06] bg-[#070D1E] ${className}`}
     >
-      {/* ── ARRIÈRE-PLAN MAGIQUE : AURA FLUIDE COUCHER DE SOLEIL & VAGUE OCÉANIQUE ── */}
+      {/* ── ARRIÈRE-PLAN ÉLÉGANT : BLEU FONCÉ À GAUCHE CROISÉ AVEC BLEU CLAIR CYAN À DROITE (SANS JAUNE/ORANGE) ── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
         
-        {/* Fond dégradé violet profond de base */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#170E32] via-[#201247] to-[#120926]" />
+        {/* Fond dégradé bleu nuit exécutif de base */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#070D1E] via-[#0E204E] to-[#0A3273]" />
 
-        {/* Forme vectorielle SVG de la vague fluide (courbe parabolique parfaite) */}
+        {/* Forme vectorielle SVG de la vague fluide bleue */}
         <svg
           className="absolute inset-0 w-full h-full"
           preserveAspectRatio="none"
@@ -49,60 +49,59 @@ export function AuraHeroBanner({
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
-            {/* Dégradé coucher de soleil radiant (Orange / Ambre / Or) */}
-            <radialGradient id="auraSunset" cx="50%" cy="50%" r="50%" fx="35%" fy="60%">
-              <stop offset="0%" stopColor="#FFF4D0" stopOpacity="1" />
-              <stop offset="25%" stopColor="#FFAE33" stopOpacity="0.98" />
-              <stop offset="60%" stopColor="#FF6636" stopOpacity="0.92" />
-              <stop offset="90%" stopColor="#C92A4B" stopOpacity="0.85" />
-              <stop offset="100%" stopColor="#241249" stopOpacity="0" />
+            {/* Dégradé bleu roi profond au centre */}
+            <radialGradient id="auraRoyalBlue" cx="45%" cy="50%" r="55%" fx="35%" fy="50%">
+              <stop offset="0%" stopColor="#2563EB" stopOpacity="0.8" />
+              <stop offset="50%" stopColor="#1D4ED8" stopOpacity="0.75" />
+              <stop offset="85%" stopColor="#1E3A8A" stopOpacity="0.7" />
+              <stop offset="100%" stopColor="#070D1E" stopOpacity="0" />
             </radialGradient>
 
-            {/* Vague Océanique / Cyan électrique à droite */}
-            <radialGradient id="auraCyanWave" cx="95%" cy="30%" r="65%">
-              <stop offset="0%" stopColor="#38E1FF" stopOpacity="0.95" />
-              <stop offset="40%" stopColor="#0077FE" stopOpacity="0.88" />
-              <stop offset="75%" stopColor="#1B2875" stopOpacity="0.6" />
-              <stop offset="100%" stopColor="#120926" stopOpacity="0" />
+            {/* Vague Océanique / Cyan et Bleu Ciel éclatant à droite */}
+            <radialGradient id="auraCyanWave" cx="95%" cy="35%" r="65%">
+              <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.95" />
+              <stop offset="35%" stopColor="#0EA5E9" stopOpacity="0.9" />
+              <stop offset="70%" stopColor="#0284C7" stopOpacity="0.75" />
+              <stop offset="100%" stopColor="#070D1E" stopOpacity="0" />
             </radialGradient>
 
-            {/* Filtre de flou doux organique pour fondre les contours */}
+            {/* Filtre de flou doux organique */}
             <filter id="auraBlur" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="25" />
             </filter>
           </defs>
 
-          {/* Courbe fluide parabolique enveloppante */}
+          {/* Courbe fluide parabolique enveloppante bleu royal */}
           <path
-            d="M 420 0 C 470 65, 520 135, 620 200 L 1200 200 L 1200 0 Z"
-            fill="url(#auraSunset)"
+            d="M 400 0 C 470 65, 520 135, 640 200 L 1200 200 L 1200 0 Z"
+            fill="url(#auraRoyalBlue)"
           />
 
-          {/* Vague cyan et bleu roi sur le coin supérieur droit */}
+          {/* Vague cyan et bleu ciel éclatante sur le côté droit */}
           <path
-            d="M 850 0 C 820 60, 890 140, 1020 200 L 1200 200 L 1200 0 Z"
+            d="M 800 0 C 780 60, 860 140, 1000 200 L 1200 200 L 1200 0 Z"
             fill="url(#auraCyanWave)"
-            opacity="0.92"
+            opacity="0.95"
           />
 
-          {/* Arc lumineux néon blanc ultra-fin qui traverse la courbe */}
+          {/* Arc lumineux ultra-fin qui traverse la courbe */}
           <path
-            d="M 720 0 C 720 85, 780 155, 890 200"
-            stroke="rgba(255, 255, 255, 0.45)"
+            d="M 680 0 C 680 85, 750 155, 870 200"
+            stroke="rgba(255, 255, 255, 0.4)"
             strokeWidth="1.5"
             strokeDasharray="4 2"
             fill="none"
           />
         </svg>
 
-        {/* Lueur solaire diffuse au cœur de l'aura */}
-        <div className="absolute top-1/2 left-[58%] -translate-x-1/2 -translate-y-1/2 w-[450px] h-[320px] bg-[radial-gradient(circle,_#FFF1C5_0%,_#FFAE33_45%,_transparent_75%)] opacity-85 blur-[45px] pointer-events-none" />
+        {/* Lueur bleu roi diffuse au centre */}
+        <div className="absolute top-1/2 left-[52%] -translate-x-1/2 -translate-y-1/2 w-[420px] h-[300px] bg-[radial-gradient(circle,_#2563EB_0%,_#1E40AF_50%,_transparent_75%)] opacity-70 blur-[50px] pointer-events-none" />
 
-        {/* Lueur cyan / turquoise électrique au bord droit */}
-        <div className="absolute -top-16 -right-16 w-[380px] h-[380px] bg-[radial-gradient(circle,_#38D9FF_0%,_#0072FF_55%,_transparent_75%)] opacity-75 blur-[55px] pointer-events-none" />
+        {/* Lueur bleu ciel / cyan électrique au bord droit */}
+        <div className="absolute -top-16 -right-16 w-[420px] h-[420px] bg-[radial-gradient(circle,_#38BDF8_0%,_#0284C7_50%,_transparent_75%)] opacity-85 blur-[55px] pointer-events-none" />
 
         {/* Fin voilage de verre pour adoucir la brillance */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.05] via-transparent to-black/[0.15] pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] via-transparent to-black/[0.2] pointer-events-none" />
       </div>
 
       {/* ── CONTENU GAUCHE : IDENTIFICATION & TITRES ── */}

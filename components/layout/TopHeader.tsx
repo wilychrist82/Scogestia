@@ -98,7 +98,8 @@ export function TopHeader({
     if (pathname.startsWith('/admin/finance/paiements')) return { title: 'Historique des paiements', subtitle: 'Reçus, transactions Mobile Money et espèces.' }
     if (pathname.startsWith('/admin/finance/impayes')) return { title: 'Suivi des impayés', subtitle: 'Relances automatiques et élèves en retard de paiement.' }
     if (pathname.startsWith('/admin/finance/rapports')) return { title: 'Rapports financiers', subtitle: 'Analyses de trésorerie et bilans comptables.' }
-    if (pathname.startsWith('/admin/finance')) return { title: 'Gestion financière', subtitle: 'Tableau de bord financier — recouvrement et encaissements.' }
+    if (pathname.startsWith('/admin/academique/surveillance')) return { title: 'Surveillance des notes', subtitle: 'Détection précoce des élèves en difficulté (< 10/20) et soutien scolaire.' }
+    if (pathname.startsWith('/admin/academique/promotion')) return { title: 'Promotion fin d\'année', subtitle: 'Passage automatique en classe supérieure et gestion des passages.' }
     if (pathname.startsWith('/admin/academique/matieres')) return { title: 'Matières & Coefficients', subtitle: 'Programme d\'enseignement et coefficients.' }
     if (pathname.startsWith('/admin/academique/emplois')) return { title: 'Emplois du temps', subtitle: 'Planning hebdomadaire des cours par classe.' }
     if (pathname.startsWith('/admin/academique/presences')) return { title: 'Suivi des présences', subtitle: 'Appel en classe, registre des absences et retards.' }
