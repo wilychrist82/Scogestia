@@ -7,7 +7,7 @@ import {
   Users, Presentation, UserCircle, Wallet, CalendarOff,
   UserPlus, PlusSquare, CalendarPlus,
   Banknote, BookOpenCheck, AlertCircle, ArrowUpRight,
-  FileText, Plus
+  FileText, Plus, GraduationCap, AlertTriangle
 } from 'lucide-react'
 import { 
   PaymentChart, AttendancePieChart, ClassDistributionPieChart, ClassBarChart,
@@ -147,6 +147,43 @@ export default async function AdminDashboard() {
     .slice(0, 5)
 
   const recentPayments = allPayments?.slice(-5).reverse() || []
+
+  // ── Alertes Pédagogiques réelles : élèves avec moyenne < 10/20 ──
+  const { data: recentGrades } = await supabase
+    .from('grades')
+    .select('student_id, score, subject_name, student:students(id, first_name, last_name, classes(name))')
+    .not('score', 'is', null)
+    .limit(300)
+
+  const studentScoresMap: Record<string, { student: any, scores: number[] }> = {}
+  recentGrades?.forEach(g => {
+    if (!g.student_id || g.score === null || !(g.student as any)) return
+    if (!studentScoresMap[g.student_id]) {
+      studentScoresMap[g.student_id] = { student: g.student, scores: [] }
+    }
+    studentScoresMap[g.student_id].scores.push(Number(g.score))
+  })
+
+  const lowAverageStudents = Object.entries(studentScoresMap)
+    .map(([studentId, data]) => {
+      const avg = data.scores.length > 0 
+        ? data.scores.reduce((a, b) => a + b, 0) / data.scores.length 
+        : 0
+      return {
+        id: studentId,
+        student: data.student,
+        average: Math.round(avg * 10) / 10,
+        gradeCount: data.scores.length,
+      }
+    })
+    .filter(item => item.average < 10 && item.gradeCount >= 1)
+    .sort((a, b) => a.average - b.average)
+    .slice(0, 5)
+
+  const alertStudentsCount = Object.values(studentScoresMap).filter(item => {
+    const avg = item.scores.reduce((a, b) => a + b, 0) / item.scores.length
+    return avg < 10 && item.scores.length >= 1
+  }).length
 
   const schoolName = schoolData?.name || 'Mon École'
   const todayLabel = format(new Date(), "EEEE d MMMM yyyy", { locale: fr })
@@ -396,6 +433,56 @@ export default async function AdminDashboard() {
                   </div>
                   <p className="font-bold text-slate-900 text-sm">Aucun retard 🎉</p>
                   <p className="text-xs text-slate-500 mt-1">Tous les paiements sont à jour.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Surveillance Pédagogique (< 10/20) */}
+        <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
+          <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+              <div>
+                <h3 className="font-bold text-slate-900 text-base tracking-tight flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"></span>
+                  </span>
+                  Surveillance Pédagogique
+                </h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">Élèves en difficulté (Moyenne &lt; 10/20)</p>
+              </div>
+              <Link href="/admin/academique" className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 hover:text-amber-800 uppercase tracking-widest bg-amber-50 px-3 py-1.5 rounded-full hover:bg-amber-100 transition-colors">
+                Notes & Bulletins <ArrowUpRight size={12} />
+              </Link>
+            </div>
+            <div className="flex-1 p-4 flex flex-col gap-2">
+              {lowAverageStudents.length > 0 ? lowAverageStudents.map((item, i) => (
+                <Link key={i} href={`/admin/eleves/${item.id}`} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors group/item">
+                  <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm flex-shrink-0 border border-amber-100 group-hover/item:bg-amber-100">
+                    <GraduationCap size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 truncate">
+                      {(item.student as any)?.last_name} {(item.student as any)?.first_name}
+                    </p>
+                    <p className="text-[11px] text-slate-500">{((item.student as any)?.classes as any)?.name || 'Classe'}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md font-black text-xs bg-rose-50 text-rose-600 border border-rose-200">
+                      {item.average} / 20
+                    </span>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{item.gradeCount} note{item.gradeCount > 1 ? 's' : ''}</p>
+                  </div>
+                </Link>
+              )) : (
+                <div className="flex-1 flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-3 border border-emerald-100">
+                    <BookOpenCheck className="w-6 h-6 text-emerald-500" />
+                  </div>
+                  <p className="font-bold text-slate-900 text-sm">Excellence pédagogique 🎓</p>
+                  <p className="text-xs text-slate-500 mt-1">Aucun élève sous la moyenne recensé.</p>
                 </div>
               )}
             </div>
