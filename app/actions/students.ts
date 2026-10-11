@@ -182,6 +182,60 @@ export async function removeStudentFromClass(studentId: string): Promise<ActionS
   }
 }
 
+/**
+ * Transfère / promeut un groupe d'élèves sélectionnés vers une classe supérieure ou cible.
+ * Conserve l'intégralité de l'historique scolaire, des notes, matricule et bulletins.
+ */
+export async function promoteStudents(
+  studentIds: string[],
+  targetClassId: string
+): Promise<{ error?: string; success?: boolean; count?: number }> {
+  if (!studentIds || studentIds.length === 0) {
+    return { error: 'Veuillez sélectionner au moins un élève à transférer.' };
+  }
+
+  if (!targetClassId) {
+    return { error: 'Veuillez sélectionner la classe de destination.' };
+  }
+
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+
+    // Vérifier que la classe de destination appartient à l'école
+    const { data: targetClass, error: classError } = await supabase
+      .from('classes')
+      .select('id, name')
+      .eq('id', targetClassId)
+      .eq('school_id', school_id)
+      .single();
+
+    if (classError || !targetClass) {
+      return { error: 'Classe de destination introuvable ou non autorisée.' };
+    }
+
+    // Mettre à jour la classe des élèves sélectionnés
+    const { error: updateError } = await supabase
+      .from('students')
+      .update({ class_id: targetClassId })
+      .in('id', studentIds)
+      .eq('school_id', school_id);
+
+    if (updateError) {
+      return { error: `Erreur lors du transfert : ${updateError.message}` };
+    }
+
+    revalidatePath('/admin/eleves');
+    revalidatePath('/admin/classes');
+    revalidatePath('/admin/academique/promotion');
+    revalidatePath('/admin');
+
+    return { success: true, count: studentIds.length };
+  } catch (err: any) {
+    return { error: err.message || 'Une erreur est survenue lors de la promotion.' };
+  }
+}
+
 export async function updateStudent(prevState: ActionState, formData: FormData): Promise<ActionState> {
   const validatedFields = updateStudentSchema.safeParse({
     student_id: formData.get('student_id'),

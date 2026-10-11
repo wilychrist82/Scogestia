@@ -85,3 +85,30 @@ export function sortClasses<T extends { name: string; level?: string | null }>(c
     return a.name.localeCompare(b.name, 'fr', { numeric: true, sensitivity: 'base' });
   });
 }
+
+/**
+ * Détermine le nom de la classe supérieure standard suggérée
+ * (ex: CP1 -> CP2, CM2 -> 6ème, 3ème -> Seconde, 1ère -> Terminale).
+ */
+export function getNextLevelSuggestion(className: string): string | null {
+  const n = (className || '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '');
+  if (n.startsWith('s1') || n.includes('section1') || n.startsWith('ps')) return 'S2';
+  if (n.startsWith('s2') || n.includes('section2') || n.startsWith('ms')) return 'CP1';
+  if (n.startsWith('s3') || n.includes('section3') || n.startsWith('gs')) return 'CP1';
+  if (n.startsWith('ci')) return 'CP1';
+  if (n.startsWith('cp1')) return 'CP2';
+  if (n.startsWith('cp2')) return 'CE1';
+  if (n.startsWith('cp')) return 'CE1';
+  if (n.startsWith('ce1')) return 'CE2';
+  if (n.startsWith('ce2')) return 'CM1';
+  if (n.startsWith('cm1')) return 'CM2';
+  if (n.startsWith('cm2')) return '6ème';
+  if (n.startsWith('6')) return '5ème';
+  if (n.startsWith('5')) return '4ème';
+  if (n.startsWith('4')) return '3ème';
+  if (n.startsWith('3')) return 'Seconde';
+  if (n.startsWith('2') || n.includes('seconde') || n.includes('2nd')) return 'Première';
+  if (n.startsWith('1') || n.includes('premiere') || n.includes('1ere')) return 'Terminale';
+  return null;
+}
+
