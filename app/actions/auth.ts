@@ -147,7 +147,20 @@ export async function registerSchool(prevState: AuthState, formData: FormData): 
       current_period_end: trialEndDate.toISOString(),
     });
 
-    // 4. Email de bienvenue (non-bloquant)
+    const hasMaternelle = formData.get('cycle_maternelle') !== null;
+    const hasPrimaire = formData.get('cycle_primaire') !== null;
+    const hasCollege = formData.get('cycle_college') !== null;
+    const hasLycee = formData.get('cycle_lycee') !== null;
+
+    // 4. Configurer uniquement les classes correspondant aux cycles sélectionnés par l'école
+    await configureInitialClasses(adminSupabase, schoolId, {
+      hasMaternelle,
+      hasPrimaire,
+      hasCollege,
+      hasLycee,
+    });
+
+    // 5. Email de bienvenue (non-bloquant)
     await sendEmail({
       to: email,
       subject: `Bienvenue sur Scogestia — ${schoolName} est prête !`,
@@ -205,6 +218,19 @@ export async function completeOnboarding(prevState: AuthState, formData: FormDat
       status: 'trial',
       plan_name: 'Essai Gratuit',
       current_period_end: trialEndDate.toISOString(),
+    });
+
+    const hasMaternelle = formData.get('cycle_maternelle') !== null;
+    const hasPrimaire = formData.get('cycle_primaire') !== null;
+    const hasCollege = formData.get('cycle_college') !== null;
+    const hasLycee = formData.get('cycle_lycee') !== null;
+
+    // Configurer uniquement les classes correspondant aux cycles sélectionnés par l'école
+    await configureInitialClasses(adminSupabase, schoolId, {
+      hasMaternelle,
+      hasPrimaire,
+      hasCollege,
+      hasLycee,
     });
   }
 
@@ -267,4 +293,72 @@ export async function updatePassword(prevState: AuthState, formData: FormData): 
   }
 
   redirect('/admin');
+}
+
+type SchoolCycles = {
+  hasMaternelle: boolean;
+  hasPrimaire: boolean;
+  hasCollege: boolean;
+  hasLycee: boolean;
+};
+
+/**
+ * Configure les classes initiales selon les cycles d'enseignement cochés par l'école.
+ * Évite d'encombrer une école primaire avec des classes de collège/lycée ou inversement.
+ */
+async function configureInitialClasses(
+  adminSupabase: any, 
+  schoolId: string, 
+  cycles: SchoolCycles
+) {
+  try {
+    // 1. Si le Lycée est coché, insérer Seconde, Première et Terminale
+    if (cycles.hasLycee) {
+      const lyceeClasses = [
+        { school_id: schoolId, name: 'Seconde', level: 'Lycée', capacity: 40, academic_year: '2024-2025' },
+        { school_id: schoolId, name: 'Première', level: 'Lycée', capacity: 40, academic_year: '2024-2025' },
+        { school_id: schoolId, name: 'Terminale', level: 'Lycée', capacity: 40, academic_year: '2024-2025' },
+      ];
+      for (const cls of lyceeClasses) {
+        const { data: existing } = await adminSupabase
+          .from('classes')
+          .select('id')
+          .eq('school_id', schoolId)
+          .eq('name', cls.name)
+          .maybeSingle();
+        if (!existing) {
+          await adminSupabase.from('classes').insert(cls);
+        }
+      }
+    }
+
+    // 2. Si le Collège n'est PAS coché, retirer les classes collège insérées par défaut dans le RPC
+    if (!cycles.hasCollege) {
+      await adminSupabase
+        .from('classes')
+        .delete()
+        .eq('school_id', schoolId)
+        .in('name', ['6ème', '5ème', '4ème', '3ème']);
+    }
+
+    // 3. Si le Primaire n'est PAS coché, retirer les classes primaire insérées par défaut
+    if (!cycles.hasPrimaire) {
+      await adminSupabase
+        .from('classes')
+        .delete()
+        .eq('school_id', schoolId)
+        .in('name', ['CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2']);
+    }
+
+    // 4. Si la Maternelle n'est PAS cochée, retirer les classes maternelle insérées par défaut
+    if (!cycles.hasMaternelle) {
+      await adminSupabase
+        .from('classes')
+        .delete()
+        .eq('school_id', schoolId)
+        .in('name', ['S1', 'S2']);
+    }
+  } catch (err) {
+    console.error('[configureInitialClasses] Erreur lors de la configuration des classes:', err);
+  }
 }

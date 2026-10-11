@@ -153,6 +153,53 @@ export default function RegisterPage() {
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Cycles d&apos;enseignement de votre école
+              </label>
+              <div className="grid grid-cols-2 gap-2.5">
+                <label className="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-medium text-slate-700 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    name="cycle_maternelle" 
+                    defaultChecked 
+                    className="w-4 h-4 rounded text-[#006039] focus:ring-[#006039] border-slate-300"
+                  />
+                  <span>Maternelle (S1, S2)</span>
+                </label>
+                <label className="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-medium text-slate-700 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    name="cycle_primaire" 
+                    defaultChecked 
+                    className="w-4 h-4 rounded text-[#006039] focus:ring-[#006039] border-slate-300"
+                  />
+                  <span>Primaire (CP1 - CM2)</span>
+                </label>
+                <label className="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-medium text-slate-700 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    name="cycle_college" 
+                    defaultChecked 
+                    className="w-4 h-4 rounded text-[#006039] focus:ring-[#006039] border-slate-300"
+                  />
+                  <span>Collège (6ème - 3ème)</span>
+                </label>
+                <label className="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-medium text-slate-700 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    name="cycle_lycee" 
+                    defaultChecked 
+                    className="w-4 h-4 rounded text-[#006039] focus:ring-[#006039] border-slate-300"
+                  />
+                  <span>Lycée (2nde - Tle)</span>
+                </label>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1.5">
+                Cochez uniquement ce que votre établissement propose. Vous pourrez ajouter des classes ou des groupes (A, B...) à tout moment.
+              </p>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="email">
                 Adresse email
               </label>

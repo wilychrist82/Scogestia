@@ -1046,8 +1046,8 @@ export default function Home() {
       <footer id="contact" className="bg-[#09090b] text-slate-300 pt-16 pb-10 relative overflow-hidden border-t-2 border-violet-900/30">
 
         {/* Filigrane Géant SCOGESTIA (iziSAAS style) */}
-        <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-full flex justify-center pointer-events-none select-none z-0 overflow-hidden">
-          <h2 className="text-[28vw] sm:text-[180px] font-black leading-none text-white/[0.06] sm:text-white/[0.03] tracking-tighter mix-blend-overlay">
+        <div className="absolute -top-3 sm:-top-6 left-1/2 -translate-x-1/2 w-full flex justify-center pointer-events-none select-none z-0 overflow-hidden px-4">
+          <h2 className="text-[11.5vw] sm:text-[14vw] md:text-[150px] lg:text-[180px] font-black leading-none text-white/[0.06] sm:text-white/[0.03] tracking-tight sm:tracking-tighter mix-blend-overlay whitespace-nowrap text-center">
             SCOGESTIA
           </h2>
         </div>

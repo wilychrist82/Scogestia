@@ -124,6 +124,53 @@ export default function OnboardingPage() {
               <p className="text-xs text-slate-500 mt-1">Prérempli depuis votre compte Google.</p>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Cycles d&apos;enseignement de votre école
+              </label>
+              <div className="grid grid-cols-2 gap-2.5">
+                <label className="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-medium text-slate-700 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    name="cycle_maternelle" 
+                    defaultChecked 
+                    className="w-4 h-4 rounded text-[#006039] focus:ring-[#006039] border-slate-300"
+                  />
+                  <span>Maternelle (S1, S2)</span>
+                </label>
+                <label className="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-medium text-slate-700 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    name="cycle_primaire" 
+                    defaultChecked 
+                    className="w-4 h-4 rounded text-[#006039] focus:ring-[#006039] border-slate-300"
+                  />
+                  <span>Primaire (CP1 - CM2)</span>
+                </label>
+                <label className="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-medium text-slate-700 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    name="cycle_college" 
+                    defaultChecked 
+                    className="w-4 h-4 rounded text-[#006039] focus:ring-[#006039] border-slate-300"
+                  />
+                  <span>Collège (6ème - 3ème)</span>
+                </label>
+                <label className="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs font-medium text-slate-700 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    name="cycle_lycee" 
+                    defaultChecked 
+                    className="w-4 h-4 rounded text-[#006039] focus:ring-[#006039] border-slate-300"
+                  />
+                  <span>Lycée (2nde - Tle)</span>
+                </label>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1.5">
+                Cochez uniquement ce que votre établissement propose. Vous pourrez modifier vos classes à tout moment.
+              </p>
+            </div>
+
             <button 
               disabled={isPending}
               className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#006039] hover:bg-[#004d2e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#006039] transition-colors disabled:opacity-70 mt-8" 

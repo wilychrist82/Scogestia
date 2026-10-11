@@ -58,6 +58,7 @@ export async function createClass(prevState: ActionState, formData: FormData): P
     }
 
     revalidatePath('/admin/classes');
+    revalidatePath('/admin');
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
@@ -90,6 +91,7 @@ export async function updateClass(prevState: ActionState, formData: FormData): P
     }
 
     revalidatePath('/admin/classes');
+    revalidatePath('/admin');
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
@@ -112,6 +114,7 @@ export async function deleteClass(classId: string): Promise<ActionState> {
     }
 
     revalidatePath('/admin/classes');
+    revalidatePath('/admin');
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
