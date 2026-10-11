@@ -220,6 +220,17 @@ export async function completeOnboarding(prevState: AuthState, formData: FormDat
       current_period_end: trialEndDate.toISOString(),
     });
 
+    const academicYear = (formData.get('academicYear') as string)?.trim() || '2026-2027';
+
+    // Synchroniser l'année académique active sur l'école et ses classes initiales
+    await adminSupabase.from('schools').update({
+      current_academic_year: academicYear
+    }).eq('id', schoolId);
+
+    await adminSupabase.from('classes').update({
+      academic_year: academicYear
+    }).eq('school_id', schoolId);
+
     const hasMaternelle = formData.get('cycle_maternelle') !== null;
     const hasPrimaire = formData.get('cycle_primaire') !== null;
     const hasCollege = formData.get('cycle_college') !== null;
@@ -231,7 +242,7 @@ export async function completeOnboarding(prevState: AuthState, formData: FormDat
       hasPrimaire,
       hasCollege,
       hasLycee,
-    });
+    }, academicYear);
   }
 
   redirect('/admin');
@@ -309,15 +320,16 @@ type SchoolCycles = {
 async function configureInitialClasses(
   adminSupabase: any, 
   schoolId: string, 
-  cycles: SchoolCycles
+  cycles: SchoolCycles,
+  academicYear: string = '2026-2027'
 ) {
   try {
     // 1. Si le Lycée est coché, insérer Seconde, Première et Terminale
     if (cycles.hasLycee) {
       const lyceeClasses = [
-        { school_id: schoolId, name: 'Seconde', level: 'Lycée', capacity: 40, academic_year: '2024-2025' },
-        { school_id: schoolId, name: 'Première', level: 'Lycée', capacity: 40, academic_year: '2024-2025' },
-        { school_id: schoolId, name: 'Terminale', level: 'Lycée', capacity: 40, academic_year: '2024-2025' },
+        { school_id: schoolId, name: 'Seconde', level: 'Lycée', capacity: 40, academic_year: academicYear },
+        { school_id: schoolId, name: 'Première', level: 'Lycée', capacity: 40, academic_year: academicYear },
+        { school_id: schoolId, name: 'Terminale', level: 'Lycée', capacity: 40, academic_year: academicYear },
       ];
       for (const cls of lyceeClasses) {
         const { data: existing } = await adminSupabase

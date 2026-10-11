@@ -77,7 +77,7 @@ export function RapportsFinanciers({ school, userFullName, stats, payments, sche
       const xlsx = await import('xlsx')
       const wb = xlsx.utils.book_new()
       const schoolName = school?.name || 'Scogestia'
-      const academicYear = school?.current_academic_year || '2024-2025'
+      const academicYear = school?.current_academic_year || '2026-2027'
       const dateStr = new Date().toLocaleDateString('fr-FR')
 
       const wsData = [

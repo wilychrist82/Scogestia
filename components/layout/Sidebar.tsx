@@ -190,6 +190,7 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
                           <Link
                             key={subItem.href}
                             href={subItem.href}
+                            prefetch={true}
                             onClick={onClose}
                             className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 group ${
                               isSubActive
@@ -217,6 +218,7 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
               ) : (
                 <Link 
                   href={item.href}
+                  prefetch={true}
                   onClick={onClose}
                   className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group ${
                     isActive 

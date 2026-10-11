@@ -92,7 +92,7 @@ export function FinanceDashboard({
   payments,
   feeTypes = [],
   schoolName = 'Établissement',
-  academicYear = '2024-2025',
+  academicYear = '2026-2027',
   basePath = '/admin/finance',
 }: Props) {
   // ── 1. CALCULS CONSOLIDÉS & RÈGLES COMPTABLES ──

@@ -57,7 +57,7 @@ export function FinancialReportDocument({ school, userFullName, stats, payments,
   const printAreaRef = useRef<HTMLDivElement>(null)
 
   const schoolName = school?.name || 'Établissement Scolaire'
-  const academicYear = school?.current_academic_year || '2024-2025'
+  const academicYear = school?.current_academic_year || '2026-2027'
   const todayStr = new Date().toLocaleDateString('fr-FR', {
     day: '2-digit',
     month: 'long',

@@ -40,7 +40,7 @@ export default async function CaissePage() {
     .maybeSingle()
 
   const cashierName = userRole.full_name || 'La Direction'
-  const academicYear = schoolData?.current_academic_year || '2024-2025'
+  const academicYear = schoolData?.current_academic_year || '2026-2027'
 
   // 4. Récupérer tous les élèves et leurs classes avec la syntaxe PostgREST correcte `classes(name)`
   const { data: studentsData } = await supabase

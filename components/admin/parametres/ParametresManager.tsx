@@ -226,14 +226,14 @@ export function ParametresManager({ school, userAvatar }: Props) {
               </label>
               <select 
                 name="currentAcademicYear"
-                defaultValue={school.current_academic_year || '2024-2025'}
+                defaultValue={school.current_academic_year || '2026-2027'}
                 className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] max-w-md"
                 required
               >
-                <option value="2024-2025">2024 - 2025</option>
                 <option value="2025-2026">2025 - 2026</option>
                 <option value="2026-2027">2026 - 2027</option>
                 <option value="2027-2028">2027 - 2028</option>
+                <option value="2028-2029">2028 - 2029</option>
               </select>
               <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">
                 La modification de l'année scolaire active basculera l'ensemble du système sur cette année. Assurez-vous d'avoir exporté tous les rapports de l'année précédente.

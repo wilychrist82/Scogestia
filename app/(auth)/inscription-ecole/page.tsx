@@ -200,6 +200,25 @@ export default function RegisterPage() {
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="academicYear">
+                Année scolaire de démarrage
+              </label>
+              <select 
+                id="academicYear"
+                name="academicYear"
+                defaultValue="2026-2027"
+                className="block w-full px-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006039] focus:border-[#006039] sm:text-sm transition-colors outline-none bg-white font-medium text-slate-800"
+              >
+                <option value="2025-2026">2025 - 2026</option>
+                <option value="2026-2027">2026 - 2027 (Année en cours)</option>
+                <option value="2027-2028">2027 - 2028</option>
+              </select>
+              <p className="text-[11px] text-slate-500 mt-1">
+                L&apos;année académique active peut également être modifiée à tout moment dans les Paramètres de l&apos;établissement.
+              </p>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="email">
                 Adresse email
               </label>

@@ -70,7 +70,7 @@ export default async function FinancePage() {
       payments={(payments as any) || []}
       feeTypes={(feeTypes as any) || []}
       schoolName={school?.name || 'Établissement'}
-      academicYear={school?.current_academic_year || '2024-2025'}
+      academicYear={school?.current_academic_year || '2026-2027'}
     />
   )
 }
