@@ -52,15 +52,67 @@ export async function saveSchoolSubject(
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
 
+    const dbCycle = (cycle === 'college' || cycle === 'lycee') ? 'secondaire' : cycle;
     const { error } = await supabase.from("subjects").insert({
       school_id,
       name,
-      cycle,
-      category: cycle === "primaire" ? category : null,
-      coefficient: cycle === "secondaire" ? coefficient || 1 : 1,
+      cycle: dbCycle,
+      category: dbCycle === "primaire" ? category : null,
+      coefficient: dbCycle === "secondaire" ? coefficient || 1 : 1,
     });
 
     if (error) throw error;
+
+    revalidatePath("/admin/academique/matieres");
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
+export async function deleteSchoolSubject(subjectId: string): Promise<ActionState> {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from("subjects")
+      .delete()
+      .eq("id", subjectId)
+      .eq("school_id", school_id);
+
+    if (error) throw error;
+
+    revalidatePath("/admin/academique/matieres");
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
+export async function ensurePhilosophieSubject(): Promise<ActionState> {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+
+    const { data: existing } = await supabase
+      .from("subjects")
+      .select("id")
+      .eq("school_id", school_id)
+      .ilike("name", "%philo%")
+      .limit(1)
+      .maybeSingle();
+
+    if (!existing) {
+      const { error } = await supabase.from("subjects").insert({
+        school_id,
+        name: "Philosophie",
+        cycle: "secondaire",
+        category: null,
+        coefficient: 2.0,
+      });
+      if (error) throw error;
+    }
 
     revalidatePath("/admin/academique/matieres");
     return { success: true };

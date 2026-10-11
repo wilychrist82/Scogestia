@@ -4,7 +4,8 @@ import { useState, useTransition, FormEvent } from 'react'
 import { savePrimaryGrades, saveSecondaryGrades } from '@/app/actions/academique'
 import Link from 'next/link'
 import { sortClasses } from '@/lib/classes'
-import { ChevronRight, Table, Save, Loader2 } from 'lucide-react'
+import { ChevronRight, Table, Save, Loader2, Sparkles } from 'lucide-react'
+import { getCoefficientForSubject, detectClassSeriesKey, LYCEE_SERIES_CONFIG } from '@/lib/academic-curriculum'
 
 type ClassItem = { id: string; name: string; level?: string }
 type SubjectItem = { id: string; name: string; cycle: string }
@@ -167,7 +168,17 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                 className="h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
               >
                 <option value="">Sélectionner...</option>
-                {filteredSubjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                {filteredSubjects.map(s => {
+                  const selectedClassObj = classes.find(c => c.id === selectedClass)
+                  const currentCoef = selectedClassObj && isSecondaryCycle
+                    ? getCoefficientForSubject(s.name, selectedClassObj.name, selectedClassObj.level, (s as any).coefficient || 2)
+                    : null
+                  return (
+                    <option key={s.id} value={s.id}>
+                      {s.name} {currentCoef ? `(Coef ${currentCoef})` : ''}
+                    </option>
+                  )
+                })}
               </select>
             </div>
 
@@ -217,6 +228,35 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
               </div>
             )}
           </div>
+
+          {/* Lycée / Série Badge Info Bar */}
+          {(() => {
+            const curClass = classes.find(c => c.id === selectedClass);
+            const curSubj = subjects.find(s => s.id === selectedSubject);
+            if (!curClass || !isSecondaryCycle) return null;
+            const seriesKey = detectClassSeriesKey(curClass.name, curClass.level);
+            const coef = curSubj ? getCoefficientForSubject(curSubj.name, curClass.name, curClass.level, (curSubj as any).coefficient || 2) : null;
+            return (
+              <div className="px-6 py-2.5 bg-blue-50/60 border-b border-blue-100 flex flex-wrap items-center justify-between gap-2 text-xs text-blue-900">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold">Classe : {curClass.name}</span>
+                  {seriesKey && (
+                    <span className="font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                      {LYCEE_SERIES_CONFIG[seriesKey].label}
+                    </span>
+                  )}
+                </div>
+                {curSubj && coef && (
+                  <div className="flex items-center gap-2 font-medium">
+                    <span>Matière : <strong className="text-blue-950">{curSubj.name}</strong></span>
+                    <span className="font-bold px-2 py-0.5 rounded bg-white border border-blue-200 text-blue-700 shadow-2xs">
+                      Coefficient appliqué : {coef}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Grid */}
           {!selectedClass || !selectedSubject ? (

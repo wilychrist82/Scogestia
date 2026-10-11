@@ -58,10 +58,20 @@ export default async function BulletinsPage() {
       { school_id: schoolId, name: 'Sciences physiques', cycle: 'secondaire', coefficient: 3 },
       { school_id: schoolId, name: 'ECM', cycle: 'secondaire', coefficient: 1 },
       { school_id: schoolId, name: 'EPS', cycle: 'secondaire', coefficient: 1 },
+      { school_id: schoolId, name: 'Philosophie', cycle: 'secondaire', coefficient: 2 },
     ];
     await supabase.from('subjects').insert(seedSubjects);
     const { data: newSubjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId);
     subjects = newSubjects;
+  } else if (!subjects.some(s => s.name.toLowerCase().includes('philo'))) {
+    await supabase.from('subjects').insert({
+      school_id: schoolId,
+      name: 'Philosophie',
+      cycle: 'secondaire',
+      coefficient: 2
+    });
+    const { data: updatedSubjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId);
+    if (updatedSubjects) subjects = updatedSubjects;
   }
   
   // We fetch all grades for the school to compute client side. 

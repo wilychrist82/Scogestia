@@ -7,6 +7,7 @@ import { jsPDF } from 'jspdf'
 import { createClient } from '@/lib/supabase/client'
 import { sortClasses } from '@/lib/classes'
 import { ShieldCheck, FileDown, GraduationCap } from 'lucide-react'
+import { getCoefficientForSubject, detectClassSeriesKey, LYCEE_SERIES_CONFIG } from '@/lib/academic-curriculum'
 
 type ClassItem = { id: string; name: string; level?: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string }
@@ -294,10 +295,11 @@ export function BulletinsManager({
         else if (!isNaN(cVal)) moy = cVal
         else if (!isNaN(compVal)) moy = compVal
         
+        const realCoef = getCoefficientForSubject(s.name, cl.name, cl.level, s.coefficient)
         let produit = null
         if (moy !== null) {
-          produit = moy * s.coefficient
-          totalCoef += s.coefficient
+          produit = moy * realCoef
+          totalCoef += realCoef
           totalProduct += produit
         }
         
@@ -311,7 +313,7 @@ export function BulletinsManager({
         }
         
         return {
-          id: s.id, name: s.name, cScore, compScore, moy, coefficient: s.coefficient, produit,
+          id: s.id, name: s.name, cScore, compScore, moy, coefficient: realCoef, produit,
           appr: stuId === selectedStudent && secAppr[s.id] !== undefined ? secAppr[s.id] : defaultAppr
         }
       })
@@ -698,10 +700,11 @@ export function BulletinsManager({
         moy = compScore
       }
 
+      const realCoef = getCoefficientForSubject(subj.name, cls.name, cls.level, subj.coefficient)
       let produit = null
       if (moy !== null) {
-        produit = moy * subj.coefficient
-        totalCoef += subj.coefficient
+        produit = moy * realCoef
+        totalCoef += realCoef
         totalProduct += produit
       }
 
@@ -716,6 +719,7 @@ export function BulletinsManager({
 
       return {
         ...subj,
+        coefficient: realCoef,
         cScore: grades.cScore,
         compScore: grades.compScore,
         moy,
@@ -778,8 +782,17 @@ export function BulletinsManager({
             <p className="text-lg font-bold">{student.last_name} {student.first_name}</p>
           </div>
           <div className="text-center">
-            <p className="text-sm text-gray-600">Classe</p>
+            <p className="text-sm text-gray-600">Classe / Série</p>
             <p className="text-lg font-bold">{cls.name}</p>
+            {(() => {
+              const sKey = detectClassSeriesKey(cls.name, cls.level);
+              if (!sKey) return null;
+              return (
+                <span className="inline-block mt-0.5 px-2 py-0.5 text-xs font-bold bg-blue-100 text-blue-900 rounded">
+                  {LYCEE_SERIES_CONFIG[sKey].label}
+                </span>
+              );
+            })()}
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-600">Matricule</p>

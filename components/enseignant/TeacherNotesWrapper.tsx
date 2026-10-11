@@ -6,7 +6,10 @@ import { BulletinsManager } from '@/components/admin/academique/BulletinsManager
 
 export function TeacherNotesWrapper(props: any) {
   const hasPrimary = props.classes.some((c: any) => c.level && ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire', 'maternelle', 's1', 's2'].includes(c.level.toLowerCase()))
-  const hasSecondary = props.classes.some((c: any) => c.level && ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège'].includes(c.level.toLowerCase()))
+  const hasSecondary = props.classes.some((c: any) => {
+    const txt = ((c.level || '') + ' ' + (c.name || '')).toLowerCase();
+    return ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège', 'lycee', 'lycée', '2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale'].some(k => txt.includes(k));
+  })
 
   const [mode, setMode] = useState<'primary' | 'secondary'>(hasPrimary ? 'primary' : 'secondary')
 

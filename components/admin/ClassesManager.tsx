@@ -282,11 +282,35 @@ export function ClassesManager({ classes }: Props) {
                   <input 
                     className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
                     id="className" name="className" 
-                    placeholder="ex: Seconde A, 6ème C..." 
+                    placeholder="ex: 2nde S, 1ère D, 6ème A..." 
                     required 
                     defaultValue={classToEdit?.name || ''}
                     type="text"
                   />
+                  {!classToEdit && (
+                    <div className="flex flex-wrap items-center gap-1 mt-1">
+                      <span className="text-[11px] text-slate-500 mr-1">Séries du Lycée :</span>
+                      {['2nde S', '2nde A4', '1ère A4', '1ère D', '1ère C', 'Terminale A4', 'Terminale D', 'Terminale C'].map(name => (
+                        <button
+                          key={name}
+                          type="button"
+                          onClick={() => {
+                            const input = document.getElementById('className') as HTMLInputElement;
+                            const select = document.getElementById('classLevel') as HTMLSelectElement;
+                            if (input) input.value = name;
+                            if (select) {
+                              if (name.startsWith('2')) select.value = 'Seconde';
+                              else if (name.startsWith('1')) select.value = 'Première';
+                              else if (name.startsWith('T')) select.value = 'Terminale';
+                            }
+                          }}
+                          className="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors"
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {/* Input: Niveau */}
                 <div className="flex flex-col gap-1.5">

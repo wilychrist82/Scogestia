@@ -52,10 +52,20 @@ export default async function NotesPage() {
       { school_id: schoolId, name: 'Sciences physiques', cycle: 'secondaire', coefficient: 3 },
       { school_id: schoolId, name: 'ECM', cycle: 'secondaire', coefficient: 1 },
       { school_id: schoolId, name: 'EPS', cycle: 'secondaire', coefficient: 1 },
+      { school_id: schoolId, name: 'Philosophie', cycle: 'secondaire', coefficient: 2 },
     ];
     await supabase.from('subjects').insert(seedSubjects);
     const { data: newSubjects } = await supabase.from('subjects').select('id, name, cycle').eq('school_id', schoolId).order('name');
     subjects = newSubjects;
+  } else if (!subjects.some(s => s.name.toLowerCase().includes('philo'))) {
+    await supabase.from('subjects').insert({
+      school_id: schoolId,
+      name: 'Philosophie',
+      cycle: 'secondaire',
+      coefficient: 2
+    });
+    const { data: updatedSubjects } = await supabase.from('subjects').select('id, name, cycle').eq('school_id', schoolId).order('name');
+    if (updatedSubjects) subjects = updatedSubjects;
   }
   
   const { data: primaryGrades } = await supabase.from('primary_grades').select('*').eq('school_id', schoolId)
