@@ -84,7 +84,10 @@ export default async function StudentsPage({
     query = query.or(`first_name.ilike.%${resolvedSearchParams.search}%,last_name.ilike.%${resolvedSearchParams.search}%,matricule.ilike.%${resolvedSearchParams.search}%`)
   }
 
-  query = query.order('created_at', { ascending: false }).range(from, to)
+  query = query
+    .order('last_name', { ascending: true })
+    .order('first_name', { ascending: true })
+    .range(from, to)
 
   const { data: students, count, error } = await query
 

@@ -25,18 +25,21 @@ export default async function FinanceRapportsPage() {
   // Récupérer tous les paiements
   const { data: payments } = await supabase
     .from('payments')
-    .select('amount, payment_date, status, payment_method, students (class_id, classes (name))')
+    .select('amount, paid_at, created_at, payment_method, students (class_id, classes (name))')
     .eq('school_id', schoolId)
 
   // Agréger par mois
   const paymentsByMonthMap: Record<string, number> = {}
-  let totalEnthousiasme = 0 // Just for fun total sum
+  let totalEnthousiasme = 0 // Total encaissé
 
   payments?.forEach(p => {
-    if (p.status === 'success' || p.status === 'completed' || p.status === 'paye') {
-      const amount = Number(p.amount)
+    // Dans Scogestia, toute ligne de paiement enregistrée est un encaissement valide
+    const pStatus = (p as any).status
+    if (!pStatus || pStatus === 'success' || pStatus === 'completed' || pStatus === 'paye') {
+      const amount = Number(p.amount) || 0
       totalEnthousiasme += amount
-      const date = new Date(p.payment_date)
+      const dateStr = (p as any).paid_at || (p as any).created_at || (p as any).payment_date
+      const date = dateStr ? new Date(dateStr) : new Date()
       const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}` // YYYY-MM
       
       if (!paymentsByMonthMap[monthYear]) paymentsByMonthMap[monthYear] = 0
@@ -61,12 +64,13 @@ export default async function FinanceRapportsPage() {
   // Agréger par classe
   const paymentsByClassMap: Record<string, number> = {}
   payments?.forEach(p => {
-    if (p.status === 'success' || p.status === 'completed' || p.status === 'paye') {
+    const pStatus = (p as any).status
+    if (!pStatus || pStatus === 'success' || pStatus === 'completed' || pStatus === 'paye') {
       const std = Array.isArray(p.students) ? p.students[0] : p.students;
       const cls = std ? (Array.isArray((std as any).classes) ? (std as any).classes[0] : (std as any).classes) : null;
-      const className = cls?.name || 'Inconnue';
+      const className = cls?.name || 'Non assigné';
       if (!paymentsByClassMap[className]) paymentsByClassMap[className] = 0
-      paymentsByClassMap[className] += Number(p.amount)
+      paymentsByClassMap[className] += Number(p.amount) || 0
     }
   })
 

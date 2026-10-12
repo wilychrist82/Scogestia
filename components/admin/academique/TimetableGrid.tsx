@@ -16,7 +16,6 @@ const DAYS = [
   { id: 3, label: 'Mercredi', short: 'Mer' },
   { id: 4, label: 'Jeudi',    short: 'Jeu' },
   { id: 5, label: 'Vendredi', short: 'Ven' },
-  { id: 6, label: 'Samedi',   short: 'Sam' },
 ]
 
 const TIME_SLOTS = [
@@ -157,10 +156,12 @@ export function TimetableGrid({ classId, className, initialSlots, readOnly = fal
         <div className="min-w-[640px]">
 
           {/* Header jours */}
-          <div className="grid border-b border-[var(--color-outline-variant)]"
-            style={{ gridTemplateColumns: '60px repeat(6, 1fr)' }}
+          <div className="grid border-b border-[var(--color-outline-variant)] bg-slate-50/70"
+            style={{ gridTemplateColumns: '72px repeat(5, 1fr)' }}
           >
-            <div className="h-10" />
+            <div className="h-10 flex items-center justify-center text-[10px] font-black uppercase tracking-wider text-slate-500 border-r border-[var(--color-outline-variant)]">
+              Horaires
+            </div>
             {DAYS.map(day => (
               <div key={day.id}
                 className="h-10 flex items-center justify-center text-xs font-bold text-[var(--color-on-surface-variant)] border-l border-[var(--color-outline-variant)]"
@@ -173,16 +174,20 @@ export function TimetableGrid({ classId, className, initialSlots, readOnly = fal
 
           {/* Corps de la grille */}
           <div className="relative grid"
-            style={{ gridTemplateColumns: '60px repeat(6, 1fr)' }}
+            style={{ gridTemplateColumns: '72px repeat(5, 1fr)' }}
           >
             {/* Colonne des heures */}
-            <div className="flex flex-col">
-              {TIME_SLOTS.map((time, i) => (
+            <div className="flex flex-col bg-slate-50/40 border-r border-[var(--color-outline-variant)]">
+              {TIME_SLOTS.map((time) => (
                 <div key={time}
-                  className="flex items-start justify-end pr-2 text-[10px] font-medium text-[var(--color-on-surface-variant)]"
-                  style={{ height: `${CELL_H}px`, marginTop: i === 0 ? -6 : 0 }}
+                  className={`flex items-start justify-center pr-1 text-[11px] font-semibold border-b ${
+                    time.endsWith(':00')
+                      ? 'text-slate-800 border-slate-200'
+                      : 'text-slate-400 border-dashed border-slate-100 text-[10px]'
+                  }`}
+                  style={{ height: `${CELL_H}px` }}
                 >
-                  {time.endsWith(':00') ? time : ''}
+                  <span className="pt-1 select-none">{time.replace(':', 'h')}</span>
                 </div>
               ))}
             </div>
@@ -435,7 +440,7 @@ function SlotModal({
               {/* Jour */}
               <div>
                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Jour</label>
-                <div className="grid grid-cols-6 gap-1.5">
+                <div className="grid grid-cols-5 gap-1.5">
                   {DAYS.map(d => (
                     <button
                       key={d.id}
@@ -482,11 +487,28 @@ function SlotModal({
               <FormField label="Matière *" icon={<BookOpen className="w-3.5 h-3.5 text-slate-500" />}>
                 <input
                   type="text"
-                  placeholder="Ex: Mathématiques"
+                  list="subjects-suggestions"
+                  placeholder="Ex: Mathématiques, Français..."
                   value={form.subject_name || ''}
                   onChange={e => set('subject_name', e.target.value)}
                   className="w-full bg-transparent text-white text-sm placeholder:text-slate-600 outline-none"
                 />
+                <datalist id="subjects-suggestions">
+                  <option value="Mathématiques" />
+                  <option value="Français" />
+                  <option value="Anglais" />
+                  <option value="Histoire-Géographie" />
+                  <option value="SVT" />
+                  <option value="Physique-Chimie" />
+                  <option value="Philosophie" />
+                  <option value="Espagnol" />
+                  <option value="Allemand" />
+                  <option value="Informatique" />
+                  <option value="EPS" />
+                  <option value="Éducation Civique (ECM)" />
+                  <option value="Musique" />
+                  <option value="Arts Plastiques" />
+                </datalist>
               </FormField>
 
               {/* Enseignant */}
