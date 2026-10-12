@@ -189,13 +189,59 @@ export default async function AdminDashboard() {
   const recentPayments = allPayments?.slice(-5).reverse() || []
 
   // ── Alertes Pédagogiques réelles : élèves avec moyenne < 10/20 ──
-  const { data: recentGrades } = await supabase
-    .from('grades')
-    .select('student_id, score, subject_name, student:students(id, first_name, last_name, classes(name))')
-    .not('score', 'is', null)
-    .limit(300)
+  const [
+    { data: secGradesAlert },
+    { data: primGradesAlert },
+    { data: recentGrades }
+  ] = await Promise.all([
+    supabase
+      .from('secondary_grades')
+      .select('student_id, class_score, comp_score, student:students(id, first_name, last_name, classes(name))')
+      .eq('school_id', schoolId)
+      .limit(300),
+    supabase
+      .from('primary_grades')
+      .select('student_id, score, max_score, student:students(id, first_name, last_name, classes(name))')
+      .eq('school_id', schoolId)
+      .not('score', 'is', null)
+      .limit(300),
+    supabase
+      .from('grades')
+      .select('student_id, score, subject_name, student:students(id, first_name, last_name, classes(name))')
+      .eq('school_id', schoolId)
+      .not('score', 'is', null)
+      .limit(300)
+  ])
 
   const studentScoresMap: Record<string, { student: any, scores: number[] }> = {}
+  
+  secGradesAlert?.forEach((g: any) => {
+    if (!g.student_id || !(g.student as any)) return
+    let scoreVal: number | null = null
+    if (g.class_score !== null && g.class_score !== undefined && g.comp_score !== null && g.comp_score !== undefined) {
+      scoreVal = (Number(g.class_score) + Number(g.comp_score)) / 2
+    } else if (g.comp_score !== null && g.comp_score !== undefined) {
+      scoreVal = Number(g.comp_score)
+    } else if (g.class_score !== null && g.class_score !== undefined) {
+      scoreVal = Number(g.class_score)
+    }
+    if (scoreVal !== null) {
+      if (!studentScoresMap[g.student_id]) {
+        studentScoresMap[g.student_id] = { student: g.student, scores: [] }
+      }
+      studentScoresMap[g.student_id].scores.push(Math.round(scoreVal * 10) / 10)
+    }
+  })
+
+  primGradesAlert?.forEach((g: any) => {
+    if (!g.student_id || g.score === null || !(g.student as any)) return
+    if (!studentScoresMap[g.student_id]) {
+      studentScoresMap[g.student_id] = { student: g.student, scores: [] }
+    }
+    const max = Number(g.max_score) || 10
+    studentScoresMap[g.student_id].scores.push(Math.round(((Number(g.score) / max) * 20) * 10) / 10)
+  })
+
   recentGrades?.forEach(g => {
     if (!g.student_id || g.score === null || !(g.student as any)) return
     if (!studentScoresMap[g.student_id]) {

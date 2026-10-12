@@ -6,6 +6,7 @@ import { UserX, ArrowLeft, BookOpen } from 'lucide-react'
 
 import { resolveStudentId } from '@/lib/parent-utils'
 import { ChildSwitchBar } from '@/components/parent/ChildSwitchBar'
+import { getCoefficientForSubject } from '@/lib/academic-curriculum'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,22 +56,110 @@ export default async function ParentNotesPage({
     )
   }
 
-  // Récupérer les notes de l'élève
-  const { data: grades } = await supabase
-    .from('grades')
-    .select('*')
-    .eq('student_id', childId)
-    .order('created_at', { ascending: false })
+  // Récupérer les notes de l'élève depuis secondary_grades, primary_grades et grades
+  const [
+    { data: secGrades },
+    { data: primGrades },
+    { data: legacyGrades }
+  ] = await Promise.all([
+    supabase
+      .from('secondary_grades')
+      .select('id, term, class_score, comp_score, max_score, subjects(name, coefficient)')
+      .eq('student_id', childId)
+      .order('term', { ascending: true }),
+    supabase
+      .from('primary_grades')
+      .select('id, month_number, score, max_score, subjects(name, category)')
+      .eq('student_id', childId)
+      .order('month_number', { ascending: true }),
+    supabase
+      .from('grades')
+      .select('*')
+      .eq('student_id', childId)
+      .order('created_at', { ascending: false })
+  ]);
 
-  // Grouper les notes par trimestre
-  const gradesByTerm = (grades || []).reduce((acc: Record<string, any[]>, grade) => {
-    const term = grade.term || 'Trimestre inconnu';
+  const allGradesList: Array<{
+    id: string;
+    term: string;
+    subject_name: string;
+    evaluation_type: string;
+    coefficient: number;
+    score: number;
+    max_score: number;
+  }> = []
+
+  const formatTerm = (t: string) => {
+    if (t === '1er_trimestre') return '1er Trimestre';
+    if (t === '2e_trimestre') return '2e Trimestre';
+    if (t === '3e_trimestre') return '3e Trimestre';
+    if (t === '1er_semestre') return '1er Semestre';
+    if (t === '2e_semestre') return '2e Semestre';
+    return (t || '').replace(/_/g, ' ');
+  };
+
+  secGrades?.forEach((g: any) => {
+    const sName = g.subjects?.name || 'Matière';
+    const coef = getCoefficientForSubject(sName, (fullStudent.classes as any)?.name, undefined, g.subjects?.coefficient || 2);
+    const term = formatTerm(g.term);
+    if (g.class_score !== null && g.class_score !== undefined) {
+      allGradesList.push({
+        id: `${g.id}_class`,
+        term,
+        subject_name: sName,
+        evaluation_type: 'Devoir / Note de classe',
+        coefficient: coef,
+        score: Number(g.class_score),
+        max_score: g.max_score || 20
+      });
+    }
+    if (g.comp_score !== null && g.comp_score !== undefined) {
+      allGradesList.push({
+        id: `${g.id}_comp`,
+        term,
+        subject_name: sName,
+        evaluation_type: 'Composition',
+        coefficient: coef,
+        score: Number(g.comp_score),
+        max_score: g.max_score || 20
+      });
+    }
+  });
+
+  primGrades?.forEach((g: any) => {
+    const sName = g.subjects?.name || 'Discipline';
+    allGradesList.push({
+      id: g.id,
+      term: `Mois ${g.month_number}`,
+      subject_name: sName,
+      evaluation_type: g.subjects?.category ? `Évaluation (${g.subjects.category})` : 'Évaluation Mensuelle',
+      coefficient: 1,
+      score: Number(g.score),
+      max_score: g.max_score || 10
+    });
+  });
+
+  legacyGrades?.forEach((g: any) => {
+    allGradesList.push({
+      id: g.id,
+      term: formatTerm(g.term || 'Trimestre 1'),
+      subject_name: g.subject_name || 'Matière',
+      evaluation_type: g.evaluation_type || 'Évaluation',
+      coefficient: g.coefficient || 1,
+      score: Number(g.score),
+      max_score: g.max_score || 20
+    });
+  });
+
+  // Grouper les notes par trimestre / période
+  const gradesByTerm = allGradesList.reduce((acc: Record<string, any[]>, grade) => {
+    const term = grade.term || 'Période inconnue';
     if (!acc[term]) acc[term] = [];
     acc[term].push(grade);
     return acc;
   }, {});
 
-  // Trier les trimestres (T1, T2, T3)
+  // Trier les trimestres
   const sortedTerms = Object.keys(gradesByTerm).sort();
 
   return (

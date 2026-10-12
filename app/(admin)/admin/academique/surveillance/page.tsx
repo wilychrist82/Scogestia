@@ -26,23 +26,40 @@ export default async function SurveillancePedagogiquePage() {
     return <div className="p-8 text-center text-red-500 font-medium">Accès refusé.</div>
   }
 
-  // Récupération des notes et élèves pour l'école
-  const { data: allGrades } = await supabase
-    .from('grades')
+  // Récupération des élèves de l'école
+  const { data: schoolStudents } = await supabase
+    .from('students')
     .select(`
-      score,
-      subject_name,
-      term,
-      student:students (
-        id,
-        first_name,
-        last_name,
-        matricule,
-        classes:classes (id, name),
-        parents:parents (phone_number, full_name)
-      )
+      id,
+      first_name,
+      last_name,
+      matricule,
+      classes:classes (id, name),
+      parents:parents (phone_number, full_name)
     `)
-    .not('score', 'is', null)
+    .eq('school_id', schoolId)
+
+  // Récupération de toutes les notes : secondaire, primaire et legacy
+  const [
+    { data: secGrades },
+    { data: primGrades },
+    { data: legacyGrades }
+  ] = await Promise.all([
+    supabase
+      .from('secondary_grades')
+      .select('student_id, class_score, comp_score, subjects(name)')
+      .eq('school_id', schoolId),
+    supabase
+      .from('primary_grades')
+      .select('student_id, score, max_score, subjects(name)')
+      .eq('school_id', schoolId)
+      .not('score', 'is', null),
+    supabase
+      .from('grades')
+      .select('student_id, score, subject_name')
+      .eq('school_id', schoolId)
+      .not('score', 'is', null)
+  ])
 
   // Agréger par élève
   const studentsMap: Record<string, {
@@ -51,20 +68,54 @@ export default async function SurveillancePedagogiquePage() {
     weakSubjects: { subject: string, score: number }[]
   }> = {}
 
-  allGrades?.forEach(g => {
-    const s = g.student as any
-    if (!s || !s.id || g.score === null) return
-    if (!studentsMap[s.id]) {
-      studentsMap[s.id] = { student: s, scores: [], weakSubjects: [] }
+  schoolStudents?.forEach(s => {
+    studentsMap[s.id] = { student: s, scores: [], weakSubjects: [] }
+  })
+
+  // 1. Notes du secondaire (Collège & Lycée)
+  secGrades?.forEach((g: any) => {
+    if (!g.student_id || !studentsMap[g.student_id]) return
+    const sName = g.subjects?.name || 'Matière'
+    let scoreVal: number | null = null
+    if (g.class_score !== null && g.class_score !== undefined && g.comp_score !== null && g.comp_score !== undefined) {
+      scoreVal = (Number(g.class_score) + Number(g.comp_score)) / 2
+    } else if (g.comp_score !== null && g.comp_score !== undefined) {
+      scoreVal = Number(g.comp_score)
+    } else if (g.class_score !== null && g.class_score !== undefined) {
+      scoreVal = Number(g.class_score)
     }
-    const numScore = Number(g.score)
-    studentsMap[s.id].scores.push(numScore)
-    if (numScore < 10) {
-      studentsMap[s.id].weakSubjects.push({ subject: g.subject_name, score: numScore })
+    if (scoreVal !== null) {
+      scoreVal = Math.round(scoreVal * 10) / 10
+      studentsMap[g.student_id].scores.push(scoreVal)
+      if (scoreVal < 10) {
+        studentsMap[g.student_id].weakSubjects.push({ subject: sName, score: scoreVal })
+      }
     }
   })
 
-  const evaluatedStudents = Object.values(studentsMap)
+  // 2. Notes du primaire (converties sur 20)
+  primGrades?.forEach((g: any) => {
+    if (!g.student_id || !studentsMap[g.student_id] || g.score === null || g.score === undefined) return
+    const sName = g.subjects?.name || 'Matière'
+    const max = Number(g.max_score) || 10
+    const scoreVal = Math.round(((Number(g.score) / max) * 20) * 10) / 10
+    studentsMap[g.student_id].scores.push(scoreVal)
+    if (scoreVal < 10) {
+      studentsMap[g.student_id].weakSubjects.push({ subject: sName, score: scoreVal })
+    }
+  })
+
+  // 3. Notes legacy
+  legacyGrades?.forEach((g: any) => {
+    if (!g.student_id || !studentsMap[g.student_id] || g.score === null || g.score === undefined) return
+    const scoreVal = Number(g.score)
+    studentsMap[g.student_id].scores.push(scoreVal)
+    if (scoreVal < 10) {
+      studentsMap[g.student_id].weakSubjects.push({ subject: g.subject_name || 'Matière', score: scoreVal })
+    }
+  })
+
+  const evaluatedStudents = Object.values(studentsMap).filter(item => item.scores.length > 0)
   const totalEvaluated = evaluatedStudents.length
 
   const allComputed = evaluatedStudents.map(item => {

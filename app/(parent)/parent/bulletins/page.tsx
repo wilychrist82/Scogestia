@@ -6,6 +6,7 @@ import { UserX, ArrowLeft, FileText, Download, Award } from 'lucide-react'
 
 import { resolveStudentId } from '@/lib/parent-utils'
 import { ChildSwitchBar } from '@/components/parent/ChildSwitchBar'
+import { getCoefficientForSubject } from '@/lib/academic-curriculum'
 
 export const dynamic = 'force-dynamic'
 
@@ -56,20 +57,42 @@ export default async function ParentBulletinsPage({
     )
   }
 
-  // Récupérer toutes les notes de l'élève
-  const { data: grades } = await supabase
-    .from('grades')
-    .select('*')
-    .eq('student_id', childId)
+  // Récupérer les notes de l'élève depuis secondary_grades, primary_grades, grades et published_bulletins
+  const [
+    { data: secGrades },
+    { data: primGrades },
+    { data: legacyGrades },
+    { data: publishedBulletins }
+  ] = await Promise.all([
+    supabase
+      .from('secondary_grades')
+      .select('id, term, class_score, comp_score, max_score, subjects(name, coefficient)')
+      .eq('student_id', childId),
+    supabase
+      .from('primary_grades')
+      .select('id, month_number, score, max_score, subjects(name, category)')
+      .eq('student_id', childId),
+    supabase
+      .from('grades')
+      .select('*')
+      .eq('student_id', childId),
+    supabase
+      .from('published_bulletins')
+      .select('*')
+      .eq('student_id', childId)
+      .order('created_at', { ascending: false })
+  ]);
 
-  // Récupérer les bulletins officiels
-  const { data: publishedBulletins } = await supabase
-    .from('published_bulletins')
-    .select('*')
-    .eq('student_id', childId)
-    .order('created_at', { ascending: false })
+  const formatTerm = (t: string) => {
+    if (t === '1er_trimestre') return '1er Trimestre';
+    if (t === '2e_trimestre') return '2e Trimestre';
+    if (t === '3e_trimestre') return '3e Trimestre';
+    if (t === '1er_semestre') return '1er Semestre';
+    if (t === '2e_semestre') return '2e Semestre';
+    return (t || '').replace(/_/g, ' ');
+  };
 
-  // Organiser et calculer les moyennes par trimestre
+  // Organiser et calculer les moyennes par trimestre / période
   const termData: Record<string, {
     subjects: Record<string, { totalScore: number, totalMax: number, coef: number }>,
     totalSum: number,
@@ -77,36 +100,49 @@ export default async function ParentBulletinsPage({
     average: number
   }> = {};
 
-  (grades || []).forEach(grade => {
-    const term = grade.term || 'Trimestre inconnu';
+  const addScore = (termKey: string, subjectName: string, score: number, maxScore: number, coef: number) => {
+    if (isNaN(score)) return;
+    const term = formatTerm(termKey);
     if (!termData[term]) {
       termData[term] = { subjects: {}, totalSum: 0, totalCoefSum: 0, average: 0 };
     }
-
-    const subject = grade.subject_name;
-    if (!termData[term].subjects[subject]) {
-      // Le coefficient de la matière est assumé être le même pour toutes les notes de cette matière.
-      termData[term].subjects[subject] = { totalScore: 0, totalMax: 0, coef: grade.coefficient || 1 };
+    if (!termData[term].subjects[subjectName]) {
+      termData[term].subjects[subjectName] = { totalScore: 0, totalMax: 0, coef: coef || 1 };
     }
+    const noteSur20 = (score / (maxScore || 20)) * 20;
+    termData[term].subjects[subjectName].totalScore += noteSur20;
+    termData[term].subjects[subjectName].totalMax += 20;
+  };
 
-    // Convertir la note sur 20 pour la moyenne
-    const noteSur20 = (grade.score / (grade.max_score || 20)) * 20;
-    
-    // Ajouter à la matière
-    termData[term].subjects[subject].totalScore += noteSur20;
-    termData[term].subjects[subject].totalMax += 20; // Chaque note compte pour 20 dans le sous-total de la matière
+  secGrades?.forEach((g: any) => {
+    const sName = g.subjects?.name || 'Matière';
+    const coef = getCoefficientForSubject(sName, (fullStudent.classes as any)?.name, undefined, g.subjects?.coefficient || 2);
+    if (g.class_score !== null && g.class_score !== undefined) {
+      addScore(g.term, sName, Number(g.class_score), g.max_score || 20, coef);
+    }
+    if (g.comp_score !== null && g.comp_score !== undefined) {
+      addScore(g.term, sName, Number(g.comp_score), g.max_score || 20, coef);
+    }
   });
 
-  // Calculer la moyenne de chaque trimestre
+  primGrades?.forEach((g: any) => {
+    const sName = g.subjects?.name || 'Discipline';
+    addScore(`Mois ${g.month_number}`, sName, Number(g.score), g.max_score || 10, 1);
+  });
+
+  legacyGrades?.forEach((g: any) => {
+    const sName = g.subject_name || 'Matière';
+    addScore(g.term || 'Trimestre 1', sName, Number(g.score), g.max_score || 20, g.coefficient || 1);
+  });
+
+  // Calculer la moyenne pondérée de chaque période
   Object.keys(termData).forEach(term => {
     let globalSum = 0;
     let globalCoef = 0;
 
     Object.keys(termData[term].subjects).forEach(subject => {
       const subjData = termData[term].subjects[subject];
-      // Moyenne de la matière sur 20
-      const subjAverage = (subjData.totalScore / subjData.totalMax) * 20;
-      
+      const subjAverage = subjData.totalMax > 0 ? (subjData.totalScore / subjData.totalMax) * 20 : 0;
       globalSum += subjAverage * subjData.coef;
       globalCoef += subjData.coef;
     });

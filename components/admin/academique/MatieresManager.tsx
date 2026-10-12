@@ -369,17 +369,13 @@ export function MatieresManager({ subjects }: Props) {
                           </span>
                         </td>
                         <td className="py-3 px-6 text-center">
-                          {isHigh ? (
+                          {coef >= 3 ? (
                             <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                              Matière Majeure
-                            </span>
-                          ) : isMid ? (
-                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
-                              Matière Forte
+                              Matière Fondamentale
                             </span>
                           ) : (
                             <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                              Complémentaire
+                              Matière Complémentaire
                             </span>
                           )}
                         </td>
@@ -402,12 +398,20 @@ export function MatieresManager({ subjects }: Props) {
           ) : (
             /* Primaire ou Collège View */
             <div className="overflow-x-auto min-h-[250px] custom-scrollbar">
+              {isCollege && (
+                <div className="px-6 py-2.5 bg-blue-50/70 border-b border-blue-100 text-xs font-semibold text-blue-900 flex items-center justify-between">
+                  <span>Règle officielle du Secondaire 1 (Collège : 6ème, 5ème, 4ème, 3ème)</span>
+                  <span className="bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-bold">
+                    Toutes les matières sont à coefficient 2 partout
+                  </span>
+                </div>
+              )}
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[var(--color-surface-container-low)] border-b border-[var(--color-outline-variant)] text-[var(--color-on-surface-variant)] text-sm">
                     <th className="py-4 px-6 font-semibold">Matière</th>
                     {isPrimary && <th className="py-4 px-6 font-semibold">Catégorie</th>}
-                    {isCollege && <th className="py-4 px-6 font-semibold text-center">Coefficient Standard</th>}
+                    {isCollege && <th className="py-4 px-6 font-semibold text-center">Coefficient Officiel</th>}
                     <th className="py-4 px-6 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
@@ -426,8 +430,8 @@ export function MatieresManager({ subjects }: Props) {
                       )}
                       {isCollege && (
                         <td className="py-3 px-6 text-center text-[var(--color-on-surface-variant)] font-semibold">
-                          <span className="inline-block px-3 py-1 bg-slate-100 rounded-lg text-sm font-bold text-slate-800">
-                            {sub.coefficient || 2}
+                          <span className="inline-block px-3 py-1 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg text-sm font-bold">
+                            2
                           </span>
                         </td>
                       )}

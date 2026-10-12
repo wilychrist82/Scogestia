@@ -43,7 +43,7 @@ export const LYCEE_SERIES_CONFIG: Record<LyceeSeriesKey, SeriesConfig> = {
       'Anglais': 2,
       'ECM': 2,
       'EPS': 2,
-      'Rédaction': 1,
+      'Rédaction': 2,
       'Philosophie': 2,
     }
   },
@@ -248,8 +248,17 @@ export function detectClassSeriesKey(className: string, level?: string): LyceeSe
 }
 
 /**
+ * Détecte si une classe appartient au Collège (Secondaire 1 : 6ème, 5ème, 4ème, 3ème).
+ */
+export function isCollegeClass(className?: string, classLevel?: string): boolean {
+  const raw = `${classLevel || ''} ${className || ''}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return ['6eme', '6ème', '5eme', '5ème', '4eme', '4ème', '3eme', '3ème', 'college', 'collège', 'secondaire1', '6e', '5e', '4e', '3e'].some(k => raw.includes(k));
+}
+
+/**
  * Récupère le coefficient officiel d'une matière pour une classe donnée.
- * Si la classe est du Lycée, applique la table de coefficients de sa série.
+ * Si la classe est du Collège (Secondaire 1), retourne strictement 2 (règle officielle : toutes les matières coef 2 partout).
+ * Si la classe est du Lycée (Secondaire 2), applique la table de coefficients de sa série.
  * Sinon, retourne le coefficient par défaut de la matière (ou 2).
  */
 export function getCoefficientForSubject(
@@ -258,6 +267,10 @@ export function getCoefficientForSubject(
   classLevel?: string,
   defaultCoefficient: number = 2
 ): number {
+  if (isCollegeClass(className, classLevel)) {
+    return 2; // Strictement 2 pour toutes les matières au Secondaire 1 (Collège)
+  }
+
   if (!className && !classLevel) return defaultCoefficient;
 
   const seriesKey = detectClassSeriesKey(className || '', classLevel);
