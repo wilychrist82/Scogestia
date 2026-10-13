@@ -97,8 +97,13 @@ export default async function SurveillancePedagogiquePage() {
   primGrades?.forEach((g: any) => {
     if (!g.student_id || !studentsMap[g.student_id] || g.score === null || g.score === undefined) return
     const sName = g.subjects?.name || 'Matière'
-    const max = Number(g.max_score) || 10
-    const scoreVal = Math.round(((Number(g.score) / max) * 20) * 10) / 10
+    let max = Number(g.max_score) || 10
+    const rawScore = Number(g.score)
+    if (rawScore > 10 && max <= 10) {
+      max = 20
+    }
+    const val = Math.min(20, Math.max(0, (rawScore / max) * 20))
+    const scoreVal = Math.round(val * 10) / 10
     studentsMap[g.student_id].scores.push(scoreVal)
     if (scoreVal < 10) {
       studentsMap[g.student_id].weakSubjects.push({ subject: sName, score: scoreVal })

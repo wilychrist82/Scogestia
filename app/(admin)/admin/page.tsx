@@ -238,8 +238,13 @@ export default async function AdminDashboard() {
     if (!studentScoresMap[g.student_id]) {
       studentScoresMap[g.student_id] = { student: g.student, scores: [] }
     }
-    const max = Number(g.max_score) || 10
-    studentScoresMap[g.student_id].scores.push(Math.round(((Number(g.score) / max) * 20) * 10) / 10)
+    let max = Number(g.max_score) || 10
+    const rawScore = Number(g.score)
+    if (rawScore > 10 && max <= 10) {
+      max = 20
+    }
+    const val = Math.min(20, Math.max(0, (rawScore / max) * 20))
+    studentScoresMap[g.student_id].scores.push(Math.round(val * 10) / 10)
   })
 
   recentGrades?.forEach(g => {

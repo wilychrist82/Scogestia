@@ -10,6 +10,7 @@ type ClassStat = {
   id: string
   name: string
   totalStudents: number
+  evaluatedCount?: number
   successRate: number
   classAverage: number
 }
@@ -23,9 +24,9 @@ export function AcademiqueRapportsManager({ classStats }: Props) {
   // Prepare data for ExportButtons
   const exportData = classStats.map(c => ({
     Classe: c.name,
-    'Effectif Évalué': c.totalStudents,
-    'Moyenne de Classe': c.classAverage,
-    'Taux de Réussite (%)': c.successRate
+    'Effectif Évalué': c.evaluatedCount !== undefined ? `${c.evaluatedCount} / ${c.totalStudents}` : c.totalStudents,
+    'Moyenne de Classe': c.evaluatedCount === 0 ? 'Non évalué' : c.classAverage,
+    'Taux de Réussite (%)': c.evaluatedCount === 0 ? 'N/A' : c.successRate
   }))
 
   const headers = [
@@ -101,25 +102,46 @@ export function AcademiqueRapportsManager({ classStats }: Props) {
               </thead>
               <tbody>
                 {classStats.length > 0 ? (
-                  classStats.map(stat => (
-                    <tr key={stat.id} className="border-b border-[var(--color-outline-variant)] hover:bg-[var(--color-surface-bright)] transition-colors">
-                      <td className="p-4 text-sm font-semibold text-[var(--color-on-surface)]">{stat.name}</td>
-                      <td className="p-4 text-sm text-[var(--color-on-surface-variant)]">{stat.totalStudents}</td>
-                      <td className="p-4 text-sm text-[var(--color-on-surface)] font-medium">
-                        <span className={`px-2 py-1 rounded-md text-xs font-bold ${stat.classAverage >= 10 ? 'bg-[#e6f4ea] text-[#1e8e3e]' : 'bg-[#fce8e6] text-[#d93025]'}`}>
-                          {stat.classAverage.toFixed(2)} / 20
-                        </span>
-                      </td>
-                      <td className="p-4 text-sm text-[var(--color-on-surface)] font-medium">
-                        <div className="flex items-center gap-2">
-                          <div className="w-24 bg-gray-200 rounded-full h-1.5">
-                            <div className={`h-1.5 rounded-full ${stat.successRate >= 50 ? 'bg-[var(--color-primary)]' : 'bg-red-500'}`} style={{ width: `${stat.successRate}%` }}></div>
-                          </div>
-                          <span>{stat.successRate.toFixed(1)}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                  classStats.map(stat => {
+                    const isEvaluated = stat.evaluatedCount === undefined ? stat.totalStudents > 0 : stat.evaluatedCount > 0
+                    return (
+                      <tr key={stat.id} className="border-b border-[var(--color-outline-variant)] hover:bg-[var(--color-surface-bright)] transition-colors">
+                        <td className="p-4 text-sm font-semibold text-[var(--color-on-surface)]">{stat.name}</td>
+                        <td className="p-4 text-sm text-[var(--color-on-surface-variant)]">
+                          {stat.evaluatedCount !== undefined ? (
+                            <span className="font-medium text-slate-800">
+                              {stat.evaluatedCount} <span className="text-xs text-slate-400">/ {stat.totalStudents}</span>
+                            </span>
+                          ) : (
+                            stat.totalStudents
+                          )}
+                        </td>
+                        <td className="p-4 text-sm font-medium">
+                          {isEvaluated ? (
+                            <span className={`px-2 py-1 rounded-md text-xs font-bold ${stat.classAverage >= 10 ? 'bg-[#e6f4ea] text-[#1e8e3e]' : 'bg-[#fce8e6] text-[#d93025]'}`}>
+                              {stat.classAverage.toFixed(2)} / 20
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-500">
+                              Non évalué
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-sm text-[var(--color-on-surface)] font-medium">
+                          {isEvaluated ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-24 bg-gray-200 rounded-full h-1.5">
+                                <div className={`h-1.5 rounded-full ${stat.successRate >= 50 ? 'bg-[var(--color-primary)]' : 'bg-red-500'}`} style={{ width: `${stat.successRate}%` }}></div>
+                              </div>
+                              <span className="text-xs font-semibold">{stat.successRate.toFixed(1)}%</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-400 font-medium">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })
                 ) : (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-[var(--color-on-surface-variant)]">

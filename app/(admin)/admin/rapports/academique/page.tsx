@@ -95,8 +95,14 @@ export default async function AcademiqueRapportsPage() {
   // 3. Notes du primaire (harmonisé sur 20)
   primGrades?.forEach((g: any) => {
     if (!g.student_id || g.score === null) return
-    const max = Number(g.max_score) || 10
-    const val = (Number(g.score) / max) * 20
+    let max = Number(g.max_score) || 10
+    const rawScore = Number(g.score)
+    // Si la note dépasse 10 et que max_score est <= 10, la note a été saisie sur 20
+    if (rawScore > 10 && max <= 10) {
+      max = 20
+    }
+    let val = (rawScore / max) * 20
+    val = Math.min(20, Math.max(0, val))
     if (!studentScoreBuckets[g.student_id]) studentScoreBuckets[g.student_id] = []
     studentScoreBuckets[g.student_id].push(val)
   })
@@ -104,8 +110,10 @@ export default async function AcademiqueRapportsPage() {
   // 4. Notes legacy
   legacyGrades?.forEach((g: any) => {
     if (!g.student_id || g.score === null) return
+    let val = Number(g.score)
+    val = Math.min(20, Math.max(0, val))
     if (!studentScoreBuckets[g.student_id]) studentScoreBuckets[g.student_id] = []
-    studentScoreBuckets[g.student_id].push(Number(g.score))
+    studentScoreBuckets[g.student_id].push(val)
   })
 
   // Calcul de la moyenne pour chaque élève sans bulletin publié
@@ -124,20 +132,22 @@ export default async function AcademiqueRapportsPage() {
       const classStudents = schoolStudents?.filter(s => s.class_id === c.id) || []
       const evaluatedStudents = classStudents.filter(s => studentAverages[s.id] !== undefined)
       
-      const totalStudents = evaluatedStudents.length > 0 ? evaluatedStudents.length : classStudents.length
+      const totalStudents = classStudents.length
+      const evaluatedCount = evaluatedStudents.length
       const passed = evaluatedStudents.filter(s => (studentAverages[s.id] ?? 0) >= 10).length
-      const successRate = evaluatedStudents.length > 0 ? (passed / evaluatedStudents.length) * 100 : 0
+      const successRate = evaluatedCount > 0 ? (passed / evaluatedCount) * 100 : 0
       
       let classTotalAvg = 0
       evaluatedStudents.forEach(s => {
         classTotalAvg += studentAverages[s.id] || 0
       })
-      const classAverage = evaluatedStudents.length > 0 ? classTotalAvg / evaluatedStudents.length : 0
+      const classAverage = evaluatedCount > 0 ? classTotalAvg / evaluatedCount : 0
 
       classStats.push({
         id: c.id,
         name: c.name,
         totalStudents,
+        evaluatedCount,
         successRate: Number(successRate.toFixed(2)),
         classAverage: Number(classAverage.toFixed(2)),
       })

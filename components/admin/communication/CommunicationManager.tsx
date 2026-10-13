@@ -13,7 +13,7 @@ import { MessageActions } from '@/components/ui/MessageActions'
 import { ReadReceiptTrigger } from '@/components/ui/ReadReceiptTrigger'
 import toast from 'react-hot-toast'
 import { CommunicationNavTabs } from './CommunicationNavTabs'
-import { AlertCircle, CheckCircle2, Users, School, History, Ban, FileText, Mic } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Users, School, History, Ban, FileText, Mic, ChevronDown, Check, GraduationCap, Sparkles } from 'lucide-react'
 
 type ClassItem = { id: string; name: string }
 type StudentItem = { id: string; first_name: string; last_name: string; classes: { name: string } | null }
@@ -43,6 +43,15 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
   const [isPending, startTransition] = useTransition()
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
+  // Fermeture du menu de sélection au clic extérieur
+  useEffect(() => {
+    if (!isDropdownOpen) return
+    const handleClickOutside = () => setIsDropdownOpen(false)
+    window.addEventListener('click', handleClickOutside)
+    return () => window.removeEventListener('click', handleClickOutside)
+  }, [isDropdownOpen])
 
   // Auto-refresh toutes les 10s pour récupérer les nouveaux messages
   useEffect(() => {
@@ -93,16 +102,19 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
         <CommunicationNavTabs />
 
         {/* Top Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)]">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div>
-            <div className="flex items-center gap-2 text-[var(--color-on-surface-variant)] mb-2">
-              <span className="text-sm font-semibold text-[var(--color-on-surface)]">Communication</span>
-              <span>/</span>
-              <span className="text-sm font-semibold text-[var(--color-primary)]">Messagerie directe</span>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Échanges & Messagerie directe
+              </span>
             </div>
-            <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Centre de Communication</h2>
-            <p className="text-base text-[var(--color-on-surface-variant)] mt-1">
-              Envoyez des messages, SMS et notifications aux parents, enseignants et plus.
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Centre de Communication
+            </h1>
+            <p className="text-sm text-slate-500 mt-1 font-medium">
+              Envoyez des messages directs, diffusions ciblées et notifications aux parents et enseignants.
             </p>
           </div>
         </div>
@@ -125,37 +137,147 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
           {/* Nouveau Message Form Style WhatsApp */}
           <div className="lg:col-span-2 bg-white rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden flex flex-col h-[600px]">
             {/* Header / Destinataires */}
-            <div className="p-3 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex items-center justify-between">
+            <div className="p-3.5 border-b border-slate-200/90 bg-white flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[var(--color-primary-container)] text-[var(--color-primary)] flex items-center justify-center">
-                  {recipientType === 'all' || recipientType === 'class' || recipientType === 'parent' ? (
-                    <Users className="w-5 h-5" />
-                  ) : (
-                    <School className="w-5 h-5" />
-                  )}
+                <div className="relative">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-emerald-700 text-white flex items-center justify-center shadow-xs">
+                    {recipientType === 'all' || recipientType === 'class' || recipientType === 'parent' ? (
+                      <Users className="w-5 h-5 text-white" />
+                    ) : (
+                      <School className="w-5 h-5 text-white" />
+                    )}
+                  </div>
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-bold text-[var(--color-on-surface)]">
+                  <span className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-1.5">
                     Contacter
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-full">
+                      <Sparkles size={10} className="text-amber-600" />
+                      Messagerie active
+                    </span>
                   </span>
-                  <span className="text-[11px] text-[var(--color-on-surface-variant)]">En ligne</span>
+                  <span className="text-[11px] text-slate-400 font-medium">Canal instantané & notifications</span>
                 </div>
               </div>
-              <select 
-                value={recipientType}
-                onChange={(e) => setRecipientType(e.target.value)}
-                className="text-xs bg-transparent border-none outline-none font-semibold text-[var(--color-primary)] cursor-pointer"
-              >
-                <optgroup label="Parents">
-                  <option value="all">Tous les parents</option>
-                  <option value="class">Parents d'une classe</option>
-                  <option value="parent">Parent d'un élève</option>
-                </optgroup>
-                <optgroup label="Enseignants">
-                  <option value="all_teachers">Tous les enseignants</option>
-                  <option value="enseignant">Un enseignant précis</option>
-                </optgroup>
-              </select>
+
+              {/* Sélecteur de Destinataires Customisé */}
+              <div className="relative" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-800 text-xs font-semibold shadow-2xs transition-all focus:outline-none"
+                >
+                  <span className="text-slate-500 text-[11px] font-medium hidden sm:inline">Destinataire :</span>
+                  <span className="text-slate-900 font-bold text-[12px]">
+                    {recipientType === 'all' && 'Tous les parents'}
+                    {recipientType === 'class' && 'Parents d\'une classe'}
+                    {recipientType === 'parent' && 'Parent d\'un élève'}
+                    {recipientType === 'all_teachers' && 'Tous les enseignants'}
+                    {recipientType === 'enseignant' && 'Un enseignant précis'}
+                  </span>
+                  <ChevronDown
+                    size={14}
+                    className={`text-slate-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-slate-900' : ''}`}
+                  />
+                </button>
+
+                {isDropdownOpen && (
+                  <>
+                    {/* Backdrop pour fermer au clic en dehors */}
+                    <div 
+                      className="fixed inset-0 z-20" 
+                      onClick={() => setIsDropdownOpen(false)} 
+                    />
+                    
+                    <div className="absolute right-0 mt-2 w-68 bg-white rounded-2xl shadow-[0_16px_40px_rgba(15,23,42,0.16)] border border-slate-200 p-2 z-30 animate-in fade-in zoom-in-95 duration-150">
+                      {/* GROUPE PARENTS */}
+                      <div className="px-2.5 py-1.5 mb-1 rounded-lg bg-slate-100/90 border border-slate-200/70 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <Users size={13} className="text-slate-900" />
+                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-900">Parents</span>
+                        </div>
+                        <span className="text-[10px] font-medium text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200/60">Familles</span>
+                      </div>
+                      <div className="space-y-0.5">
+                        <button
+                          type="button"
+                          onClick={() => { setRecipientType('all'); setIsDropdownOpen(false) }}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-[12.5px] font-semibold flex items-center justify-between transition-colors ${
+                            recipientType === 'all' 
+                              ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                              : 'text-slate-800 hover:bg-slate-100 hover:text-slate-950'
+                          }`}
+                        >
+                          <span>Tous les parents</span>
+                          {recipientType === 'all' && <Check size={14} className="text-white" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setRecipientType('class'); setIsDropdownOpen(false) }}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-[12.5px] font-semibold flex items-center justify-between transition-colors ${
+                            recipientType === 'class' 
+                              ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                              : 'text-slate-800 hover:bg-slate-100 hover:text-slate-950'
+                          }`}
+                        >
+                          <span>Parents d'une classe</span>
+                          {recipientType === 'class' && <Check size={14} className="text-white" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setRecipientType('parent'); setIsDropdownOpen(false) }}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-[12.5px] font-semibold flex items-center justify-between transition-colors ${
+                            recipientType === 'parent' 
+                              ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                              : 'text-slate-800 hover:bg-slate-100 hover:text-slate-950'
+                          }`}
+                        >
+                          <span>Parent d'un élève</span>
+                          {recipientType === 'parent' && <Check size={14} className="text-white" />}
+                        </button>
+                      </div>
+
+                      <div className="h-px bg-slate-100 my-1.5" />
+
+                      {/* GROUPE ENSEIGNANTS */}
+                      <div className="px-2.5 py-1.5 mb-1 rounded-lg bg-slate-100/90 border border-slate-200/70 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <GraduationCap size={13} className="text-slate-900" />
+                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-900">Enseignants</span>
+                        </div>
+                        <span className="text-[10px] font-medium text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200/60">Équipe</span>
+                      </div>
+                      <div className="space-y-0.5">
+                        <button
+                          type="button"
+                          onClick={() => { setRecipientType('all_teachers'); setIsDropdownOpen(false) }}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-[12.5px] font-semibold flex items-center justify-between transition-colors ${
+                            recipientType === 'all_teachers' 
+                              ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                              : 'text-slate-800 hover:bg-slate-100 hover:text-slate-950'
+                          }`}
+                        >
+                          <span>Tous les enseignants</span>
+                          {recipientType === 'all_teachers' && <Check size={14} className="text-white" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setRecipientType('enseignant'); setIsDropdownOpen(false) }}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-[12.5px] font-semibold flex items-center justify-between transition-colors ${
+                            recipientType === 'enseignant' 
+                              ? 'bg-slate-900 text-white font-bold shadow-xs' 
+                              : 'text-slate-800 hover:bg-slate-100 hover:text-slate-950'
+                          }`}
+                        >
+                          <span>Un enseignant précis</span>
+                          {recipientType === 'enseignant' && <Check size={14} className="text-white" />}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Zone de sélection additionnelle (classe, parent, enseignant) */}
@@ -241,14 +363,17 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
           </div>
 
           {/* Sidebar Historique */}
-          <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="p-4 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)]">
-              <h3 className="font-bold text-[var(--color-on-surface)] flex items-center gap-2">
-                <History className="w-5 h-5 text-[var(--color-on-surface-variant)]" />
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden flex flex-col h-full">
+            <div className="p-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+              <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                <History className="w-4 h-4 text-amber-600" />
                 Historique Récent
               </h3>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-full">
+                5 derniers
+              </span>
             </div>
-            <div className="p-4 flex flex-col gap-4 flex-1 bg-[var(--color-surface)]">
+            <div className="p-4 flex flex-col gap-4 flex-1 bg-slate-50/30">
               {(() => {
                 const unreadIds = recentCommunications
                   .filter(msg => msg.sender_id !== currentUserId && !(msg.read_by || []).includes(currentUserId))
@@ -388,12 +513,12 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
                         </div>
 
                         {isSentByMe && recipientText ? (
-                          <span className="text-[10px] text-[var(--color-on-surface-variant)] px-1">
+                          <span className="text-[10px] font-semibold text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded-full border border-slate-200/50">
                             À : {recipientText}
                           </span>
                         ) : !isSentByMe ? (
-                          <span className="text-[10px] text-[var(--color-on-surface-variant)] px-1">
-                            De: Parent/Enseignant
+                          <span className="text-[10px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/50">
+                            De : Parent / Enseignant
                           </span>
                         ) : null}
                       </div>
