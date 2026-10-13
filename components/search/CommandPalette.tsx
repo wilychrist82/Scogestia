@@ -161,13 +161,16 @@ export function CommandPalette({ isOpen: controlledIsOpen, onClose: controlledOn
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div 
+      className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-24 px-3 sm:px-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 cursor-pointer"
+      onClick={handleClose}
+    >
       <div 
-        className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform animate-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]"
+        className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh] sm:max-h-[80vh] cursor-default"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Barre de recherche */}
-        <div className="flex items-center px-4 py-3.5 border-b border-slate-100 bg-slate-50/50 gap-3">
+        <div className="flex items-center px-4 py-3.5 border-b border-slate-100 bg-slate-50/50 gap-2 sm:gap-3">
           <Search size={20} className="text-slate-400 flex-shrink-0" />
           <input
             ref={inputRef}
@@ -180,22 +183,37 @@ export function CommandPalette({ isOpen: controlledIsOpen, onClose: controlledOn
                 ? "Rechercher un élève dans vos classes... (ex: Komi, CM2)" 
                 : "Rechercher un élève, classe, facture, personnel... (ex: Komi, CM2)"
             }
-            className="w-full bg-transparent text-slate-800 placeholder-slate-400 text-base outline-none font-medium"
+            className="w-full bg-transparent text-slate-800 placeholder-slate-400 text-sm sm:text-base outline-none font-medium"
           />
-          {isPending ? (
+          {isPending && (
             <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-          ) : query ? (
+          )}
+          {query && !isPending && (
             <button 
+              type="button"
               onClick={() => { setQuery(''); inputRef.current?.focus() }}
-              className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+              className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200/50 transition-colors"
+              title="Effacer la recherche"
+              aria-label="Effacer la recherche"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
-          ) : (
-            <kbd className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-semibold text-slate-400 bg-slate-200/80 rounded border border-slate-300">
+          )}
+
+          {/* Bouton Fermer explicite (visible mobile et desktop) */}
+          <button
+            type="button"
+            onClick={handleClose}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 active:bg-slate-300/80 transition-all text-xs font-bold flex-shrink-0 border border-slate-200 sm:border-transparent"
+            title="Fermer la recherche"
+            aria-label="Fermer la recherche"
+          >
+            <X size={17} className="text-slate-700" />
+            <span className="hidden sm:inline">Fermer</span>
+            <kbd className="hidden sm:inline-block ml-0.5 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 bg-slate-200 rounded border border-slate-300">
               ESC
             </kbd>
-          )}
+          </button>
         </div>
 
         {/* Liste des résultats */}
@@ -279,9 +297,15 @@ export function CommandPalette({ isOpen: controlledIsOpen, onClose: controlledOn
         {/* Pied de palette */}
         <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
           <div className="flex items-center gap-3">
-            <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded font-semibold text-slate-600">↑↓</kbd> Naviguer</span>
-            <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded font-semibold text-slate-600">↵</kbd> Ouvrir</span>
-            <span><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded font-semibold text-slate-600">ESC</kbd> Fermer</span>
+            <span className="hidden sm:inline"><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded font-semibold text-slate-600">↑↓</kbd> Naviguer</span>
+            <span className="hidden sm:inline"><kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded font-semibold text-slate-600">↵</kbd> Ouvrir</span>
+            <button 
+              type="button" 
+              onClick={handleClose}
+              className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 font-semibold cursor-pointer p-0.5 rounded transition-colors"
+            >
+              <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded font-semibold text-slate-600 shadow-2xs">ESC</kbd> Fermer
+            </button>
           </div>
           <span className="font-semibold text-emerald-600">
             {isEnseignant ? 'Scogestia Enseignant' : 'Scogestia Spotlight'}
