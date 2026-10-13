@@ -6,7 +6,7 @@ import { UserX, ArrowLeft, BookOpen } from 'lucide-react'
 
 import { resolveStudentId } from '@/lib/parent-utils'
 import { ChildSwitchBar } from '@/components/parent/ChildSwitchBar'
-import { getCoefficientForSubject } from '@/lib/academic-curriculum'
+import { getCoefficientForSubject, getPrimarySubjectMaxScore } from '@/lib/academic-curriculum'
 
 export const dynamic = 'force-dynamic'
 
@@ -128,6 +128,7 @@ export default async function ParentNotesPage({
 
   primGrades?.forEach((g: any) => {
     const sName = g.subjects?.name || 'Discipline';
+    const officialMax = getPrimarySubjectMaxScore(sName, (fullStudent.classes as any)?.name, (fullStudent.classes as any)?.level) || g.max_score || 10;
     allGradesList.push({
       id: g.id,
       term: `Mois ${g.month_number}`,
@@ -135,7 +136,7 @@ export default async function ParentNotesPage({
       evaluation_type: g.subjects?.category ? `Évaluation (${g.subjects.category})` : 'Évaluation Mensuelle',
       coefficient: 1,
       score: Number(g.score),
-      max_score: g.max_score || 10
+      max_score: officialMax
     });
   });
 

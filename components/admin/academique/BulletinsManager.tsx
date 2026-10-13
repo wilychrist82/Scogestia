@@ -7,7 +7,7 @@ import { jsPDF } from 'jspdf'
 import { createClient } from '@/lib/supabase/client'
 import { sortClasses } from '@/lib/classes'
 import { ShieldCheck, FileDown, GraduationCap } from 'lucide-react'
-import { getCoefficientForSubject, detectClassSeriesKey, LYCEE_SERIES_CONFIG } from '@/lib/academic-curriculum'
+import { getCoefficientForSubject, detectClassSeriesKey, LYCEE_SERIES_CONFIG, getPrimarySubjectMaxScore } from '@/lib/academic-curriculum'
 
 type ClassItem = { id: string; name: string; level?: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string }
@@ -231,9 +231,9 @@ export function BulletinsManager({
           if (!isNaN(val)) { total += val; count++ }
         })
         const avg = count > 0 ? (total / count).toFixed(2) : ''
-        
+        const maxS = getPrimarySubjectMaxScore(s.name, cl?.name, cl?.level)
         groupedSubjects[cat].push({
-          id: s.id, name: s.name, monthScores, avg
+          id: s.id, name: s.name, monthScores, avg, maxScore: maxS
         })
       })
       data.primaryCategories = groupedSubjects
@@ -243,7 +243,7 @@ export function BulletinsManager({
       data.monthAvgs = {}
       data.monthRanks = {}
       months.forEach(m => {
-        let mTotal = 0, count = 0
+        let mTotal = 0, count = 0, maxPossible = 0
         primarySubjects.forEach(s => {
           let valStr = ''
           if (stuId === selectedStudent && localPrimGrades[`${s.id}_${m}`] !== undefined) valStr = localPrimGrades[`${s.id}_${m}`]
@@ -252,10 +252,15 @@ export function BulletinsManager({
             valStr = g ? g.score.toString() : ''
           }
           const val = parseFloat(valStr)
-          if (!isNaN(val)) { mTotal += val; count++ }
+          if (!isNaN(val)) {
+            const maxS = getPrimarySubjectMaxScore(s.name, cl?.name, cl?.level)
+            mTotal += val
+            maxPossible += maxS
+            count++
+          }
         })
-        data.monthTotals[m] = mTotal > 0 ? mTotal.toString() : ''
-        data.monthAvgs[m] = count > 0 ? (mTotal / count).toFixed(2) : ''
+        data.monthTotals[m] = mTotal > 0 ? mTotal.toFixed(2) : ''
+        data.monthAvgs[m] = maxPossible > 0 ? ((mTotal / maxPossible) * 10).toFixed(2) : ''
         
         if (stuId === selectedStudent && localPrimRanks[m] !== undefined) data.monthRanks[m] = localPrimRanks[m]
         else {
@@ -534,6 +539,7 @@ export function BulletinsManager({
                     <td colSpan={11} className="border border-black p-2 font-bold italic">{category}</td>
                   </tr>
                   {subjs.map(subj => {
+                    const maxS = getPrimarySubjectMaxScore(subj.name, cls?.name, cls?.level)
                     let total = 0
                     let count = 0
                     months.forEach(m => {
@@ -545,7 +551,16 @@ export function BulletinsManager({
 
                     return (
                       <tr key={subj.id}>
-                        <td className="border border-black p-2 pl-6 font-medium">{subj.name}</td>
+                        <td className="border border-black p-2 pl-6 font-medium">
+                          <div className="flex items-center justify-between gap-1">
+                            <span>{subj.name}</span>
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                              maxS === 20 ? 'bg-blue-100 text-blue-900 border border-blue-200' : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              sur {maxS}
+                            </span>
+                          </div>
+                        </td>
                         {months.map(m => {
                           const key = `${subj.id}_${m}`
                           return (
@@ -559,7 +574,9 @@ export function BulletinsManager({
                             </td>
                           )
                         })}
-                        <td className="border border-black p-2 text-center font-bold bg-gray-100">{avg}</td>
+                        <td className="border border-black p-2 text-center font-bold bg-gray-100">
+                          {avg ? `${avg} / ${maxS}` : ''}
+                        </td>
                       </tr>
                     )
                   })}
@@ -571,13 +588,23 @@ export function BulletinsManager({
                 <td className="border border-black p-2 text-right uppercase">Total des points</td>
                 {months.map(m => {
                   let monthTotal = 0;
+                  let maxPossible = 0;
                   primarySubjects.forEach(subj => {
                     const val = parseFloat(localPrimGrades[`${subj.id}_${m}`]);
-                    if (!isNaN(val)) monthTotal += val;
+                    if (!isNaN(val)) {
+                      const maxS = getPrimarySubjectMaxScore(subj.name, cls?.name, cls?.level);
+                      monthTotal += val;
+                      maxPossible += maxS;
+                    }
                   });
                   return (
                     <td key={`total-${m}`} className="border border-black p-2 text-center">
-                      {monthTotal > 0 ? monthTotal : ''}
+                      {monthTotal > 0 ? (
+                        <div className="flex flex-col items-center">
+                          <span className="font-bold">{monthTotal.toFixed(2)}</span>
+                          <span className="text-[10px] text-gray-600 font-normal">/{maxPossible}</span>
+                        </div>
+                      ) : ''}
                     </td>
                   );
                 })}
@@ -587,19 +614,21 @@ export function BulletinsManager({
                 <td className="border border-black p-2 text-right uppercase">Moyenne / 10</td>
                 {months.map(m => {
                   let monthTotal = 0;
+                  let maxPossible = 0;
                   let count = 0;
                   primarySubjects.forEach(subj => {
                     const val = parseFloat(localPrimGrades[`${subj.id}_${m}`]);
                     if (!isNaN(val)) {
+                      const maxS = getPrimarySubjectMaxScore(subj.name, cls?.name, cls?.level);
                       monthTotal += val;
+                      maxPossible += maxS;
                       count++;
                     }
                   });
-                  // Divide by total number of subjects to get the true average, or number of inputted grades?
-                  // Generally it's divided by total number of subjects tested. Let's use count.
-                  const avg = count > 0 ? (monthTotal / count).toFixed(2) : '';
+                  // Formule officielle : (Total des points / Total des barèmes possibles) * 10
+                  const avg = maxPossible > 0 ? ((monthTotal / maxPossible) * 10).toFixed(2) : '';
                   return (
-                    <td key={`avg-${m}`} className="border border-black p-2 text-center text-blue-800">
+                    <td key={`avg-${m}`} className="border border-black p-2 text-center text-blue-800 font-extrabold">
                       {avg}
                     </td>
                   );

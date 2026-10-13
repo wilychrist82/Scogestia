@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { ActionState } from "./finance";
+import { getPrimarySubjectMaxScore } from "@/lib/academic-curriculum";
 
 async function getActiveSchoolId() {
   const supabase = await createClient();
@@ -140,6 +141,20 @@ export async function savePrimaryGrades(
       data: { user },
     } = await supabase.auth.getUser();
 
+    // Récupérer le niveau et nom de la classe
+    const { data: clsData } = await supabase
+      .from("classes")
+      .select("name, level")
+      .eq("id", classId)
+      .maybeSingle();
+
+    // Récupérer les noms des matières pour calcul du barème
+    const { data: subjectsData } = await supabase
+      .from("subjects")
+      .select("id, name")
+      .eq("school_id", school_id);
+    const subjectsMap = new Map((subjectsData || []).map((s) => [s.id, s.name]));
+
     const academicYear = getDynamicAcademicYear();
     const gradesToUpsert = [];
     const deleteConditions: { student_id: string; subject_id: string; month_number: number }[] = [];
@@ -160,13 +175,22 @@ export async function savePrimaryGrades(
           if (valStr !== "") {
             const score = parseFloat(valStr);
             if (!isNaN(score)) {
+              const subjName = subjectsMap.get(actualSubjectId) || "";
+              const officialMax = getPrimarySubjectMaxScore(subjName, clsData?.name, clsData?.level);
+              const maxScoreStr = formData.get(`max_${actualSubjectId}`) as string | null;
+              const maxScore = officialMax || (maxScoreStr ? parseFloat(maxScoreStr) : 10);
+
+              if (score < 0 || score > maxScore) {
+                return { error: `La note de ${subjName || 'la discipline'} (${score}) doit être comprise entre 0 et ${maxScore}.` };
+              }
+
               gradesToUpsert.push({
                 school_id,
                 student_id: actualStudentId,
                 subject_id: actualSubjectId,
                 month_number: monthNumber,
                 score,
-                max_score: 10,
+                max_score: maxScore,
                 academic_year: academicYear,
                 entered_by: user?.id,
               });
@@ -302,6 +326,22 @@ export async function saveBulletinPrimaryGrades(
       data: { user },
     } = await supabase.auth.getUser();
 
+    // Récupérer la classe de l'élève pour le barème officiel
+    const { data: stuData } = await supabase
+      .from("students")
+      .select("class_id, classes:classes(name, level)")
+      .eq("id", studentId)
+      .maybeSingle();
+
+    const className = (stuData?.classes as any)?.name;
+    const classLevel = (stuData?.classes as any)?.level;
+
+    const { data: subjectsData } = await supabase
+      .from("subjects")
+      .select("id, name")
+      .eq("school_id", school_id);
+    const subjectsMap = new Map((subjectsData || []).map((s) => [s.id, s.name]));
+
     const gradesToUpsert = [];
     for (const [key, value] of Object.entries(grades)) {
       // key format: {subjectId}_{monthNumber}
@@ -311,13 +351,20 @@ export async function saveBulletinPrimaryGrades(
         const monthNumber = parseInt(parts[1], 10);
         const score = parseFloat(value);
         if (!isNaN(score)) {
+          const subjName = subjectsMap.get(subjectId) || "";
+          const officialMax = getPrimarySubjectMaxScore(subjName, className, classLevel);
+
+          if (score < 0 || score > officialMax) {
+            return { error: `La note de ${subjName || 'la discipline'} (${score}) dépasse le barème autorisé (${officialMax}).` };
+          }
+
           gradesToUpsert.push({
             school_id,
             student_id: studentId,
             subject_id: subjectId,
             month_number: monthNumber,
             score,
-            max_score: 10,
+            max_score: officialMax,
             academic_year: getDynamicAcademicYear(),
             entered_by: user?.id,
           });

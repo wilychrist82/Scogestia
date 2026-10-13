@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendNotification } from './notifications'
 
+import { getPrimarySubjectMaxScore, detectPrimaryLevel } from '@/lib/academic-curriculum'
+
 export type GradeSavePayload = {
   student_id: string
   class_id: string
@@ -35,15 +37,21 @@ export async function saveGrade(payload: GradeSavePayload): Promise<{ error?: st
     // La classe doit appartenir à l'école de l'utilisateur
     const { data: cls } = await supabase
       .from('classes')
-      .select('id')
+      .select('id, name, level')
       .eq('id', payload.class_id)
       .eq('school_id', roleData.school_id)
       .maybeSingle()
     if (!cls) return { error: 'Classe introuvable' }
 
+    // Calculer le barème max officiel
+    const primLevel = detectPrimaryLevel(cls.name, cls.level)
+    const maxScore = primLevel !== 'AUTRE'
+      ? getPrimarySubjectMaxScore(payload.subject_name, cls.name, cls.level)
+      : 20
+
     // Validation basique
-    if (payload.score !== null && (typeof payload.score !== 'number' || Number.isNaN(payload.score) || payload.score < 0 || payload.score > 20)) {
-      return { error: 'La note doit être comprise entre 0 et 20' }
+    if (payload.score !== null && (typeof payload.score !== 'number' || Number.isNaN(payload.score) || payload.score < 0 || payload.score > maxScore)) {
+      return { error: `La note doit être comprise entre 0 et ${maxScore}` }
     }
 
     if (payload.score === null) {
@@ -73,7 +81,7 @@ export async function saveGrade(payload: GradeSavePayload): Promise<{ error?: st
           evaluation_type: payload.evaluation_type,
           term: payload.term,
           score: payload.score,
-          max_score: 20,
+          max_score: maxScore,
           coefficient: coeff,
           entered_by: user.id
         }, {

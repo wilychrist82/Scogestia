@@ -6,7 +6,7 @@ import { UserX, ArrowLeft, FileText, Download, Award } from 'lucide-react'
 
 import { resolveStudentId } from '@/lib/parent-utils'
 import { ChildSwitchBar } from '@/components/parent/ChildSwitchBar'
-import { getCoefficientForSubject } from '@/lib/academic-curriculum'
+import { getCoefficientForSubject, getPrimarySubjectMaxScore } from '@/lib/academic-curriculum'
 
 export const dynamic = 'force-dynamic'
 
@@ -127,7 +127,8 @@ export default async function ParentBulletinsPage({
 
   primGrades?.forEach((g: any) => {
     const sName = g.subjects?.name || 'Discipline';
-    addScore(`Mois ${g.month_number}`, sName, Number(g.score), g.max_score || 10, 1);
+    const officialMax = getPrimarySubjectMaxScore(sName, (fullStudent.classes as any)?.name, (fullStudent.classes as any)?.level) || g.max_score || 10;
+    addScore(`Mois ${g.month_number}`, sName, Number(g.score), officialMax, 1);
   });
 
   legacyGrades?.forEach((g: any) => {

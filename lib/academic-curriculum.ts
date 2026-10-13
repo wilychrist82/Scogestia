@@ -309,3 +309,151 @@ export const STANDARD_LYCEE_CLASSES = [
   { name: 'Terminale D', level: 'Terminale', track: 'Scientifique', seriesKey: 'tle_D' as const },
   { name: 'Terminale C', level: 'Terminale', track: 'Scientifique', seriesKey: 'tle_C' as const },
 ];
+
+/**
+ * Détection du niveau primaire : CP (CP1, CP2, CI), CE (CE1, CE2), CM (CM1, CM2).
+ */
+export type PrimaryLevel = 'CP' | 'CE' | 'CM' | 'AUTRE';
+
+export function detectPrimaryLevel(className?: string, classLevel?: string): PrimaryLevel {
+  const full = `${classLevel || ''} ${className || ''}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  
+  // 1. CM : CM1, CM2, CM, Cours Moyen
+  if (
+    /\b(cm2|cm1|cm\s*2|cm\s*1|cours\s+moyen)\b/i.test(full) ||
+    full.includes('cm2') || full.includes('cm1') || full.includes('cours moyen') ||
+    /\bcm\b/i.test(full)
+  ) {
+    return 'CM';
+  }
+
+  // 2. CE : CE1, CE2, CE, Cours Elémentaire
+  if (
+    /\b(ce2|ce1|ce\s*2|ce\s*1|cours\s+elementaire)\b/i.test(full) ||
+    full.includes('ce2') || full.includes('ce1') || full.includes('cours elementaire') ||
+    /\bce\b/i.test(full)
+  ) {
+    return 'CE';
+  }
+
+  // 3. CP : CP1, CP2, CI, Cours Préparatoire, Cours d'Initiation
+  if (
+    /\b(cp2|cp1|cp\s*2|cp\s*1|ci|cours\s+preparatoire|initiation)\b/i.test(full) ||
+    full.includes('cp2') || full.includes('cp1') || full.includes('cours preparatoire') || full.includes('ci') ||
+    /\bcp\b/i.test(full)
+  ) {
+    return 'CP';
+  }
+
+  return 'AUTRE';
+}
+
+/**
+ * Fonctions de reconnaissance précise des matières du primaire
+ */
+export function isProblemeSubject(subjectName: string): boolean {
+  const s = (subjectName || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return s.includes('problem');
+}
+
+export function isDicteeQuestionsSubject(subjectName: string): boolean {
+  const s = (subjectName || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  // Ne pas confondre avec rédaction / production d'écrit
+  if (s.includes('redact') || s.includes('produis')) return false;
+  return s.includes('dictee') || s.includes('ecrire les mots');
+}
+
+export function isCalculEcritSubject(subjectName: string): boolean {
+  const s = (subjectName || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  // Ne pas confondre avec calcul mental
+  if (s.includes('mental')) return false;
+  return s.includes('calcul ecrit') || s.includes('calcul-ecrit') || s.includes('calcul_ecrit');
+}
+
+export function isEtudeDeTexteSubject(subjectName: string): boolean {
+  const s = (subjectName || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  // Ne pas confondre avec rédaction
+  if (s.includes('redact') || s.includes('produis un texte')) return false;
+  return s.includes('etude de texte') || s.includes('etude de textes') || s.includes('etude texte') || s.includes('lecture');
+}
+
+/**
+ * Règles officielles de notation au Primaire (Togo & Afrique de l'Ouest) :
+ * - CP (CP1, CP2, CI) : TOUTES les disciplines sont notées sur 10.
+ * - CE (CE1, CE2) : 2 disciplines notées sur 20 (Problème, Dictée-questions). Toutes les autres sur 10.
+ * - CM (CM1, CM2) : 4 disciplines notées sur 20 (Problème, Dictée-questions, Calcul écrit, Étude de texte). Toutes les autres sur 10.
+ */
+export function getPrimarySubjectMaxScore(
+  subjectName: string,
+  className?: string,
+  classLevel?: string
+): number {
+  const level = detectPrimaryLevel(className, classLevel);
+
+  if (level === 'CM') {
+    // 4 disciplines notées sur 20 en CM (CM1, CM2) :
+    // 1. Problème
+    // 2. Dictée-questions
+    // 3. Calcul écrit
+    // 4. Étude de texte
+    if (isProblemeSubject(subjectName)) return 20;
+    if (isDicteeQuestionsSubject(subjectName)) return 20;
+    if (isCalculEcritSubject(subjectName)) return 20;
+    if (isEtudeDeTexteSubject(subjectName)) return 20;
+
+    return 10;
+  }
+
+  if (level === 'CE') {
+    // 2 disciplines notées sur 20 en CE (CE1, CE2) :
+    // 1. Problème
+    // 2. Dictée-questions
+    if (isProblemeSubject(subjectName)) return 20;
+    if (isDicteeQuestionsSubject(subjectName)) return 20;
+
+    return 10;
+  }
+
+  // CP (CP1, CP2), CI, Maternelle, etc. -> TOUTES les disciplines sur 10
+  return 10;
+}
+
+/**
+ * Calcule la moyenne d'une discipline pour un élève sur son barème officiel (sur 10 ou sur 20).
+ * Retourne la moyenne formatée (ex: 15.50) ou null si aucune note saisie.
+ */
+export function calculateDisciplineAverage(scores: (number | null | undefined)[]): number | null {
+  const valid = scores.filter((s): s is number => typeof s === 'number' && !isNaN(s));
+  if (valid.length === 0) return null;
+  const sum = valid.reduce((acc, curr) => acc + curr, 0);
+  return Number((sum / valid.length).toFixed(2));
+}
+
+/**
+ * Calcule la moyenne générale pondérée ramenée STRICTEMENT sur 10.
+ * Pour chaque note saisie, elle est pondérée par son barème max (10 ou 20).
+ * Formule officielle : (Somme des points obtenus / Somme des barèmes possibles) * 10
+ */
+export function calculatePrimaryGeneralAverage(
+  entries: Array<{ score: number | null | undefined; maxScore: number }>
+): { totalPoints: number; maxPossible: number; averageOutOf10: number | null } {
+  let totalPoints = 0;
+  let maxPossible = 0;
+  let count = 0;
+
+  for (const entry of entries) {
+    if (entry.score !== null && entry.score !== undefined && !isNaN(entry.score)) {
+      totalPoints += entry.score;
+      maxPossible += (entry.maxScore || 10);
+      count++;
+    }
+  }
+
+  const averageOutOf10 = maxPossible > 0 ? Number(((totalPoints / maxPossible) * 10).toFixed(2)) : null;
+
+  return {
+    totalPoints: Number(totalPoints.toFixed(2)),
+    maxPossible,
+    averageOutOf10
+  };
+}

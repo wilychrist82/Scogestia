@@ -23,7 +23,15 @@ import {
   Calculator,
   Award
 } from 'lucide-react'
-import { getCoefficientForSubject, detectClassSeriesKey, LYCEE_SERIES_CONFIG } from '@/lib/academic-curriculum'
+import { 
+  getCoefficientForSubject, 
+  detectClassSeriesKey, 
+  LYCEE_SERIES_CONFIG,
+  getPrimarySubjectMaxScore,
+  detectPrimaryLevel,
+  calculateDisciplineAverage,
+  calculatePrimaryGeneralAverage
+} from '@/lib/academic-curriculum'
 
 type ClassItem = { id: string; name: string; level?: string }
 type SubjectItem = { id: string; name: string; cycle: string; category?: string | null; coefficient?: number }
@@ -76,6 +84,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
 
   const isPrimaryCycle = selectedCycle === 'primaire' || selectedCycle === 'maternelle'
   const isSecondaryCycle = !isPrimaryCycle
+  const selectedClassObj = classes.find(c => c.id === selectedClass)
 
   const filteredClasses = sortClasses(classes.filter(c => {
     const full = ((c.level || '') + ' ' + (c.name || '')).toLowerCase();
@@ -142,26 +151,31 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
 
   // Student stats for class roster view
   const studentStatsMap = useMemo(() => {
-    const stats: Record<string, { count: number; total: number; avg: string | null }> = {}
+    const stats: Record<string, { count: number; total: number; maxPossible: number; avg: string | null }> = {}
     if (!isPrimaryCycle) return stats
 
     filteredStudents.forEach(stu => {
       let count = 0
       let total = 0
+      let maxPossible = 0
       allPrimaryGrades.forEach(g => {
         if (g.student_id === stu.id && g.score !== null && g.score !== undefined) {
+          const subj = subjects.find(s => s.id === g.subject_id)
+          const maxS = subj ? getPrimarySubjectMaxScore(subj.name, selectedClassObj?.name, selectedClassObj?.level) : ((g as any).max_score || 10)
           total += g.score
+          maxPossible += maxS
           count++
         }
       })
       stats[stu.id] = {
         count,
         total,
-        avg: count > 0 ? (total / count).toFixed(2) : null
+        maxPossible,
+        avg: maxPossible > 0 ? ((total / maxPossible) * 10).toFixed(2) : null
       }
     })
     return stats
-  }, [isPrimaryCycle, filteredStudents, allPrimaryGrades])
+  }, [isPrimaryCycle, filteredStudents, allPrimaryGrades, subjects, selectedClassObj])
 
   // Synchronize studentScores when selected student changes
   useEffect(() => {
@@ -185,8 +199,40 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
 
     for (let m = 1; m <= 9; m++) {
       let sum = 0
+      let maxPossible = 0
       let count = 0
       filteredPrimarySubjects.forEach(s => {
+        const maxS = getPrimarySubjectMaxScore(s.name, selectedClassObj?.name, selectedClassObj?.level)
+        const valStr = studentScores[`${m}_${s.id}`]
+        if (valStr !== undefined && valStr !== '') {
+          const val = parseFloat(valStr)
+          if (!isNaN(val)) {
+            sum += val
+            maxPossible += maxS
+            count++
+          }
+        }
+      })
+      calcs[m] = {
+        total: sum,
+        count,
+        maxPossible,
+        avg: maxPossible > 0 ? ((sum / maxPossible) * 10).toFixed(2) : null
+      }
+    }
+    return calcs
+  }, [isPrimaryCycle, selectedStudent, studentScores, filteredPrimarySubjects, selectedClassObj])
+
+  // Moyenne de chaque discipline pour l'élève sélectionné
+  const disciplineStats = useMemo(() => {
+    if (!isPrimaryCycle || !selectedStudent) return {}
+    const stats: Record<string, { sum: number; count: number; maxScore: number; avgOnScale: string | null; avgOutOf10: string | null }> = {}
+
+    filteredPrimarySubjects.forEach(s => {
+      const maxScore = getPrimarySubjectMaxScore(s.name, selectedClassObj?.name, selectedClassObj?.level)
+      let sum = 0
+      let count = 0
+      for (let m = 1; m <= 9; m++) {
         const valStr = studentScores[`${m}_${s.id}`]
         if (valStr !== undefined && valStr !== '') {
           const val = parseFloat(valStr)
@@ -195,16 +241,53 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
             count++
           }
         }
-      })
-      calcs[m] = {
-        total: sum,
+      }
+      const rawAvg = count > 0 ? sum / count : null
+      const avgOnScale = rawAvg !== null ? rawAvg.toFixed(2) : null
+      const avgOutOf10 = rawAvg !== null ? ((rawAvg / maxScore) * 10).toFixed(2) : null
+
+      stats[s.id] = { sum, count, maxScore, avgOnScale, avgOutOf10 }
+    })
+    return stats
+  }, [isPrimaryCycle, selectedStudent, studentScores, filteredPrimarySubjects, selectedClassObj])
+
+  // Synthèse trimestrielle et annuelle de l'élève sélectionné
+  const termSummaries = useMemo(() => {
+    if (!isPrimaryCycle || !selectedStudent) return null
+
+    const calcRange = (startMonth: number, endMonth: number) => {
+      let sum = 0
+      let maxPossible = 0
+      let count = 0
+      for (let m = startMonth; m <= endMonth; m++) {
+        filteredPrimarySubjects.forEach(s => {
+          const maxS = getPrimarySubjectMaxScore(s.name, selectedClassObj?.name, selectedClassObj?.level)
+          const valStr = studentScores[`${m}_${s.id}`]
+          if (valStr !== undefined && valStr !== '') {
+            const val = parseFloat(valStr)
+            if (!isNaN(val)) {
+              sum += val
+              maxPossible += maxS
+              count++
+            }
+          }
+        })
+      }
+      return {
+        sum,
+        maxPossible,
         count,
-        maxPossible: count * 10,
-        avg: count > 0 ? (sum / count).toFixed(2) : null
+        avg: maxPossible > 0 ? ((sum / maxPossible) * 10).toFixed(2) : null
       }
     }
-    return calcs
-  }, [isPrimaryCycle, selectedStudent, studentScores, filteredPrimarySubjects])
+
+    const t1 = calcRange(1, 3)
+    const t2 = calcRange(4, 6)
+    const t3 = calcRange(7, 9)
+    const annual = calcRange(1, 9)
+
+    return { t1, t2, t3, annual }
+  }, [isPrimaryCycle, selectedStudent, studentScores, filteredPrimarySubjects, selectedClassObj])
 
   // Keyboard navigation across cells in Excel style
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, subjIdx: number, month: number) => {
@@ -297,8 +380,6 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
       }
     })
   }
-
-  const selectedClassObj = classes.find(c => c.id === selectedClass)
 
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)] custom-scrollbar">
@@ -572,15 +653,44 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
               <div className="flex flex-col">
                 <div className="p-4 sm:p-6 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-container-low)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
-                    <h3 className="font-bold text-lg text-[var(--color-on-surface)] flex items-center gap-2">
-                      <span>Liste des élèves de la classe :</span>
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[var(--color-primary)] text-white">
-                        {selectedClassObj?.name}
-                      </span>
-                      <span className="text-sm font-normal text-[var(--color-on-surface-variant)]">
-                        ({filteredStudents.length} élèves)
-                      </span>
-                    </h3>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-bold text-lg text-[var(--color-on-surface)] flex items-center gap-2">
+                        <span>Liste des élèves de la classe :</span>
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[var(--color-primary)] text-white">
+                          {selectedClassObj?.name}
+                        </span>
+                        <span className="text-sm font-normal text-[var(--color-on-surface-variant)]">
+                          ({filteredStudents.length} élèves)
+                        </span>
+                      </h3>
+
+                      {/* Badge barème officiel */}
+                      {(() => {
+                        const primLvl = selectedClassObj ? detectPrimaryLevel(selectedClassObj.name, selectedClassObj.level) : null;
+                        if (primLvl === 'CP') {
+                          return (
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                              📘 CP (CP1, CP2, CI) : toutes disciplines sur 10
+                            </span>
+                          );
+                        }
+                        if (primLvl === 'CE') {
+                          return (
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                              📗 CE (CE1, CE2) : Problème & Dictée sur 20 • Autres sur 10
+                            </span>
+                          );
+                        }
+                        if (primLvl === 'CM') {
+                          return (
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">
+                              📙 CM (CM1, CM2) : Problème, Dictée, Calcul écrit & Étude de texte sur 20 • Autres sur 10
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
                     <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">
                       💡 Cliquez sur un élève, <strong>double-cliquez</strong> ou cliquez sur <strong>« Saisir les notes »</strong> pour ouvrir sa grille de notes complète.
                     </p>
@@ -728,7 +838,12 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                         Matricule : <span className="font-semibold text-[var(--color-on-surface)]">{currentStudent?.matricule || 'Non renseigné'}</span>
                         {' • '}
                         <span className="text-[var(--color-on-surface-variant)]">
-                          {filteredPrimarySubjects.length} matières • Barème : / 10
+                          {filteredPrimarySubjects.length} matières • Barème : {(() => {
+                            const primLvl = selectedClassObj ? detectPrimaryLevel(selectedClassObj.name, selectedClassObj.level) : null;
+                            if (primLvl === 'CM') return '4 disciplines sur 20 (Problème, Dictée, Calcul, Étude de texte), autres sur 10';
+                            if (primLvl === 'CE') return '2 disciplines sur 20 (Problème, Dictée), autres sur 10';
+                            return 'Toutes disciplines sur 10';
+                          })()} • Moyenne calculée sur 10
                         </span>
                       </p>
                     </div>
@@ -773,6 +888,56 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                   </div>
                 </div>
 
+                {/* Cartes de synthèse des moyennes de l'élève */}
+                {termSummaries && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 p-4 bg-[var(--color-surface-container-lowest)] border-b border-[var(--color-outline-variant)]">
+                    <div className="p-3 rounded-xl border border-blue-200 bg-blue-50/50 flex flex-col">
+                      <span className="text-[11px] font-semibold text-blue-900 uppercase tracking-wide">Moyenne T1 (M1-M3)</span>
+                      <div className="flex items-baseline gap-1 mt-1">
+                        <span className="text-xl font-extrabold text-blue-950">{termSummaries.t1.avg ?? '—'}</span>
+                        <span className="text-xs font-semibold text-blue-800">/ 10</span>
+                      </div>
+                      <span className="text-[10px] text-blue-700 mt-0.5">{termSummaries.t1.count} note(s) saisie(s)</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl border border-emerald-200 bg-emerald-50/50 flex flex-col">
+                      <span className="text-[11px] font-semibold text-emerald-900 uppercase tracking-wide">Moyenne T2 (M4-M6)</span>
+                      <div className="flex items-baseline gap-1 mt-1">
+                        <span className="text-xl font-extrabold text-emerald-950">{termSummaries.t2.avg ?? '—'}</span>
+                        <span className="text-xs font-semibold text-emerald-800">/ 10</span>
+                      </div>
+                      <span className="text-[10px] text-emerald-700 mt-0.5">{termSummaries.t2.count} note(s) saisie(s)</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl border border-purple-200 bg-purple-50/50 flex flex-col">
+                      <span className="text-[11px] font-semibold text-purple-900 uppercase tracking-wide">Moyenne T3 (M7-M9)</span>
+                      <div className="flex items-baseline gap-1 mt-1">
+                        <span className="text-xl font-extrabold text-purple-950">{termSummaries.t3.avg ?? '—'}</span>
+                        <span className="text-xs font-semibold text-purple-800">/ 10</span>
+                      </div>
+                      <span className="text-[10px] text-purple-700 mt-0.5">{termSummaries.t3.count} note(s) saisie(s)</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl border border-amber-300 bg-amber-50/70 flex flex-col shadow-2xs">
+                      <span className="text-[11px] font-bold text-amber-950 uppercase tracking-wide">Moyenne Annuelle</span>
+                      <div className="flex items-baseline gap-1 mt-1">
+                        <span className="text-2xl font-black text-amber-900">{termSummaries.annual.avg ?? '—'}</span>
+                        <span className="text-xs font-bold text-amber-800">/ 10</span>
+                      </div>
+                      <span className="text-[10px] font-medium text-amber-800 mt-0.5">Sur l'ensemble des mois</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl border border-[var(--color-outline-variant)] bg-[var(--color-surface)] flex flex-col col-span-2 sm:col-span-1">
+                      <span className="text-[11px] font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wide">Points cumulés</span>
+                      <div className="flex items-baseline gap-1 mt-1">
+                        <span className="text-lg font-bold text-[var(--color-on-surface)]">{termSummaries.annual.sum.toFixed(1)}</span>
+                        <span className="text-xs text-[var(--color-on-surface-variant)]">/ {termSummaries.annual.maxPossible}</span>
+                      </div>
+                      <span className="text-[10px] text-[var(--color-on-surface-variant)] mt-0.5">{termSummaries.annual.count} notes au total</span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Primary Excel Grid */}
                 <div id="primary-notes-table-container" className="overflow-x-auto min-h-[420px] max-h-[650px] custom-scrollbar">
                   <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -788,37 +953,58 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                         <th colSpan={3} className="py-2 px-2 text-center font-bold bg-emerald-50/50 text-emerald-900 border-r border-[var(--color-outline-variant)]">
                           2e Trimestre
                         </th>
-                        <th colSpan={3} className="py-2 px-2 text-center font-bold bg-purple-50/50 text-purple-900">
+                        <th colSpan={3} className="py-2 px-2 text-center font-bold bg-purple-50/50 text-purple-900 border-r border-[var(--color-outline-variant)]">
                           3e Trimestre
+                        </th>
+                        <th colSpan={2} className="py-2 px-3 text-center font-bold bg-amber-50/70 text-amber-950">
+                          Moyennes Discipline
                         </th>
                       </tr>
 
                       {/* Month sub-headers */}
                       <tr className="bg-[var(--color-surface-container)] border-b border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-xs font-semibold">
                         <th className="py-2.5 px-4 sticky left-0 bg-[var(--color-surface-container)] z-20 border-r border-[var(--color-outline-variant)] shadow-[1px_0_0_var(--color-outline-variant)]">
-                          Matières
+                          Discipline & Barème
                         </th>
                         {Array.from({ length: 9 }).map((_, i) => (
                           <th key={i} className={`py-2.5 px-2 text-center w-[85px] ${i === 2 || i === 5 ? 'border-r border-[var(--color-outline-variant)]' : ''}`}>
                             <div className="font-bold">Mois {i + 1}</div>
-                            <div className="text-[10px] font-normal text-[var(--color-on-surface-variant)]">/ 10</div>
+                            <div className="text-[10px] font-normal text-[var(--color-on-surface-variant)]">Évaluation</div>
                           </th>
                         ))}
+                        <th className="py-2.5 px-3 text-center w-[115px] border-l border-[var(--color-outline-variant)] bg-amber-50/40">
+                          <div className="font-bold text-amber-950">Moy. Discipline</div>
+                          <div className="text-[10px] font-normal text-amber-800">Sur barème officiel</div>
+                        </th>
+                        <th className="py-2.5 px-3 text-center w-[95px] bg-amber-50/40">
+                          <div className="font-bold text-amber-950">Moy. / 10</div>
+                          <div className="text-[10px] font-normal text-amber-800">Ramenée</div>
+                        </th>
                       </tr>
                     </thead>
                     
                     <tbody className="divide-y divide-[var(--color-outline-variant)] text-sm">
                       {filteredPrimarySubjects.map((subject, subjIdx) => {
                         const cat = subject.category || 'Général'
+                        const maxScore = getPrimarySubjectMaxScore(subject.name, selectedClassObj?.name, selectedClassObj?.level)
                         return (
                           <tr key={subject.id} className="hover:bg-[var(--color-surface-container-lowest)]/80 bg-[var(--color-surface-container-lowest)] transition-colors group">
                             
                             {/* Sticky Subject Cell */}
                             <td className="py-2.5 px-4 sticky left-0 bg-[var(--color-surface-container-lowest)] group-hover:bg-[var(--color-surface-bright)] z-10 border-r border-[var(--color-outline-variant)] shadow-[1px_0_0_var(--color-outline-variant)] min-w-[280px]">
                               <div className="flex flex-col">
-                                <span className="font-semibold text-[var(--color-on-surface)] text-sm leading-tight">
-                                  {subject.name}
-                                </span>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-semibold text-[var(--color-on-surface)] text-sm leading-tight">
+                                    {subject.name}
+                                  </span>
+                                  <span className={`px-2 py-0.5 rounded text-[11px] font-bold shrink-0 ${
+                                    maxScore === 20 
+                                      ? 'bg-blue-100 text-blue-800 border border-blue-200 shadow-2xs' 
+                                      : 'bg-slate-100 text-slate-700 border border-slate-200'
+                                  }`}>
+                                    sur {maxScore}
+                                  </span>
+                                </div>
                                 {cat && (
                                   <span className="text-[10px] text-[var(--color-on-surface-variant)] font-medium mt-0.5">
                                     {cat}
@@ -833,7 +1019,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                               const scoreKey = `${month}_${subject.id}`;
                               const currentVal = studentScores[scoreKey] ?? '';
                               const hasPrevScore = allPrimaryGrades.some(g => g.student_id === selectedStudent && g.subject_id === subject.id && g.month_number === month);
-                              const isOutOfRange = currentVal !== '' && (parseFloat(currentVal) < 0 || parseFloat(currentVal) > 10);
+                              const isOutOfRange = currentVal !== '' && (parseFloat(currentVal) < 0 || parseFloat(currentVal) > maxScore);
 
                               return (
                                 <td 
@@ -844,7 +1030,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                                     type="number" 
                                     step="0.25"
                                     min="0"
-                                    max="10"
+                                    max={maxScore}
                                     id={`score-input-${subjIdx}-${month}`}
                                     name={`score_${month}_${subject.id}`}
                                     value={currentVal}
@@ -856,7 +1042,7 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                                       }))
                                     }}
                                     onKeyDown={(e) => handleKeyDown(e, subjIdx, month)}
-                                    placeholder="-"
+                                    placeholder={`/${maxScore}`}
                                     className={`w-16 h-9 text-center font-semibold text-sm border rounded-lg outline-none transition-all ${
                                       isOutOfRange 
                                         ? 'border-red-500 bg-red-50 text-red-700 focus:ring-2 focus:ring-red-200' 
@@ -865,7 +1051,12 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                                           : 'border-[var(--color-outline-variant)] bg-[var(--color-surface)] text-[var(--color-on-surface)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20'
                                     }`}
                                   />
-                                  {/* Track if field previously had a grade in DB for clean deletions */}
+                                  {/* Dynamic max score and previous grade tracking */}
+                                  <input 
+                                    type="hidden" 
+                                    name={`max_${subject.id}`} 
+                                    value={maxScore} 
+                                  />
                                   <input 
                                     type="hidden" 
                                     name={`orig_${month}_${subject.id}`} 
@@ -874,6 +1065,42 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                                 </td>
                               )
                             })}
+
+                            {/* Colonnes de moyennes par discipline */}
+                            {(() => {
+                              const dStat = disciplineStats[subject.id];
+                              const isPass = dStat?.avgOutOf10 !== null && parseFloat(dStat.avgOutOf10) >= 5;
+                              return (
+                                <>
+                                  <td className="py-1.5 px-2 text-center border-l border-[var(--color-outline-variant)] bg-[var(--color-surface-container-lowest)]">
+                                    {dStat && dStat.count > 0 ? (
+                                      <span className={`inline-block px-2.5 py-0.5 rounded text-xs font-bold ${
+                                        maxScore === 20
+                                          ? parseFloat(dStat.avgOnScale || '0') >= 10
+                                            ? 'bg-blue-100 text-blue-900 border border-blue-200'
+                                            : 'bg-red-100 text-red-800 border border-red-200'
+                                          : isPass
+                                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                            : 'bg-red-100 text-red-800 border border-red-200'
+                                      }`}>
+                                        {dStat.avgOnScale} <span className="text-[10px] font-normal opacity-75">/ {maxScore}</span>
+                                      </span>
+                                    ) : (
+                                      <span className="text-[var(--color-on-surface-variant)] opacity-40 text-xs">—</span>
+                                    )}
+                                  </td>
+                                  <td className="py-1.5 px-2 text-center bg-[var(--color-surface-container-lowest)]">
+                                    {dStat && dStat.count > 0 ? (
+                                      <span className="text-xs font-semibold text-[var(--color-on-surface)]">
+                                        {dStat.avgOutOf10} <span className="text-[10px] text-[var(--color-on-surface-variant)]">/ 10</span>
+                                      </span>
+                                    ) : (
+                                      <span className="text-[var(--color-on-surface-variant)] opacity-40 text-xs">—</span>
+                                    )}
+                                  </td>
+                                </>
+                              );
+                            })()}
                           </tr>
                         )
                       })}
@@ -918,6 +1145,21 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                             </td>
                           )
                         })}
+                        {/* Annuel Total Points */}
+                        <td className="py-2.5 px-2 text-center border-l border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] font-bold text-xs" colSpan={2}>
+                          {termSummaries && termSummaries.annual.count > 0 ? (
+                            <div className="flex flex-col items-center">
+                              <span className="font-bold text-xs text-[var(--color-on-surface)]">
+                                {termSummaries.annual.sum.toFixed(2)}
+                              </span>
+                              <span className="text-[10px] font-normal text-[var(--color-on-surface-variant)]">
+                                / {termSummaries.annual.maxPossible} points
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-[var(--color-on-surface-variant)] opacity-40">—</span>
+                          )}
+                        </td>
                       </tr>
 
                       {/* Row 2: MOYENNE MENSUELLE */}
@@ -956,6 +1198,25 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
                             </td>
                           )
                         })}
+                        {/* Annuel Moyenne Générale */}
+                        <td className="py-2.5 px-2 text-center border-l border-[var(--color-outline-variant)] bg-[var(--color-surface-container-high)] font-bold text-xs" colSpan={2}>
+                          {termSummaries && termSummaries.annual.avg ? (
+                            <div className="flex flex-col items-center">
+                              <span className={`inline-block px-2.5 py-0.5 rounded font-extrabold text-xs shadow-2xs ${
+                                parseFloat(termSummaries.annual.avg) >= 5
+                                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                  : 'bg-red-100 text-red-900 border border-red-200'
+                              }`}>
+                                {termSummaries.annual.avg} / 10
+                              </span>
+                              <span className="text-[9px] font-normal text-[var(--color-on-surface-variant)] mt-0.5">
+                                Moyenne Générale
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-[var(--color-on-surface-variant)] opacity-40">—</span>
+                          )}
+                        </td>
                       </tr>
                     </tfoot>
                   </table>

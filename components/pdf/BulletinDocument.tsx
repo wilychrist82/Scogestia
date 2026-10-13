@@ -88,7 +88,7 @@ export type BulletinData = {
   
   // Primary specific
   primaryCategories?: Record<string, Array<{
-    id: string; name: string; monthScores: Record<string, string>; avg: string
+    id: string; name: string; monthScores: Record<string, string>; avg: string; maxScore?: number
   }>>
   months?: number[]
   monthTotals?: Record<string, string>
@@ -149,11 +149,11 @@ function renderPrimaryTable(data: BulletinData) {
           </View>
           {subjs.map(subj => (
             <View key={subj.id} style={styles.row}>
-              <Text style={styles.colPrimSubj}>{subj.name}</Text>
+              <Text style={styles.colPrimSubj}>{subj.name}{subj.maxScore ? ` (/${subj.maxScore})` : ''}</Text>
               {months.map(m => (
                 <Text key={m} style={styles.colPrimMonth}>{subj.monthScores[m] || ''}</Text>
               ))}
-              <Text style={styles.colPrimMoy}>{subj.avg}</Text>
+              <Text style={styles.colPrimMoy}>{subj.avg ? `${subj.avg}${subj.maxScore ? `/${subj.maxScore}` : ''}` : ''}</Text>
             </View>
           ))}
         </React.Fragment>
