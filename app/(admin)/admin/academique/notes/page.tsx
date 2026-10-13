@@ -21,7 +21,7 @@ export default async function NotesPage() {
 
   const { data: classes } = await supabase.from('classes').select('id, name, level').eq('school_id', schoolId).order('name')
   const { data: students } = await supabase.from('students').select('id, first_name, last_name, matricule, class_id').eq('school_id', schoolId).order('last_name')
-  let { data: subjects } = await supabase.from('subjects').select('id, name, cycle').eq('school_id', schoolId).order('name')
+  let { data: subjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId).order('name')
   
   if (!subjects || subjects.length === 0) {
     const seedSubjects = [
@@ -55,7 +55,7 @@ export default async function NotesPage() {
       { school_id: schoolId, name: 'Philosophie', cycle: 'secondaire', coefficient: 2 },
     ];
     await supabase.from('subjects').insert(seedSubjects);
-    const { data: newSubjects } = await supabase.from('subjects').select('id, name, cycle').eq('school_id', schoolId).order('name');
+    const { data: newSubjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId).order('name');
     subjects = newSubjects;
   } else if (!subjects.some(s => s.name.toLowerCase().includes('philo'))) {
     await supabase.from('subjects').insert({
@@ -64,7 +64,7 @@ export default async function NotesPage() {
       cycle: 'secondaire',
       coefficient: 2
     });
-    const { data: updatedSubjects } = await supabase.from('subjects').select('id, name, cycle').eq('school_id', schoolId).order('name');
+    const { data: updatedSubjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId).order('name');
     if (updatedSubjects) subjects = updatedSubjects;
   }
   

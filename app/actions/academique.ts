@@ -126,10 +126,11 @@ export async function savePrimaryGrades(
   formData: FormData,
 ): Promise<ActionState> {
   const classId = formData.get("classId") as string;
-  const subjectId = formData.get("subjectId") as string;
+  const subjectId = formData.get("subjectId") as string | null;
+  const studentId = formData.get("studentId") as string | null;
 
-  if (!classId || !subjectId) {
-    return { error: "Paramètres manquants pour la sauvegarde." };
+  if (!classId || (!subjectId && !studentId)) {
+    return { error: "Paramètres manquants pour la sauvegarde (classe et élève ou matière requis)." };
   }
 
   try {
@@ -139,40 +140,77 @@ export async function savePrimaryGrades(
       data: { user },
     } = await supabase.auth.getUser();
 
+    const academicYear = getDynamicAcademicYear();
     const gradesToUpsert = [];
+    const deleteConditions: { student_id: string; subject_id: string; month_number: number }[] = [];
+
     for (const [key, value] of formData.entries()) {
-      if (key.startsWith("score_") && value) {
-        // key format: score_{monthNumber}_{studentId}
+      if (key.startsWith("score_")) {
+        // key format: score_{monthNumber}_{targetId}
+        // If studentId is present (mode par élève): targetId is subjectId
+        // If subjectId is present (mode par matière): targetId is studentId
         const parts = key.split("_");
         if (parts.length === 3) {
           const monthNumber = parseInt(parts[1], 10);
-          const studentId = parts[2];
-          const score = parseFloat(value as string);
-          if (!isNaN(score)) {
-            gradesToUpsert.push({
-              school_id,
-              student_id: studentId,
-              subject_id: subjectId,
-              month_number: monthNumber,
-              score,
-              max_score: 10,
-              academic_year: getDynamicAcademicYear(),
-              entered_by: user?.id,
-            });
+          const targetId = parts[2];
+          const actualStudentId = studentId ? studentId : targetId;
+          const actualSubjectId = studentId ? targetId : subjectId!;
+          const valStr = typeof value === "string" ? value.trim() : "";
+
+          if (valStr !== "") {
+            const score = parseFloat(valStr);
+            if (!isNaN(score)) {
+              gradesToUpsert.push({
+                school_id,
+                student_id: actualStudentId,
+                subject_id: actualSubjectId,
+                month_number: monthNumber,
+                score,
+                max_score: 10,
+                academic_year: academicYear,
+                entered_by: user?.id,
+              });
+            }
+          } else {
+            // Check if there was an existing grade that got cleared
+            const origFlag = formData.get(`orig_${monthNumber}_${targetId}`);
+            if (origFlag === "1") {
+              deleteConditions.push({
+                student_id: actualStudentId,
+                subject_id: actualSubjectId,
+                month_number: monthNumber,
+              });
+            }
           }
         }
       }
     }
 
     if (gradesToUpsert.length > 0) {
-      await supabase
+      const { error: upsertErr } = await supabase
         .from("primary_grades")
         .upsert(gradesToUpsert, {
           onConflict: "student_id, subject_id, month_number, academic_year",
         });
+      if (upsertErr) throw upsertErr;
+    }
+
+    if (deleteConditions.length > 0) {
+      for (const cond of deleteConditions) {
+        await supabase
+          .from("primary_grades")
+          .delete()
+          .eq("school_id", school_id)
+          .eq("student_id", cond.student_id)
+          .eq("subject_id", cond.subject_id)
+          .eq("month_number", cond.month_number)
+          .eq("academic_year", academicYear);
+      }
     }
 
     revalidatePath("/admin/academique/notes");
+    revalidatePath("/admin/academique/bulletins");
+    revalidatePath("/enseignant/notes");
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
