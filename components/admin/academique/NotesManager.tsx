@@ -46,6 +46,7 @@ type Props = {
   students: StudentItem[]
   primaryGrades: PrimaryGradeItem[]
   secondaryGrades: SecondaryGradeItem[]
+  isTeacher?: boolean
 }
 
 const CATEGORY_PRIORITY: Record<string, number> = {
@@ -56,9 +57,30 @@ const CATEGORY_PRIORITY: Record<string, number> = {
   'Général': 5,
 }
 
-export function NotesManager({ classes, subjects, students, primaryGrades, secondaryGrades }: Props) {
-  const [selectedCycle, setSelectedCycle] = useState<string>('primaire')
-  const [selectedClass, setSelectedClass] = useState<string>('')
+export function NotesManager({ 
+  classes, 
+  subjects, 
+  students, 
+  primaryGrades, 
+  secondaryGrades,
+  isTeacher = false
+}: Props) {
+  const [selectedCycle, setSelectedCycle] = useState<string>(() => {
+    if (classes.length > 0) {
+      const firstClass = classes[0]
+      const full = ((firstClass.level || '') + ' ' + (firstClass.name || '')).toLowerCase()
+      if (['cp1', 'cp2', 'cp', 'ce1', 'ce2', 'ce', 'cm1', 'cm2', 'cm', 'ci', 'primaire'].some(k => full.includes(k))) return 'primaire'
+      if (['s1', 's2', 'section1', 'section2', 'maternelle', 'ps', 'ms', 'gs'].some(k => full.includes(k))) return 'maternelle'
+      if (['6eme', '6ème', '5eme', '5ème', '4eme', '4ème', '3eme', '3ème', 'college', 'collège', '6e', '5e', '4e', '3e'].some(k => full.includes(k))) return 'college'
+      if (['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => full.includes(k))) return 'lycee'
+      if (['secondaire'].some(k => full.includes(k))) return 'secondaire'
+    }
+    return 'primaire'
+  })
+  const [selectedClass, setSelectedClass] = useState<string>(() => {
+    if (classes.length === 1) return classes[0].id
+    return ''
+  })
   const [selectedStudent, setSelectedStudent] = useState<string>('') // Mode primaire / maternelle
   const [selectedSubject, setSelectedSubject] = useState<string>('') // Mode secondaire
   const [selectedTerm, setSelectedTerm] = useState<string>('1er_trimestre') // Mode secondaire
@@ -123,6 +145,30 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
   const filteredSecondarySubjects = useMemo(() => {
     return subjects.filter(s => s.cycle === 'secondaire')
   }, [subjects])
+
+  // Auto-select class when filteredClasses changes
+  useEffect(() => {
+    if (filteredClasses.length === 1) {
+      if (selectedClass !== filteredClasses[0].id) {
+        setSelectedClass(filteredClasses[0].id)
+      }
+    } else if (selectedClass && !filteredClasses.some(c => c.id === selectedClass)) {
+      setSelectedClass(filteredClasses[0]?.id || '')
+    }
+  }, [filteredClasses, selectedClass])
+
+  // Auto-select subject for secondary when filteredSecondarySubjects changes
+  useEffect(() => {
+    if (isSecondaryCycle) {
+      if (filteredSecondarySubjects.length === 1) {
+        if (selectedSubject !== filteredSecondarySubjects[0].id) {
+          setSelectedSubject(filteredSecondarySubjects[0].id)
+        }
+      } else if (selectedSubject && !filteredSecondarySubjects.some(s => s.id === selectedSubject)) {
+        setSelectedSubject(filteredSecondarySubjects[0]?.id || '')
+      }
+    }
+  }, [filteredSecondarySubjects, selectedSubject, isSecondaryCycle])
 
   // Students in selected class sorted alphabetically
   const filteredStudents = useMemo(() => {
@@ -404,15 +450,6 @@ export function NotesManager({ classes, subjects, students, primaryGrades, secon
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* Quick Link to Bulletins */}
-            <Link 
-              href="/admin/academique/bulletins"
-              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] hover:bg-[var(--color-primary)] hover:text-white transition-all text-xs font-semibold border border-[var(--color-outline-variant)] shadow-2xs"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Générer les Bulletins & Livrets</span>
-            </Link>
-
             {/* Quick cycle mode pill */}
             <div className="flex items-center gap-2 bg-[var(--color-surface-container-low)] px-3 py-1.5 rounded-full border border-[var(--color-outline-variant)] text-xs font-semibold text-[var(--color-on-surface-variant)]">
               <GraduationCap className="w-4 h-4 text-[var(--color-primary)]" />

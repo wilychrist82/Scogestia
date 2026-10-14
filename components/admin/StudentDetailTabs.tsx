@@ -2,13 +2,14 @@
 
 import { useState, useTransition, useRef } from 'react'
 import Link from 'next/link'
-import { generateParentCode } from '@/app/actions/invitations'
+import { generateParentCode, resetParentPassword, unlinkParentFromStudent, createDirectParentAccess } from '@/app/actions/invitations'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { 
   FileEdit, CalendarDays, Banknote, Camera, User, GraduationCap, 
   CalendarCheck, CreditCard, CheckCircle2, Clock, CalendarOff, Receipt, Plus,
   Loader2, Edit3, Mail, Trash2, Users, Copy, Key, HeartPulse, X, Mic, 
-  ChevronRight, MessageSquare, Info, ArrowLeft, Send, AlertTriangle
+  ChevronRight, MessageSquare, Info, ArrowLeft, Send, AlertTriangle, ShieldCheck,
+  Lock, Eye, EyeOff, Sparkles, Phone, ExternalLink
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -33,12 +34,24 @@ type Student = {
   } | null
 }
 
+export type LinkedParent = {
+  linkId: string
+  userId: string
+  fullName: string
+  phone: string | null
+  email: string | null
+  relationship: string
+  createdAt: string
+}
+
 type Props = {
   student: Student
   grades?: any[]
   attendances?: any[]
   schedules?: any[]
   payments?: any[]
+  linkedParents?: LinkedParent[]
+  initialInvitationCode?: string | null
 }
 
 export function StudentDetailTabs({ 
@@ -46,12 +59,28 @@ export function StudentDetailTabs({
   grades = [], 
   attendances = [], 
   schedules = [], 
-  payments = [] 
+  payments = [],
+  linkedParents = [],
+  initialInvitationCode = null
 }: Props) {
   const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'presences' | 'paiements'>('info')
   const [isPending, startTransition] = useTransition()
-  const [invitationCode, setInvitationCode] = useState<string | null>(null)
+  const [invitationCode, setInvitationCode] = useState<string | null>(initialInvitationCode)
   const [error, setError] = useState<string | null>(null)
+  
+  // Modale Réinitialisation Mot de passe Parent
+  const [parentToReset, setParentToReset] = useState<LinkedParent | null>(null)
+  const [newParentPassword, setNewParentPassword] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [resetSuccessData, setResetSuccessData] = useState<{ phone: string, password: string } | null>(null)
+
+  // Modale Création directe accès parent
+  const [isDirectAccessModalOpen, setIsDirectAccessModalOpen] = useState(false)
+  const [directPhone, setDirectPhone] = useState(student.parent_phone || '')
+  const [directPassword, setDirectPassword] = useState('')
+  const [directFullName, setDirectFullName] = useState(`Parent de ${student.first_name}`)
+  const [directError, setDirectError] = useState<string | null>(null)
+  const [directSuccessData, setDirectSuccessData] = useState<{ phone: string, password: string } | null>(null)
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
@@ -232,6 +261,80 @@ export function StudentDetailTabs({
     }
   }
 
+  const generateRandomPassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#'
+    let res = ''
+    for (let i = 0; i < 8; i++) {
+      res += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return res
+  }
+
+  const handleResetParentPassword = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!parentToReset || !newParentPassword) return
+    if (newParentPassword.length < 6) {
+      toast.error('Le mot de passe doit comporter au moins 6 caractères.')
+      return
+    }
+
+    startTransition(async () => {
+      const res = await resetParentPassword(parentToReset.userId, newParentPassword, student.id)
+      if (res?.error) {
+        toast.error(res.error)
+      } else {
+        toast.success(`Mot de passe mis à jour avec succès pour ${parentToReset.fullName} !`)
+        setResetSuccessData({
+          phone: parentToReset.phone || parentToReset.email || '',
+          password: newParentPassword
+        })
+        router.refresh()
+      }
+    })
+  }
+
+  const handleUnlinkParent = (linkId: string, parentName: string) => {
+    if (!window.confirm(`Dissocier le compte de ${parentName} de cet élève ?`)) return
+
+    startTransition(async () => {
+      const res = await unlinkParentFromStudent(linkId, student.id)
+      if (res?.error) {
+        toast.error(res.error)
+      } else {
+        toast.success('Compte parent dissocié avec succès.')
+        router.refresh()
+      }
+    })
+  }
+
+  const handleDirectAccessSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setDirectError(null)
+    if (!directPhone || !directPassword) {
+      setDirectError('Veuillez renseigner le téléphone/email et le mot de passe.')
+      return
+    }
+
+    if (directPassword.length < 6) {
+      setDirectError('Le mot de passe doit comporter au moins 6 caractères.')
+      return
+    }
+
+    startTransition(async () => {
+      const res = await createDirectParentAccess(student.id, directPhone, directPassword, directFullName)
+      if (res?.error) {
+        setDirectError(res.error)
+      } else {
+        toast.success('Accès parent créé et lié avec succès !')
+        setDirectSuccessData({
+          phone: directPhone,
+          password: directPassword
+        })
+        router.refresh()
+      }
+    })
+  }
+
   return (
     <div className="space-y-6">
       {/* Profile Header Card */}
@@ -389,52 +492,159 @@ export function StudentDetailTabs({
           
           {/* Contact & Medical */}
           <div className="space-y-6">
-            {/* Parent Contact */}
-            <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6">
-              <h3 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2 mb-4">
-                <Users className="w-5 h-5 text-[var(--color-primary)]" />
-                Contact Parent
-              </h3>
-              <div className="space-y-4">
-                <p className="text-sm text-[var(--color-on-surface-variant)]">Les informations de contact seront disponibles après l'activation du compte parent.</p>
-                
-                <div className="pt-4 border-t border-[var(--color-outline-variant)]/50">
-                  <h4 className="text-sm font-semibold text-[var(--color-on-surface)] mb-2">Invitation Parent</h4>
-                  {invitationCode ? (
-                    <div className="bg-[#eff4ff] border border-[var(--color-outline-variant)] rounded-lg p-4">
-                      <p className="text-sm text-[var(--color-on-surface-variant)] mb-2">Lien magique à envoyer au parent :</p>
-                      <div className="text-2xl font-mono font-bold text-[var(--color-primary)] tracking-widest bg-white p-3 rounded text-center shadow-sm">
-                        {invitationCode}
-                      </div>
-                      
-                      <button 
-                        onClick={() => {
-                          const message = `Bonjour, voici le lien pour activer votre accès parent afin de suivre mon enfant. Cliquez ici : https://scogestia.vercel.app/activer-parent?code=${invitationCode}`;
-                          navigator.clipboard.writeText(message);
-                          alert("Lien copié dans le presse-papier ! Vous pouvez le coller sur WhatsApp.");
-                        }}
-                        className="w-full mt-3 h-10 bg-white border border-[var(--color-primary)] text-[var(--color-primary)] rounded-lg font-semibold text-sm flex items-center justify-center gap-2 hover:bg-[#e6eeff] transition-colors"
-                      >
-                        <Copy className="w-4 h-4" />
-                        Copier le lien pour WhatsApp
-                      </button>
+            {/* Parent Contact & Access */}
+            <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6 space-y-5">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h3 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-[var(--color-primary)]" />
+                  Accès & Contact Parent
+                </h3>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                  {linkedParents.length} compte{linkedParents.length > 1 ? 's' : ''} lié{linkedParents.length > 1 ? 's' : ''}
+                </span>
+              </div>
 
-                      <p className="text-xs text-[var(--color-on-surface-variant)] mt-3 text-center">Ce code expirera dans 7 jours.</p>
+              {/* Liste des comptes parents actifs liés */}
+              {linkedParents.length > 0 ? (
+                <div className="space-y-3">
+                  {linkedParents.map((parent) => (
+                    <div 
+                      key={parent.linkId}
+                      className="p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/30 flex flex-col gap-3 shadow-2xs"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm shrink-0 border border-emerald-200">
+                            {parent.fullName?.slice(0, 2).toUpperCase() || 'PA'}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-sm text-slate-900">{parent.fullName}</span>
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                Actif
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 capitalize mt-0.5">
+                              {parent.relationship === 'parent' ? 'Responsable légal' : parent.relationship}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleUnlinkParent(parent.linkId, parent.fullName)}
+                          className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors"
+                          title="Dissocier ce compte parent"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Boîte des identifiants de connexion */}
+                      <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                        <div>
+                          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                            Identifiant de connexion (Téléphone)
+                          </span>
+                          <span className="font-mono font-bold text-sm text-slate-900 flex items-center gap-1.5 mt-0.5">
+                            <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                            {parent.phone || parent.email || 'Numéro non renseigné'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const idToCopy = parent.phone || parent.email || '';
+                              navigator.clipboard.writeText(idToCopy);
+                              toast.success('Identifiant copié !');
+                            }}
+                            className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 inline-flex items-center gap-1 transition-colors"
+                            title="Copier le numéro"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                            Copier
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setParentToReset(parent);
+                              setNewParentPassword('');
+                              setResetSuccessData(null);
+                            }}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white inline-flex items-center gap-1.5 transition-colors shadow-2xs"
+                          >
+                            <Key className="w-3.5 h-3.5" />
+                            Changer mot de passe
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  ) : (
-                    <div>
-                      {error && <p className="text-sm text-[var(--color-status-retard-text)] mb-2">{error}</p>}
-                      <button 
-                        onClick={handleGenerateCode}
-                        disabled={isPending}
-                        className="h-10 px-4 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors flex items-center gap-2 disabled:opacity-50"
-                      >
-                        {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
-                        {isPending ? 'Génération...' : 'Générer un code d\'activation'}
-                      </button>
-                    </div>
-                  )}
+                  ))}
                 </div>
+              ) : (
+                <div className="p-4 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 text-center space-y-2">
+                  <p className="text-sm font-semibold text-slate-700">Aucun compte parent actif lié</p>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    Créez directement un accès avec mot de passe ou générez un code d'invitation à envoyer par WhatsApp.
+                  </p>
+                </div>
+              )}
+
+              {/* Actions d'ajout ou de réinitialisation */}
+              <div className="pt-4 border-t border-[var(--color-outline-variant)]/50 space-y-4">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDirectAccessModalOpen(true);
+                      setDirectSuccessData(null);
+                      setDirectError(null);
+                    }}
+                    className="flex-1 h-10 px-3.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Créer un accès direct (Téléphone + MdP)
+                  </button>
+
+                  <button 
+                    onClick={handleGenerateCode}
+                    disabled={isPending}
+                    className="flex-1 h-10 px-3.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  >
+                    {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4 text-slate-500" />}
+                    {isPending ? 'Génération...' : 'Générer code d\'invitation (OTP)'}
+                  </button>
+                </div>
+
+                {invitationCode && (
+                  <div className="bg-[#eff4ff] border border-blue-200 rounded-xl p-4 animate-in fade-in space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-blue-900 uppercase tracking-wider">Code d'activation parent</span>
+                      <span className="text-[11px] font-medium text-blue-600">Valide 7 jours</span>
+                    </div>
+
+                    <div className="text-2xl font-mono font-bold text-[var(--color-primary)] tracking-widest bg-white p-3 rounded-lg text-center shadow-xs border border-blue-100">
+                      {invitationCode}
+                    </div>
+
+                    <button 
+                      onClick={() => {
+                        const siteUrl = window.location.origin;
+                        const message = `Bonjour, voici votre lien pour activer votre accès parent Scogestia et suivre la scolarité de ${student.first_name} ${student.last_name} :\n👉 ${siteUrl}/activer-parent?code=${invitationCode}\n\nCode d'activation : ${invitationCode}`;
+                        navigator.clipboard.writeText(message);
+                        toast.success("Lien copié ! Vous pouvez le coller sur WhatsApp.");
+                      }}
+                      className="w-full h-10 bg-white border border-[var(--color-primary)] text-[var(--color-primary)] rounded-lg font-semibold text-xs flex items-center justify-center gap-2 hover:bg-[#e6eeff] transition-colors"
+                    >
+                      <Copy className="w-4 h-4" />
+                      Copier le message pour WhatsApp
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -1109,6 +1319,284 @@ export function StudentDetailTabs({
                 {isPending ? 'Suppression...' : 'Supprimer définitivement'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Réinitialisation du mot de passe Parent */}
+      {parentToReset && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col">
+            <div className="px-6 py-4 bg-emerald-700 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
+                  <Key className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base">Réinitialiser le mot de passe</h3>
+                  <p className="text-xs text-emerald-100">{parentToReset.fullName} • {parentToReset.phone || parentToReset.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setParentToReset(null); setResetSuccessData(null); }}
+                className="p-1 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {resetSuccessData ? (
+              <div className="p-6 space-y-4">
+                <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 p-3.5 rounded-xl border border-emerald-200">
+                  <CheckCircle2 className="w-5 h-5 shrink-0" />
+                  <p className="text-sm font-semibold">Mot de passe réinitialisé avec succès !</p>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Identifiants mis à jour :</span>
+                  <div className="font-mono text-sm space-y-1">
+                    <p><strong className="text-slate-700">Identifiant :</strong> <span className="font-bold text-slate-900">{resetSuccessData.phone}</span></p>
+                    <p><strong className="text-slate-700">Nouveau mot de passe :</strong> <span className="font-bold text-emerald-700">{resetSuccessData.password}</span></p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const siteUrl = window.location.origin;
+                    const msg = `Bonjour ${parentToReset.fullName}, voici vos nouveaux accès Scogestia pour suivre la scolarité de ${student.first_name} ${student.last_name} :\n\n• Identifiant : ${resetSuccessData.phone}\n• Mot de passe : ${resetSuccessData.password}\n• Connexion : ${siteUrl}/connexion\n\nGardez ces informations en sécurité.`;
+                    navigator.clipboard.writeText(msg);
+                    toast.success('Message copié ! Vous pouvez le coller sur WhatsApp.');
+                  }}
+                  className="w-full py-3 px-4 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
+                >
+                  <Copy className="w-4 h-4" />
+                  Copier le message pour WhatsApp
+                </button>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => { setParentToReset(null); setResetSuccessData(null); }}
+                    className="px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleResetParentPassword} className="p-6 space-y-5">
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Définissez un nouveau mot de passe pour le parent. Il pourra ensuite se connecter avec son numéro <strong>{parentToReset.phone || parentToReset.email}</strong>.
+                </p>
+
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold text-slate-700" htmlFor="new-parent-pass">
+                      Nouveau mot de passe
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setNewParentPassword(generateRandomPassword())}
+                      className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Générer un mot de passe
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <input
+                      id="new-parent-pass"
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={newParentPassword}
+                      onChange={(e) => setNewParentPassword(e.target.value)}
+                      placeholder="ex: Akossiwa2026"
+                      required
+                      minLength={6}
+                      className="w-full h-11 pl-4 pr-10 border border-slate-200 rounded-xl text-sm font-medium focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/15 outline-none transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <span className="text-[11px] text-slate-400">Minimum 6 caractères.</span>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setParentToReset(null)}
+                    disabled={isPending}
+                    className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isPending || !newParentPassword || newParentPassword.length < 6}
+                    className="px-5 py-2 text-sm font-bold text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
+                    {isPending ? 'Mise à jour...' : 'Enregistrer le mot de passe'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Création directe d'un accès parent */}
+      {isDirectAccessModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col">
+            <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <User className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base">Créer un accès parent direct</h3>
+                  <p className="text-xs text-slate-400">Pour {student.first_name} {student.last_name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setIsDirectAccessModalOpen(false); setDirectSuccessData(null); }}
+                className="p-1 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {directSuccessData ? (
+              <div className="p-6 space-y-4">
+                <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 p-3.5 rounded-xl border border-emerald-200">
+                  <CheckCircle2 className="w-5 h-5 shrink-0" />
+                  <p className="text-sm font-semibold">Compte parent créé et associé avec succès !</p>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Identifiants de connexion :</span>
+                  <div className="font-mono text-sm space-y-1">
+                    <p><strong className="text-slate-700">Identifiant :</strong> <span className="font-bold text-slate-900">{directSuccessData.phone}</span></p>
+                    <p><strong className="text-slate-700">Mot de passe :</strong> <span className="font-bold text-emerald-700">{directSuccessData.password}</span></p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const siteUrl = window.location.origin;
+                    const msg = `Bonjour, voici vos identifiants pour vous connecter à Scogestia et suivre ${student.first_name} ${student.last_name} :\n\n• Identifiant : ${directSuccessData.phone}\n• Mot de passe : ${directSuccessData.password}\n• Connexion : ${siteUrl}/connexion\n\nConservez ces identifiants pour vos prochaines connexions.`;
+                    navigator.clipboard.writeText(msg);
+                    toast.success('Message copié ! Vous pouvez le coller sur WhatsApp.');
+                  }}
+                  className="w-full py-3 px-4 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
+                >
+                  <Copy className="w-4 h-4" />
+                  Copier le message pour WhatsApp
+                </button>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => { setIsDirectAccessModalOpen(false); setDirectSuccessData(null); }}
+                    className="px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleDirectAccessSubmit} className="p-6 space-y-4">
+                {directError && (
+                  <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                    {directError}
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-700" htmlFor="direct-fullName">
+                    Nom du parent
+                  </label>
+                  <input
+                    id="direct-fullName"
+                    type="text"
+                    value={directFullName}
+                    onChange={(e) => setDirectFullName(e.target.value)}
+                    placeholder="ex: M. Koffi Agbodjan"
+                    required
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm font-medium focus:border-emerald-600 outline-none"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-700" htmlFor="direct-phone">
+                    Numéro de téléphone (Identifiant de connexion)
+                  </label>
+                  <input
+                    id="direct-phone"
+                    type="tel"
+                    value={directPhone}
+                    onChange={(e) => setDirectPhone(e.target.value)}
+                    placeholder="ex: 90000000 ou +228 90 00 00 00"
+                    required
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm font-mono font-medium focus:border-emerald-600 outline-none"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold text-slate-700" htmlFor="direct-pass">
+                      Mot de passe initial
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setDirectPassword(generateRandomPassword())}
+                      className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Générer
+                    </button>
+                  </div>
+                  <input
+                    id="direct-pass"
+                    type="text"
+                    value={directPassword}
+                    onChange={(e) => setDirectPassword(e.target.value)}
+                    placeholder="ex: Akossiwa2026"
+                    required
+                    minLength={6}
+                    className="w-full h-10 px-3 border border-slate-200 rounded-lg text-sm font-medium focus:border-emerald-600 outline-none"
+                  />
+                  <span className="text-[11px] text-slate-400">Le parent utilisera ce numéro et ce mot de passe pour se connecter.</span>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsDirectAccessModalOpen(false)}
+                    disabled={isPending}
+                    className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isPending}
+                    className="px-5 py-2 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                    {isPending ? 'Création...' : 'Créer l\'accès parent'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

@@ -647,6 +647,18 @@ export async function publishBulletinPDF(studentId: string, termOrMonth: string,
     // 1. Check if user is admin
     const { data: userData, error: userError } = await supabase.auth.getUser()
     if (userError || !userData.user) return { success: false, error: 'Non authentifié' }
+
+    const { data: roleData } = await supabase
+      .from('user_school_roles')
+      .select('role')
+      .eq('user_id', userData.user.id)
+      .eq('school_id', schoolId)
+      .limit(1)
+      .maybeSingle()
+
+    if (!roleData || (roleData.role !== 'admin' && roleData.role !== 'super_admin' && roleData.role !== 'comptable')) {
+      return { success: false, error: 'Seule la direction ou les administrateurs peuvent publier les bulletins officiels.' }
+    }
     
     // 2. Save to published_bulletins table
     const { error: dbError } = await supabase

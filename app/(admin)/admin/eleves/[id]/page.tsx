@@ -1,5 +1,6 @@
 import { StudentDetailTabs } from '@/components/admin/StudentDetailTabs'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
@@ -31,6 +32,7 @@ export default async function StudentDetailPage({
     .from('students')
     .select(`
       id,
+      school_id,
       matricule,
       first_name,
       last_name,
@@ -83,6 +85,47 @@ export default async function StudentDetailPage({
     .eq('student_id', id)
     .order('paid_at', { ascending: false })
 
+  // Fetch linked parent accounts (with phone/email credentials)
+  const adminClient = createAdminClient()
+  const { data: parentLinks } = await adminClient
+    .from('parent_student_links')
+    .select('id, parent_user_id, relationship, created_at')
+    .eq('student_id', id)
+
+  const linkedParents: any[] = []
+  if (parentLinks && parentLinks.length > 0) {
+    for (const link of parentLinks) {
+      const { data: userData } = await adminClient.auth.admin.getUserById(link.parent_user_id)
+      const { data: parentRole } = await adminClient
+        .from('user_school_roles')
+        .select('full_name, phone')
+        .eq('user_id', link.parent_user_id)
+        .eq('school_id', roleData.school_id)
+        .maybeSingle()
+
+      linkedParents.push({
+        linkId: link.id,
+        userId: link.parent_user_id,
+        relationship: link.relationship,
+        createdAt: link.created_at,
+        phone: userData?.user?.phone || parentRole?.phone || null,
+        email: userData?.user?.email || null,
+        fullName: parentRole?.full_name || userData?.user?.user_metadata?.full_name || 'Parent'
+      })
+    }
+  }
+
+  // Fetch active invitation code if any
+  const { data: activeCode } = await adminClient
+    .from('parent_invitation_codes')
+    .select('code, expires_at, created_at')
+    .eq('student_id', id)
+    .is('used_at', null)
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Breadcrumb */}
@@ -100,6 +143,8 @@ export default async function StudentDetailPage({
         attendances={attendances || []}
         schedules={schedules || []}
         payments={payments || []}
+        linkedParents={linkedParents}
+        initialInvitationCode={activeCode?.code || null}
       />
     </div>
   )

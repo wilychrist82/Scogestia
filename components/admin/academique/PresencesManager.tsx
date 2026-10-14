@@ -434,6 +434,23 @@ export function PresencesManager({ classes, students }: Props) {
                     </span>
                   </button>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const today = new Date()
+                    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+                    const el = document.getElementById(`day-col-${todayStr}`)
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+                    }
+                  }}
+                  className="px-2.5 py-1 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors"
+                  title="Faire défiler jusqu'au jour d'aujourd'hui"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Aujourd'hui</span>
+                </button>
               </div>
               
               <div className="flex items-center gap-4 flex-wrap">
@@ -462,24 +479,25 @@ export function PresencesManager({ classes, students }: Props) {
               </div>
             </div>
 
-            <div className="overflow-x-auto max-h-[65vh] custom-scrollbar relative p-4">
+            {/* Data Grid Table */}
+            <div className="overflow-x-auto max-h-[70vh] custom-scrollbar relative">
               <table className="w-full text-left border-collapse border-spacing-0 select-none bg-white">
                 <thead className="sticky top-0 z-20">
                   {/* First header row: Indication des absences */}
                   <tr>
-                    <th rowSpan={2} className="border border-gray-400 py-2 px-3 font-semibold text-center w-12 bg-gray-100 text-gray-700 text-sm z-30 sticky left-0">
+                    <th rowSpan={2} className="border border-gray-400 py-2 px-2 font-semibold text-center w-8 sm:w-12 bg-gray-100 text-gray-700 text-xs sm:text-sm z-30 md:sticky md:left-0">
                       N°
                     </th>
-                    <th rowSpan={2} className="border border-gray-400 py-2 px-4 font-semibold w-64 bg-gray-100 text-gray-700 text-sm z-30 sticky left-[48px]">
+                    <th rowSpan={2} className="border border-gray-400 py-2 px-3 font-semibold min-w-[140px] sm:min-w-[200px] md:w-64 bg-gray-100 text-gray-700 text-xs sm:text-sm z-30 md:sticky md:left-[48px]">
                       Nom et prénom
                     </th>
-                    <th rowSpan={2} className="border border-gray-400 py-2 px-3 font-semibold text-center w-16 bg-gray-100 text-gray-700 text-sm z-30 sticky left-[304px]">
+                    <th rowSpan={2} className="border border-gray-400 py-2 px-1 sm:px-2 font-semibold text-center w-8 sm:w-14 bg-gray-100 text-gray-700 text-xs sm:text-sm z-30 md:sticky md:left-[304px]">
                       Sexe
                     </th>
-                    <th colSpan={displayedDays.length} className="border border-gray-400 py-1 font-bold text-center bg-indigo-50/50 text-gray-700 text-sm tracking-wide">
+                    <th colSpan={displayedDays.length} className="border border-gray-400 py-1 font-bold text-center bg-indigo-50/50 text-gray-700 text-xs sm:text-sm tracking-wide">
                       Indication des absences
                     </th>
-                    <th rowSpan={2} className="border border-gray-400 py-2 px-3 font-semibold text-center w-24 bg-gray-100 text-gray-700 text-sm z-20">
+                    <th rowSpan={2} className="border border-gray-400 py-2 px-2 font-semibold text-center w-16 sm:w-24 bg-gray-100 text-gray-700 text-xs sm:text-sm z-20">
                       Total Abs.
                     </th>
                   </tr>
@@ -488,7 +506,8 @@ export function PresencesManager({ classes, students }: Props) {
                     {displayedDays.map(d => (
                       <th 
                         key={d.dayNum} 
-                        className={`border border-gray-400 p-0 text-center min-w-[28px] w-[28px] text-[11px]
+                        id={`day-col-${d.dateStr}`}
+                        className={`border border-gray-400 p-0 text-center min-w-[34px] w-[34px] sm:min-w-[28px] sm:w-[28px] text-[11px]
                           ${!d.isWithinPeriod 
                             ? 'bg-gray-200/70 text-gray-400' 
                             : d.isWeekend 
@@ -508,16 +527,16 @@ export function PresencesManager({ classes, students }: Props) {
                 <tbody className="text-sm">
                   {filteredStudents.map((student, index) => {
                     const isFille = student.gender?.toLowerCase().startsWith('f')
-                    const textColor = isFille ? 'text-red-600' : 'text-gray-800'
+                    const textColor = isFille ? 'text-red-600' : 'text-gray-900'
                     return (
                       <tr key={student.id} className="hover:bg-gray-50 group">
-                        <td className="border border-gray-400 py-2 px-2 text-center text-gray-600 font-semibold sticky left-0 bg-white z-10 group-hover:bg-gray-50">
+                        <td className="border border-gray-400 py-2 px-1 text-center text-gray-600 font-semibold bg-white z-10 group-hover:bg-gray-50 text-xs md:sticky md:left-0">
                           {String(index + 1).padStart(2, '0')}
                         </td>
-                        <td className={`border border-gray-400 py-2 px-3 font-semibold sticky left-[48px] bg-white z-10 whitespace-nowrap overflow-hidden text-ellipsis group-hover:bg-gray-50 text-xs ${textColor}`}>
+                        <td className={`border border-gray-400 py-2 px-2.5 font-semibold bg-white z-10 whitespace-nowrap overflow-hidden text-ellipsis group-hover:bg-gray-50 text-xs md:sticky md:left-[48px] ${textColor}`}>
                           {student.last_name} {student.first_name}
                         </td>
-                        <td className={`border border-gray-400 py-2 px-2 font-bold text-center sticky left-[304px] bg-white z-10 group-hover:bg-gray-50 ${textColor}`}>
+                        <td className={`border border-gray-400 py-2 px-1 font-bold text-center bg-white z-10 group-hover:bg-gray-50 text-xs md:sticky md:left-[304px] ${textColor}`}>
                           {isFille ? 'F' : 'M'}
                         </td>
                         {displayedDays.map(d => {
@@ -536,16 +555,16 @@ export function PresencesManager({ classes, students }: Props) {
                                     : 'Cliquez pour marquer : Présent -> Retard (-) -> Absent (+)'
                               }
                               className={`
-                                border border-gray-400 p-0 text-center text-sm font-bold transition-colors select-none
+                                border border-gray-400 p-0 text-center text-sm font-black transition-colors select-none
                                 ${!d.isWithinPeriod 
                                   ? 'bg-gray-100/80 text-gray-300 cursor-not-allowed' 
                                   : d.isWeekend 
                                     ? 'bg-blue-100/30 cursor-not-allowed' 
-                                    : 'cursor-pointer hover:bg-gray-100'}
-                                ${isModified ? 'text-indigo-600 bg-indigo-50/50' : 'text-gray-800'}
+                                    : 'cursor-pointer hover:bg-gray-100 active:bg-blue-50'}
+                                ${isModified ? 'text-indigo-600 bg-indigo-50/50' : 'text-gray-900'}
                               `}
                             >
-                              <div className="w-full h-8 flex items-center justify-center">
+                              <div className="w-full h-9 sm:h-8 flex items-center justify-center text-base sm:text-sm font-black">
                                 {!d.isWithinPeriod ? (
                                   <span className="text-gray-300 text-xs font-normal">/</span>
                                 ) : !d.isWeekend ? (
@@ -555,7 +574,7 @@ export function PresencesManager({ classes, students }: Props) {
                             </td>
                           )
                         })}
-                        <td className="border border-gray-400 py-2 px-2 text-center font-bold text-gray-700 bg-gray-50/50">
+                        <td className="border border-gray-400 py-2 px-2 text-center font-bold text-gray-700 bg-gray-50/50 text-xs sm:text-sm">
                           {getTotalAbsences(student.id)}
                         </td>
                       </tr>
@@ -565,14 +584,27 @@ export function PresencesManager({ classes, students }: Props) {
               </table>
             </div>
 
-            {/* Bouton récapitulation en bas pour mobile */}
-            <div className="p-4 border-t border-gray-200 bg-gray-50 flex md:hidden justify-center">
+            {/* Barre d'action mobile fixe en bas */}
+            <div className="p-3 border-t border-gray-200 bg-white/95 backdrop-blur-xs flex md:hidden items-center justify-between gap-2 sticky bottom-0 z-30 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
               <button 
                 onClick={() => setIsRecapOpen(true)}
-                className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 bg-blue-50 border border-blue-200 text-blue-700 px-3 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-1.5"
               >
                 <FileText className="w-4 h-4" />
-                Récapitulation du mois
+                Récapitulatif
+              </button>
+
+              <button 
+                onClick={handleSave}
+                disabled={isPending || modifiedCells.size === 0}
+                className="flex-1 bg-[var(--color-primary)] text-white px-3 py-2.5 rounded-lg text-xs font-bold hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                {isPending ? 'Enregistrement...' : "Enregistrer"}
+                {modifiedCells.size > 0 && !isPending && (
+                  <span className="bg-white/25 px-1.5 py-0.2 rounded-full text-[10px] font-bold">
+                    {modifiedCells.size}
+                  </span>
+                )}
               </button>
             </div>
           </div>

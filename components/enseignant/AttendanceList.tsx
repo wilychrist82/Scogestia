@@ -156,43 +156,43 @@ export function AttendanceList({ classId, className, date, students, initialAtte
                 </div>
 
                 {/* Segmented Toggle Control */}
-                <div className={`flex bg-[var(--color-surface-container-high)] rounded-lg p-1 gap-1 ${status === 'non_defini' ? 'border border-[var(--color-outline-variant)]/50' : ''}`}>
+                <div className={`flex w-full sm:w-auto justify-between sm:justify-start bg-[var(--color-surface-container-high)] rounded-lg p-1 gap-1 ${status === 'non_defini' ? 'border border-[var(--color-outline-variant)]/50' : ''}`}>
                   {/* Présent */}
                   <button 
                     onClick={() => handleStatusChange(student.id, 'present')}
-                    className={`px-4 sm:px-6 py-2 rounded-md font-semibold text-sm transition-all flex items-center gap-2 ${
+                    className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 rounded-md font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 ${
                       status === 'present' 
                         ? 'bg-[var(--color-primary)] text-white shadow-sm' 
                         : 'text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-highest)]'
                     }`}
                   >
-                    {status === 'present' && <CheckCircle2 className="w-4 h-4" />}
+                    {status === 'present' && <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />}
                     Présent
                   </button>
                   
                   {/* Retard */}
                   <button 
                     onClick={() => handleStatusChange(student.id, 'retard')}
-                    className={`px-4 sm:px-6 py-2 rounded-md font-semibold text-sm transition-all flex items-center gap-2 ${
+                    className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 rounded-md font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 ${
                       status === 'retard' 
                         ? 'bg-[#e65100] text-white shadow-sm' 
                         : 'text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-highest)]'
                     }`}
                   >
-                    {status === 'retard' && <Clock className="w-4 h-4" />}
+                    {status === 'retard' && <Clock className="w-3.5 h-3.5 shrink-0" />}
                     Retard
                   </button>
                   
                   {/* Absent */}
                   <button 
                     onClick={() => handleStatusChange(student.id, 'absent')}
-                    className={`px-4 sm:px-6 py-2 rounded-md font-semibold text-sm transition-all flex items-center gap-2 ${
+                    className={`flex-1 sm:flex-initial px-3 sm:px-6 py-2 rounded-md font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 ${
                       (status === 'absent' || status === 'absent_justifie')
                         ? 'bg-[var(--color-error)] text-white shadow-sm' 
                         : 'text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-highest)]'
                     }`}
                   >
-                    {(status === 'absent' || status === 'absent_justifie') && <XCircle className="w-4 h-4" />}
+                    {(status === 'absent' || status === 'absent_justifie') && <XCircle className="w-3.5 h-3.5 shrink-0" />}
                     Absent
                   </button>
                 </div>
@@ -203,7 +203,7 @@ export function AttendanceList({ classId, className, date, students, initialAtte
       </div>
 
       {/* Sticky Bottom Action Bar */}
-      <div className="fixed bottom-0 left-64 right-0 bg-[var(--color-surface-container-lowest)] border-t border-[var(--color-outline-variant)] p-4 flex justify-end items-center gap-4 shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)] z-10 px-8">
+      <div className="fixed bottom-0 left-0 md:left-64 right-0 bg-[var(--color-surface-container-lowest)] border-t border-[var(--color-outline-variant)] p-3 sm:p-4 flex justify-between sm:justify-end items-center gap-3 sm:gap-4 shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)] z-20 px-4 sm:px-8">
         <button 
           onClick={() => {
             // Remettre à l'état initial

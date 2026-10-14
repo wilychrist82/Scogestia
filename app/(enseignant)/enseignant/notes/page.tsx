@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { TeacherNotesWrapper } from '@/components/enseignant/TeacherNotesWrapper'
+import { sortClasses } from '@/lib/classes'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,7 +33,15 @@ export default async function EnseignantNotesPage() {
     .eq('teacher_id', user.id)
 
   if (!assignments || assignments.length === 0) {
-    return <div className="p-8">Aucune classe assignée.</div>
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center">
+        <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4 border border-blue-100">
+          <span className="text-3xl">📚</span>
+        </div>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Aucune classe assignée</h2>
+        <p className="text-sm text-slate-500 max-w-sm">Vous n'avez pas encore de classe ou de matière assignée par l'administration.</p>
+      </div>
+    )
   }
 
   // Fetch actual subjects from DB to get their cycle and ID
@@ -49,8 +58,23 @@ export default async function EnseignantNotesPage() {
     if (!classesMap.has(a.class_id)) {
       classesMap.set(a.class_id, { id: a.class_id, name: a.classes?.name, level: a.classes?.level })
     }
-    
-    // Find the real subject from the subjects table
+  })
+
+  // Detect if teacher teaches any primary/maternelle class
+  const hasPrimaryClass = Array.from(classesMap.values()).some((c: any) => {
+    const full = ((c.level || '') + ' ' + (c.name || '')).toLowerCase()
+    return ['cp1', 'cp2', 'cp', 'ce1', 'ce2', 'ce', 'cm1', 'cm2', 'cm', 'ci', 'primaire', 'maternelle', 's1', 's2', 'section1', 'section2', 'ps', 'ms', 'gs'].some(k => full.includes(k))
+  })
+
+  // If teacher has primary classes, they teach all primary/maternelle subjects
+  if (hasPrimaryClass && allSubjects) {
+    allSubjects
+      .filter(s => s.cycle === 'primaire' || s.cycle === 'maternelle')
+      .forEach(s => subjectsMap.set(s.id, s))
+  }
+
+  // For secondary classes, match assigned subject names to actual subject records
+  assignments.forEach((a: any) => {
     const realSubject = allSubjects?.find(s => s.name === a.subject_name)
     if (realSubject) {
       if (!subjectsMap.has(realSubject.id)) {
@@ -59,7 +83,7 @@ export default async function EnseignantNotesPage() {
     }
   })
 
-  const classes = Array.from(classesMap.values())
+  const classes = sortClasses(Array.from(classesMap.values()))
   const assignedSubjects = Array.from(subjectsMap.values())
 
   const classIds = classes.map(c => c.id)
@@ -84,30 +108,13 @@ export default async function EnseignantNotesPage() {
     .select('*')
     .eq('school_id', schoolId)
 
-  // Fetch new metadata fields for primary
-  const { data: studentsData } = await supabase.from('students').select('id').eq('school_id', schoolId);
-  const studentIds = studentsData ? studentsData.map(s => s.id) : [];
-  
-  let primaryRanks: any[] = [];
-  let primaryInfo: any[] = [];
-  if (studentIds.length > 0) {
-    const { data: r } = await supabase.from('primary_monthly_ranks').select('*').in('student_id', studentIds);
-    if (r) primaryRanks = r;
-    const { data: i } = await supabase.from('primary_bulletin_info').select('*').in('student_id', studentIds);
-    if (i) primaryInfo = i;
-  }
-
   return (
     <TeacherNotesWrapper 
       classes={classes}
-      allSubjects={allSubjects || []}
-      assignedSubjects={assignedSubjects || []}
-      students={students as any || []}
+      assignedSubjects={assignedSubjects}
+      students={(students as any) || []}
       primaryGrades={primaryGrades || []}
       secondaryGrades={secondaryGrades || []}
-      primaryRanks={primaryRanks}
-      primaryInfo={primaryInfo}
-      schoolName={(roleData as any)?.school?.name || 'École'}
     />
   )
 }

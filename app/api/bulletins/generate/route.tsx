@@ -12,10 +12,23 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient()
 
-    // 1. Authentification & Vérification
+    // 1. Authentification & Vérification (Direction / Admin uniquement)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    }
+
+    const { data: roleData } = await supabase
+      .from('user_school_roles')
+      .select('role, school_id')
+      .eq('user_id', user.id)
+      .limit(1)
+      .maybeSingle()
+
+    if (!roleData || (roleData.role !== 'admin' && roleData.role !== 'super_admin' && roleData.role !== 'comptable')) {
+      return NextResponse.json({ 
+        error: "Accès interdit : La génération et la publication des bulletins et livrets sont strictement réservées à l'administration." 
+      }, { status: 403 })
     }
 
     const body = await request.json()

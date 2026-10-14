@@ -13,12 +13,16 @@ export default async function BulletinsPage() {
 
   const { data: roleData, error: roleError } = await supabase
     .from('user_school_roles')
-    .select('school_id, school:schools(name, logo_url, city, phone, stamp_url, signature_url, director_name)')
+    .select('school_id, role, school:schools(name, logo_url, city, phone, stamp_url, signature_url, director_name)')
     .eq('user_id', user.id)
     .limit(1).maybeSingle()
 
   if (!roleData?.school_id) {
     return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable: {roleError?.message || 'Inconnu'}</div>
+  }
+
+  if (roleData.role === 'enseignant') {
+    redirect('/enseignant/notes')
   }
 
   const schoolId = roleData.school_id

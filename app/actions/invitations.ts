@@ -329,3 +329,185 @@ export async function inviteStaff(prevState: any, formData: FormData): Promise<{
   // mais la fonction est préparée.
   return { error: "L'invitation du staff par email requiert un backend configuré pour l'envoi." }
 }
+
+/**
+ * Réinitialise directement le mot de passe d'un parent depuis la fiche élève (Admin).
+ */
+export async function resetParentPassword(parentUserId: string, newPassword: string, studentId: string): Promise<{ error?: string, success?: boolean }> {
+  if (!parentUserId || !newPassword) {
+    return { error: 'Identifiant parent et nouveau mot de passe requis.' }
+  }
+
+  if (newPassword.length < 6) {
+    return { error: 'Le mot de passe doit contenir au moins 6 caractères.' }
+  }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  // Vérifier rôle staff/admin
+  const { data: role } = await supabase
+    .from('user_school_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .in('role', ['admin', 'directeur', 'secretaire'])
+    .maybeSingle()
+
+  if (!role) {
+    return { error: 'Action réservée aux administrateurs de l\'établissement.' }
+  }
+
+  const adminClient = createAdminClient()
+  const { error: updateError } = await adminClient.auth.admin.updateUserById(parentUserId, {
+    password: newPassword
+  })
+
+  if (updateError) {
+    return { error: `Erreur lors de la mise à jour : ${updateError.message}` }
+  }
+
+  if (studentId) {
+    revalidatePath(`/admin/eleves/${studentId}`)
+  }
+  revalidatePath('/admin/eleves')
+
+  return { success: true }
+}
+
+/**
+ * Dissocie un compte parent d'un élève.
+ */
+export async function unlinkParentFromStudent(linkId: string, studentId: string): Promise<{ error?: string, success?: boolean }> {
+  if (!linkId) return { error: 'Identifiant de liaison manquant.' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const adminClient = createAdminClient()
+  const { error: delError } = await adminClient
+    .from('parent_student_links')
+    .delete()
+    .eq('id', linkId)
+
+  if (delError) {
+    return { error: `Erreur lors de la dissociation : ${delError.message}` }
+  }
+
+  if (studentId) {
+    revalidatePath(`/admin/eleves/${studentId}`)
+  }
+
+  return { success: true }
+}
+
+/**
+ * Permet à l'administrateur de créer directement les identifiants d'un parent (Téléphone + Mot de passe)
+ * et de le relier immédiatement à l'élève sans exiger de code OTP.
+ */
+export async function createDirectParentAccess(studentId: string, identifier: string, password: string, fullName?: string): Promise<{ error?: string, success?: boolean, userId?: string }> {
+  if (!studentId || !identifier || !password) {
+    return { error: 'Veuillez remplir tous les champs obligatoires (téléphone/email et mot de passe).' }
+  }
+
+  if (password.length < 6) {
+    return { error: 'Le mot de passe doit comporter au moins 6 caractères.' }
+  }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const adminClient = createAdminClient()
+
+  // Obtenir l'école de l'élève
+  const { data: student, error: stdError } = await adminClient
+    .from('students')
+    .select('id, school_id, first_name, last_name')
+    .eq('id', studentId)
+    .single()
+
+  if (stdError || !student) {
+    return { error: 'Élève introuvable.' }
+  }
+
+  const cleanId = identifier.trim().replace(/\s+/g, '')
+  const isEmail = cleanId.includes('@')
+  const userCredentials = isEmail
+    ? { email: cleanId, password, email_confirm: true, user_metadata: { full_name: fullName || 'Parent' } }
+    : { phone: cleanId.startsWith('+') ? cleanId : cleanId, password, phone_confirm: true, user_metadata: { full_name: fullName || 'Parent' } }
+
+  let parentUserId: string | null = null
+
+  // 1. Tenter la création de l'utilisateur
+  const { data: newUserData, error: createError } = await adminClient.auth.admin.createUser(userCredentials)
+
+  if (createError) {
+    if (createError.message.includes('already registered')) {
+      // Le compte existe déjà dans auth.users : cherchons-le
+      // Listons ou cherchons l'utilisateur
+      const { data: listData } = await adminClient.auth.admin.listUsers()
+      const foundUser = listData.users.find(u => 
+        (isEmail && u.email?.toLowerCase() === cleanId.toLowerCase()) ||
+        (!isEmail && (u.phone === cleanId || u.phone === `+${cleanId}` || (cleanId.startsWith('+') && u.phone === cleanId.slice(1))))
+      )
+
+      if (foundUser) {
+        parentUserId = foundUser.id
+        // Mettre à jour son mot de passe avec le nouveau demandé par l'admin
+        await adminClient.auth.admin.updateUserById(parentUserId, { password })
+      } else {
+        return { error: `Un compte existe déjà avec ce contact mais n'a pas pu être associé : ${createError.message}` }
+      }
+    } else {
+      return { error: `Erreur création compte : ${createError.message}` }
+    }
+  } else {
+    parentUserId = newUserData.user?.id || null
+  }
+
+  if (!parentUserId) {
+    return { error: 'Impossible de finaliser la création du compte.' }
+  }
+
+  // 2. Vérifier si l'élève est déjà lié à ce parent
+  const { data: existingLink } = await adminClient
+    .from('parent_student_links')
+    .select('id')
+    .eq('parent_user_id', parentUserId)
+    .eq('student_id', studentId)
+    .maybeSingle()
+
+  if (!existingLink) {
+    const { error: linkErr } = await adminClient
+      .from('parent_student_links')
+      .insert({
+        parent_user_id: parentUserId,
+        student_id: studentId,
+        school_id: student.school_id,
+        relationship: 'parent'
+      })
+
+    if (linkErr) {
+      return { error: `Erreur liaison élève : ${linkErr.message}` }
+    }
+  }
+
+  // 3. S'assurer du rôle parent
+  await adminClient
+    .from('user_school_roles')
+    .upsert({
+      user_id: parentUserId,
+      school_id: student.school_id,
+      role: 'parent',
+      full_name: fullName || 'Parent',
+      phone: !isEmail ? cleanId : null
+    }, { onConflict: 'user_id,school_id,role', ignoreDuplicates: true })
+
+  revalidatePath(`/admin/eleves/${studentId}`)
+  revalidatePath('/admin/eleves')
+
+  return { success: true, userId: parentUserId }
+}
+
