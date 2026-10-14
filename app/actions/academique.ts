@@ -127,16 +127,17 @@ export async function ensureEtudeDeTexteSubject(): Promise<ActionState> {
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
 
-    const { data: existing } = await supabase
+    const { data: allSubs } = await supabase
       .from("subjects")
-      .select("id")
-      .eq("school_id", school_id)
-      .eq("cycle", "primaire")
-      .or("name.ilike.%etude de texte%,name.ilike.%étude de texte%")
-      .limit(1)
-      .maybeSingle();
+      .select("id, name, cycle")
+      .eq("school_id", school_id);
 
-    if (!existing) {
+    const hasEtude = allSubs?.some(s => {
+      const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+      return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte');
+    });
+
+    if (!hasEtude) {
       const { error } = await supabase.from("subjects").insert({
         school_id,
         name: "Étude de texte",

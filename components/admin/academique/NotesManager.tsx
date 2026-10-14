@@ -132,14 +132,26 @@ export function NotesManager({
 
   // Primary subjects sorted neatly by official curriculum order (Lecture followed directly by Étude de texte)
   const filteredPrimarySubjects = useMemo(() => {
-    return subjects
-      .filter(s => s.cycle === 'primaire' || s.cycle === 'maternelle')
-      .sort((a, b) => {
-        const orderA = getPrimarySubjectOrder(a.name)
-        const orderB = getPrimarySubjectOrder(b.name)
-        if (orderA !== orderB) return orderA - orderB
-        return a.name.localeCompare(b.name)
+    const list = subjects.filter(s => !s.cycle || s.cycle.toLowerCase() === 'primaire' || s.cycle.toLowerCase() === 'maternelle')
+    const hasEtude = list.some(s => {
+      const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+      return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
+    })
+    if (!hasEtude) {
+      list.push({
+        id: 'virtual-etude-de-texte',
+        name: 'Étude de texte',
+        cycle: 'primaire',
+        category: 'Français',
+        coefficient: 1
       })
+    }
+    return list.sort((a, b) => {
+      const orderA = getPrimarySubjectOrder(a.name)
+      const orderB = getPrimarySubjectOrder(b.name)
+      if (orderA !== orderB) return orderA - orderB
+      return a.name.localeCompare(b.name)
+    })
   }, [subjects])
 
   // Secondary subjects

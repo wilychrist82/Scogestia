@@ -1,10 +1,17 @@
 'use client'
 
-import { useState, useTransition, useMemo, FormEvent } from 'react'
+import { useState, useTransition, useMemo, useEffect, FormEvent } from 'react'
 import { saveSchoolSubject, deleteSchoolSubject, ensurePhilosophieSubject, ensureEtudeDeTexteSubject } from '@/app/actions/academique'
 import Link from 'next/link'
 import { ChevronRight, Plus, BookOpen, Trash2, X, Loader2, Sparkles, CheckCircle2 } from 'lucide-react'
-import { LYCEE_SERIES_CONFIG, LyceeSeriesKey, normalizeSubjectName, getPrimarySubjectOrder } from '@/lib/academic-curriculum'
+import { 
+  LYCEE_SERIES_CONFIG, 
+  LyceeSeriesKey, 
+  normalizeSubjectName, 
+  getPrimarySubjectOrder,
+  isLectureSubject,
+  isEtudeDeTexteSubject
+} from '@/lib/academic-curriculum'
 
 export type SubjectItem = {
   id: string
@@ -92,6 +99,22 @@ export function MatieresManager({ subjects }: Props) {
     })
   }
 
+  // Vérifier si Philosophie est déjà présente dans les matières du secondaire
+  const hasPhilosophie = subjects.some(s => s.cycle === 'secondaire' && s.name.toLowerCase().includes('philo'))
+
+  // Vérifier si Étude de texte est présente dans les matières du primaire
+  const hasEtudeDeTexte = subjects.some(s => {
+    const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+    return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
+  })
+
+  // Synchronisation automatique en arrière-plan d'Étude de texte si absente
+  useEffect(() => {
+    if (!hasEtudeDeTexte) {
+      ensureEtudeDeTexteSubject()
+    }
+  }, [hasEtudeDeTexte])
+
   // Filtrage des matières
   const isPrimary = selectedCycle === 'primaire'
   const isCollege = selectedCycle === 'college'
@@ -99,20 +122,26 @@ export function MatieresManager({ subjects }: Props) {
 
   const filteredSubjects = useMemo(() => {
     const list = subjects.filter(s => {
-      if (isPrimary) return s.cycle === 'primaire' || s.cycle === 'maternelle'
+      if (isPrimary) return !s.cycle || s.cycle.toLowerCase() === 'primaire' || s.cycle.toLowerCase() === 'maternelle'
       return s.cycle === 'secondaire'
     })
+
+    // Si on est au primaire et qu'Étude de texte n'est pas encore dans la liste DB
+    if (isPrimary && !hasEtudeDeTexte) {
+      list.push({
+        id: 'virtual-etude-de-texte',
+        name: 'Étude de texte',
+        cycle: 'primaire',
+        category: 'Français',
+        coefficient: 1
+      })
+    }
+
     if (isPrimary) {
       return [...list].sort((a, b) => getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name))
     }
     return list
-  }, [subjects, isPrimary])
-
-  // Vérifier si Philosophie est déjà présente dans les matières du secondaire
-  const hasPhilosophie = subjects.some(s => s.cycle === 'secondaire' && s.name.toLowerCase().includes('philo'))
-
-  // Vérifier si Étude de texte est présente dans les matières du primaire
-  const hasEtudeDeTexte = subjects.some(s => (s.cycle === 'primaire' || s.cycle === 'maternelle') && (s.name.toLowerCase().includes('etude de texte') || s.name.toLowerCase().includes('étude de texte')))
+  }, [subjects, isPrimary, hasEtudeDeTexte])
 
   // Primary categories
   const primaryCategories = [
@@ -461,11 +490,27 @@ export function MatieresManager({ subjects }: Props) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--color-outline-variant)] text-base">
-                  {filteredSubjects.map((sub) => (
-                    <tr key={sub.id} className="hover:bg-[var(--color-surface-container-lowest)]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
-                      <td className="py-3 px-6 font-medium text-[var(--color-on-surface)]">
-                        {sub.name}
-                      </td>
+                  {filteredSubjects.map((sub) => {
+                    const isLecture = isPrimary && isLectureSubject(sub.name)
+                    const isEtude = isPrimary && isEtudeDeTexteSubject(sub.name)
+
+                    return (
+                      <tr key={sub.id} className="hover:bg-[var(--color-surface-container-lowest)]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
+                        <td className="py-3 px-6 font-medium text-[var(--color-on-surface)]">
+                          <div className="flex items-center gap-2.5 flex-wrap">
+                            <span className="font-semibold">{sub.name}</span>
+                            {isLecture && (
+                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                Notée sur 10 (CP1 au CM2)
+                              </span>
+                            )}
+                            {isEtude && (
+                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-100 text-indigo-900 border border-indigo-300">
+                                Notée sur 20 au CM1/CM2 (sur 10 avant)
+                              </span>
+                            )}
+                          </div>
+                        </td>
                       {isPrimary && (
                         <td className="py-3 px-6 text-[var(--color-on-surface-variant)]">
                           <span className="bg-[var(--color-surface-container-high)] px-3 py-1 rounded-full text-xs font-semibold">
@@ -491,7 +536,7 @@ export function MatieresManager({ subjects }: Props) {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                  )})}
                 </tbody>
               </table>
             </div>

@@ -79,7 +79,11 @@ export default async function BulletinsPage() {
       });
       hasChanges = true;
     }
-    if (!subjects.some(s => s.cycle === 'primaire' && (s.name.toLowerCase().includes('etude de texte') || s.name.toLowerCase().includes('étude de texte')))) {
+    const hasEtude = subjects.some(s => {
+      const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+      return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
+    });
+    if (!hasEtude) {
       await supabase.from('subjects').insert({
         school_id: schoolId,
         name: 'Étude de texte',

@@ -244,9 +244,21 @@ export function BulletinsManager({
     }
 
     if (isPrimary) {
-      const primarySubjects = subjects
-        .filter(s => s.cycle === 'primaire' || s.cycle === 'maternelle')
-        .sort((a, b) => getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name))
+      const list = subjects.filter(s => !s.cycle || s.cycle === 'primaire' || s.cycle === 'maternelle')
+      const hasEtude = list.some(s => {
+        const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+        return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
+      })
+      if (!hasEtude) {
+        list.push({
+          id: 'virtual-etude-de-texte',
+          name: 'Étude de texte',
+          cycle: 'primaire',
+          category: 'Français',
+          coefficient: 1
+        })
+      }
+      const primarySubjects = list.sort((a, b) => getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name))
       const groupedSubjects: Record<string, any[]> = {}
       
       const months = Array.from({ length: 9 }, (_, i) => i + 1)
@@ -543,9 +555,21 @@ export function BulletinsManager({
   const renderPrimaryLivret = () => {
     if (!student || !cls) return null
 
-    const primarySubjects = subjects
-      .filter(s => s.cycle === 'primaire' || s.cycle === 'maternelle')
-      .sort((a, b) => getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name))
+    const list = subjects.filter(s => !s.cycle || s.cycle === 'primaire' || s.cycle === 'maternelle')
+    const hasEtude = list.some(s => {
+      const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+      return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
+    })
+    if (!hasEtude) {
+      list.push({
+        id: 'virtual-etude-de-texte',
+        name: 'Étude de texte',
+        cycle: 'primaire',
+        category: 'Français',
+        coefficient: 1
+      })
+    }
+    const primarySubjects = list.sort((a, b) => getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name))
     const groupedSubjects: Record<string, SubjectItem[]> = {}
     primarySubjects.forEach(s => {
       const cat = s.category || 'Général'

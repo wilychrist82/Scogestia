@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { TeacherNotesWrapper } from '@/components/enseignant/TeacherNotesWrapper'
 import { sortClasses } from '@/lib/classes'
+import { getPrimarySubjectOrder } from '@/lib/academic-curriculum'
 
 export const dynamic = 'force-dynamic'
 
@@ -69,8 +70,22 @@ export default async function EnseignantNotesPage() {
   // If teacher has primary classes, they teach all primary/maternelle subjects
   if (hasPrimaryClass && allSubjects) {
     allSubjects
-      .filter(s => s.cycle === 'primaire' || s.cycle === 'maternelle')
+      .filter(s => !s.cycle || s.cycle === 'primaire' || s.cycle === 'maternelle')
       .forEach(s => subjectsMap.set(s.id, s))
+
+    const hasEtude = Array.from(subjectsMap.values()).some((s: any) => {
+      const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+      return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
+    })
+    if (!hasEtude) {
+      subjectsMap.set('virtual-etude-de-texte', {
+        id: 'virtual-etude-de-texte',
+        name: 'Étude de texte',
+        cycle: 'primaire',
+        category: 'Français',
+        coefficient: 1
+      })
+    }
   }
 
   // For secondary classes, match assigned subject names to actual subject records
@@ -84,7 +99,9 @@ export default async function EnseignantNotesPage() {
   })
 
   const classes = sortClasses(Array.from(classesMap.values()))
-  const assignedSubjects = Array.from(subjectsMap.values())
+  const assignedSubjects = Array.from(subjectsMap.values()).sort((a: any, b: any) => {
+    return getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name)
+  })
 
   const classIds = classes.map(c => c.id)
 
