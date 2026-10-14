@@ -39,6 +39,7 @@ export default async function BulletinsPage() {
       { school_id: schoolId, name: 'Je sais écrire les mots (dictée, questions)', cycle: 'primaire', category: 'Français' },
       { school_id: schoolId, name: 'Je produis un texte (Rédaction)', cycle: 'primaire', category: 'Français' },
       { school_id: schoolId, name: 'Lecture', cycle: 'primaire', category: 'Français' },
+      { school_id: schoolId, name: 'Étude de texte', cycle: 'primaire', category: 'Français' },
       { school_id: schoolId, name: 'Je sais parler (langage)', cycle: 'primaire', category: 'Français' },
       { school_id: schoolId, name: 'Calcul Écrit', cycle: 'primaire', category: 'Mathématiques' },
       { school_id: schoolId, name: 'Calcul mental', cycle: 'primaire', category: 'Mathématiques' },
@@ -67,15 +68,31 @@ export default async function BulletinsPage() {
     await supabase.from('subjects').insert(seedSubjects);
     const { data: newSubjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId);
     subjects = newSubjects;
-  } else if (!subjects.some(s => s.name.toLowerCase().includes('philo'))) {
-    await supabase.from('subjects').insert({
-      school_id: schoolId,
-      name: 'Philosophie',
-      cycle: 'secondaire',
-      coefficient: 2
-    });
-    const { data: updatedSubjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId);
-    if (updatedSubjects) subjects = updatedSubjects;
+  } else {
+    let hasChanges = false;
+    if (!subjects.some(s => s.name.toLowerCase().includes('philo'))) {
+      await supabase.from('subjects').insert({
+        school_id: schoolId,
+        name: 'Philosophie',
+        cycle: 'secondaire',
+        coefficient: 2
+      });
+      hasChanges = true;
+    }
+    if (!subjects.some(s => s.cycle === 'primaire' && (s.name.toLowerCase().includes('etude de texte') || s.name.toLowerCase().includes('étude de texte')))) {
+      await supabase.from('subjects').insert({
+        school_id: schoolId,
+        name: 'Étude de texte',
+        cycle: 'primaire',
+        category: 'Français',
+        coefficient: 1
+      });
+      hasChanges = true;
+    }
+    if (hasChanges) {
+      const { data: updatedSubjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId);
+      if (updatedSubjects) subjects = updatedSubjects;
+    }
   }
   
   // We fetch all grades for the school to compute client side. 

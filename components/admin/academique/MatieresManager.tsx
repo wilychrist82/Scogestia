@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useTransition, FormEvent } from 'react'
-import { saveSchoolSubject, deleteSchoolSubject, ensurePhilosophieSubject } from '@/app/actions/academique'
+import { useState, useTransition, useMemo, FormEvent } from 'react'
+import { saveSchoolSubject, deleteSchoolSubject, ensurePhilosophieSubject, ensureEtudeDeTexteSubject } from '@/app/actions/academique'
 import Link from 'next/link'
 import { ChevronRight, Plus, BookOpen, Trash2, X, Loader2, Sparkles, CheckCircle2 } from 'lucide-react'
-import { LYCEE_SERIES_CONFIG, LyceeSeriesKey, normalizeSubjectName } from '@/lib/academic-curriculum'
+import { LYCEE_SERIES_CONFIG, LyceeSeriesKey, normalizeSubjectName, getPrimarySubjectOrder } from '@/lib/academic-curriculum'
 
 export type SubjectItem = {
   id: string
@@ -25,9 +25,9 @@ export function MatieresManager({ subjects }: Props) {
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   
   // Cycles: primaire | college | lycee
-  const [selectedCycle, setSelectedCycle] = useState<'primaire' | 'college' | 'lycee'>('lycee')
+  const [selectedCycle, setSelectedCycle] = useState<'primaire' | 'college' | 'lycee'>('primaire')
   const [selectedLyceeSeries, setSelectedLyceeSeries] = useState<LyceeSeriesKey | 'all'>('all')
-  const [formCycle, setFormCycle] = useState<string>('lycee')
+  const [formCycle, setFormCycle] = useState<string>('primaire')
 
   const openAddModal = () => {
     setError(null)
@@ -79,18 +79,40 @@ export function MatieresManager({ subjects }: Props) {
     })
   }
 
+  const handleEnsureEtudeDeTexte = () => {
+    setError(null)
+    startTransition(async () => {
+      const res = await ensureEtudeDeTexteSubject()
+      if (res?.error) {
+        setError(res.error)
+      } else {
+        setSuccessMsg("La discipline Étude de texte a été ajoutée avec succès après la Lecture au programme du Primaire !")
+        setTimeout(() => setSuccessMsg(null), 3500)
+      }
+    })
+  }
+
   // Filtrage des matières
   const isPrimary = selectedCycle === 'primaire'
   const isCollege = selectedCycle === 'college'
   const isLycee = selectedCycle === 'lycee'
 
-  const filteredSubjects = subjects.filter(s => {
-    if (isPrimary) return s.cycle === 'primaire' || s.cycle === 'maternelle'
-    return s.cycle === 'secondaire'
-  })
+  const filteredSubjects = useMemo(() => {
+    const list = subjects.filter(s => {
+      if (isPrimary) return s.cycle === 'primaire' || s.cycle === 'maternelle'
+      return s.cycle === 'secondaire'
+    })
+    if (isPrimary) {
+      return [...list].sort((a, b) => getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name))
+    }
+    return list
+  }, [subjects, isPrimary])
 
   // Vérifier si Philosophie est déjà présente dans les matières du secondaire
   const hasPhilosophie = subjects.some(s => s.cycle === 'secondaire' && s.name.toLowerCase().includes('philo'))
+
+  // Vérifier si Étude de texte est présente dans les matières du primaire
+  const hasEtudeDeTexte = subjects.some(s => (s.cycle === 'primaire' || s.cycle === 'maternelle') && (s.name.toLowerCase().includes('etude de texte') || s.name.toLowerCase().includes('étude de texte')))
 
   // Primary categories
   const primaryCategories = [
@@ -135,6 +157,16 @@ export function MatieresManager({ subjects }: Props) {
               >
                 <Sparkles className="w-4 h-4" />
                 Ajouter Philosophie
+              </button>
+            )}
+            {isPrimary && !hasEtudeDeTexte && (
+              <button 
+                onClick={handleEnsureEtudeDeTexte} 
+                disabled={isPending}
+                className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white h-12 px-5 rounded-full text-sm font-semibold transition-colors shadow-sm disabled:opacity-50"
+              >
+                <Sparkles className="w-4 h-4" />
+                Ajouter Étude de texte
               </button>
             )}
             <button 
@@ -404,6 +436,19 @@ export function MatieresManager({ subjects }: Props) {
                   <span className="bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full font-bold">
                     Toutes les matières sont à coefficient 2 partout
                   </span>
+                </div>
+              )}
+              {isPrimary && (
+                <div className="px-6 py-2.5 bg-emerald-50/70 border-b border-emerald-100 text-xs font-semibold text-emerald-950 flex flex-wrap items-center justify-between gap-2">
+                  <span>Programme officiel du Primaire (CP1 au CM2) — Barèmes officiels :</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="bg-emerald-100 text-emerald-900 px-2.5 py-0.5 rounded-full text-[11px] font-bold border border-emerald-200">
+                      Lecture : Notée sur 10 (CP1 à CM2)
+                    </span>
+                    <span className="bg-indigo-100 text-indigo-900 px-2.5 py-0.5 rounded-full text-[11px] font-bold border border-indigo-200">
+                      Étude de texte : Notée sur 20 au CM1/CM2 (sur 10 avant)
+                    </span>
+                  </div>
                 </div>
               )}
               <table className="w-full text-left border-collapse">

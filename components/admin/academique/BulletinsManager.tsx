@@ -7,7 +7,15 @@ import { jsPDF } from 'jspdf'
 import { createClient } from '@/lib/supabase/client'
 import { sortClasses } from '@/lib/classes'
 import { ShieldCheck, FileDown, GraduationCap } from 'lucide-react'
-import { getCoefficientForSubject, detectClassSeriesKey, LYCEE_SERIES_CONFIG, getPrimarySubjectMaxScore } from '@/lib/academic-curriculum'
+import { 
+  getCoefficientForSubject, 
+  detectClassSeriesKey, 
+  LYCEE_SERIES_CONFIG, 
+  getPrimarySubjectMaxScore, 
+  getPrimarySubjectOrder, 
+  calculateCollegeAnnualAverage, 
+  calculateLyceeAnnualAverage 
+} from '@/lib/academic-curriculum'
 
 type ClassItem = { id: string; name: string; level?: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string }
@@ -153,8 +161,39 @@ export function BulletinsManager({
       })
       setLocalSecGrades(newSec)
       setSecTotalStudents(availableStudents.length.toString())
+
+      // Auto-calcul des moyennes des trimestres/semestres précédents
+      const computeTermAvg = (t: string) => {
+        const tGrades = secondaryGrades.filter(g => g.student_id === student.id && g.term === t)
+        if (tGrades.length === 0) return ''
+        let coefSum = 0, prodSum = 0
+        tGrades.forEach(g => {
+          const sub = subjects.find(s => s.id === g.subject_id)
+          const cVal = g.class_score !== null ? Number(g.class_score) : NaN
+          const compVal = g.comp_score !== null ? Number(g.comp_score) : NaN
+          let moy = null
+          if (!isNaN(cVal) && !isNaN(compVal)) moy = (cVal + compVal) / 2
+          else if (!isNaN(cVal)) moy = cVal
+          else if (!isNaN(compVal)) moy = compVal
+          if (moy !== null) {
+            const coef = getCoefficientForSubject(sub?.name || '', cls?.name, cls?.level, sub?.coefficient || 2)
+            coefSum += coef
+            prodSum += moy * coef
+          }
+        })
+        return coefSum > 0 ? (prodSum / coefSum).toFixed(2) : ''
+      }
+
+      const autoT1 = computeTermAvg(selectedLevel === 'lycee' ? '1er_semestre' : '1er_trimestre')
+      const autoT2 = computeTermAvg('2e_trimestre')
+      
+      setSecStats(prev => ({
+        ...prev,
+        t1: autoT1 || prev.t1,
+        t2: autoT2 || prev.t2,
+      }))
     }
-  }, [student, selectedLevel, selectedTerm, primaryGrades, secondaryGrades, availableStudents.length])
+  }, [student, selectedLevel, selectedTerm, primaryGrades, secondaryGrades, availableStudents.length, subjects, cls])
 
   const handlePrint = () => {
     window.print()
@@ -205,7 +244,9 @@ export function BulletinsManager({
     }
 
     if (isPrimary) {
-      const primarySubjects = subjects.filter(s => s.cycle === 'primaire' || s.cycle === 'maternelle')
+      const primarySubjects = subjects
+        .filter(s => s.cycle === 'primaire' || s.cycle === 'maternelle')
+        .sort((a, b) => getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name))
       const groupedSubjects: Record<string, any[]> = {}
       
       const months = Array.from({ length: 9 }, (_, i) => i + 1)
@@ -328,8 +369,44 @@ export function BulletinsManager({
       data.termAvg = totalCoef > 0 ? (totalProduct / totalCoef).toFixed(2) : '0.00'
       data.rank = stuId === selectedStudent ? secRank : '-'
       data.totalStudents = stuId === selectedStudent ? secTotalStudents : students.filter(s => s.class_id === cl.id).length.toString()
-      data.stats = stuId === selectedStudent ? secStats : { min: '-', max: '-', annual: '-' }
-      data.footerInfo = stuId === selectedStudent ? secFooterInfo : { appreciation: '', decision: '' }
+
+      // Calcul officiel de la moyenne annuelle
+      let computedAnnual = secStats.annual_t3 || ''
+      if (!computedAnnual || computedAnnual === '-') {
+        if (selectedTerm === '3eme_trimestre' || selectedTerm === '3e_trimestre') {
+          const t1 = parseFloat(secStats.t1)
+          const t2 = parseFloat(secStats.t2)
+          const t3 = parseFloat(data.termAvg)
+          if (!isNaN(t1) && !isNaN(t2) && !isNaN(t3)) {
+            computedAnnual = ((t1 + t2 + t3) / 3).toFixed(2)
+          }
+        } else if (selectedTerm === '2e_semestre') {
+          const s1 = parseFloat(secStats.t1)
+          const s2 = parseFloat(data.termAvg)
+          if (!isNaN(s1) && !isNaN(s2)) {
+            computedAnnual = ((s1 + s2) / 2).toFixed(2)
+          }
+        }
+      }
+
+      data.stats = stuId === selectedStudent ? {
+        ...secStats,
+        annual: computedAnnual || secStats.annual_t3 || '-'
+      } : { min: '-', max: '-', annual: computedAnnual || '-' }
+
+      // Décision automatique de fin d'année si non renseignée
+      let autoDecision = secFooterInfo.decision
+      if (!autoDecision && computedAnnual && computedAnnual !== '-') {
+        const annNum = parseFloat(computedAnnual)
+        if (!isNaN(annNum)) {
+          autoDecision = annNum >= 10 ? 'Passe en classe supérieure (Admis)' : 'Redouble la classe'
+        }
+      }
+
+      data.footerInfo = stuId === selectedStudent ? {
+        ...secFooterInfo,
+        decision: autoDecision || secFooterInfo.decision
+      } : { appreciation: '', decision: autoDecision || '' }
     }
     
     return data
@@ -466,7 +543,9 @@ export function BulletinsManager({
   const renderPrimaryLivret = () => {
     if (!student || !cls) return null
 
-    const primarySubjects = subjects.filter(s => s.cycle === 'primaire' || s.cycle === 'maternelle')
+    const primarySubjects = subjects
+      .filter(s => s.cycle === 'primaire' || s.cycle === 'maternelle')
+      .sort((a, b) => getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name))
     const groupedSubjects: Record<string, SubjectItem[]> = {}
     primarySubjects.forEach(s => {
       const cat = s.category || 'Général'
@@ -759,6 +838,30 @@ export function BulletinsManager({
 
     const termAvg = totalCoef > 0 ? (totalProduct / totalCoef).toFixed(2) : '0.00'
 
+    const isLyceeEnd = selectedTerm === '2e_semestre'
+    const isCollegeEnd = selectedTerm === '3eme_trimestre' || selectedTerm === '3e_trimestre'
+
+    let computedAnnualCollege = ''
+    if (isCollegeEnd) {
+      const v1 = parseFloat(secStats.t1)
+      const v2 = parseFloat(secStats.t2)
+      const v3 = parseFloat(termAvg)
+      if (!isNaN(v1) && !isNaN(v2) && !isNaN(v3)) {
+        computedAnnualCollege = calculateCollegeAnnualAverage(v1, v2, v3)?.toFixed(2) || ''
+      }
+    }
+
+    let computedAnnualLycee = ''
+    if (isLyceeEnd) {
+      const v1 = parseFloat(secStats.t1)
+      const v2 = parseFloat(termAvg)
+      if (!isNaN(v1) && !isNaN(v2)) {
+        computedAnnualLycee = calculateLyceeAnnualAverage(v1, v2)?.toFixed(2) || ''
+      }
+    }
+
+    const effectiveAnnual = secStats.annual_t3 || (isCollegeEnd ? computedAnnualCollege : isLyceeEnd ? computedAnnualLycee : '')
+
     return (
       <div className="bg-white p-8 print:p-4 rounded-xl shadow-sm border border-[var(--color-outline-variant)] print:border-none text-black relative bulletin-page" ref={printRef}>
         
@@ -936,9 +1039,16 @@ export function BulletinsManager({
               <p className="text-xs text-gray-600 font-semibold uppercase">Moy. 2ème Semestre</p>
               <div className="text-center font-bold mt-1">{termAvg}</div>
             </div>
-            <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
-              <p className="text-xs text-gray-600 font-semibold uppercase">Moyenne Annuelle</p>
-              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.annual_t3} onChange={e => setSecStats({...secStats, annual_t3: e.target.value})} />
+            <div className="bg-blue-50/60 border border-blue-200 p-3 rounded-xl text-center">
+              <p className="text-xs text-blue-900 font-bold uppercase">Moy. Annuelle (S1+S2)/2</p>
+              <input 
+                type="text" 
+                className="w-full text-center font-black text-blue-900 bg-transparent outline-none mt-1 print-input text-lg" 
+                placeholder={computedAnnualLycee || "-"} 
+                value={effectiveAnnual} 
+                onChange={e => setSecStats({...secStats, annual_t3: e.target.value})} 
+              />
+              <span className="text-[10px] text-blue-800 font-semibold">Passage si ≥ 10/20</span>
             </div>
           </div>
         ) : selectedTerm === '3eme_trimestre' || selectedTerm === '3e_trimestre' ? (
@@ -955,9 +1065,16 @@ export function BulletinsManager({
               <p className="text-xs text-gray-600 font-semibold uppercase">Moy. 3ème Trim.</p>
               <div className="text-center font-bold mt-1">{termAvg}</div>
             </div>
-            <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
-              <p className="text-xs text-gray-600 font-semibold uppercase">Moy. Annuelle</p>
-              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.annual_t3} onChange={e => setSecStats({...secStats, annual_t3: e.target.value})} />
+            <div className="bg-blue-50/60 border border-blue-200 p-3 rounded-xl text-center">
+              <p className="text-xs text-blue-900 font-bold uppercase">Moy. Annuelle (T1+T2+T3)/3</p>
+              <input 
+                type="text" 
+                className="w-full text-center font-black text-blue-900 bg-transparent outline-none mt-1 print-input text-lg" 
+                placeholder={computedAnnualCollege || "-"} 
+                value={effectiveAnnual} 
+                onChange={e => setSecStats({...secStats, annual_t3: e.target.value})} 
+              />
+              <span className="text-[10px] text-blue-800 font-semibold">Passage si ≥ 10/20</span>
             </div>
           </div>
         ) : (
@@ -989,7 +1106,7 @@ export function BulletinsManager({
             <div className="w-full text-left flex flex-col items-center">
               <p className="font-bold underline mb-2">Appréciation :</p>
               <input 
-                type="text"
+                type="text" 
                 placeholder="Appréciation..."
                 className="print-input text-center text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-full border-b border-gray-300 focus:border-[var(--color-primary)]"
                 value={secFooterInfo.appreciation}
@@ -1027,11 +1144,16 @@ export function BulletinsManager({
               <p className="font-bold underline mb-2">Décision du chef d'établissement :</p>
               <input 
                 type="text"
-                placeholder="Décision..."
+                placeholder={effectiveAnnual ? (Number(effectiveAnnual) >= 10 ? 'Passe en classe supérieure (Admis)' : 'Redouble la classe') : 'Décision...'}
                 className="print-input text-center text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-full border-b border-gray-300 focus:border-[var(--color-primary)]"
                 value={secFooterInfo.decision}
                 onChange={e => setSecFooterInfo({...secFooterInfo, decision: e.target.value})}
               />
+              {effectiveAnnual && !secFooterInfo.decision && (
+                <p className="text-[10px] text-blue-800 mt-1 font-semibold print:hidden">
+                  Décision annuelle calculée ({effectiveAnnual}/20) : {Number(effectiveAnnual) >= 10 ? 'Passage en classe supérieure' : 'Redoublement'}
+                </p>
+              )}
             </div>
           </div>
         </div>

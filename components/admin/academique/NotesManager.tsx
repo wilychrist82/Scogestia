@@ -30,7 +30,8 @@ import {
   getPrimarySubjectMaxScore,
   detectPrimaryLevel,
   calculateDisciplineAverage,
-  calculatePrimaryGeneralAverage
+  calculatePrimaryGeneralAverage,
+  getPrimarySubjectOrder
 } from '@/lib/academic-curriculum'
 
 type ClassItem = { id: string; name: string; level?: string }
@@ -129,14 +130,14 @@ export function NotesManager({
     return false;
   }))
 
-  // Primary subjects sorted neatly by Category then Name
+  // Primary subjects sorted neatly by official curriculum order (Lecture followed directly by Étude de texte)
   const filteredPrimarySubjects = useMemo(() => {
     return subjects
       .filter(s => s.cycle === 'primaire' || s.cycle === 'maternelle')
       .sort((a, b) => {
-        const catA = CATEGORY_PRIORITY[a.category || 'Général'] || 99
-        const catB = CATEGORY_PRIORITY[b.category || 'Général'] || 99
-        if (catA !== catB) return catA - catB
+        const orderA = getPrimarySubjectOrder(a.name)
+        const orderB = getPrimarySubjectOrder(b.name)
+        if (orderA !== orderB) return orderA - orderB
         return a.name.localeCompare(b.name)
       })
   }, [subjects])
@@ -955,13 +956,12 @@ export function NotesManager({
                       <span className="text-[10px] text-purple-700 mt-0.5">{termSummaries.t3.count} note(s) saisie(s)</span>
                     </div>
 
-                    <div className="p-3 rounded-xl border border-amber-300 bg-amber-50/70 flex flex-col shadow-2xs">
-                      <span className="text-[11px] font-bold text-amber-950 uppercase tracking-wide">Moyenne Annuelle</span>
+                    <div className="p-3 rounded-xl border border-blue-200 bg-blue-50/70 flex flex-col shadow-2xs">
+                      <span className="text-[11px] font-bold text-blue-950 uppercase tracking-wide">Règle Primaire</span>
                       <div className="flex items-baseline gap-1 mt-1">
-                        <span className="text-2xl font-black text-amber-900">{termSummaries.annual.avg ?? '—'}</span>
-                        <span className="text-xs font-bold text-amber-800">/ 10</span>
+                        <span className="text-sm font-black text-blue-900">Moyenne sur 10</span>
                       </div>
-                      <span className="text-[10px] font-medium text-amber-800 mt-0.5">Sur l'ensemble des mois</span>
+                      <span className="text-[10px] font-medium text-blue-800 mt-0.5">Calculée par mois composé (pas de moyenne annuelle)</span>
                     </div>
 
                     <div className="p-3 rounded-xl border border-[var(--color-outline-variant)] bg-[var(--color-surface)] flex flex-col col-span-2 sm:col-span-1">
@@ -1241,13 +1241,13 @@ export function NotesManager({
                             <div className="flex flex-col items-center">
                               <span className={`inline-block px-2.5 py-0.5 rounded font-extrabold text-xs shadow-2xs ${
                                 parseFloat(termSummaries.annual.avg) >= 5
-                                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                  ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
                                   : 'bg-red-100 text-red-900 border border-red-200'
                               }`}>
                                 {termSummaries.annual.avg} / 10
                               </span>
                               <span className="text-[9px] font-normal text-[var(--color-on-surface-variant)] mt-0.5">
-                                Moyenne Générale
+                                Moyenne sur 10
                               </span>
                             </div>
                           ) : (

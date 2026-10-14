@@ -122,6 +122,40 @@ export async function ensurePhilosophieSubject(): Promise<ActionState> {
   }
 }
 
+export async function ensureEtudeDeTexteSubject(): Promise<ActionState> {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+
+    const { data: existing } = await supabase
+      .from("subjects")
+      .select("id")
+      .eq("school_id", school_id)
+      .eq("cycle", "primaire")
+      .or("name.ilike.%etude de texte%,name.ilike.%étude de texte%")
+      .limit(1)
+      .maybeSingle();
+
+    if (!existing) {
+      const { error } = await supabase.from("subjects").insert({
+        school_id,
+        name: "Étude de texte",
+        cycle: "primaire",
+        category: "Français",
+        coefficient: 1.0,
+      });
+      if (error) throw error;
+    }
+
+    revalidatePath("/admin/academique/matieres");
+    revalidatePath("/admin/academique/notes");
+    revalidatePath("/admin/academique/bulletins");
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
 export async function savePrimaryGrades(
   prevState: ActionState,
   formData: FormData,

@@ -84,7 +84,17 @@ export function PromotionManager({ classes, students }: Props) {
     return students.filter(s => s.class_id === sourceClassId)
   }, [students, sourceClassId])
 
-  // 5. Sélection des élèves à promouvoir (par défaut, ceux qui ont average >= 10 ou pas de notes si maternelle)
+  // Détection du cycle de la classe source : Primaire ou Secondaire
+  const isPrimarySource = useMemo(() => {
+    if (!sourceClass) return false
+    const full = `${sourceClass.level || ''} ${sourceClass.name || ''}`.toLowerCase()
+    return ['cp', 'ce', 'cm', 'ci', 'primaire', 'maternelle', 's1', 's2', 'ps', 'ms', 'gs'].some(k => full.includes(k))
+  }, [sourceClass])
+
+  const passThreshold = isPrimarySource ? 5 : 10
+  const maxScale = isPrimarySource ? 10 : 20
+
+  // 5. Sélection des élèves à promouvoir (par défaut, ceux qui atteignent le seuil d'admission)
   const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({})
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -92,15 +102,15 @@ export function PromotionManager({ classes, students }: Props) {
   useMemo(() => {
     const initial: Record<string, boolean> = {}
     sourceStudents.forEach(s => {
-      // Si la moyenne est >= 10 ou si l'élève n'a pas de notes (ex: maternelle), cocher par défaut
-      if (s.average === null || s.average >= 10) {
+      // Si la moyenne est >= seuil (5 pour primaire, 10 pour secondaire) ou si l'élève n'a pas de notes, cocher par défaut
+      if (s.average === null || s.average >= passThreshold) {
         initial[s.id] = true
       } else {
         initial[s.id] = false
       }
     })
     setSelectedIds(initial)
-  }, [sourceClassId, sourceStudents])
+  }, [sourceClassId, sourceStudents, passThreshold])
 
   // Filtrage par recherche
   const filteredStudents = useMemo(() => {
@@ -116,18 +126,18 @@ export function PromotionManager({ classes, students }: Props) {
   // Statistiques calculées
   const stats = useMemo(() => {
     const total = sourceStudents.length
-    const admis = sourceStudents.filter(s => s.average !== null && s.average >= 10).length
-    const redoublants = sourceStudents.filter(s => s.average !== null && s.average < 10).length
+    const admis = sourceStudents.filter(s => s.average !== null && s.average >= passThreshold).length
+    const redoublants = sourceStudents.filter(s => s.average !== null && s.average < passThreshold).length
     const sansNotes = sourceStudents.filter(s => s.average === null).length
     const selectedCount = Object.values(selectedIds).filter(Boolean).length
     return { total, admis, redoublants, sansNotes, selectedCount }
-  }, [sourceStudents, selectedIds])
+  }, [sourceStudents, selectedIds, passThreshold])
 
   // Actions de sélection rapide
   const selectOnlyPassing = () => {
     const next: Record<string, boolean> = {}
     sourceStudents.forEach(s => {
-      next[s.id] = s.average !== null ? s.average >= 10 : true
+      next[s.id] = s.average !== null ? s.average >= passThreshold : true
     })
     setSelectedIds(next)
   }
@@ -369,7 +379,9 @@ export function PromotionManager({ classes, students }: Props) {
                   </th>
                   <th className="p-4">Matricule</th>
                   <th className="p-4">Nom et Prénom</th>
-                  <th className="p-4 text-center">Moyenne Annuelle</th>
+                  <th className="p-4 text-center">
+                    {isPrimarySource ? 'Moyenne Générale (/10)' : 'Moyenne Annuelle (/20)'}
+                  </th>
                   <th className="p-4">Décision Recommandée</th>
                   <th className="p-4 text-right">Destination finale</th>
                 </tr>
@@ -378,7 +390,7 @@ export function PromotionManager({ classes, students }: Props) {
                 {filteredStudents.map(student => {
                   const isChecked = !!selectedIds[student.id]
                   const hasAverage = student.average !== null
-                  const isPassing = hasAverage && student.average! >= 10
+                  const isPassing = hasAverage && student.average! >= passThreshold
 
                   return (
                     <tr 
@@ -398,7 +410,7 @@ export function PromotionManager({ classes, students }: Props) {
                         />
                       </td>
 
-                      {/* Matricule */}
+                       {/* Matricule */}
                       <td className="p-4 font-mono font-bold text-slate-600 text-xs">
                         {student.matricule}
                       </td>
@@ -416,7 +428,7 @@ export function PromotionManager({ classes, students }: Props) {
                               ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
                               : 'bg-amber-100 text-amber-800 border border-amber-200'
                           }`}>
-                            {student.average!.toFixed(2)} / 20
+                            {student.average!.toFixed(2)} / {maxScale}
                           </span>
                         ) : (
                           <span className="text-slate-400 text-xs italic">

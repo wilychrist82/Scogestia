@@ -40,34 +40,120 @@ export default async function PromotionFinAnneePage() {
     .eq('school_id', schoolId)
     .order('last_name', { ascending: true })
 
-  // 3. Notes réelles enregistrées pour calculer les moyennes annuelles
-  const { data: rawGrades } = await supabase
-    .from('grades')
-    .select('student_id, score, coefficient')
-    .eq('school_id', schoolId)
-    .not('score', 'is', null)
+  // 3. Notes réelles enregistrées (primaire et secondaire)
+  const [
+    { data: rawPrimaryGrades },
+    { data: rawSecondaryGrades },
+    { data: rawSubjects },
+    { data: rawLegacyGrades }
+  ] = await Promise.all([
+    supabase.from('primary_grades').select('student_id, score, max_score, month_number').eq('school_id', schoolId).not('score', 'is', null),
+    supabase.from('secondary_grades').select('student_id, subject_id, term, class_score, comp_score').eq('school_id', schoolId),
+    supabase.from('subjects').select('id, name, coefficient').eq('school_id', schoolId),
+    supabase.from('grades').select('student_id, score, coefficient').eq('school_id', schoolId).not('score', 'is', null)
+  ])
 
-  // Calcul des moyennes par élève
-  const studentScoresMap: Record<string, { totalScore: number; totalCoeff: number; count: number }> = {}
-  rawGrades?.forEach(g => {
-    if (!g.student_id || g.score === null) return
-    const coeff = Number(g.coefficient || 1)
-    const score = Number(g.score)
-
-    if (!studentScoresMap[g.student_id]) {
-      studentScoresMap[g.student_id] = { totalScore: 0, totalCoeff: 0, count: 0 }
-    }
-    studentScoresMap[g.student_id].totalScore += score * coeff
-    studentScoresMap[g.student_id].totalCoeff += coeff
-    studentScoresMap[g.student_id].count += 1
-  })
+  const subjectsMap = new Map((rawSubjects || []).map(s => [s.id, s]))
+  const classesMap = new Map((classes || []).map(c => [c.id, c]))
 
   const formattedStudents = (rawStudents || []).map(s => {
-    const gradeData = studentScoresMap[s.id]
+    const studentClass = classesMap.get(s.class_id)
+    const className = studentClass?.name || ''
+    const classLevel = studentClass?.level || ''
+    const isPrimary = ['cp', 'ce', 'cm', 'ci', 'primaire', 'maternelle', 's1', 's2', 'ps', 'ms', 'gs'].some(k => 
+      `${classLevel} ${className}`.toLowerCase().includes(k)
+    )
+    const isCollege = !isPrimary && ['6eme', '6ème', '5eme', '5ème', '4eme', '4ème', '3eme', '3ème', 'college', 'collège', '6e', '5e', '4e', '3e'].some(k =>
+      `${classLevel} ${className}`.toLowerCase().includes(k)
+    )
+
     let average: number | null = null
-    if (gradeData && gradeData.totalCoeff > 0) {
-      average = Math.round((gradeData.totalScore / gradeData.totalCoeff) * 100) / 100
+    let gradeCount = 0
+
+    if (isPrimary) {
+      // Primaire : Moyenne pondérée ramenée sur 10
+      const pGrades = (rawPrimaryGrades || []).filter(g => g.student_id === s.id)
+      gradeCount = pGrades.length
+      if (pGrades.length > 0) {
+        let totalPts = 0
+        let totalMax = 0
+        pGrades.forEach(g => {
+          totalPts += Number(g.score)
+          totalMax += Number(g.max_score || 10)
+        })
+        if (totalMax > 0) {
+          average = Math.round(((totalPts / totalMax) * 10) * 100) / 100
+        }
+      }
+    } else {
+      // Secondaire : Collège ou Lycée
+      const secGrades = (rawSecondaryGrades || []).filter(g => g.student_id === s.id)
+      gradeCount = secGrades.length
+
+      if (secGrades.length > 0) {
+        const computeTermAvg = (term: string) => {
+          const tGrades = secGrades.filter(g => g.term === term)
+          if (tGrades.length === 0) return null
+          let totalCoef = 0
+          let totalProd = 0
+          tGrades.forEach(g => {
+            const sub = subjectsMap.get(g.subject_id)
+            const cVal = g.class_score !== null ? Number(g.class_score) : NaN
+            const compVal = g.comp_score !== null ? Number(g.comp_score) : NaN
+            let moy = null
+            if (!isNaN(cVal) && !isNaN(compVal)) moy = (cVal + compVal) / 2
+            else if (!isNaN(cVal)) moy = cVal
+            else if (!isNaN(compVal)) moy = compVal
+
+            if (moy !== null) {
+              const coef = isCollege ? 2 : (sub?.coefficient || 2)
+              totalCoef += coef
+              totalProd += moy * coef
+            }
+          })
+          return totalCoef > 0 ? totalProd / totalCoef : null
+        }
+
+        if (isCollege) {
+          // Collège : (T1 + T2 + T3) / 3
+          const t1 = computeTermAvg('1er_trimestre')
+          const t2 = computeTermAvg('2e_trimestre')
+          const t3 = computeTermAvg('3e_trimestre')
+          const validTerms = [t1, t2, t3].filter((t): t is number => t !== null)
+          if (validTerms.length > 0) {
+            const sum = (t1 || 0) + (t2 || 0) + (t3 || 0)
+            average = Math.round((sum / 3) * 100) / 100
+          }
+        } else {
+          // Lycée : (S1 + S2) / 2
+          const s1 = computeTermAvg('1er_semestre')
+          const s2 = computeTermAvg('2e_semestre')
+          const validTerms = [s1, s2].filter((t): t is number => t !== null)
+          if (validTerms.length > 0) {
+            const sum = (s1 || 0) + (s2 || 0)
+            average = Math.round((sum / 2) * 100) / 100
+          }
+        }
+      }
     }
+
+    // Fallback legacy grades
+    if (average === null && rawLegacyGrades) {
+      const lGrades = rawLegacyGrades.filter(g => g.student_id === s.id)
+      if (lGrades.length > 0) {
+        let totalScore = 0, totalCoeff = 0
+        lGrades.forEach(g => {
+          const coeff = Number(g.coefficient || 1)
+          totalScore += Number(g.score) * coeff
+          totalCoeff += coeff
+        })
+        if (totalCoeff > 0) {
+          average = Math.round((totalScore / totalCoeff) * 100) / 100
+          gradeCount = lGrades.length
+        }
+      }
+    }
+
     return {
       id: s.id,
       matricule: s.matricule,
@@ -75,7 +161,7 @@ export default async function PromotionFinAnneePage() {
       last_name: s.last_name,
       class_id: s.class_id,
       average,
-      gradeCount: gradeData?.count || 0
+      gradeCount
     }
   })
 

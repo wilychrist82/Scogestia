@@ -372,22 +372,68 @@ export function isCalculEcritSubject(subjectName: string): boolean {
 
 export function isEtudeDeTexteSubject(subjectName: string): boolean {
   const s = (subjectName || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  // Ne pas confondre avec rédaction
-  if (s.includes('redact') || s.includes('produis un texte')) return false;
-  return s.includes('etude de texte') || s.includes('etude de textes') || s.includes('etude texte') || s.includes('lecture');
+  // Ne pas confondre avec rédaction / production d'écrit
+  if (s.includes('redact') || s.includes('produis')) return false;
+  // Strictement "Étude de texte" (ne pas inclure la simple "lecture")
+  return s.includes('etude de texte') || s.includes('etude de textes') || s.includes('etude texte') || s.includes('texte suivi de questions');
+}
+
+export function isLectureSubject(subjectName: string): boolean {
+  const s = (subjectName || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (isEtudeDeTexteSubject(s)) return false;
+  return s.includes('lecture');
+}
+
+/**
+ * Ordre officiel des disciplines du primaire (Togo & Afrique de l'Ouest) :
+ * 1. Dictée-questions
+ * 2. Rédaction / Expression écrite
+ * 3. Lecture (notée sur 10 de CP1 au CM2)
+ * 4. Étude de texte (notée sur 20 au CM1 et CM2, sur 10 avant)
+ * 5. Langage / Élocution
+ * 6. Calcul écrit
+ * 7. Calcul mental
+ * 8. Problème
+ * etc.
+ */
+export function getPrimarySubjectOrder(name: string): number {
+  const n = (name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (n.includes('ecrire les mots') || n.includes('dictee')) return 10;
+  if (n.includes('produis un texte') || n.includes('redact')) return 20;
+  if (n.includes('lecture') && !n.includes('etude')) return 30;
+  if (n.includes('etude de texte') || n.includes('etude texte')) return 35; // IMMÉDIATEMENT APRÈS LA LECTURE
+  if (n.includes('parler') || n.includes('langage')) return 40;
+  if (n.includes('calcul ecrit')) return 50;
+  if (n.includes('calcul mental')) return 60;
+  if (n.includes('problem')) return 70;
+  if (n.includes('science') || n.includes('histoire') || n.includes('geo')) return 80;
+  if (n.includes('sociale') || n.includes('ecm')) return 90;
+  if (n.includes('technologie') || n.includes('edusivip')) return 100;
+  if (n.includes('plastique') || n.includes('dessin')) return 110;
+  if (n.includes('chant')) return 120;
+  if (n.includes('recitation')) return 130;
+  if (n.includes('anglais')) return 140;
+  if (n.includes('eps') || n.includes('sport')) return 150;
+  return 200;
 }
 
 /**
  * Règles officielles de notation au Primaire (Togo & Afrique de l'Ouest) :
  * - CP (CP1, CP2, CI) : TOUTES les disciplines sont notées sur 10.
  * - CE (CE1, CE2) : 2 disciplines notées sur 20 (Problème, Dictée-questions). Toutes les autres sur 10.
- * - CM (CM1, CM2) : 4 disciplines notées sur 20 (Problème, Dictée-questions, Calcul écrit, Étude de texte). Toutes les autres sur 10.
+ * - CM (CM1, CM2) : 4 disciplines notées sur 20 (Problème, Dictée-questions, Calcul écrit, Étude de texte).
+ * - IMPORTANT : La Lecture est notée sur 10 du CP1 au CM2.
  */
 export function getPrimarySubjectMaxScore(
   subjectName: string,
   className?: string,
   classLevel?: string
 ): number {
+  // RÈGLE STRICTE : La discipline "Lecture" est notée sur 10 de CP1 au CM2
+  if (isLectureSubject(subjectName)) {
+    return 10;
+  }
+
   const level = detectPrimaryLevel(className, classLevel);
 
   if (level === 'CM') {
@@ -430,7 +476,7 @@ export function calculateDisciplineAverage(scores: (number | null | undefined)[]
 }
 
 /**
- * Calcule la moyenne générale pondérée ramenée STRICTEMENT sur 10.
+ * Calcule la moyenne générale pondérée ramenée STRICTEMENT sur 10 (au Primaire).
  * Pour chaque note saisie, elle est pondérée par son barème max (10 ou 20).
  * Formule officielle : (Somme des points obtenus / Somme des barèmes possibles) * 10
  */
@@ -455,5 +501,80 @@ export function calculatePrimaryGeneralAverage(
     totalPoints: Number(totalPoints.toFixed(2)),
     maxPossible,
     averageOutOf10
+  };
+}
+
+/**
+ * Calcul officiel de la moyenne annuelle au Collège (Secondaire 1) :
+ * Somme des moyennes sur 20 des trois trimestres (T1 + T2 + T3) divisée par 3.
+ * Calculée au 3ème trimestre, donne droit au passage en classe supérieure si >= 10/20.
+ */
+export function calculateCollegeAnnualAverage(
+  t1Avg: number | null | undefined,
+  t2Avg: number | null | undefined,
+  t3Avg: number | null | undefined
+): number | null {
+  const t1 = (typeof t1Avg === 'number' && !isNaN(t1Avg)) ? t1Avg : null;
+  const t2 = (typeof t2Avg === 'number' && !isNaN(t2Avg)) ? t2Avg : null;
+  const t3 = (typeof t3Avg === 'number' && !isNaN(t3Avg)) ? t3Avg : null;
+
+  // Si aucun trimestre n'a de note
+  if (t1 === null && t2 === null && t3 === null) return null;
+
+  // Calcul officiel sur les 3 trimestres
+  // S'ils sont tous disponibles : (T1 + T2 + T3) / 3
+  const availableTerms = [t1, t2, t3].filter((t): t is number => t !== null);
+  if (availableTerms.length === 0) return null;
+
+  // Règle officielle : divisé par 3
+  const sum = (t1 || 0) + (t2 || 0) + (t3 || 0);
+  return Number((sum / 3).toFixed(2));
+}
+
+/**
+ * Calcul officiel de la moyenne annuelle au Lycée (Secondaire 2) :
+ * Somme des moyennes sur 20 des 2 semestres (S1 + S2) divisée par 2.
+ * Calculée au 2ème semestre, donne droit au passage en classe supérieure si >= 10/20.
+ */
+export function calculateLyceeAnnualAverage(
+  s1Avg: number | null | undefined,
+  s2Avg: number | null | undefined
+): number | null {
+  const s1 = (typeof s1Avg === 'number' && !isNaN(s1Avg)) ? s1Avg : null;
+  const s2 = (typeof s2Avg === 'number' && !isNaN(s2Avg)) ? s2Avg : null;
+
+  if (s1 === null && s2 === null) return null;
+
+  const sum = (s1 || 0) + (s2 || 0);
+  return Number((sum / 2).toFixed(2));
+}
+
+/**
+ * Décision de passage en classe supérieure selon la moyenne annuelle :
+ * - Collège et Lycée : moyenne sur 20, admis si >= 10/20.
+ * - Primaire : moyenne sur 10, admis si >= 5/10 (évaluation par composition).
+ */
+export function getAnnualPassDecision(
+  average: number | null | undefined,
+  cycle: 'college' | 'lycee' | 'primaire' | 'maternelle'
+): { passed: boolean; label: string; threshold: number } {
+  if (average === null || average === undefined || isNaN(average)) {
+    return { passed: false, label: 'En attente', threshold: cycle === 'primaire' ? 5 : 10 };
+  }
+
+  if (cycle === 'primaire' || cycle === 'maternelle') {
+    const passed = average >= 5;
+    return {
+      passed,
+      label: passed ? 'Passe en classe supérieure (Admis)' : 'Redouble (Non admis)',
+      threshold: 5
+    };
+  }
+
+  const passed = average >= 10;
+  return {
+    passed,
+    label: passed ? 'Passe en classe supérieure (Admis)' : 'Redouble (Non admis)',
+    threshold: 10
   };
 }
