@@ -133,12 +133,25 @@ export function NotesManager({
   // Primary subjects sorted neatly by official curriculum order (Lecture followed directly by Étude de texte)
   const filteredPrimarySubjects = useMemo(() => {
     const list = subjects.filter(s => !s.cycle || s.cycle.toLowerCase() === 'primaire' || s.cycle.toLowerCase() === 'maternelle')
-    const hasEtude = list.some(s => {
+    
+    // Déduplication stricte par nom normalisé
+    const seen = new Set<string>()
+    const deduplicated: typeof list = []
+
+    for (const sub of list) {
+      const norm = (sub.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+      if (!seen.has(norm)) {
+        seen.add(norm)
+        deduplicated.push(sub)
+      }
+    }
+
+    const hasEtude = deduplicated.some(s => {
       const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
       return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
     })
     if (!hasEtude) {
-      list.push({
+      deduplicated.push({
         id: 'virtual-etude-de-texte',
         name: 'Étude de texte',
         cycle: 'primaire',
@@ -146,7 +159,7 @@ export function NotesManager({
         coefficient: 1
       })
     }
-    return list.sort((a, b) => {
+    return deduplicated.sort((a, b) => {
       const orderA = getPrimarySubjectOrder(a.name)
       const orderB = getPrimarySubjectOrder(b.name)
       if (orderA !== orderB) return orderA - orderB
@@ -713,33 +726,6 @@ export function NotesManager({
                           ({filteredStudents.length} élèves)
                         </span>
                       </h3>
-
-                      {/* Badge barème officiel */}
-                      {(() => {
-                        const primLvl = selectedClassObj ? detectPrimaryLevel(selectedClassObj.name, selectedClassObj.level) : null;
-                        if (primLvl === 'CP') {
-                          return (
-                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
-                              📘 CP (CP1, CP2, CI) : toutes disciplines sur 10
-                            </span>
-                          );
-                        }
-                        if (primLvl === 'CE') {
-                          return (
-                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200">
-                              📗 CE (CE1, CE2) : Problème & Dictée sur 20 • Autres sur 10
-                            </span>
-                          );
-                        }
-                        if (primLvl === 'CM') {
-                          return (
-                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">
-                              📙 CM (CM1, CM2) : Problème, Dictée, Calcul écrit & Étude de texte sur 20 • Autres sur 10
-                            </span>
-                          );
-                        }
-                        return null;
-                      })()}
                     </div>
                     <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">
                       💡 Cliquez sur un élève, <strong>double-cliquez</strong> ou cliquez sur <strong>« Saisir les notes »</strong> pour ouvrir sa grille de notes complète.
@@ -887,14 +873,7 @@ export function NotesManager({
                       <p className="text-xs text-[var(--color-on-surface-variant)] mt-0.5">
                         Matricule : <span className="font-semibold text-[var(--color-on-surface)]">{currentStudent?.matricule || 'Non renseigné'}</span>
                         {' • '}
-                        <span className="text-[var(--color-on-surface-variant)]">
-                          {filteredPrimarySubjects.length} matières • Barème : {(() => {
-                            const primLvl = selectedClassObj ? detectPrimaryLevel(selectedClassObj.name, selectedClassObj.level) : null;
-                            if (primLvl === 'CM') return '4 disciplines sur 20 (Problème, Dictée, Calcul, Étude de texte), autres sur 10';
-                            if (primLvl === 'CE') return '2 disciplines sur 20 (Problème, Dictée), autres sur 10';
-                            return 'Toutes disciplines sur 10';
-                          })()} • Moyenne calculée sur 10
-                        </span>
+                        <span>{filteredPrimarySubjects.length} matières</span>
                       </p>
                     </div>
                   </div>
@@ -1013,7 +992,7 @@ export function NotesManager({
                       {/* Month sub-headers */}
                       <tr className="bg-[var(--color-surface-container)] border-b border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-xs font-semibold">
                         <th className="py-2.5 px-4 sticky left-0 bg-[var(--color-surface-container)] z-20 border-r border-[var(--color-outline-variant)] shadow-[1px_0_0_var(--color-outline-variant)]">
-                          Discipline & Barème
+                          Discipline
                         </th>
                         {Array.from({ length: 9 }).map((_, i) => (
                           <th key={i} className={`py-2.5 px-2 text-center w-[85px] ${i === 2 || i === 5 ? 'border-r border-[var(--color-outline-variant)]' : ''}`}>
@@ -1042,18 +1021,9 @@ export function NotesManager({
                             {/* Sticky Subject Cell */}
                             <td className="py-2.5 px-4 sticky left-0 bg-[var(--color-surface-container-lowest)] group-hover:bg-[var(--color-surface-bright)] z-10 border-r border-[var(--color-outline-variant)] shadow-[1px_0_0_var(--color-outline-variant)] min-w-[280px]">
                               <div className="flex flex-col">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="font-semibold text-[var(--color-on-surface)] text-sm leading-tight">
-                                    {subject.name}
-                                  </span>
-                                  <span className={`px-2 py-0.5 rounded text-[11px] font-bold shrink-0 ${
-                                    maxScore === 20 
-                                      ? 'bg-blue-100 text-blue-800 border border-blue-200 shadow-2xs' 
-                                      : 'bg-slate-100 text-slate-700 border border-slate-200'
-                                  }`}>
-                                    sur {maxScore}
-                                  </span>
-                                </div>
+                                <span className="font-semibold text-[var(--color-on-surface)] text-sm leading-tight">
+                                  {subject.name}
+                                </span>
                                 {cat && (
                                   <span className="text-[10px] text-[var(--color-on-surface-variant)] font-medium mt-0.5">
                                     {cat}

@@ -69,11 +69,15 @@ export default async function NotesPage() {
       });
       hasChanges = true;
     }
-    const hasEtude = subjects.some(s => {
+    const allEtudes = subjects.filter(s => {
       const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
       return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
     });
-    if (!hasEtude) {
+    if (allEtudes.length > 1) {
+      const dupes = allEtudes.slice(1).map(e => e.id);
+      await supabase.from('subjects').delete().in('id', dupes);
+      hasChanges = true;
+    } else if (allEtudes.length === 0) {
       await supabase.from('subjects').insert({
         school_id: schoolId,
         name: 'Étude de texte',
@@ -83,6 +87,7 @@ export default async function NotesPage() {
       });
       hasChanges = true;
     }
+
     if (hasChanges) {
       const { data: updatedSubjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId).order('name');
       if (updatedSubjects) subjects = updatedSubjects;

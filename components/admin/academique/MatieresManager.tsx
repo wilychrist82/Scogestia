@@ -126,9 +126,26 @@ export function MatieresManager({ subjects }: Props) {
       return s.cycle === 'secondaire'
     })
 
+    // Déduplication stricte par nom normalisé
+    const seen = new Set<string>()
+    const deduplicated: typeof list = []
+
+    for (const sub of list) {
+      const norm = (sub.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+      if (!seen.has(norm)) {
+        seen.add(norm)
+        deduplicated.push(sub)
+      }
+    }
+
     // Si on est au primaire et qu'Étude de texte n'est pas encore dans la liste DB
-    if (isPrimary && !hasEtudeDeTexte) {
-      list.push({
+    const hasEtudeInList = deduplicated.some(s => {
+      const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+      return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
+    })
+
+    if (isPrimary && !hasEtudeInList) {
+      deduplicated.push({
         id: 'virtual-etude-de-texte',
         name: 'Étude de texte',
         cycle: 'primaire',
@@ -138,9 +155,9 @@ export function MatieresManager({ subjects }: Props) {
     }
 
     if (isPrimary) {
-      return [...list].sort((a, b) => getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name))
+      return [...deduplicated].sort((a, b) => getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name))
     }
-    return list
+    return deduplicated
   }, [subjects, isPrimary, hasEtudeDeTexte])
 
   // Primary categories
@@ -468,16 +485,8 @@ export function MatieresManager({ subjects }: Props) {
                 </div>
               )}
               {isPrimary && (
-                <div className="px-6 py-2.5 bg-emerald-50/70 border-b border-emerald-100 text-xs font-semibold text-emerald-950 flex flex-wrap items-center justify-between gap-2">
-                  <span>Programme officiel du Primaire (CP1 au CM2) — Barèmes officiels :</span>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="bg-emerald-100 text-emerald-900 px-2.5 py-0.5 rounded-full text-[11px] font-bold border border-emerald-200">
-                      Lecture : Notée sur 10 (CP1 à CM2)
-                    </span>
-                    <span className="bg-indigo-100 text-indigo-900 px-2.5 py-0.5 rounded-full text-[11px] font-bold border border-indigo-200">
-                      Étude de texte : Notée sur 20 au CM1/CM2 (sur 10 avant)
-                    </span>
-                  </div>
+                <div className="px-6 py-2.5 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-700">
+                  Programme officiel du Primaire (CP1 au CM2)
                 </div>
               )}
               <table className="w-full text-left border-collapse">
@@ -491,25 +500,10 @@ export function MatieresManager({ subjects }: Props) {
                 </thead>
                 <tbody className="divide-y divide-[var(--color-outline-variant)] text-base">
                   {filteredSubjects.map((sub) => {
-                    const isLecture = isPrimary && isLectureSubject(sub.name)
-                    const isEtude = isPrimary && isEtudeDeTexteSubject(sub.name)
-
                     return (
                       <tr key={sub.id} className="hover:bg-[var(--color-surface-container-lowest)]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
                         <td className="py-3 px-6 font-medium text-[var(--color-on-surface)]">
-                          <div className="flex items-center gap-2.5 flex-wrap">
-                            <span className="font-semibold">{sub.name}</span>
-                            {isLecture && (
-                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                Notée sur 10 (CP1 au CM2)
-                              </span>
-                            )}
-                            {isEtude && (
-                              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-100 text-indigo-900 border border-indigo-300">
-                                Notée sur 20 au CM1/CM2 (sur 10 avant)
-                              </span>
-                            )}
-                          </div>
+                          <span className="font-semibold">{sub.name}</span>
                         </td>
                       {isPrimary && (
                         <td className="py-3 px-6 text-[var(--color-on-surface-variant)]">

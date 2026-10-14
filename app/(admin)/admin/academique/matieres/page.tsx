@@ -70,13 +70,17 @@ export default async function MatieresPage() {
   } else {
     let hasChanges = false
 
-    // Vérifier si Étude de texte est présente
-    const hasEtude = subjects.some(s => {
+    // Vérifier et nettoyer les doublons d'Étude de texte
+    const allEtudes = subjects.filter(s => {
       const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
       return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
     })
 
-    if (!hasEtude) {
+    if (allEtudes.length > 1) {
+      const dupes = allEtudes.slice(1).map(e => e.id)
+      await supabase.from('subjects').delete().in('id', dupes)
+      hasChanges = true
+    } else if (allEtudes.length === 0) {
       await supabase.from('subjects').insert({
         school_id: schoolId,
         name: 'Étude de texte',

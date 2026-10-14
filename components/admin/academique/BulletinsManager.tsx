@@ -245,12 +245,21 @@ export function BulletinsManager({
 
     if (isPrimary) {
       const list = subjects.filter(s => !s.cycle || s.cycle === 'primaire' || s.cycle === 'maternelle')
-      const hasEtude = list.some(s => {
+      const seen = new Set<string>()
+      const deduplicated: typeof list = []
+      for (const sub of list) {
+        const norm = (sub.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+        if (!seen.has(norm)) {
+          seen.add(norm)
+          deduplicated.push(sub)
+        }
+      }
+      const hasEtude = deduplicated.some(s => {
         const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
         return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
       })
       if (!hasEtude) {
-        list.push({
+        deduplicated.push({
           id: 'virtual-etude-de-texte',
           name: 'Étude de texte',
           cycle: 'primaire',
@@ -258,7 +267,7 @@ export function BulletinsManager({
           coefficient: 1
         })
       }
-      const primarySubjects = list.sort((a, b) => getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name))
+      const primarySubjects = deduplicated.sort((a, b) => getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name))
       const groupedSubjects: Record<string, any[]> = {}
       
       const months = Array.from({ length: 9 }, (_, i) => i + 1)
@@ -556,12 +565,21 @@ export function BulletinsManager({
     if (!student || !cls) return null
 
     const list = subjects.filter(s => !s.cycle || s.cycle === 'primaire' || s.cycle === 'maternelle')
-    const hasEtude = list.some(s => {
+    const seen = new Set<string>()
+    const deduplicated: typeof list = []
+    for (const sub of list) {
+      const norm = (sub.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+      if (!seen.has(norm)) {
+        seen.add(norm)
+        deduplicated.push(sub)
+      }
+    }
+    const hasEtude = deduplicated.some(s => {
       const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
       return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
     })
     if (!hasEtude) {
-      list.push({
+      deduplicated.push({
         id: 'virtual-etude-de-texte',
         name: 'Étude de texte',
         cycle: 'primaire',
@@ -569,7 +587,7 @@ export function BulletinsManager({
         coefficient: 1
       })
     }
-    const primarySubjects = list.sort((a, b) => getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name))
+    const primarySubjects = deduplicated.sort((a, b) => getPrimarySubjectOrder(a.name) - getPrimarySubjectOrder(b.name))
     const groupedSubjects: Record<string, SubjectItem[]> = {}
     primarySubjects.forEach(s => {
       const cat = s.category || 'Général'

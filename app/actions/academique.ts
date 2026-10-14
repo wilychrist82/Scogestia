@@ -132,12 +132,16 @@ export async function ensureEtudeDeTexteSubject(): Promise<ActionState> {
       .select("id, name, cycle")
       .eq("school_id", school_id);
 
-    const hasEtude = allSubs?.some(s => {
+    const allEtudes = allSubs?.filter(s => {
       const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
       return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte');
     });
 
-    if (!hasEtude) {
+    if (allEtudes && allEtudes.length > 1) {
+      // Nettoyage : garder le premier, supprimer les doublons
+      const duplicateIds = allEtudes.slice(1).map(e => e.id);
+      await supabase.from("subjects").delete().in("id", duplicateIds);
+    } else if (!allEtudes || allEtudes.length === 0) {
       const { error } = await supabase.from("subjects").insert({
         school_id,
         name: "Étude de texte",
