@@ -482,16 +482,16 @@ export function PresencesManager({ classes, students }: Props) {
             {/* Data Grid Table */}
             <div className="overflow-x-auto max-h-[70vh] custom-scrollbar relative">
               <table className="w-full text-left border-collapse border-spacing-0 select-none bg-white">
-                <thead className="sticky top-0 z-20">
+                <thead className="sticky top-0 z-30">
                   {/* First header row: Indication des absences */}
                   <tr>
-                    <th rowSpan={2} className="border border-gray-400 py-2 px-2 font-semibold text-center w-8 sm:w-12 bg-gray-100 text-gray-700 text-xs sm:text-sm z-30 md:sticky md:left-0">
+                    <th rowSpan={2} className="border border-gray-400 py-2 px-1 font-semibold text-center w-8 min-w-[32px] max-w-[32px] md:w-12 md:min-w-[48px] md:max-w-[48px] bg-gray-100 text-gray-700 text-xs sm:text-sm z-50 sticky left-0">
                       N°
                     </th>
-                    <th rowSpan={2} className="border border-gray-400 py-2 px-3 font-semibold min-w-[140px] sm:min-w-[200px] md:w-64 bg-gray-100 text-gray-700 text-xs sm:text-sm z-30 md:sticky md:left-[48px]">
+                    <th rowSpan={2} className="border border-gray-400 py-2 px-2 md:px-3 font-semibold w-[130px] min-w-[130px] max-w-[130px] md:w-64 md:min-w-[256px] md:max-w-[256px] bg-gray-100 text-gray-700 text-xs sm:text-sm z-50 sticky left-[32px] md:left-[48px]">
                       Nom et prénom
                     </th>
-                    <th rowSpan={2} className="border border-gray-400 py-2 px-1 sm:px-2 font-semibold text-center w-8 sm:w-14 bg-gray-100 text-gray-700 text-xs sm:text-sm z-30 md:sticky md:left-[304px]">
+                    <th rowSpan={2} className="border border-gray-400 border-r-2 border-r-gray-400 py-2 px-1 font-semibold text-center w-8 min-w-[32px] max-w-[32px] md:w-14 md:min-w-[56px] md:max-w-[56px] bg-gray-100 text-gray-700 text-xs sm:text-sm z-50 sticky left-[162px] md:left-[304px] shadow-[4px_0_8px_-2px_rgba(0,0,0,0.18)]">
                       Sexe
                     </th>
                     <th colSpan={displayedDays.length} className="border border-gray-400 py-1 font-bold text-center bg-indigo-50/50 text-gray-700 text-xs sm:text-sm tracking-wide">
@@ -530,13 +530,16 @@ export function PresencesManager({ classes, students }: Props) {
                     const textColor = isFille ? 'text-red-600' : 'text-gray-900'
                     return (
                       <tr key={student.id} className="hover:bg-gray-50 group">
-                        <td className="border border-gray-400 py-2 px-1 text-center text-gray-600 font-semibold bg-white z-10 group-hover:bg-gray-50 text-xs md:sticky md:left-0">
+                        <td className="border border-gray-400 py-2 px-1 text-center text-gray-600 font-semibold bg-white z-20 group-hover:bg-gray-100 text-xs sticky left-0 w-8 min-w-[32px] max-w-[32px] md:w-12 md:min-w-[48px] md:max-w-[48px]">
                           {String(index + 1).padStart(2, '0')}
                         </td>
-                        <td className={`border border-gray-400 py-2 px-2.5 font-semibold bg-white z-10 whitespace-nowrap overflow-hidden text-ellipsis group-hover:bg-gray-50 text-xs md:sticky md:left-[48px] ${textColor}`}>
+                        <td 
+                          title={`${student.last_name} ${student.first_name}`}
+                          className={`border border-gray-400 py-2 px-2 font-semibold bg-white z-20 whitespace-nowrap overflow-hidden text-ellipsis group-hover:bg-gray-100 text-xs sticky left-[32px] md:left-[48px] w-[130px] min-w-[130px] max-w-[130px] md:w-64 md:min-w-[256px] md:max-w-[256px] ${textColor}`}
+                        >
                           {student.last_name} {student.first_name}
                         </td>
-                        <td className={`border border-gray-400 py-2 px-1 font-bold text-center bg-white z-10 group-hover:bg-gray-50 text-xs md:sticky md:left-[304px] ${textColor}`}>
+                        <td className={`border border-gray-400 border-r-2 border-r-gray-400 py-2 px-1 font-bold text-center bg-white z-20 group-hover:bg-gray-100 text-xs sticky left-[162px] md:left-[304px] w-8 min-w-[32px] max-w-[32px] md:w-14 md:min-w-[56px] md:max-w-[56px] shadow-[4px_0_8px_-2px_rgba(0,0,0,0.18)] ${textColor}`}>
                           {isFille ? 'F' : 'M'}
                         </td>
                         {displayedDays.map(d => {
