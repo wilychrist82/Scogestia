@@ -666,7 +666,7 @@ export function PresencesManager({ classes, students }: Props) {
                 <button 
                   onClick={handleSave}
                   disabled={isPending || modifiedCells.size === 0}
-                  className="bg-[var(--color-primary)] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="hidden md:flex bg-[var(--color-primary)] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed items-center gap-2"
                 >
                   {isPending ? 'Enregistrement...' : "Enregistrer"}
                   {modifiedCells.size > 0 && !isPending && <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs">{modifiedCells.size}</span>}
