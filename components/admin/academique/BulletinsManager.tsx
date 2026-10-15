@@ -6,7 +6,7 @@ import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 import { createClient } from '@/lib/supabase/client'
 import { sortClasses } from '@/lib/classes'
-import { ShieldCheck, FileDown, GraduationCap } from 'lucide-react'
+import { ShieldCheck, FileDown, GraduationCap, Printer } from 'lucide-react'
 import { 
   getCoefficientForSubject, 
   detectClassSeriesKey, 
@@ -70,6 +70,7 @@ export function BulletinsManager({
   const [isPending, startTransition] = useTransition()
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [publishStatus, setPublishStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [isPrintingAllClass, setIsPrintingAllClass] = useState(false)
   const [stampText, setStampText] = useState(schoolName.toUpperCase())
 
   useEffect(() => {
@@ -231,7 +232,19 @@ export function BulletinsManager({
   }, [student, selectedLevel, selectedTerm, primaryGrades, secondaryGrades, availableStudents.length, subjects, cls])
 
   const handlePrint = () => {
-    window.print()
+    setIsPrintingAllClass(false)
+    setTimeout(() => {
+      window.print()
+    }, 100)
+  }
+
+  const handlePrintAllClass = () => {
+    if (!selectedClass || availableStudents.length === 0) return
+    setIsPrintingAllClass(true)
+    setTimeout(() => {
+      window.print()
+      setIsPrintingAllClass(false)
+    }, 400)
   }
 
   const handleSavePrimary = () => {
@@ -615,8 +628,10 @@ export function BulletinsManager({
     )
   }
 
-  const renderPrimaryLivret = () => {
-    if (!student || !cls) return null
+  const renderPrimaryLivret = (targetStu?: StudentItem) => {
+    const curStu = targetStu || student
+    if (!curStu || !cls) return null
+    const isCurrent = curStu.id === student?.id
 
     const list = subjects.filter(s => !s.cycle || s.cycle === 'primaire' || s.cycle === 'maternelle')
     const seen = new Set<string>()
@@ -651,6 +666,16 @@ export function BulletinsManager({
 
     const months = Array.from({ length: 9 }, (_, i) => i + 1)
 
+    const getScoreVal = (subjId: string, m: number): string => {
+      if (isCurrent) return localPrimGrades[`${subjId}_${m}`] || ''
+      const g = primaryGrades.find(g => g.student_id === curStu.id && g.subject_id === subjId && g.month_number === m)
+      return g ? g.score.toString() : ''
+    }
+
+    const curInfo = isCurrent
+      ? localPrimInfo
+      : (primaryInfo?.find(p => p.student_id === curStu.id) || { appreciation: '', decision: '' })
+
     return (
       <div className="bg-white p-8 print:p-4 rounded-xl shadow-sm border border-[var(--color-outline-variant)] print:border-none text-black relative bulletin-page" ref={printRef}>
         
@@ -683,7 +708,7 @@ export function BulletinsManager({
         <div className="flex justify-between items-center mb-8 print:mb-4 bg-gray-50 p-4 print:p-2 rounded-lg border border-gray-200">
           <div>
             <p className="text-sm text-gray-600">Nom et Prénom(s)</p>
-            <p className="text-lg font-bold">{student.last_name} {student.first_name}</p>
+            <p className="text-lg font-bold">{curStu.last_name} {curStu.first_name}</p>
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600">Classe</p>
@@ -691,7 +716,7 @@ export function BulletinsManager({
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-600">Matricule</p>
-            <p className="text-lg font-bold">{student.matricule}</p>
+            <p className="text-lg font-bold">{curStu.matricule}</p>
           </div>
         </div>
 
@@ -718,8 +743,7 @@ export function BulletinsManager({
                     let total = 0
                     let count = 0
                     months.forEach(m => {
-                      const key = `${subj.id}_${m}`
-                      const val = parseFloat(localPrimGrades[key])
+                      const val = parseFloat(getScoreVal(subj.id, m))
                       if (!isNaN(val)) { total += val; count++ }
                     })
                     const avg = count > 0 ? (total / count).toFixed(2) : ''
@@ -737,15 +761,21 @@ export function BulletinsManager({
                           </div>
                         </td>
                         {months.map(m => {
-                          const key = `${subj.id}_${m}`
+                          const valStr = getScoreVal(subj.id, m)
                           return (
                             <td key={m} className="border border-black p-0 text-center">
-                              <input 
-                                type="text"
-                                className="w-full h-full p-2 text-center outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 font-medium print-input"
-                                value={localPrimGrades[key] || ''}
-                                onChange={e => setLocalPrimGrades({...localPrimGrades, [key]: e.target.value})}
-                              />
+                              {isCurrent ? (
+                                <input 
+                                  type="text"
+                                  className="w-full h-full p-2 text-center outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 font-medium print-input"
+                                  value={valStr}
+                                  onChange={e => setLocalPrimGrades({...localPrimGrades, [`${subj.id}_${m}`]: e.target.value})}
+                                />
+                              ) : (
+                                <span className="w-full h-full p-2 text-center inline-block font-medium">
+                                  {valStr}
+                                </span>
+                              )}
                             </td>
                           )
                         })}
@@ -765,7 +795,7 @@ export function BulletinsManager({
                   let monthTotal = 0;
                   let maxPossible = 0;
                   primarySubjects.forEach(subj => {
-                    const val = parseFloat(localPrimGrades[`${subj.id}_${m}`]);
+                    const val = parseFloat(getScoreVal(subj.id, m));
                     if (!isNaN(val)) {
                       const maxS = getPrimarySubjectMaxScore(subj.name, cls?.name, cls?.level);
                       monthTotal += val;
@@ -792,7 +822,7 @@ export function BulletinsManager({
                   let maxPossible = 0;
                   let count = 0;
                   primarySubjects.forEach(subj => {
-                    const val = parseFloat(localPrimGrades[`${subj.id}_${m}`]);
+                    const val = parseFloat(getScoreVal(subj.id, m));
                     if (!isNaN(val)) {
                       const maxS = getPrimarySubjectMaxScore(subj.name, cls?.name, cls?.level);
                       monthTotal += val;
@@ -813,19 +843,25 @@ export function BulletinsManager({
               <tr className="bg-gray-100 font-bold">
                 <td className="border border-black p-2 text-right uppercase">Rang</td>
                 {months.map(m => {
-                  const autoRank = computedPrimaryRanks[m]?.[student.id]?.rankText || ''
-                  const currentRank = (localPrimRanks[m] !== undefined && localPrimRanks[m] !== '') 
-                    ? localPrimRanks[m] 
-                    : autoRank
+                  const autoRank = computedPrimaryRanks[m]?.[curStu.id]?.rankText || ''
+                  const currentRank = isCurrent 
+                    ? ((localPrimRanks[m] !== undefined && localPrimRanks[m] !== '') ? localPrimRanks[m] : autoRank)
+                    : (primaryRanks?.find(r => r.student_id === curStu.id && r.month_number === m)?.rank_text || autoRank)
                   return (
                     <td key={`rank-${m}`} className="border border-black p-0 text-center">
-                      <input 
-                        type="text"
-                        className="w-full h-full p-2 text-center outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 font-bold print-input text-gray-900"
-                        placeholder={autoRank || '-'}
-                        value={currentRank}
-                        onChange={e => setLocalPrimRanks({...localPrimRanks, [m]: e.target.value})}
-                      />
+                      {isCurrent ? (
+                        <input 
+                          type="text"
+                          className="w-full h-full p-2 text-center outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 font-bold print-input text-gray-900"
+                          placeholder={autoRank || '-'}
+                          value={currentRank}
+                          onChange={e => setLocalPrimRanks({...localPrimRanks, [m]: e.target.value})}
+                        />
+                      ) : (
+                        <span className="w-full h-full p-2 text-center inline-block font-bold text-gray-900">
+                          {currentRank || '-'}
+                        </span>
+                      )}
                     </td>
                   )
                 })}
@@ -846,13 +882,17 @@ export function BulletinsManager({
             />
             <div className="mt-4 flex flex-col items-center w-full">
               <span className="text-sm font-semibold mb-1">Appréciation :</span>
-              <input 
-                type="text"
-                placeholder="Ex: Passable, Bien..."
-                className="print-input text-center text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-full border-b border-gray-300 focus:border-[var(--color-primary)]"
-                value={localPrimInfo.appreciation}
-                onChange={e => setLocalPrimInfo({...localPrimInfo, appreciation: e.target.value})}
-              />
+              {isCurrent ? (
+                <input 
+                  type="text"
+                  placeholder="Ex: Passable, Bien..."
+                  className="print-input text-center text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-full border-b border-gray-300 focus:border-[var(--color-primary)]"
+                  value={localPrimInfo.appreciation}
+                  onChange={e => setLocalPrimInfo({...localPrimInfo, appreciation: e.target.value})}
+                />
+              ) : (
+                <span className="text-sm font-semibold text-gray-800">{curInfo.appreciation || '—'}</span>
+              )}
             </div>
           </div>
           <div className="w-1/3 flex justify-center">
@@ -876,13 +916,17 @@ export function BulletinsManager({
             />
             <div className="mt-4 flex flex-col items-center w-full">
               <span className="text-sm font-semibold mb-1">Décision du directeur :</span>
-              <input 
-                type="text"
-                placeholder="Décision finale..."
-                className="print-input text-center text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-full border-b border-gray-300 focus:border-[var(--color-primary)]"
-                value={localPrimInfo.decision}
-                onChange={e => setLocalPrimInfo({...localPrimInfo, decision: e.target.value})}
-              />
+              {isCurrent ? (
+                <input 
+                  type="text"
+                  placeholder="Décision finale..."
+                  className="print-input text-center text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-full border-b border-gray-300 focus:border-[var(--color-primary)]"
+                  value={localPrimInfo.decision}
+                  onChange={e => setLocalPrimInfo({...localPrimInfo, decision: e.target.value})}
+                />
+              ) : (
+                <span className="text-sm font-semibold text-gray-800">{curInfo.decision || '—'}</span>
+              )}
             </div>
           </div>
         </div>
@@ -890,17 +934,35 @@ export function BulletinsManager({
     )
   }
 
-  const renderSecondaryBulletin = () => {
-    if (!student || !cls) return null
+  const renderSecondaryBulletin = (targetStu?: StudentItem) => {
+    const curStu = targetStu || student
+    if (!curStu || !cls) return null
+    const isCurrent = curStu.id === student?.id
 
     const secondarySubjects = subjects.filter(s => s.cycle === 'secondaire')
     let totalCoef = 0
     let totalProduct = 0
 
     const rows = secondarySubjects.map(subj => {
-      const grades = localSecGrades[subj.id] || { cScore: '', compScore: '' }
-      const cScore = parseFloat(grades.cScore)
-      const compScore = parseFloat(grades.compScore)
+      let cScoreVal = ''
+      let compScoreVal = ''
+      let teacherVal = ''
+      let apprVal = ''
+
+      if (isCurrent) {
+        const grades = localSecGrades[subj.id] || { cScore: '', compScore: '' }
+        cScoreVal = grades.cScore
+        compScoreVal = grades.compScore
+        teacherVal = secTeachers[subj.id] || ''
+        apprVal = secAppr[subj.id] !== undefined ? secAppr[subj.id] : ''
+      } else {
+        const g = secondaryGrades.find(g => g.student_id === curStu.id && g.subject_id === subj.id && g.term === selectedTerm)
+        cScoreVal = g?.class_score !== null && g?.class_score !== undefined ? g.class_score.toString() : ''
+        compScoreVal = g?.comp_score !== null && g?.comp_score !== undefined ? g.comp_score.toString() : ''
+      }
+
+      const cScore = parseFloat(cScoreVal)
+      const compScore = parseFloat(compScoreVal)
       
       let moy = null
       if (!isNaN(cScore) && !isNaN(compScore)) {
@@ -931,11 +993,12 @@ export function BulletinsManager({
       return {
         ...subj,
         coefficient: realCoef,
-        cScore: grades.cScore,
-        compScore: grades.compScore,
+        cScore: cScoreVal,
+        compScore: compScoreVal,
         moy,
         produit,
-        appr: secAppr[subj.id] !== undefined ? secAppr[subj.id] : defaultAppr
+        teacher: teacherVal,
+        appr: apprVal || defaultAppr
       }
     })
 
@@ -944,10 +1007,34 @@ export function BulletinsManager({
     const isLyceeEnd = selectedTerm === '2e_semestre'
     const isCollegeEnd = selectedTerm === '3eme_trimestre' || selectedTerm === '3e_trimestre'
 
+    const computeStuTermAvg = (t: string) => {
+      const tGrades = secondaryGrades.filter(g => g.student_id === curStu.id && g.term === t)
+      if (tGrades.length === 0) return ''
+      let coefSum = 0, prodSum = 0
+      tGrades.forEach(g => {
+        const sub = subjects.find(s => s.id === g.subject_id)
+        const cVal = g.class_score !== null ? Number(g.class_score) : NaN
+        const compVal = g.comp_score !== null ? Number(g.comp_score) : NaN
+        let moy = null
+        if (!isNaN(cVal) && !isNaN(compVal)) moy = (cVal + compVal) / 2
+        else if (!isNaN(cVal)) moy = cVal
+        else if (!isNaN(compVal)) moy = compVal
+        if (moy !== null) {
+          const coef = getCoefficientForSubject(sub?.name || '', cls.name, cls.level, sub?.coefficient || 2)
+          coefSum += coef
+          prodSum += moy * coef
+        }
+      })
+      return coefSum > 0 ? (prodSum / coefSum).toFixed(2) : ''
+    }
+
+    const t1Val = isCurrent ? secStats.t1 : computeStuTermAvg(selectedLevel === 'lycee' ? '1er_semestre' : '1er_trimestre')
+    const t2Val = isCurrent ? secStats.t2 : computeStuTermAvg('2e_trimestre')
+
     let computedAnnualCollege = ''
     if (isCollegeEnd) {
-      const v1 = parseFloat(secStats.t1)
-      const v2 = parseFloat(secStats.t2)
+      const v1 = parseFloat(t1Val)
+      const v2 = parseFloat(t2Val)
       const v3 = parseFloat(termAvg)
       if (!isNaN(v1) && !isNaN(v2) && !isNaN(v3)) {
         computedAnnualCollege = calculateCollegeAnnualAverage(v1, v2, v3)?.toFixed(2) || ''
@@ -956,14 +1043,16 @@ export function BulletinsManager({
 
     let computedAnnualLycee = ''
     if (isLyceeEnd) {
-      const v1 = parseFloat(secStats.t1)
+      const v1 = parseFloat(t1Val)
       const v2 = parseFloat(termAvg)
       if (!isNaN(v1) && !isNaN(v2)) {
         computedAnnualLycee = calculateLyceeAnnualAverage(v1, v2)?.toFixed(2) || ''
       }
     }
 
-    const effectiveAnnual = secStats.annual_t3 || (isCollegeEnd ? computedAnnualCollege : isLyceeEnd ? computedAnnualLycee : '')
+    const effectiveAnnual = isCurrent
+      ? (secStats.annual_t3 || (isCollegeEnd ? computedAnnualCollege : isLyceeEnd ? computedAnnualLycee : ''))
+      : (isCollegeEnd ? computedAnnualCollege : isLyceeEnd ? computedAnnualLycee : '')
 
     return (
       <div className="bg-white p-8 print:p-4 rounded-xl shadow-sm border border-[var(--color-outline-variant)] print:border-none text-black relative bulletin-page" ref={printRef}>
@@ -1014,7 +1103,7 @@ export function BulletinsManager({
         <div className="flex justify-between items-center mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
           <div>
             <p className="text-sm text-gray-600">Nom et Prénom(s)</p>
-            <p className="text-lg font-bold">{student.last_name} {student.first_name}</p>
+            <p className="text-lg font-bold">{curStu.last_name} {curStu.first_name}</p>
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600">Classe / Série</p>
@@ -1031,7 +1120,7 @@ export function BulletinsManager({
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-600">Matricule</p>
-            <p className="text-lg font-bold">{student.matricule}</p>
+            <p className="text-lg font-bold">{curStu.matricule}</p>
           </div>
         </div>
 
@@ -1056,39 +1145,55 @@ export function BulletinsManager({
                 <tr key={row.id}>
                   <td className="border border-black p-2 font-semibold">{row.name}</td>
                   <td className="border border-black p-0 text-center">
-                    <input 
-                      type="text"
-                      className="w-full h-full p-2 text-center outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 font-medium print-input"
-                      value={row.cScore}
-                      onChange={e => setLocalSecGrades({...localSecGrades, [row.id]: { ...localSecGrades[row.id], cScore: e.target.value }})}
-                    />
+                    {isCurrent ? (
+                      <input 
+                        type="text"
+                        className="w-full h-full p-2 text-center outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 font-medium print-input"
+                        value={row.cScore}
+                        onChange={e => setLocalSecGrades({...localSecGrades, [row.id]: { ...localSecGrades[row.id], cScore: e.target.value }})}
+                      />
+                    ) : (
+                      <span className="p-2 inline-block font-medium">{row.cScore}</span>
+                    )}
                   </td>
                   <td className="border border-black p-0 text-center">
-                    <input 
-                      type="text"
-                      className="w-full h-full p-2 text-center outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 font-medium print-input"
-                      value={row.compScore}
-                      onChange={e => setLocalSecGrades({...localSecGrades, [row.id]: { ...localSecGrades[row.id], compScore: e.target.value }})}
-                    />
+                    {isCurrent ? (
+                      <input 
+                        type="text"
+                        className="w-full h-full p-2 text-center outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 font-medium print-input"
+                        value={row.compScore}
+                        onChange={e => setLocalSecGrades({...localSecGrades, [row.id]: { ...localSecGrades[row.id], compScore: e.target.value }})}
+                      />
+                    ) : (
+                      <span className="p-2 inline-block font-medium">{row.compScore}</span>
+                    )}
                   </td>
                   <td className="border border-black p-2 text-center font-bold bg-gray-100">{row.moy !== null ? row.moy.toFixed(2) : ''}</td>
                   <td className="border border-black p-2 text-center">{row.coefficient}</td>
                   <td className="border border-black p-2 text-center font-bold bg-gray-100">{row.produit !== null ? row.produit.toFixed(2) : ''}</td>
                   <td className="border border-black p-0 text-left">
-                     <input 
-                      type="text"
-                      className="w-full h-full p-2 outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 text-xs print-input text-left"
-                      value={secTeachers[row.id] || ''}
-                      onChange={e => setSecTeachers({...secTeachers, [row.id]: e.target.value})}
-                    />
+                    {isCurrent ? (
+                      <input 
+                        type="text"
+                        className="w-full h-full p-2 outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 text-xs print-input text-left"
+                        value={secTeachers[row.id] || ''}
+                        onChange={e => setSecTeachers({...secTeachers, [row.id]: e.target.value})}
+                      />
+                    ) : (
+                      <span className="p-2 text-xs text-left inline-block">{row.teacher}</span>
+                    )}
                   </td>
                   <td className="border border-black p-0 text-left">
-                     <input 
-                      type="text"
-                      className="w-full h-full p-2 pl-4 outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 italic print-input text-left"
-                      value={row.appr}
-                      onChange={e => setSecAppr({...secAppr, [row.id]: e.target.value})}
-                    />
+                    {isCurrent ? (
+                      <input 
+                        type="text"
+                        className="w-full h-full p-2 pl-4 outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 italic print-input text-left"
+                        value={row.appr}
+                        onChange={e => setSecAppr({...secAppr, [row.id]: e.target.value})}
+                      />
+                    ) : (
+                      <span className="p-2 pl-4 italic text-left inline-block">{row.appr}</span>
+                    )}
                   </td>
                   <td className="border border-black p-2"></td>
                 </tr>
@@ -1113,20 +1218,31 @@ export function BulletinsManager({
           <div className="w-1/2 p-6 bg-gray-50 border border-gray-200 rounded-xl flex flex-col justify-center items-center">
             <p className="text-gray-600 font-semibold mb-2">RANG</p>
             <div className="text-4xl font-black text-black flex items-center justify-center">
-              <input 
-                type="text"
-                className="w-24 text-center bg-transparent outline-none border-b-2 border-transparent hover:border-gray-300 focus:border-[var(--color-primary)] print-input"
-                placeholder={computedSecondaryRanks.ranks[student.id]?.rankText || "-"}
-                value={secRank !== '' ? secRank : (computedSecondaryRanks.ranks[student.id]?.rankText || '')}
-                onChange={e => setSecRank(e.target.value)}
-              />
-              <span className="text-sm font-medium text-gray-500 mx-1">/</span>
-              <input 
-                type="text"
-                className="w-12 text-sm font-medium text-gray-500 text-center bg-transparent outline-none border-b border-transparent hover:border-gray-300 focus:border-[var(--color-primary)] print-input print:text-gray-500"
-                value={secTotalStudents !== '' ? secTotalStudents : (computedSecondaryRanks.totalClassed > 0 ? computedSecondaryRanks.totalClassed.toString() : availableStudents.length.toString())}
-                onChange={e => setSecTotalStudents(e.target.value)}
-              />
+              {isCurrent ? (
+                <>
+                  <input 
+                    type="text"
+                    className="w-24 text-center bg-transparent outline-none border-b-2 border-transparent hover:border-gray-300 focus:border-[var(--color-primary)] print-input"
+                    placeholder={computedSecondaryRanks.ranks[curStu.id]?.rankText || "-"}
+                    value={secRank !== '' ? secRank : (computedSecondaryRanks.ranks[curStu.id]?.rankText || '')}
+                    onChange={e => setSecRank(e.target.value)}
+                  />
+                  <span className="text-sm font-medium text-gray-500 mx-1">/</span>
+                  <input 
+                    type="text"
+                    className="w-12 text-sm font-medium text-gray-500 text-center bg-transparent outline-none border-b border-transparent hover:border-gray-300 focus:border-[var(--color-primary)] print-input print:text-gray-500"
+                    value={secTotalStudents !== '' ? secTotalStudents : (computedSecondaryRanks.totalClassed > 0 ? computedSecondaryRanks.totalClassed.toString() : availableStudents.length.toString())}
+                    onChange={e => setSecTotalStudents(e.target.value)}
+                  />
+                </>
+              ) : (
+                <span>
+                  {computedSecondaryRanks.ranks[curStu.id]?.rankText || '-'}
+                  <span className="text-sm font-medium text-gray-500 mx-1">
+                    / {computedSecondaryRanks.totalClassed > 0 ? computedSecondaryRanks.totalClassed : availableStudents.length}
+                  </span>
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -1136,7 +1252,11 @@ export function BulletinsManager({
           <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
               <p className="text-xs text-gray-600 font-semibold uppercase">Moy. 1er Semestre</p>
-              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.t1} onChange={e => setSecStats({...secStats, t1: e.target.value})} />
+              {isCurrent ? (
+                <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.t1} onChange={e => setSecStats({...secStats, t1: e.target.value})} />
+              ) : (
+                <div className="text-center font-bold mt-1">{t1Val || '-'}</div>
+              )}
             </div>
             <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
               <p className="text-xs text-gray-600 font-semibold uppercase">Moy. 2ème Semestre</p>
@@ -1144,13 +1264,17 @@ export function BulletinsManager({
             </div>
             <div className="bg-blue-50/60 border border-blue-200 p-3 rounded-xl text-center">
               <p className="text-xs text-blue-900 font-bold uppercase">Moy. Annuelle (S1+S2)/2</p>
-              <input 
-                type="text" 
-                className="w-full text-center font-black text-blue-900 bg-transparent outline-none mt-1 print-input text-lg" 
-                placeholder={computedAnnualLycee || "-"} 
-                value={effectiveAnnual} 
-                onChange={e => setSecStats({...secStats, annual_t3: e.target.value})} 
-              />
+              {isCurrent ? (
+                <input 
+                  type="text" 
+                  className="w-full text-center font-black text-blue-900 bg-transparent outline-none mt-1 print-input text-lg" 
+                  placeholder={computedAnnualLycee || "-"} 
+                  value={effectiveAnnual} 
+                  onChange={e => setSecStats({...secStats, annual_t3: e.target.value})} 
+                />
+              ) : (
+                <div className="text-center font-black text-blue-900 text-lg mt-1">{effectiveAnnual || '-'}</div>
+              )}
               <span className="text-[10px] text-blue-800 font-semibold">Passage si ≥ 10/20</span>
             </div>
           </div>
@@ -1158,11 +1282,19 @@ export function BulletinsManager({
           <div className="grid grid-cols-4 gap-4 mb-8">
             <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
               <p className="text-xs text-gray-600 font-semibold uppercase">Moy. 1er Trim.</p>
-              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.t1} onChange={e => setSecStats({...secStats, t1: e.target.value})} />
+              {isCurrent ? (
+                <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.t1} onChange={e => setSecStats({...secStats, t1: e.target.value})} />
+              ) : (
+                <div className="text-center font-bold mt-1">{t1Val || '-'}</div>
+              )}
             </div>
             <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
               <p className="text-xs text-gray-600 font-semibold uppercase">Moy. 2ème Trim.</p>
-              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.t2} onChange={e => setSecStats({...secStats, t2: e.target.value})} />
+              {isCurrent ? (
+                <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.t2} onChange={e => setSecStats({...secStats, t2: e.target.value})} />
+              ) : (
+                <div className="text-center font-bold mt-1">{t2Val || '-'}</div>
+              )}
             </div>
             <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
               <p className="text-xs text-gray-600 font-semibold uppercase">Moy. 3ème Trim.</p>
@@ -1170,13 +1302,17 @@ export function BulletinsManager({
             </div>
             <div className="bg-blue-50/60 border border-blue-200 p-3 rounded-xl text-center">
               <p className="text-xs text-blue-900 font-bold uppercase">Moy. Annuelle (T1+T2+T3)/3</p>
-              <input 
-                type="text" 
-                className="w-full text-center font-black text-blue-900 bg-transparent outline-none mt-1 print-input text-lg" 
-                placeholder={computedAnnualCollege || "-"} 
-                value={effectiveAnnual} 
-                onChange={e => setSecStats({...secStats, annual_t3: e.target.value})} 
-              />
+              {isCurrent ? (
+                <input 
+                  type="text" 
+                  className="w-full text-center font-black text-blue-900 bg-transparent outline-none mt-1 print-input text-lg" 
+                  placeholder={computedAnnualCollege || "-"} 
+                  value={effectiveAnnual} 
+                  onChange={e => setSecStats({...secStats, annual_t3: e.target.value})} 
+                />
+              ) : (
+                <div className="text-center font-black text-blue-900 text-lg mt-1">{effectiveAnnual || '-'}</div>
+              )}
               <span className="text-[10px] text-blue-800 font-semibold">Passage si ≥ 10/20</span>
             </div>
           </div>
@@ -1184,23 +1320,31 @@ export function BulletinsManager({
           <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
               <p className="text-xs text-gray-600 font-semibold uppercase">Moyenne la plus faible</p>
-              <input 
-                type="text" 
-                className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" 
-                placeholder={computedSecondaryRanks.minAvg} 
-                value={secStats.min !== '' ? secStats.min : (computedSecondaryRanks.minAvg !== '-' ? computedSecondaryRanks.minAvg : '')} 
-                onChange={e => setSecStats({...secStats, min: e.target.value})} 
-              />
+              {isCurrent ? (
+                <input 
+                  type="text" 
+                  className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" 
+                  placeholder={computedSecondaryRanks.minAvg} 
+                  value={secStats.min !== '' ? secStats.min : (computedSecondaryRanks.minAvg !== '-' ? computedSecondaryRanks.minAvg : '')} 
+                  onChange={e => setSecStats({...secStats, min: e.target.value})} 
+                />
+              ) : (
+                <div className="text-center font-bold mt-1">{computedSecondaryRanks.minAvg}</div>
+              )}
             </div>
             <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
               <p className="text-xs text-gray-600 font-semibold uppercase">Moyenne la plus forte</p>
-              <input 
-                type="text" 
-                className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" 
-                placeholder={computedSecondaryRanks.maxAvg} 
-                value={secStats.max !== '' ? secStats.max : (computedSecondaryRanks.maxAvg !== '-' ? computedSecondaryRanks.maxAvg : '')} 
-                onChange={e => setSecStats({...secStats, max: e.target.value})} 
-              />
+              {isCurrent ? (
+                <input 
+                  type="text" 
+                  className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" 
+                  placeholder={computedSecondaryRanks.maxAvg} 
+                  value={secStats.max !== '' ? secStats.max : (computedSecondaryRanks.maxAvg !== '-' ? computedSecondaryRanks.maxAvg : '')} 
+                  onChange={e => setSecStats({...secStats, max: e.target.value})} 
+                />
+              ) : (
+                <div className="text-center font-bold mt-1">{computedSecondaryRanks.maxAvg}</div>
+              )}
             </div>
             <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
               <p className="text-xs text-gray-600 font-semibold uppercase">Moyenne {selectedLevel === 'lycee' ? '1er Semestre' : 'Trimestrielle'}</p>
@@ -1220,13 +1364,17 @@ export function BulletinsManager({
             />
             <div className="w-full text-left flex flex-col items-center">
               <p className="font-bold underline mb-2">Appréciation :</p>
-              <input 
-                type="text" 
-                placeholder="Appréciation..."
-                className="print-input text-center text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-full border-b border-gray-300 focus:border-[var(--color-primary)]"
-                value={secFooterInfo.appreciation}
-                onChange={e => setSecFooterInfo({...secFooterInfo, appreciation: e.target.value})}
-              />
+              {isCurrent ? (
+                <input 
+                  type="text" 
+                  placeholder="Appréciation..."
+                  className="print-input text-center text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-full border-b border-gray-300 focus:border-[var(--color-primary)]"
+                  value={secFooterInfo.appreciation}
+                  onChange={e => setSecFooterInfo({...secFooterInfo, appreciation: e.target.value})}
+                />
+              ) : (
+                <span className="text-sm font-semibold text-gray-800">{secFooterInfo.appreciation || '—'}</span>
+              )}
             </div>
           </div>
           <div className="text-center w-1/3 flex flex-col items-center">
@@ -1257,14 +1405,20 @@ export function BulletinsManager({
             />
             <div className="w-full text-left flex flex-col items-center">
               <p className="font-bold underline mb-2">Décision du chef d'établissement :</p>
-              <input 
-                type="text"
-                placeholder={effectiveAnnual ? (Number(effectiveAnnual) >= 10 ? 'Passe en classe supérieure (Admis)' : 'Redouble la classe') : 'Décision...'}
-                className="print-input text-center text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-full border-b border-gray-300 focus:border-[var(--color-primary)]"
-                value={secFooterInfo.decision}
-                onChange={e => setSecFooterInfo({...secFooterInfo, decision: e.target.value})}
-              />
-              {effectiveAnnual && !secFooterInfo.decision && (
+              {isCurrent ? (
+                <input 
+                  type="text" 
+                  placeholder={effectiveAnnual ? (Number(effectiveAnnual) >= 10 ? 'Passe en classe supérieure (Admis)' : 'Redouble la classe') : 'Décision...'}
+                  className="print-input text-center text-gray-800 outline-none hover:bg-gray-50 focus:bg-blue-50 p-1 w-full border-b border-gray-300 focus:border-[var(--color-primary)]"
+                  value={secFooterInfo.decision}
+                  onChange={e => setSecFooterInfo({...secFooterInfo, decision: e.target.value})}
+                />
+              ) : (
+                <span className="text-sm font-semibold text-gray-800">
+                  {secFooterInfo.decision || (effectiveAnnual ? (Number(effectiveAnnual) >= 10 ? 'Passe en classe supérieure (Admis)' : 'Redouble la classe') : '—')}
+                </span>
+              )}
+              {isCurrent && effectiveAnnual && !secFooterInfo.decision && (
                 <p className="text-[10px] text-blue-800 mt-1 font-semibold print:hidden">
                   Décision annuelle calculée ({effectiveAnnual}/20) : {Number(effectiveAnnual) >= 10 ? 'Passage en classe supérieure' : 'Redoublement'}
                 </p>
@@ -1389,19 +1543,43 @@ export function BulletinsManager({
             </div>
             
             {selectedClass && (
-              <button
-                onClick={handleGenerateClassPDF}
-                disabled={publishStatus === 'loading'}
-                className="h-11 px-6 bg-[#004532] text-white font-bold rounded-lg hover:opacity-90 disabled:opacity-50 transition-colors flex items-center gap-2 shadow-sm"
-              >
-                <FileDown className="w-5 h-5" />
-                {publishStatus === 'loading' ? 'Génération...' : 'Bulletins de la classe'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrintAllClass}
+                  disabled={availableStudents.length === 0 || isPrintingAllClass}
+                  className="h-11 px-4 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2 shadow-sm"
+                  title="Lancer l'impression directe pour tous les élèves de la classe"
+                >
+                  <Printer className="w-5 h-5" />
+                  {isPrintingAllClass ? 'Impression...' : 'Imprimer toute la classe'}
+                </button>
+                <button
+                  onClick={handleGenerateClassPDF}
+                  disabled={publishStatus === 'loading' || availableStudents.length === 0}
+                  className="h-11 px-5 bg-[#004532] text-white font-bold rounded-lg hover:opacity-90 disabled:opacity-50 transition-colors flex items-center gap-2 shadow-sm"
+                >
+                  <FileDown className="w-5 h-5" />
+                  {publishStatus === 'loading' ? 'Génération...' : 'Télécharger PDF Classe'}
+                </button>
+              </div>
             )}
           </div>
         </div>
 
-        {selectedStudent ? (
+        {isPrintingAllClass ? (
+          <div className="print-container space-y-8 print:space-y-0">
+            {availableStudents.map((stu, idx) => (
+              <div 
+                key={stu.id} 
+                className={idx < availableStudents.length - 1 ? "page-break-after-always mb-8 print:mb-0" : ""}
+              >
+                {selectedLevel === 'primaire' || selectedLevel === 'maternelle' 
+                  ? renderPrimaryLivret(stu) 
+                  : renderSecondaryBulletin(stu)}
+              </div>
+            ))}
+          </div>
+        ) : selectedStudent ? (
           <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] shadow-sm">
             <div className="flex justify-between items-center mb-6">
               <p className="text-sm text-[var(--color-on-surface-variant)]">
@@ -1418,8 +1596,9 @@ export function BulletinsManager({
                 <button 
                   onClick={handlePrint}
                   disabled={!selectedStudent}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-1.5"
                 >
+                  <Printer className="w-4 h-4" />
                   Imprimer / PDF
                 </button>
                 <button 
@@ -1443,7 +1622,7 @@ export function BulletinsManager({
           <div className="bg-[var(--color-surface-container-lowest)] p-12 rounded-xl border border-[var(--color-outline-variant)] flex flex-col items-center justify-center text-[var(--color-on-surface-variant)] shadow-sm">
             <GraduationCap className="w-12 h-12 mb-4 opacity-50" />
             <p className="text-lg font-medium">Sélectionnez un niveau, une classe et un élève</p>
-            <p className="text-sm mt-1">Le bulletin s'affichera ici. Vous pourrez y saisir les notes directement.</p>
+            <p className="text-sm mt-1">Le bulletin s'affichera ici. Vous pouvez également cliquer sur &quot;Imprimer toute la classe&quot; ou &quot;Télécharger PDF Classe&quot;.</p>
           </div>
         )}
       </div>
@@ -1461,6 +1640,10 @@ export function BulletinsManager({
             left: 0;
             top: 0;
             width: 100%;
+          }
+          .page-break-after-always {
+            break-after: page;
+            page-break-after: always;
           }
           .print-input {
             border: none !important;

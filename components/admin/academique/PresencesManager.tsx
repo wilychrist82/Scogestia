@@ -4,7 +4,23 @@ import { useState, useTransition, useEffect } from 'react'
 import { fetchMonthlyAttendance, saveMonthlyAttendanceGrid } from '@/app/actions/academique'
 import Link from 'next/link'
 import { sortClasses } from '@/lib/classes'
-import { ChevronRight, School, Calendar, CalendarDays, CheckCircle2, FileText, ClipboardCheck, X, Table, BarChart3, Printer } from 'lucide-react'
+import { 
+  ChevronRight, 
+  School, 
+  Calendar, 
+  CalendarDays, 
+  CheckCircle2, 
+  FileText, 
+  ClipboardCheck, 
+  X, 
+  Table, 
+  BarChart3, 
+  Printer,
+  Wifi,
+  WifiOff,
+  CloudUpload,
+  RefreshCw
+} from 'lucide-react'
 
 type ClassItem = { id: string; name: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string; gender: string; status: string }
@@ -52,7 +68,107 @@ export function PresencesManager({ classes, students }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<boolean>(false)
 
+  // State offline / PWA
+  const [isOnline, setIsOnline] = useState<boolean>(true)
+  const [offlinePendingQueue, setOfflinePendingQueue] = useState<Array<{
+    classId: string
+    year: number
+    month: number
+    updates: Array<{ student_id: string; date: string; status: string }>
+  }>>([])
+  const [isSyncingOffline, setIsSyncingOffline] = useState(false)
+  const [offlineSavedMsg, setOfflineSavedMsg] = useState(false)
+  const [isLoadedFromCache, setIsLoadedFromCache] = useState(false)
+
   const filteredStudents = selectedClass ? students.filter(s => s.class_id === selectedClass) : []
+
+  // Gestion de la connectivité réseau et file d'attente hors-ligne
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setIsOnline(navigator.onLine)
+
+    const handleOnline = () => {
+      setIsOnline(true)
+      syncOfflineQueue()
+    }
+    const handleOffline = () => {
+      setIsOnline(false)
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    try {
+      const stored = localStorage.getItem('scogestia_offline_attendance_queue')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) setOfflinePendingQueue(parsed)
+      }
+    } catch (e) {
+      console.warn('Erreur lecture queue hors-ligne:', e)
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  const saveToOfflineQueue = (updates: Array<{ student_id: string; date: string; status: string }>) => {
+    const queueItem = {
+      classId: selectedClass,
+      year: selectedYear,
+      month: selectedMonth,
+      updates
+    }
+    const nextQueue = [...offlinePendingQueue, queueItem]
+    setOfflinePendingQueue(nextQueue)
+    try {
+      localStorage.setItem('scogestia_offline_attendance_queue', JSON.stringify(nextQueue))
+      localStorage.setItem(`scogestia_attendance_grid_${selectedClass}_${selectedYear}_${selectedMonth}`, JSON.stringify(gridData))
+    } catch (e) {}
+    setModifiedCells(new Set())
+    setOfflineSavedMsg(true)
+    setTimeout(() => setOfflineSavedMsg(false), 4500)
+  }
+
+  const syncOfflineQueue = async () => {
+    let currentQueue: any[] = []
+    try {
+      const stored = localStorage.getItem('scogestia_offline_attendance_queue')
+      if (stored) currentQueue = JSON.parse(stored)
+    } catch (e) {}
+
+    if (!currentQueue || currentQueue.length === 0) return
+
+    setIsSyncingOffline(true)
+    let hasError = false
+    const remainingQueue = []
+
+    for (const item of currentQueue) {
+      try {
+        const res = await saveMonthlyAttendanceGrid(item.classId, item.year, item.month, item.updates)
+        if (res?.error) {
+          hasError = true
+          remainingQueue.push(item)
+        }
+      } catch (e) {
+        hasError = true
+        remainingQueue.push(item)
+      }
+    }
+
+    setOfflinePendingQueue(remainingQueue)
+    try {
+      localStorage.setItem('scogestia_offline_attendance_queue', JSON.stringify(remainingQueue))
+    } catch (e) {}
+
+    setIsSyncingOffline(false)
+    if (!hasError) {
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+    }
+  }
 
   // Initialiser les dates de période par défaut quand l'année ou le mois change
   useEffect(() => {
@@ -91,11 +207,21 @@ export function PresencesManager({ classes, students }: Props) {
     let isMounted = true
     setIsLoadingData(true)
     setError(null)
+    setIsLoadedFromCache(false)
 
     fetchMonthlyAttendance(selectedClass, selectedYear, selectedMonth)
       .then(result => {
         if (!isMounted) return
         if (result.error) {
+          try {
+            const cached = localStorage.getItem(`scogestia_attendance_grid_${selectedClass}_${selectedYear}_${selectedMonth}`)
+            if (cached) {
+              setGridData(JSON.parse(cached))
+              setIsLoadedFromCache(true)
+              setIsLoadingData(false)
+              return
+            }
+          } catch (e) {}
           setError(result.error)
         } else if (result.data) {
           const newData: Record<string, string> = {}
@@ -105,11 +231,23 @@ export function PresencesManager({ classes, students }: Props) {
           })
           setGridData(newData)
           setModifiedCells(new Set())
+          try {
+            localStorage.setItem(`scogestia_attendance_grid_${selectedClass}_${selectedYear}_${selectedMonth}`, JSON.stringify(newData))
+          } catch (e) {}
         }
         setIsLoadingData(false)
       })
       .catch(err => {
         if (isMounted) {
+          try {
+            const cached = localStorage.getItem(`scogestia_attendance_grid_${selectedClass}_${selectedYear}_${selectedMonth}`)
+            if (cached) {
+              setGridData(JSON.parse(cached))
+              setIsLoadedFromCache(true)
+              setIsLoadingData(false)
+              return
+            }
+          } catch (e) {}
           setError(err.message)
           setIsLoadingData(false)
         }
@@ -153,14 +291,26 @@ export function PresencesManager({ classes, students }: Props) {
       }
     })
 
+    if (!navigator.onLine) {
+      saveToOfflineQueue(updates)
+      return
+    }
+
     startTransition(async () => {
-      const result = await saveMonthlyAttendanceGrid(selectedClass, selectedYear, selectedMonth, updates)
-      if (result?.error) {
-        setError(result.error)
-      } else {
-        setSuccess(true)
-        setModifiedCells(new Set())
-        setTimeout(() => setSuccess(false), 3000)
+      try {
+        const result = await saveMonthlyAttendanceGrid(selectedClass, selectedYear, selectedMonth, updates)
+        if (result?.error) {
+          saveToOfflineQueue(updates)
+        } else {
+          setSuccess(true)
+          setModifiedCells(new Set())
+          try {
+            localStorage.setItem(`scogestia_attendance_grid_${selectedClass}_${selectedYear}_${selectedMonth}`, JSON.stringify(gridData))
+          } catch (e) {}
+          setTimeout(() => setSuccess(false), 3000)
+        }
+      } catch (err) {
+        saveToOfflineQueue(updates)
       }
     })
   }
@@ -284,6 +434,33 @@ export function PresencesManager({ classes, students }: Props) {
               Gérez les absences mensuelles. Cliquez sur une case pour marquer une absence (- matin, + journée entière).
             </p>
           </div>
+
+          {/* Network & Offline Status Pill */}
+          <div className="flex items-center gap-3">
+            {isOnline ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                En ligne
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 shadow-2xs">
+                <WifiOff className="w-3.5 h-3.5 text-amber-600" />
+                Mode Hors-ligne
+              </span>
+            )}
+
+            {offlinePendingQueue.length > 0 && (
+              <button
+                onClick={syncOfflineQueue}
+                disabled={isSyncingOffline || !isOnline}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 transition-all shadow-sm"
+                title="Synchroniser les présences en attente"
+              >
+                <CloudUpload className={`w-3.5 h-3.5 ${isSyncingOffline ? 'animate-bounce' : ''}`} />
+                {isSyncingOffline ? 'Synchronisation...' : `Synchroniser (${offlinePendingQueue.length})`}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Filters */}
@@ -390,6 +567,32 @@ export function PresencesManager({ classes, students }: Props) {
             </div>
           </div>
         </div>
+
+        {offlineSavedMsg && (
+          <div className="bg-amber-50 border border-amber-300 text-amber-900 p-4 rounded-xl text-sm font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm animate-in fade-in">
+            <div className="flex items-center gap-2.5">
+              <WifiOff className="w-5 h-5 text-amber-600 shrink-0" />
+              <span>Modifications sauvegardées hors-ligne sur votre appareil. Elles seront synchronisées automatiquement dès que la connexion Internet sera rétablie.</span>
+            </div>
+            {isOnline && (
+              <button 
+                onClick={syncOfflineQueue}
+                disabled={isSyncingOffline}
+                className="px-3.5 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-bold hover:bg-amber-700 transition-colors shrink-0 flex items-center gap-1.5"
+              >
+                <CloudUpload className="w-4 h-4" />
+                Synchroniser maintenant
+              </button>
+            )}
+          </div>
+        )}
+
+        {isLoadedFromCache && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-900 p-3 rounded-xl text-xs font-medium flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+            Mode hors-ligne : données du registre chargées depuis la mémoire cache locale de cet appareil.
+          </div>
+        )}
 
         {error && (
           <div className="bg-[var(--color-status-retard-bg)] text-[var(--color-status-retard-text)] p-3 rounded text-sm font-medium">

@@ -244,6 +244,54 @@ export function StudentForm({ classes }: Props) {
               </div>
             </div>
           </div>
+
+          {/* Row 4: Genre, Téléphone du parent & Lieu de naissance (Optionnels) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 border-t border-[var(--color-outline-variant)]/60">
+            <div>
+              <label className="block text-sm font-semibold text-[var(--color-on-surface)] mb-2" htmlFor="gender">
+                Genre
+              </label>
+              <div className="relative">
+                <select 
+                  className="w-full h-12 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg pl-4 pr-10 text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all appearance-none" 
+                  id="gender" 
+                  name="gender"
+                  defaultValue=""
+                >
+                  <option value="">Non précisé</option>
+                  <option value="M">Masculin</option>
+                  <option value="F">Féminin</option>
+                </select>
+                <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)] pointer-events-none" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-[var(--color-on-surface)] mb-2" htmlFor="parent_phone">
+                Téléphone du parent
+              </label>
+              <input 
+                className="w-full h-12 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg px-4 text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all" 
+                id="parent_phone" 
+                name="parent_phone" 
+                placeholder="Ex: 90 00 00 00" 
+                type="tel"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-[var(--color-on-surface)] mb-2" htmlFor="birth_place">
+                Lieu de naissance
+              </label>
+              <input 
+                className="w-full h-12 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg px-4 text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all" 
+                id="birth_place" 
+                name="birth_place" 
+                placeholder="Ex: Lomé" 
+                type="text"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Footer Actions */}

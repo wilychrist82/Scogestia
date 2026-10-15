@@ -3,6 +3,7 @@ import { Work_Sans, Public_Sans } from "next/font/google";
 import "./globals.css";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
 import { CookieBanner } from "@/components/layout/CookieBanner";
+import { PwaRegister } from "@/components/providers/PwaRegister";
 import { Toaster } from "react-hot-toast";
 
 const workSans = Work_Sans({ subsets: ["latin"], variable: "--font-work-sans", display: "swap" });
@@ -253,6 +254,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <NotificationProvider>
+          <PwaRegister />
           {children}
           <CookieBanner />
           <Toaster

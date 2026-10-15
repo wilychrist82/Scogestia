@@ -763,7 +763,7 @@ export async function saveMonthlyAttendanceGrid(
 
     // Séparer les présences ('present' ou vide) des absences/retards
     const toUpsert = updates
-      .filter((u) => u.status === "absent" || u.status === "retard")
+      .filter((u) => u.status === "absent" || u.status === "retard" || u.status === "absent_justifie")
       .map((u) => ({
         school_id,
         student_id: u.student_id,

@@ -97,6 +97,10 @@ export async function createStudent(prevState: ActionState, formData: FormData):
     await checkStudentLimit(supabase, school_id, 1);
     const matricule = await generateUniqueMatricule(supabase, school_id);
 
+    const gender = (formData.get('gender') as string)?.trim() || null;
+    const parent_phone = (formData.get('parent_phone') as string)?.trim() || null;
+    const birth_place = (formData.get('birth_place') as string)?.trim() || null;
+
     const { error } = await supabase
       .from('students')
       .insert({
@@ -106,6 +110,9 @@ export async function createStudent(prevState: ActionState, formData: FormData):
         last_name,
         date_of_birth,
         class_id,
+        gender: gender || null,
+        parent_phone: parent_phone || null,
+        birth_place: birth_place || null,
         status: 'actif'
       });
 

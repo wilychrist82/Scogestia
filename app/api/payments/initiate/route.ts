@@ -19,17 +19,17 @@ export async function POST(req: Request) {
     }
 
     // 2. Vérifier que l'échéance existe et que l'utilisateur est le parent de l'élève
-    const { data: due, error: dueError } = await supabase
-      .from('dues')
-      .select('id, amount, label, status, student_id')
+    const { data: schedule, error: scheduleError } = await supabase
+      .from('payment_schedules')
+      .select('id, amount_due, label, status, student_id, school_id')
       .eq('id', due_id)
       .single()
 
-    if (dueError || !due) {
+    if (scheduleError || !schedule) {
       return NextResponse.json({ error: 'Échéance introuvable.' }, { status: 404 })
     }
     
-    if (due.status === 'paye') {
+    if (schedule.status === 'paye') {
       return NextResponse.json({ error: 'Cette échéance est déjà payée.' }, { status: 400 })
     }
 
@@ -37,26 +37,27 @@ export async function POST(req: Request) {
       .from('parent_student_links')
       .select('id')
       .eq('parent_user_id', user.id)
-      .eq('student_id', due.student_id)
+      .eq('student_id', schedule.student_id)
       .single()
 
     if (linkError || !link) {
       return NextResponse.json({ error: 'Non autorisé à payer pour cet élève.' }, { status: 403 })
     }
 
-    // 3. Préparer la transaction CinetPay
+    // 3. Préparer la transaction
     const transactionId = uuidv4()
     
     // Insérer dans notre base de données
     const { error: insertError } = await supabase
       .from('payments')
       .insert({
-        due_id: due.id,
-        amount: due.amount,
+        school_id: schedule.school_id,
+        student_id: schedule.student_id,
+        schedule_id: schedule.id,
+        amount: Number(schedule.amount_due),
         payment_method: payment_method,
-        transaction_id: transactionId,
-        status: 'pending',
-        created_by: user.id
+        transaction_reference: transactionId,
+        recorded_by: user.id
       })
 
     if (insertError) {
@@ -85,12 +86,13 @@ export async function POST(req: Request) {
       },
       // Optionally pass amount if Chariow supports overriding it, 
       // but according to some docs, it relies on product_id. We pass it just in case.
-      amount: due.amount, 
-      redirect_url: `${BASE_URL}/parent/payments/success?due_id=${due.id}`,
+      amount: Number(schedule.amount_due), 
+      redirect_url: `${BASE_URL}/parent/paiements?schedule_id=${schedule.id}`,
       custom_metadata: { 
-        due_id: due.id,
+        schedule_id: schedule.id,
         transaction_id: transactionId,
-        student_id: due.student_id 
+        student_id: schedule.student_id,
+        school_id: schedule.school_id
       }
     }
 
@@ -109,14 +111,13 @@ export async function POST(req: Request) {
       // Update our payment record with the provider's sale ID
       if (chariowData.data?.purchase?.id) {
          await supabase.from('payments').update({ 
-           provider_sale_id: chariowData.data.purchase.id 
-         }).eq('transaction_id', transactionId)
+           transaction_reference: `${transactionId}_${chariowData.data.purchase.id}`
+         }).eq('transaction_reference', transactionId)
       }
       return NextResponse.json({ payment_url: chariowData.data.payment.checkout_url }, { status: 200 })
     } else {
       console.error("Erreur Chariow:", chariowData)
-      await supabase.from('payments').update({ status: 'failed' }).eq('transaction_id', transactionId)
-      return NextResponse.json({ error: 'Erreur lors de l\'initialisation du paiement Chariow.' }, { status: 500 })
+      return NextResponse.json({ error: 'Erreur lors de l\'initialisation du paiement.' }, { status: 500 })
     }
 
   } catch (error) {
