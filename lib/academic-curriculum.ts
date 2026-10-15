@@ -578,3 +578,284 @@ export function getAnnualPassDecision(
     threshold: 10
   };
 }
+
+/**
+ * Formate un rang académique selon les normes francophones officielles (Togo / Afrique de l'Ouest).
+ * Ex: 1 -> "1er", 2 -> "2e", 3 -> "3e", ex-æquo -> "1er ex", "2e ex", "3e ex".
+ */
+export function formatRank(position: number, isExAequo: boolean = false): string {
+  if (!position || position <= 0 || isNaN(position)) return '-';
+  const suffix = position === 1 ? 'er' : 'e';
+  return isExAequo ? `${position}${suffix} ex` : `${position}${suffix}`;
+}
+
+export interface StudentRankResult {
+  studentId: string;
+  rankNum: number;
+  rankText: string;
+  isExAequo: boolean;
+  score: number;
+  totalPoints?: number;
+  maxPossible?: number;
+}
+
+/**
+ * Calcul officiel et automatique du classement d'une classe au Primaire pour chaque mois (1 à 9).
+ * Trie les élèves de la classe par moyenne sur 10 (et total des points) décroissant.
+ * Attribue les rangs officiels avec gestion des ex-æquo (règle 1224: si deux 1ers, le suivant est 3e).
+ */
+export function computePrimaryMonthClassRanks(params: {
+  students: Array<{ id: string; last_name?: string; first_name?: string }>;
+  primaryGrades: Array<{ student_id: string; subject_id: string; month_number: number; score: number }>;
+  subjects: Array<{ id: string; name: string; cycle?: string | null }>;
+  className?: string;
+  classLevel?: string;
+  localScoresOverride?: Record<string, string>; // Format: `${subjectId}_${month}` -> score string
+  activeStudentId?: string;
+}): Record<number, Record<string, StudentRankResult>> {
+  const { students, primaryGrades, subjects, className, classLevel, localScoresOverride, activeStudentId } = params;
+
+  // Filtrer les matières du primaire dédoublées
+  const list = subjects.filter(s => !s.cycle || s.cycle === 'primaire' || s.cycle === 'maternelle');
+  const seen = new Set<string>();
+  const primarySubjects: typeof list = [];
+  for (const sub of list) {
+    const norm = (sub.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    if (!seen.has(norm)) {
+      seen.add(norm);
+      primarySubjects.push(sub);
+    }
+  }
+
+  const result: Record<number, Record<string, StudentRankResult>> = {};
+
+  for (let m = 1; m <= 9; m++) {
+    result[m] = {};
+
+    // Calculer les totaux de chaque élève pour ce mois
+    const studentScoresList: Array<{
+      studentId: string;
+      totalPoints: number;
+      maxPossible: number;
+      averageOutOf10: number;
+      count: number;
+    }> = [];
+
+    for (const stu of students) {
+      let totalPoints = 0;
+      let maxPossible = 0;
+      let count = 0;
+
+      for (const subj of primarySubjects) {
+        let valStr = '';
+        if (stu.id === activeStudentId && localScoresOverride && localScoresOverride[`${subj.id}_${m}`] !== undefined) {
+          valStr = localScoresOverride[`${subj.id}_${m}`];
+        } else {
+          const g = primaryGrades.find(g => g.student_id === stu.id && g.subject_id === subj.id && g.month_number === m);
+          if (g && typeof g.score === 'number' && !isNaN(g.score)) {
+            valStr = g.score.toString();
+          }
+        }
+
+        const score = parseFloat(valStr);
+        if (!isNaN(score)) {
+          const maxS = getPrimarySubjectMaxScore(subj.name, className, classLevel);
+          totalPoints += score;
+          maxPossible += maxS;
+          count++;
+        }
+      }
+
+      if (count > 0 && maxPossible > 0) {
+        const averageOutOf10 = Number(((totalPoints / maxPossible) * 10).toFixed(2));
+        studentScoresList.push({
+          studentId: stu.id,
+          totalPoints: Number(totalPoints.toFixed(2)),
+          maxPossible,
+          averageOutOf10,
+          count
+        });
+      }
+    }
+
+    // Si aucun élève n'a composé ce mois-ci
+    if (studentScoresList.length === 0) continue;
+
+    // Trier les élèves par ordre décroissant de moyenne sur 10 (puis par total des points)
+    studentScoresList.sort((a, b) => {
+      if (b.averageOutOf10 !== a.averageOutOf10) {
+        return b.averageOutOf10 - a.averageOutOf10;
+      }
+      return b.totalPoints - a.totalPoints;
+    });
+
+    // Attribuer les rangs avec gestion stricte des ex-æquo (standard de compétition)
+    let currentRank = 1;
+    for (let i = 0; i < studentScoresList.length; i++) {
+      const current = studentScoresList[i];
+      let isExAequo = false;
+
+      // Vérifier égalité avec le précédent ou le suivant
+      const sameAsPrev = i > 0 && 
+        studentScoresList[i - 1].averageOutOf10 === current.averageOutOf10 &&
+        Math.abs(studentScoresList[i - 1].totalPoints - current.totalPoints) < 0.001;
+
+      const sameAsNext = i < studentScoresList.length - 1 && 
+        studentScoresList[i + 1].averageOutOf10 === current.averageOutOf10 &&
+        Math.abs(studentScoresList[i + 1].totalPoints - current.totalPoints) < 0.001;
+
+      if (sameAsPrev) {
+        // Garde le même rang que le précédent
+        isExAequo = true;
+      } else {
+        // Nouveau rang = sa position absolue dans la liste (1-indexed)
+        currentRank = i + 1;
+        if (sameAsNext) {
+          isExAequo = true;
+        }
+      }
+
+      result[m][current.studentId] = {
+        studentId: current.studentId,
+        rankNum: currentRank,
+        rankText: formatRank(currentRank, isExAequo),
+        isExAequo,
+        score: current.averageOutOf10,
+        totalPoints: current.totalPoints,
+        maxPossible: current.maxPossible
+      };
+    }
+  }
+
+  return result;
+}
+
+export interface SecondaryClassRankResult {
+  ranks: Record<string, StudentRankResult>;
+  minAvg: string;
+  maxAvg: string;
+  totalClassed: number;
+}
+
+/**
+ * Calcul officiel et automatique du classement d'une classe au Secondaire (Collège & Lycée).
+ * Trie les élèves de la classe par moyenne trimestrielle/semestrielle pondérée par les coefficients.
+ * Renvoie les rangs officiels (avec ex-æquo), la plus faible moyenne et la plus forte moyenne de la classe.
+ */
+export function computeSecondaryClassRanks(params: {
+  students: Array<{ id: string; last_name?: string; first_name?: string }>;
+  secondaryGrades: Array<{ student_id: string; subject_id: string; term: string; class_score: number | null; comp_score: number | null }>;
+  subjects: Array<{ id: string; name: string; cycle?: string | null; coefficient?: number }>;
+  className?: string;
+  classLevel?: string;
+  term: string;
+  localScoresOverride?: Record<string, { cScore: string; compScore: string }>;
+  activeStudentId?: string;
+}): SecondaryClassRankResult {
+  const { students, secondaryGrades, subjects, className, classLevel, term, localScoresOverride, activeStudentId } = params;
+
+  const secondarySubjects = subjects.filter(s => s.cycle === 'secondaire');
+
+  const studentAvgs: Array<{
+    studentId: string;
+    termAvg: number;
+    totalCoef: number;
+    totalProduct: number;
+  }> = [];
+
+  for (const stu of students) {
+    let totalCoef = 0;
+    let totalProduct = 0;
+    let validCount = 0;
+
+    for (const subj of secondarySubjects) {
+      let cScore = '';
+      let compScore = '';
+
+      if (stu.id === activeStudentId && localScoresOverride && localScoresOverride[subj.id]) {
+        cScore = localScoresOverride[subj.id].cScore;
+        compScore = localScoresOverride[subj.id].compScore;
+      } else {
+        const g = secondaryGrades.find(g => g.student_id === stu.id && g.subject_id === subj.id && g.term === term);
+        if (g) {
+          cScore = g.class_score !== null && g.class_score !== undefined ? g.class_score.toString() : '';
+          compScore = g.comp_score !== null && g.comp_score !== undefined ? g.comp_score.toString() : '';
+        }
+      }
+
+      const cVal = parseFloat(cScore);
+      const compVal = parseFloat(compScore);
+      let moy: number | null = null;
+      if (!isNaN(cVal) && !isNaN(compVal)) moy = (cVal + compVal) / 2;
+      else if (!isNaN(cVal)) moy = cVal;
+      else if (!isNaN(compVal)) moy = compVal;
+
+      if (moy !== null) {
+        const coef = getCoefficientForSubject(subj.name, className, classLevel, subj.coefficient || 2);
+        totalCoef += coef;
+        totalProduct += moy * coef;
+        validCount++;
+      }
+    }
+
+    if (totalCoef > 0 && validCount > 0) {
+      const avg = Number((totalProduct / totalCoef).toFixed(2));
+      studentAvgs.push({
+        studentId: stu.id,
+        termAvg: avg,
+        totalCoef,
+        totalProduct
+      });
+    }
+  }
+
+  const ranksMap: Record<string, StudentRankResult> = {};
+  if (studentAvgs.length === 0) {
+    return {
+      ranks: ranksMap,
+      minAvg: '-',
+      maxAvg: '-',
+      totalClassed: 0
+    };
+  }
+
+  // Trier par moyenne décroissante
+  studentAvgs.sort((a, b) => b.termAvg - a.termAvg);
+
+  const minAvg = studentAvgs[studentAvgs.length - 1].termAvg.toFixed(2);
+  const maxAvg = studentAvgs[0].termAvg.toFixed(2);
+
+  let currentRank = 1;
+  for (let i = 0; i < studentAvgs.length; i++) {
+    const current = studentAvgs[i];
+    let isExAequo = false;
+
+    const sameAsPrev = i > 0 && Math.abs(studentAvgs[i - 1].termAvg - current.termAvg) < 0.001;
+    const sameAsNext = i < studentAvgs.length - 1 && Math.abs(studentAvgs[i + 1].termAvg - current.termAvg) < 0.001;
+
+    if (sameAsPrev) {
+      isExAequo = true;
+    } else {
+      currentRank = i + 1;
+      if (sameAsNext) {
+        isExAequo = true;
+      }
+    }
+
+    ranksMap[current.studentId] = {
+      studentId: current.studentId,
+      rankNum: currentRank,
+      rankText: formatRank(currentRank, isExAequo),
+      isExAequo,
+      score: current.termAvg
+    };
+  }
+
+  return {
+    ranks: ranksMap,
+    minAvg,
+    maxAvg,
+    totalClassed: studentAvgs.length
+  };
+}
+

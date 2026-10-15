@@ -31,7 +31,8 @@ import {
   detectPrimaryLevel,
   calculateDisciplineAverage,
   calculatePrimaryGeneralAverage,
-  getPrimarySubjectOrder
+  getPrimarySubjectOrder,
+  computePrimaryMonthClassRanks
 } from '@/lib/academic-curriculum'
 
 type ClassItem = { id: string; name: string; level?: string }
@@ -322,6 +323,30 @@ export function NotesManager({
     })
     return stats
   }, [isPrimaryCycle, selectedStudent, studentScores, filteredPrimarySubjects, selectedClassObj])
+
+  // Classement officiel automatique pour chaque mois de l'année
+  const computedPrimaryRanks = useMemo(() => {
+    if (!isPrimaryCycle || !selectedClass) return {}
+    const convertedLocalScores: Record<string, string> = {}
+    Object.entries(studentScores).forEach(([k, v]) => {
+      const parts = k.split('_')
+      if (parts.length === 2) {
+        const m = parts[0]
+        const sId = parts[1]
+        convertedLocalScores[`${sId}_${m}`] = v
+      }
+    })
+
+    return computePrimaryMonthClassRanks({
+      students: filteredStudents,
+      primaryGrades: allPrimaryGrades,
+      subjects: filteredPrimarySubjects,
+      className: selectedClassObj?.name,
+      classLevel: selectedClassObj?.level,
+      localScoresOverride: convertedLocalScores,
+      activeStudentId: selectedStudent,
+    })
+  }, [isPrimaryCycle, selectedClass, filteredStudents, allPrimaryGrades, filteredPrimarySubjects, selectedClassObj, studentScores, selectedStudent])
 
   // Synthèse trimestrielle et annuelle de l'élève sélectionné
   const termSummaries = useMemo(() => {
@@ -1235,6 +1260,44 @@ export function NotesManager({
                           ) : (
                             <span className="text-[var(--color-on-surface-variant)] opacity-40">—</span>
                           )}
+                        </td>
+                      </tr>
+
+                      {/* Row 3: RANG DE L'ÉLÈVE DANS LA CLASSE */}
+                      <tr className="bg-[var(--color-surface-container)] border-t border-[var(--color-outline-variant)] text-xs font-bold text-[var(--color-on-surface)]">
+                        <td className="py-2.5 px-4 sticky left-0 bg-[var(--color-surface-container)] z-20 border-r border-[var(--color-outline-variant)] shadow-[1px_0_0_var(--color-outline-variant)]">
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                              <GraduationCap className="w-3.5 h-3.5 text-blue-600" />
+                              Rang de l&apos;élève
+                            </span>
+                            <span className="text-[10px] font-normal text-[var(--color-on-surface-variant)] uppercase tracking-wider">
+                              Dans la classe
+                            </span>
+                          </div>
+                        </td>
+                        {Array.from({ length: 9 }).map((_, i) => {
+                          const month = i + 1;
+                          const r = computedPrimaryRanks[month]?.[selectedStudent]?.rankText;
+
+                          return (
+                            <td 
+                              key={i} 
+                              className={`py-2 px-2 text-center ${month === 3 || month === 6 ? 'border-r border-[var(--color-outline-variant)]' : ''}`}
+                            >
+                              {r ? (
+                                <span className="inline-block px-2 py-0.5 rounded font-extrabold text-xs bg-blue-100 text-blue-900 border border-blue-200 shadow-2xs">
+                                  {r}
+                                </span>
+                              ) : (
+                                <span className="text-[var(--color-on-surface-variant)] opacity-40">-</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                        {/* Annuel Info */}
+                        <td className="py-2.5 px-2 text-center border-l border-[var(--color-outline-variant)] bg-[var(--color-surface-container)] font-semibold text-xs text-[var(--color-on-surface-variant)]" colSpan={2}>
+                          {filteredStudents.length} élèves
                         </td>
                       </tr>
                     </tfoot>

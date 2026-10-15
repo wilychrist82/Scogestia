@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useEffect, useTransition } from 'react'
+import React, { useState, useRef, useEffect, useTransition, useMemo } from 'react'
 import { saveBulletinPrimaryGrades, saveBulletinSecondaryGrades, publishBulletinPDF } from '@/app/actions/academique'
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
@@ -14,7 +14,10 @@ import {
   getPrimarySubjectMaxScore, 
   getPrimarySubjectOrder, 
   calculateCollegeAnnualAverage, 
-  calculateLyceeAnnualAverage 
+  calculateLyceeAnnualAverage,
+  computePrimaryMonthClassRanks,
+  computeSecondaryClassRanks,
+  formatRank
 } from '@/lib/academic-curriculum'
 
 type ClassItem = { id: string; name: string; level?: string }
@@ -118,6 +121,38 @@ export function BulletinsManager({
   const student = students.find(s => s.id === selectedStudent)
   const cls = classes.find(c => c.id === selectedClass)
 
+  // Calcul automatique du classement de toute la classe pour le Primaire (pour chaque mois de 1 à 9)
+  const computedPrimaryRanks = useMemo(() => {
+    if (selectedLevel !== 'primaire' && selectedLevel !== 'maternelle') return {}
+    return computePrimaryMonthClassRanks({
+      students: availableStudents,
+      primaryGrades,
+      subjects,
+      className: cls?.name,
+      classLevel: cls?.level,
+      localScoresOverride: localPrimGrades,
+      activeStudentId: student?.id,
+    })
+  }, [availableStudents, primaryGrades, subjects, cls, localPrimGrades, student?.id, selectedLevel])
+
+  // Calcul automatique du classement de toute la classe pour le Secondaire (Collège / Lycée)
+  const computedSecondaryRanks = useMemo(() => {
+    if (selectedLevel === 'primaire' || selectedLevel === 'maternelle') {
+      return { ranks: {}, minAvg: '-', maxAvg: '-', totalClassed: 0 }
+    }
+    return computeSecondaryClassRanks({
+      students: availableStudents,
+      secondaryGrades,
+      subjects,
+      className: cls?.name,
+      classLevel: cls?.level,
+      term: selectedTerm,
+      localScoresOverride: localSecGrades,
+      activeStudentId: student?.id,
+    })
+  }, [availableStudents, secondaryGrades, subjects, cls, selectedTerm, localSecGrades, student?.id, selectedLevel])
+
+
   // Initialize local state when student changes
   useEffect(() => {
     if (!student) return
@@ -203,7 +238,15 @@ export function BulletinsManager({
     if (!student || !cls) return
     setSaveSuccess(false)
     startTransition(async () => {
-      const res = await saveBulletinPrimaryGrades(student.id, localPrimGrades, localPrimRanks, localPrimInfo)
+      // Si un mois n'a pas de rang saisi manuellement, on injecte le rang officiel calculé automatiquement
+      const effectiveRanks: Record<number, string> = { ...localPrimRanks }
+      for (let m = 1; m <= 9; m++) {
+        if (!effectiveRanks[m] || effectiveRanks[m].trim() === '') {
+          const auto = computedPrimaryRanks[m]?.[student.id]?.rankText
+          if (auto) effectiveRanks[m] = auto
+        }
+      }
+      const res = await saveBulletinPrimaryGrades(student.id, localPrimGrades, effectiveRanks, localPrimInfo)
       if (res?.success) {
         setSaveSuccess(true)
         setTimeout(() => setSaveSuccess(false), 3000)
@@ -324,10 +367,12 @@ export function BulletinsManager({
         data.monthTotals[m] = mTotal > 0 ? mTotal.toFixed(2) : ''
         data.monthAvgs[m] = maxPossible > 0 ? ((mTotal / maxPossible) * 10).toFixed(2) : ''
         
-        if (stuId === selectedStudent && localPrimRanks[m] !== undefined) data.monthRanks[m] = localPrimRanks[m]
-        else {
+        const autoRank = computedPrimaryRanks[m]?.[stuId]?.rankText || ''
+        if (stuId === selectedStudent && localPrimRanks[m] !== undefined && localPrimRanks[m].trim() !== '') {
+          data.monthRanks[m] = localPrimRanks[m]
+        } else {
           const r = primaryRanks?.find(r => r.student_id === stuId && r.month_number === m)
-          data.monthRanks[m] = r ? r.rank_text : ''
+          data.monthRanks[m] = (r && r.rank_text && r.rank_text.trim() !== '') ? r.rank_text : autoRank
         }
       })
       
@@ -388,8 +433,11 @@ export function BulletinsManager({
       data.totalCoef = totalCoef
       data.totalProduct = totalProduct
       data.termAvg = totalCoef > 0 ? (totalProduct / totalCoef).toFixed(2) : '0.00'
-      data.rank = stuId === selectedStudent ? secRank : '-'
-      data.totalStudents = stuId === selectedStudent ? secTotalStudents : students.filter(s => s.class_id === cl.id).length.toString()
+      const autoSecRank = computedSecondaryRanks.ranks[stuId]?.rankText || '-'
+      data.rank = (stuId === selectedStudent && secRank && secRank !== '-') ? secRank : autoSecRank
+      data.totalStudents = (stuId === selectedStudent && secTotalStudents && secTotalStudents !== '-') 
+        ? secTotalStudents 
+        : (computedSecondaryRanks.totalClassed > 0 ? computedSecondaryRanks.totalClassed.toString() : students.filter(s => s.class_id === cl.id).length.toString())
 
       // Calcul officiel de la moyenne annuelle
       let computedAnnual = secStats.annual_t3 || ''
@@ -412,8 +460,14 @@ export function BulletinsManager({
 
       data.stats = stuId === selectedStudent ? {
         ...secStats,
+        min: (secStats.min && secStats.min !== '-') ? secStats.min : computedSecondaryRanks.minAvg,
+        max: (secStats.max && secStats.max !== '-') ? secStats.max : computedSecondaryRanks.maxAvg,
         annual: computedAnnual || secStats.annual_t3 || '-'
-      } : { min: '-', max: '-', annual: computedAnnual || '-' }
+      } : { 
+        min: computedSecondaryRanks.minAvg, 
+        max: computedSecondaryRanks.maxAvg, 
+        annual: computedAnnual || '-' 
+      }
 
       // Décision automatique de fin d'année si non renseignée
       let autoDecision = secFooterInfo.decision
@@ -758,16 +812,23 @@ export function BulletinsManager({
               </tr>
               <tr className="bg-gray-100 font-bold">
                 <td className="border border-black p-2 text-right uppercase">Rang</td>
-                {months.map(m => (
-                  <td key={`rank-${m}`} className="border border-black p-0 text-center">
-                    <input 
-                      type="text"
-                      className="w-full h-full p-2 text-center outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 font-bold print-input"
-                      value={localPrimRanks[m] || ''}
-                      onChange={e => setLocalPrimRanks({...localPrimRanks, [m]: e.target.value})}
-                    />
-                  </td>
-                ))}
+                {months.map(m => {
+                  const autoRank = computedPrimaryRanks[m]?.[student.id]?.rankText || ''
+                  const currentRank = (localPrimRanks[m] !== undefined && localPrimRanks[m] !== '') 
+                    ? localPrimRanks[m] 
+                    : autoRank
+                  return (
+                    <td key={`rank-${m}`} className="border border-black p-0 text-center">
+                      <input 
+                        type="text"
+                        className="w-full h-full p-2 text-center outline-none bg-transparent hover:bg-gray-50 focus:bg-blue-50 font-bold print-input text-gray-900"
+                        placeholder={autoRank || '-'}
+                        value={currentRank}
+                        onChange={e => setLocalPrimRanks({...localPrimRanks, [m]: e.target.value})}
+                      />
+                    </td>
+                  )
+                })}
                 <td className="border border-black p-2 bg-gray-200"></td>
               </tr>
             </tbody>
@@ -1054,16 +1115,16 @@ export function BulletinsManager({
             <div className="text-4xl font-black text-black flex items-center justify-center">
               <input 
                 type="text"
-                className="w-16 text-center bg-transparent outline-none border-b-2 border-transparent hover:border-gray-300 focus:border-[var(--color-primary)] print-input"
-                placeholder="-"
-                value={secRank}
+                className="w-24 text-center bg-transparent outline-none border-b-2 border-transparent hover:border-gray-300 focus:border-[var(--color-primary)] print-input"
+                placeholder={computedSecondaryRanks.ranks[student.id]?.rankText || "-"}
+                value={secRank !== '' ? secRank : (computedSecondaryRanks.ranks[student.id]?.rankText || '')}
                 onChange={e => setSecRank(e.target.value)}
               />
               <span className="text-sm font-medium text-gray-500 mx-1">/</span>
               <input 
                 type="text"
                 className="w-12 text-sm font-medium text-gray-500 text-center bg-transparent outline-none border-b border-transparent hover:border-gray-300 focus:border-[var(--color-primary)] print-input print:text-gray-500"
-                value={secTotalStudents}
+                value={secTotalStudents !== '' ? secTotalStudents : (computedSecondaryRanks.totalClassed > 0 ? computedSecondaryRanks.totalClassed.toString() : availableStudents.length.toString())}
                 onChange={e => setSecTotalStudents(e.target.value)}
               />
             </div>
@@ -1123,11 +1184,23 @@ export function BulletinsManager({
           <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
               <p className="text-xs text-gray-600 font-semibold uppercase">Moyenne la plus faible</p>
-              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.min} onChange={e => setSecStats({...secStats, min: e.target.value})} />
+              <input 
+                type="text" 
+                className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" 
+                placeholder={computedSecondaryRanks.minAvg} 
+                value={secStats.min !== '' ? secStats.min : (computedSecondaryRanks.minAvg !== '-' ? computedSecondaryRanks.minAvg : '')} 
+                onChange={e => setSecStats({...secStats, min: e.target.value})} 
+              />
             </div>
             <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
               <p className="text-xs text-gray-600 font-semibold uppercase">Moyenne la plus forte</p>
-              <input type="text" className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" placeholder="-" value={secStats.max} onChange={e => setSecStats({...secStats, max: e.target.value})} />
+              <input 
+                type="text" 
+                className="w-full text-center font-bold bg-transparent outline-none mt-1 print-input" 
+                placeholder={computedSecondaryRanks.maxAvg} 
+                value={secStats.max !== '' ? secStats.max : (computedSecondaryRanks.maxAvg !== '-' ? computedSecondaryRanks.maxAvg : '')} 
+                onChange={e => setSecStats({...secStats, max: e.target.value})} 
+              />
             </div>
             <div className="bg-gray-50 border border-gray-200 p-3 rounded-xl text-center">
               <p className="text-xs text-gray-600 font-semibold uppercase">Moyenne {selectedLevel === 'lycee' ? '1er Semestre' : 'Trimestrielle'}</p>
