@@ -126,6 +126,11 @@ export function EnseignantCommunication({ currentUserId, students, communication
   const handleSend = (payload: { text: string; audioUrl: string | null; fileUrl?: string | null; fileType?: string | null }) => {
     setError(null)
 
+    // Marquer l'horodatage d'envoi pour bloquer les auto-alertes sonores
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('scogestia_last_sent_msg_time', Date.now().toString())
+    }
+
     if (recipientType === 'parent' && !selectedParent) {
       toast.error("Veuillez sélectionner un élève/parent avant d'envoyer.", { position: 'top-center' })
       return

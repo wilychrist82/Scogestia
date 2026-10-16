@@ -250,6 +250,11 @@ export async function completeOnboarding(prevState: AuthState, formData: FormDat
 
 export async function logout() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const adminClient = await import('@/lib/supabase/admin').then(m => m.createAdminClient());
+    await adminClient.from('user_devices').delete().eq('user_id', user.id);
+  }
   await supabase.auth.signOut();
   redirect('/connexion');
 }

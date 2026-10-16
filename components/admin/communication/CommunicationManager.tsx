@@ -64,6 +64,12 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
   const handleSend = (payload: { text: string; audioUrl: string | null; fileUrl?: string | null; fileType?: string | null }) => {
     setSuccess(false)
     setError(null)
+
+    // Marquer l'horodatage d'envoi pour bloquer les auto-alertes sonores
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('scogestia_last_sent_msg_time', Date.now().toString())
+    }
+
     const formData = new FormData()
     formData.append('recipientType', recipientType)
     formData.append('subject', 'Message de l\'administration')

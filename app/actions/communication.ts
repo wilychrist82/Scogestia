@@ -160,12 +160,12 @@ export async function sendCommunication(formData: FormData) {
       usersToNotify = [recipientId]
 
     } else if (recipientType === 'admin') {
-      // Notifier tous les admins de l'école
+      // Notifier tous les admins/gestionnaires de l'école
       const { data: adminUsers } = await adminClient
         .from('user_school_roles')
         .select('user_id')
         .eq('school_id', roleData.school_id)
-        .eq('role', 'admin')
+        .in('role', ['admin', 'super_admin', 'direction', 'comptable'])
       if (adminUsers) usersToNotify = adminUsers.map(u => u.user_id)
 
     } else if (recipientType === 'all') {
@@ -203,8 +203,8 @@ export async function sendCommunication(formData: FormData) {
       }
     }
 
-    // Exclure l'expéditeur des destinataires
-    usersToNotify = Array.from(new Set(usersToNotify)).filter(uid => uid !== user.id)
+    // Exclure ABSOLUMENT l'expéditeur des destinataires
+    usersToNotify = Array.from(new Set(usersToNotify)).filter(uid => Boolean(uid) && uid !== user.id)
 
     // Insérer les notifications
     if (usersToNotify.length > 0) {
@@ -246,7 +246,7 @@ export async function sendCommunication(formData: FormData) {
         const targetRole = roleMap.get(uid)
         let actionUrl = '/parent/messages'
         if (targetRole === 'enseignant') actionUrl = '/enseignant/messages'
-        else if (targetRole === 'admin') actionUrl = '/admin/communication'
+        else if (['admin', 'super_admin', 'direction', 'comptable'].includes(targetRole || '')) actionUrl = '/admin/communication'
 
         return {
           user_id: uid,

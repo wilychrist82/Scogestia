@@ -6,17 +6,8 @@ import toast, { Toaster } from 'react-hot-toast'
 import { BellRing } from 'lucide-react'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 
-// Joue un carillon doux
-function playChime() {
-  // 1. Tenter de jouer le fichier mp3 qui est dans public/
-  try {
-    const audio = new Audio('/notification.mp3')
-    audio.play().catch(e => console.warn('[Audio] HTML5 Audio bloqué par le navigateur:', e))
-  } catch (err) {
-    console.warn('[Audio] Erreur de lecture du fichier:', err)
-  }
-
-  // 2. Fallback Web Audio API (s'arrête automatiquement après ~5s)
+// Fallback Web Audio API (notes douces)
+function playWebAudioChime() {
   try {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
     if (!AudioCtx) return
@@ -24,7 +15,7 @@ function playChime() {
 
     // Notes du carillon : Do, Mi, Sol, Do (octave sup)
     const notes = [523.25, 659.25, 783.99, 1046.50]
-    const totalDuration = 5 // secondes
+    const totalDuration = 4 // secondes
 
     notes.forEach((freq, i) => {
       const osc = ctx.createOscillator()
@@ -35,7 +26,7 @@ function playChime() {
 
       // Enveloppe douce : attaque rapide, longue décroissance
       const startTime = ctx.currentTime + i * 0.18
-      const peakVolume = 0.18 - i * 0.02 // chaque note un peu plus douce
+      const peakVolume = 0.18 - i * 0.02
       gain.gain.setValueAtTime(0, startTime)
       gain.gain.linearRampToValueAtTime(peakVolume, startTime + 0.05)
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + totalDuration - i * 0.3)
@@ -47,11 +38,32 @@ function playChime() {
       osc.stop(startTime + totalDuration)
     })
 
-    // Ferme le contexte proprement après la durée totale
     setTimeout(() => ctx.close().catch(() => {}), (totalDuration + 1) * 1000)
   } catch (err) {
     console.warn('[Chime] Web Audio API non disponible:', err)
   }
+}
+
+// Joue un carillon doux sans superposition
+function playChime() {
+  // 1. Tenter de jouer le fichier mp3
+  try {
+    const audio = new Audio('/notification.mp3')
+    audio.volume = 0.6
+    const playPromise = audio.play()
+    if (playPromise !== undefined) {
+      playPromise.catch((e) => {
+        console.warn('[Audio] HTML5 Audio bloqué ou indisponible, passage au fallback Web Audio:', e)
+        playWebAudioChime()
+      })
+      return
+    }
+  } catch (err) {
+    console.warn('[Audio] Erreur de lecture du fichier mp3:', err)
+  }
+
+  // 2. Fallback si HTML5 Audio a échoué
+  playWebAudioChime()
 }
 
 export type Notification = {
@@ -92,7 +104,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate([100, 50, 100])
     }
-    // Carillon doux généré par Web Audio API (s'arrête après 5s)
+    // Carillon doux
     playChime()
   }
 
@@ -103,6 +115,16 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const setup = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      // Récupérer le nom de l'utilisateur pour filtrer ses propres notifications
+      const { data: roleProfile } = await supabase
+        .from('user_school_roles')
+        .select('full_name')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle()
+
+      const currentUserName = (roleProfile?.full_name || user.user_metadata?.full_name || '').trim()
 
       const { data: initialNotifs } = await supabase
         .from('notifications')
@@ -122,6 +144,35 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           return [newNotif, ...prev].slice(0, 50)
         })
         lastNotifTimestamp.current = newNotif.created_at
+
+        // ─────────────────────────────────────────────────────────────────────
+        // FILTRES ANTI-SONNERIE CHEZ L'EXPÉDITEUR
+        // ─────────────────────────────────────────────────────────────────────
+        // 1. Si le titre indique que le message provient de l'utilisateur connecté : JAMAIS DE SONNERIE !
+        if (currentUserName && newNotif.title && newNotif.title.toLowerCase().includes(currentUserName.toLowerCase())) {
+          console.log('[NotificationProvider] Alerte sonore bloquée : notification issue de l\'utilisateur connecté')
+          return
+        }
+
+        // 2. Fenêtre de silence anti-écho : si un message a été envoyé depuis ce navigateur dans les 8 dernières secondes
+        if (typeof window !== 'undefined' && newNotif.type === 'message') {
+          const lastSentTime = parseInt(sessionStorage.getItem('scogestia_last_sent_msg_time') || '0', 10)
+          if (Date.now() - lastSentTime < 8000) {
+            console.log('[NotificationProvider] Alerte sonore bloquée : message envoyé récemment par cet utilisateur')
+            return
+          }
+
+          // 3. Déduplication anti-doublon (Realtime / Push simultanés)
+          const lastAlertId = (window as any).__scogestia_last_alert_id
+          const lastAlertTime = (window as any).__scogestia_last_alert_time || 0
+          if (lastAlertId === newNotif.id || (Date.now() - lastAlertTime < 3000 && (window as any).__scogestia_last_alert_title === newNotif.title)) {
+            return
+          }
+          ;(window as any).__scogestia_last_alert_id = newNotif.id
+          ;(window as any).__scogestia_last_alert_time = Date.now()
+          ;(window as any).__scogestia_last_alert_title = newNotif.title
+        }
+
         triggerAlert()
         toast(
           () => (
@@ -140,8 +191,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       }
 
       // Abonnement Realtime
-      // IMPORTANT : on ne met PAS de filtre côté Supabase (user_id=eq.X) car cela
-      // nécessite REPLICA IDENTITY FULL sur la table. On filtre en JavaScript.
       const channel = supabase
         .channel(`notifs-${user.id}`)
         .on(
@@ -149,8 +198,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           { event: 'INSERT', schema: 'public', table: 'notifications' },
           (payload) => {
             const newNotif = payload.new as Notification
-            // Filtre JS : ne traiter que les notifications de CET utilisateur
-            if (newNotif.user_id === user.id) {
+            // Ne traiter que les notifications destinées à cet utilisateur
+            if (newNotif && newNotif.user_id === user.id) {
               handleNewNotif(newNotif)
             }
           }

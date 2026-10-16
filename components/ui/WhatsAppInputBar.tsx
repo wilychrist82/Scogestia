@@ -92,6 +92,11 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
             .from('communications')
             .getPublicUrl(fileName)
           
+          // Marquer l'horodatage d'envoi pour bloquer les auto-alertes sonores
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('scogestia_last_sent_msg_time', Date.now().toString())
+          }
+
           // Envoi direct sans aperçu !
           onSend({ text: '', audioUrl: publicUrl })
           
@@ -160,6 +165,11 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
 
         fileUrl = publicUrl
         fileType = selectedFile.type
+      }
+
+      // Marquer l'horodatage d'envoi pour bloquer les auto-alertes sonores
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('scogestia_last_sent_msg_time', Date.now().toString())
       }
 
       onSend({ text: text.trim(), audioUrl: null, fileUrl, fileType, originalFileName })

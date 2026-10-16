@@ -32,6 +32,11 @@ export function ParentMessageForm({ teachers = [], selectedChild }: Props) {
   const handleSend = (payload: { text: string; audioUrl: string | null; fileUrl?: string | null; fileType?: string | null }) => {
     setError(null)
 
+    // Marquer l'horodatage d'envoi pour bloquer les auto-alertes sonores
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('scogestia_last_sent_msg_time', Date.now().toString())
+    }
+
     const effectiveTeacher = selectedTeacher || (teachers.length === 1 ? teachers[0].id : '')
 
     if (recipientType === 'enseignant' && !effectiveTeacher) {

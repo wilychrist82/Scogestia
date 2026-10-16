@@ -43,6 +43,12 @@ export function ParentHeader({ fullName, userAvatar }: { fullName: string, userA
 
   const handleSignOut = async () => {
     const supabase = createClient()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase.from('user_devices').delete().eq('user_id', user.id)
+      }
+    } catch {}
     await supabase.auth.signOut()
     router.push('/connexion')
     router.refresh()
