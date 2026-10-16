@@ -12,13 +12,27 @@ export async function sendCommunication(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autorisé' }
 
-  const { data: roleData } = await supabase
+  const adminClient = await createAdminClient()
+
+  const { data: roleData } = await adminClient
     .from('user_school_roles')
     .select('school_id, role')
     .eq('user_id', user.id)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
-  if (!roleData?.school_id) return { error: 'École introuvable' }
+  let targetSchoolId = roleData?.school_id
+  const studentId = formData.get('studentId') as string | null
+  if (!targetSchoolId && studentId) {
+    const { data: student } = await adminClient
+      .from('students')
+      .select('school_id')
+      .eq('id', studentId)
+      .maybeSingle()
+    if (student?.school_id) targetSchoolId = student.school_id
+  }
+
+  if (!targetSchoolId) return { error: 'École introuvable' }
 
   const recipientType = formData.get('recipientType') as string
   const selectedClass = formData.get('selectedClass') as string
@@ -36,8 +50,6 @@ export async function sendCommunication(formData: FormData) {
   if (!subject && !audioUrl && !fileUrl) {
     return { error: 'L\'objet, l\'audio ou un fichier est requis' }
   }
-
-  const adminClient = await createAdminClient()
 
   // ─────────────────────────────────────────────────────────────────────────
   // Résolution du recipient_id selon le type
@@ -114,7 +126,7 @@ export async function sendCommunication(formData: FormData) {
 
   if (recipientType === 'parent' && parentUserIds.length > 0) {
     const records = parentUserIds.map(pId => ({
-      school_id: roleData.school_id,
+      school_id: targetSchoolId,
       sender_id: user.id,
       recipient_type: recipientType,
       recipient_id: pId,
@@ -130,7 +142,7 @@ export async function sendCommunication(formData: FormData) {
     }
   } else {
     const { error: insertError } = await adminClient.from('communications').insert({
-      school_id: roleData.school_id,
+      school_id: targetSchoolId,
       sender_id: user.id,
       recipient_type: recipientType,
       recipient_id: recipientId,
@@ -160,20 +172,37 @@ export async function sendCommunication(formData: FormData) {
       usersToNotify = [recipientId]
 
     } else if (recipientType === 'admin') {
-      // Notifier tous les admins/gestionnaires de l'école
-      const { data: adminUsers } = await adminClient
+      // Notifier tous les admins/gestionnaires de l'école (rôles enum valides: admin, super_admin, comptable)
+      const { data: adminUsers, error: adminErr } = await adminClient
         .from('user_school_roles')
         .select('user_id')
-        .eq('school_id', roleData.school_id)
-        .in('role', ['admin', 'super_admin', 'direction', 'comptable'])
-      if (adminUsers) usersToNotify = adminUsers.map(u => u.user_id)
+        .eq('school_id', targetSchoolId)
+        .in('role', ['admin', 'super_admin', 'comptable'])
+
+      if (adminErr) {
+        console.error('Error fetching admin users for notification:', adminErr)
+      }
+
+      let adminIds = (adminUsers || []).map(u => u.user_id)
+
+      // Si aucun admin local n'est configuré ou pour garantir que les super admins SaaS sont notifiés
+      if (adminIds.length === 0) {
+        const { data: superAdmins } = await adminClient
+          .from('super_admins')
+          .select('user_id')
+        if (superAdmins && superAdmins.length > 0) {
+          adminIds = superAdmins.map(sa => sa.user_id)
+        }
+      }
+
+      usersToNotify = adminIds
 
     } else if (recipientType === 'all') {
       // Notifier tous les parents de l'école
       const { data: parentUsers } = await adminClient
         .from('user_school_roles')
         .select('user_id')
-        .eq('school_id', roleData.school_id)
+        .eq('school_id', targetSchoolId)
         .eq('role', 'parent')
       if (parentUsers) usersToNotify = parentUsers.map(u => u.user_id)
 
@@ -182,7 +211,7 @@ export async function sendCommunication(formData: FormData) {
       const { data: teacherUsers } = await adminClient
         .from('user_school_roles')
         .select('user_id')
-        .eq('school_id', roleData.school_id)
+        .eq('school_id', targetSchoolId)
         .eq('role', 'enseignant')
       if (teacherUsers) usersToNotify = teacherUsers.map(u => u.user_id)
 
@@ -213,7 +242,7 @@ export async function sendCommunication(formData: FormData) {
         .from('user_school_roles')
         .select('full_name, role')
         .eq('user_id', user.id)
-        .eq('school_id', roleData.school_id)
+        .eq('school_id', targetSchoolId)
         .maybeSingle()
 
       const senderName = senderRole?.full_name || 'Utilisateur'
@@ -238,7 +267,7 @@ export async function sendCommunication(formData: FormData) {
         .from('user_school_roles')
         .select('user_id, role')
         .in('user_id', usersToNotify)
-        .eq('school_id', roleData.school_id)
+        .eq('school_id', targetSchoolId)
 
       const roleMap = new Map((recipientsRoles || []).map(r => [r.user_id, r.role]))
 
@@ -246,11 +275,11 @@ export async function sendCommunication(formData: FormData) {
         const targetRole = roleMap.get(uid)
         let actionUrl = '/parent/messages'
         if (targetRole === 'enseignant') actionUrl = '/enseignant/messages'
-        else if (['admin', 'super_admin', 'direction', 'comptable'].includes(targetRole || '')) actionUrl = '/admin/communication'
+        else if (['admin', 'super_admin', 'comptable'].includes(targetRole || '')) actionUrl = '/admin/communication'
 
         return {
           user_id: uid,
-          school_id: roleData.school_id,
+          school_id: targetSchoolId,
           title: notifTitle,
           message: notifBody,
           type: 'message',
@@ -258,7 +287,10 @@ export async function sendCommunication(formData: FormData) {
         }
       })
 
-      await adminClient.from('notifications').insert(notificationsToInsert)
+      const { error: notifInsertErr } = await adminClient.from('notifications').insert(notificationsToInsert)
+      if (notifInsertErr) {
+        console.error('Error inserting notifications in sendCommunication:', notifInsertErr)
+      }
     }
   } catch (notifErr) {
     console.error('Error creating notifications:', notifErr)
@@ -275,7 +307,7 @@ export async function sendCommunication(formData: FormData) {
         const { data } = await supabase
           .from('user_school_roles')
           .select('user_id')
-          .eq('school_id', roleData.school_id)
+          .eq('school_id', targetSchoolId)
           .eq('role', 'parent')
         if (data) parentIdsToSms = data.map(d => d.user_id)
 
@@ -301,7 +333,7 @@ export async function sendCommunication(formData: FormData) {
           .from('user_school_roles')
           .select('phone')
           .in('user_id', parentIdsToSms)
-          .eq('school_id', roleData.school_id)
+          .eq('school_id', targetSchoolId)
 
         const phones = parentsData?.map(p => p.phone).filter(Boolean) as string[] || []
         
@@ -325,7 +357,7 @@ export async function sendCommunication(formData: FormData) {
         const { data } = await adminClient
           .from('user_school_roles')
           .select('user_id')
-          .eq('school_id', roleData.school_id)
+          .eq('school_id', targetSchoolId)
           .eq('role', 'parent')
         if (data) parentUserIds = data.map(d => d.user_id)
 
@@ -359,7 +391,7 @@ export async function sendCommunication(formData: FormData) {
           }
 
           const { data: schoolData } = await adminClient
-            .from('schools').select('name').eq('id', roleData.school_id).maybeSingle()
+            .from('schools').select('name').eq('id', targetSchoolId).maybeSingle()
           const schoolName = (schoolData as any)?.name || 'Scogestia'
 
           const emailHtml = `

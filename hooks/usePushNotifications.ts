@@ -3,6 +3,8 @@ import { PushNotifications, Token, ActionPerformed } from '@capacitor/push-notif
 import { Capacitor } from '@capacitor/core';
 import toast from 'react-hot-toast';
 import { createClient } from '@/lib/supabase/client';
+import { registerDeviceToken } from '@/app/actions/notifications';
+import { shouldSuppressAlert } from '@/components/providers/NotificationProvider';
 import { useRouter } from 'next/navigation';
 
 export const usePushNotifications = () => {
@@ -27,27 +29,11 @@ export const usePushNotifications = () => {
         console.log('FCM Token:', token.value);
         setFcmToken(token.value);
         
-        // Sauvegarder le token en base de données
+        // Sauvegarder le token via l'action serveur (adminClient) pour dissocier proprement tout ancien compte
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            // Nettoyer ce token physique pour tout AUTRE utilisateur (évite qu'un appareil reçoive les alertes d'un autre compte testé précédemment)
-            await supabase
-              .from('user_devices')
-              .delete()
-              .eq('fcm_token', token.value)
-              .neq('user_id', user.id);
-
-            await supabase
-              .from('user_devices')
-              .upsert({ 
-                user_id: user.id, 
-                fcm_token: token.value,
-                updated_at: new Date().toISOString()
-              }, { onConflict: 'user_id' });
-          }
+          await registerDeviceToken(token.value);
         } catch (err) {
-          console.error("Erreur d'enregistrement du token en BDD:", err);
+          console.error("Erreur d'enregistrement du token via registerDeviceToken:", err);
         }
       });
 
@@ -95,18 +81,18 @@ export const usePushNotifications = () => {
               console.log('[Push] Push ignoré : message envoyé récemment par cet utilisateur');
               return;
             }
+          }
 
-            // 4. Déduplication avec NotificationProvider (Realtime)
-            const notifId = data.notification_id || notification.id;
-            const lastAlertId = (window as any).__scogestia_last_alert_id;
-            const lastAlertTime = (window as any).__scogestia_last_alert_time || 0;
-            if (notifId && (lastAlertId === notifId || (Date.now() - lastAlertTime < 4000 && (window as any).__scogestia_last_alert_title === notification.title))) {
-              console.log('[Push] Déjà alerté via Realtime, pas de double sonnerie');
-              return;
-            }
-            (window as any).__scogestia_last_alert_id = notifId;
-            (window as any).__scogestia_last_alert_time = Date.now();
-            (window as any).__scogestia_last_alert_title = notification.title;
+          // 4. Déduplication avec NotificationProvider (Realtime) via cache partagé 12s
+          const notifId = data.notification_id || notification.id;
+          const contentFingerprint = `${notification.title}::${notification.body || ''}`.toLowerCase();
+
+          const isDuplicateId = notifId ? shouldSuppressAlert(String(notifId), 12000) : false;
+          const isDuplicateContent = shouldSuppressAlert(contentFingerprint, 12000);
+
+          if (isDuplicateId || isDuplicateContent) {
+            console.log('[Push] Notification déjà traitée via Realtime, double sonnerie et toast bloqués');
+            return;
           }
 
           // 5. Carillon doux via Web Audio API si tous les filtres sont passés
@@ -138,7 +124,7 @@ export const usePushNotifications = () => {
           }
 
           toast.success(`${notification.title} : ${notification.body}`, {
-            duration: 4000,
+            duration: 8000,
             position: 'top-center'
           });
         } catch (pushErr) {

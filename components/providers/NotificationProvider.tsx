@@ -66,6 +66,27 @@ function playChime() {
   playWebAudioChime()
 }
 
+// Global alert deduplication cache across window/tab
+export function shouldSuppressAlert(key: string, windowMs = 12000): boolean {
+  if (typeof window === 'undefined' || !key) return false
+  const w = window as any
+  if (!w.__scogestia_recent_alerts) {
+    w.__scogestia_recent_alerts = new Map<string, number>()
+  }
+  const now = Date.now()
+  // Nettoyage régulier des entrées de plus de 60s
+  for (const [k, time] of w.__scogestia_recent_alerts.entries()) {
+    if (now - time > 60000) w.__scogestia_recent_alerts.delete(k)
+  }
+
+  const lastTime = w.__scogestia_recent_alerts.get(key)
+  if (lastTime && (now - lastTime < windowMs)) {
+    return true
+  }
+  w.__scogestia_recent_alerts.set(key, now)
+  return false
+}
+
 export type Notification = {
   id: string
   user_id: string
@@ -75,7 +96,6 @@ export type Notification = {
   is_read: boolean
   created_at: string
 }
-
 
 type NotificationContextType = {
   notifications: Notification[]
@@ -110,11 +130,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     const supabase = createClient()
-    let cleanup: (() => void) | null = null
+    let isCancelled = false
+    let currentChannel: any = null
+    let pollInterval: any = null
 
     const setup = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user || isCancelled) return
 
       // Récupérer le nom de l'utilisateur pour filtrer ses propres notifications
       const { data: roleProfile } = await supabase
@@ -123,6 +145,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         .eq('user_id', user.id)
         .limit(1)
         .maybeSingle()
+
+      if (isCancelled) return
 
       const currentUserName = (roleProfile?.full_name || user.user_metadata?.full_name || '').trim()
 
@@ -133,12 +157,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         .order('created_at', { ascending: false })
         .limit(30)
 
+      if (isCancelled) return
+
       if (initialNotifs && initialNotifs.length > 0) {
         setNotifications(initialNotifs)
         lastNotifTimestamp.current = initialNotifs[0].created_at
       }
 
       const handleNewNotif = (newNotif: Notification) => {
+        // Mettre à jour la liste sans doublon d'ID
         setNotifications(prev => {
           if (prev.some(n => n.id === newNotif.id)) return prev
           return [newNotif, ...prev].slice(0, 50)
@@ -146,7 +173,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         lastNotifTimestamp.current = newNotif.created_at
 
         // ─────────────────────────────────────────────────────────────────────
-        // FILTRES ANTI-SONNERIE CHEZ L'EXPÉDITEUR
+        // FILTRES ANTI-DOUBLON ET ANTI-SONNERIE CHEZ L'EXPÉDITEUR
         // ─────────────────────────────────────────────────────────────────────
         // 1. Si le titre indique que le message provient de l'utilisateur connecté : JAMAIS DE SONNERIE !
         if (currentUserName && newNotif.title && newNotif.title.toLowerCase().includes(currentUserName.toLowerCase())) {
@@ -161,16 +188,16 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             console.log('[NotificationProvider] Alerte sonore bloquée : message envoyé récemment par cet utilisateur')
             return
           }
+        }
 
-          // 3. Déduplication anti-doublon (Realtime / Push simultanés)
-          const lastAlertId = (window as any).__scogestia_last_alert_id
-          const lastAlertTime = (window as any).__scogestia_last_alert_time || 0
-          if (lastAlertId === newNotif.id || (Date.now() - lastAlertTime < 3000 && (window as any).__scogestia_last_alert_title === newNotif.title)) {
-            return
-          }
-          ;(window as any).__scogestia_last_alert_id = newNotif.id
-          ;(window as any).__scogestia_last_alert_time = Date.now()
-          ;(window as any).__scogestia_last_alert_title = newNotif.title
+        // 3. Déduplication anti-doublon universelle (par ID et par empreinte titre/message sur 12 secondes)
+        const contentFingerprint = `${newNotif.title}::${newNotif.message || ''}`.toLowerCase()
+        const isDuplicateId = shouldSuppressAlert(newNotif.id, 12000)
+        const isDuplicateContent = shouldSuppressAlert(contentFingerprint, 12000)
+
+        if (isDuplicateId || isDuplicateContent) {
+          console.log('[NotificationProvider] Alerte sonore/toast bloquée : notification déjà alertée récemment')
+          return
         }
 
         triggerAlert()
@@ -190,8 +217,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         )
       }
 
-      // Abonnement Realtime
-      const channel = supabase
+      // Abonnement Realtime propre
+      currentChannel = supabase
         .channel(`notifs-${user.id}`)
         .on(
           'postgres_changes',
@@ -204,9 +231,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             }
           }
         )
-        .subscribe((status) => console.log('[Realtime] statut:', status))
+      currentChannel.subscribe((status: any) => console.log('[Realtime] statut:', status))
 
-      const pollInterval = setInterval(async () => {
+      pollInterval = setInterval(async () => {
+        if (isCancelled) return
         const since = lastNotifTimestamp.current
         if (!since) return
         const { data: missed } = await supabase
@@ -215,14 +243,23 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           .eq('user_id', user.id)
           .gt('created_at', since)
           .order('created_at', { ascending: true })
-        if (missed && missed.length > 0) missed.forEach(handleNewNotif)
+        if (missed && missed.length > 0 && !isCancelled) {
+          missed.forEach(handleNewNotif)
+        }
       }, 15000)
-
-      cleanup = () => { supabase.removeChannel(channel); clearInterval(pollInterval) }
     }
 
     setup()
-    return () => { cleanup?.() }
+
+    return () => {
+      isCancelled = true
+      if (currentChannel) {
+        supabase.removeChannel(currentChannel)
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval)
+      }
+    }
   }, [])
 
   const markAsRead = async (id: string) => {
@@ -241,7 +278,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   return (
     <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead }}>
-      <Toaster position="top-right" />
       {children}
     </NotificationContext.Provider>
   )
