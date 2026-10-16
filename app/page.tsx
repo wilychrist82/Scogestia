@@ -172,7 +172,7 @@ export default function Home() {
                 <motion.h1 variants={fadeIn} className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.05] mb-6 font-sans">
                   Plateforme de gestion
                   <br />
-                  <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">
+                  <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-teal-100 to-emerald-400">
                     scolaire intelligente.
                   </span>
                 </motion.h1>
@@ -228,15 +228,15 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Vagues dynamiques animées (iziSAAS style) - Forme de 8 restaurée avec overshoot */}
+          {/* Vagues dynamiques animées Scogestia */}
           <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-0 h-[80px] md:h-[120px]">
-            {/* Vague Violet Clair (descend en premier) */}
+            {/* Vague Émeraude douce */}
             <svg className="block absolute bottom-0 w-[200%] h-full animate-wave-continuous-left" viewBox="0 0 2400 120" preserveAspectRatio="none">
-              <path d="M0,60 C300,280 300,-160 600,60 C900,280 900,-160 1200,60 C1500,280 1500,-160 1800,60 C2100,280 2100,-160 2400,60 L2400,120 L0,120 Z" className="fill-violet-600/90" />
+              <path d="M0,60 C300,280 300,-160 600,60 C900,280 900,-160 1200,60 C1500,280 1500,-160 1800,60 C2100,280 2100,-160 2400,60 L2400,120 L0,120 Z" className="fill-emerald-800/80" />
             </svg>
-            {/* Vague Violet Foncé (monte en premier) */}
+            {/* Vague Émeraude profonde */}
             <svg className="block absolute bottom-0 w-[200%] h-full animate-wave-continuous-right" viewBox="0 0 2400 120" preserveAspectRatio="none">
-              <path d="M0,60 C300,-160 300,280 600,60 C900,-160 900,280 1200,60 C1500,-160 1500,280 1800,60 C2100,-160 2100,280 2400,60 L2400,120 L0,120 Z" className="fill-violet-800" />
+              <path d="M0,60 C300,-160 300,280 600,60 C900,-160 900,280 1200,60 C1500,-160 1500,280 1800,60 C2100,-160 2100,280 2400,60 L2400,120 L0,120 Z" className="fill-[#043323]" />
             </svg>
           </div>
         </section>
@@ -253,7 +253,7 @@ export default function Home() {
               variants={fadeIn}
             >
               <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 tracking-tight max-w-4xl leading-tight">
-                Un contrôle total sur l'ensemble de <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-[#006039]">votre établissement.</span>
+                Un contrôle total sur l'ensemble de <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-700 via-emerald-800 to-[#006039]">votre établissement.</span>
               </h2>
               <p className="text-xl text-slate-600 max-w-2xl leading-relaxed">
                 Des outils financiers puissants aux carnets de notes automatisés, chaque module est conçu pour être invisible et efficace.
@@ -310,7 +310,7 @@ export default function Home() {
                   <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
                     <Wallet className="w-6 h-6 text-emerald-400" />
                   </div>
-                  <h3 className="text-3xl font-bold text-white mb-2 font-sans tracking-tight">Suivi Financier & <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Recouvrement</span></h3>
+                  <h3 className="text-3xl font-bold text-white mb-2 font-sans tracking-tight">Suivi Financier & <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-teal-100 to-emerald-400">Recouvrement</span></h3>
                   <p className="text-slate-300 text-lg max-w-lg leading-relaxed">
                     Visualisez instantanément les impayés, relancez les parents par SMS, et automatisez toute votre comptabilité sans tableaux croisés.
                   </p>
@@ -324,9 +324,9 @@ export default function Home() {
                 
                 <div className="relative z-10 h-full flex flex-col justify-end">
                   <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
-                    <Smartphone className="w-6 h-6 text-violet-400" />
+                    <Smartphone className="w-6 h-6 text-emerald-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-2 font-sans tracking-tight"><span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Portail</span> Parents</h3>
+                  <h3 className="text-2xl font-bold text-white mb-2 font-sans tracking-tight"><span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-teal-100 to-emerald-400">Portail</span> Parents</h3>
                   <p className="text-slate-300 text-sm md:text-base">
                     Transparence totale sur le téléphone des parents : notes, absences, et paiements.
                   </p>
@@ -342,7 +342,7 @@ export default function Home() {
                   <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
                     <Building2 className="w-6 h-6 text-blue-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight">Gestion <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Scolaire</span></h3>
+                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight">Gestion <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-teal-100 to-emerald-400">Scolaire</span></h3>
                   <p className="text-slate-300">
                     Classes, enseignants, emplois du temps. Une architecture claire pour gérer des milliers d'élèves.
                   </p>
@@ -358,7 +358,7 @@ export default function Home() {
                   <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
                     <GraduationCap className="w-6 h-6 text-amber-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight"><span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Académique</span></h3>
+                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight"><span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-teal-100 to-emerald-400">Académique</span></h3>
                   <p className="text-slate-300">
                     Saisie fluide des notes, bulletins automatisés et statistiques en temps réel.
                   </p>
@@ -374,7 +374,7 @@ export default function Home() {
                   <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
                     <ShieldCheck className="w-6 h-6 text-emerald-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight">Sécurité & <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-emerald-200 to-emerald-400">Contrôle</span></h3>
+                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight">Sécurité & <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-teal-100 to-emerald-400">Contrôle</span></h3>
                   <p className="text-slate-300">
                     Vos données sensibles sont cryptées. Personne d'autre que vous n'y a accès. Fiabilité 99.9%.
                   </p>
@@ -623,7 +623,7 @@ export default function Home() {
 
               {/* Carte 3 : Parents & Familles */}
               <motion.div variants={fadeIn} className="flex flex-col bg-slate-50 rounded-3xl p-8 border border-slate-200/80 hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
-                <div className="w-16 h-16 rounded-2xl bg-violet-600 text-white flex items-center justify-center mb-6 shadow-lg shadow-violet-500/20 group-hover:scale-105 transition-transform">
+                <div className="w-16 h-16 rounded-2xl bg-teal-700 text-white flex items-center justify-center mb-6 shadow-lg shadow-teal-700/20 group-hover:scale-105 transition-transform">
                   <Smartphone className="w-8 h-8" />
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-3">Espace Parent</h3>
@@ -631,22 +631,22 @@ export default function Home() {
                   Suivez la scolarité de vos enfants 24h/24 : consultation des notes, bulletins en direct, retards et alertes par messages audios et SMS directement intégrés à la plateforme Scogestia.
                 </p>
                 <div className="space-y-2 mb-8 text-xs font-semibold text-slate-700">
-                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-600" /> Bulletins téléchargeables en direct</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-600" /> Alertes messages audios & SMS via Scogestia</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-600" /> Notifications WhatsApp directes</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-600" /> Historique clair des paiements et solde</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-teal-600" /> Bulletins téléchargeables en direct</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-teal-600" /> Alertes messages audios & SMS via Scogestia</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-teal-600" /> Notifications WhatsApp directes</div>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-teal-600" /> Historique clair des paiements et solde</div>
                 </div>
                 <div className="flex flex-col gap-2">
                   <Link
                     href="/connexion"
-                    className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-violet-600 text-white font-bold text-sm text-center transition-colors flex items-center justify-center gap-2"
+                    className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-teal-700 text-white font-bold text-sm text-center transition-colors flex items-center justify-center gap-2"
                   >
                     <span>Se connecter</span>
                     <ChevronRight className="w-4 h-4" />
                   </Link>
                   <Link
                     href="/activer-parent"
-                    className="w-full py-2 text-center text-xs text-violet-700 hover:underline font-semibold"
+                    className="w-full py-2 text-center text-xs text-teal-700 hover:underline font-semibold"
                   >
                     Première connexion ? Activer mon compte parent
                   </Link>
@@ -659,7 +659,7 @@ export default function Home() {
         {/* Section Comment ça marche (#comment-ca-marche) */}
         <section id="comment-ca-marche" className="py-24 bg-white relative overflow-hidden">
           {/* Subtle background decoration */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-violet-50/50 rounded-full blur-[100px] -z-10"></div>
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-emerald-50/60 rounded-full blur-[100px] -z-10"></div>
           
           <div className="container mx-auto px-4 max-w-6xl relative z-10">
             <motion.div 
@@ -669,10 +669,10 @@ export default function Home() {
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-violet-50 border border-violet-100 text-violet-600 font-semibold text-sm tracking-wide uppercase shadow-sm">
+              <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-semibold text-sm tracking-wide uppercase shadow-sm">
                 Déploiement Facile
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">Prêt à l'emploi en <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-emerald-500">3 étapes simples</span></h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">Prêt à l'emploi en <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500">3 étapes simples</span></h2>
               <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">Pas besoin de connaissances techniques. Notre processus d'installation est conçu pour être aussi rapide que possible.</p>
             </motion.div>
 
@@ -693,11 +693,11 @@ export default function Home() {
                     title: 'Créez votre compte', 
                     desc: 'Inscrivez votre établissement en 2 minutes. Aucune carte bancaire requise pour commencer l\'essai gratuit.',
                     styles: {
-                      blur: 'bg-violet-400/20',
-                      border: 'border-violet-50',
-                      text: 'text-violet-600',
-                      hoverBg: 'group-hover:bg-violet-600',
-                      hoverBorder: 'group-hover:border-violet-100'
+                      blur: 'bg-emerald-400/20',
+                      border: 'border-emerald-50',
+                      text: 'text-emerald-700',
+                      hoverBg: 'group-hover:bg-emerald-700',
+                      hoverBorder: 'group-hover:border-emerald-100'
                     }
                   },
                   { 
@@ -1004,8 +1004,8 @@ export default function Home() {
             <div className="bg-slate-900 rounded-[2.5rem] relative overflow-hidden shadow-2xl max-w-5xl mx-auto p-12 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 border border-white/10">
               
               {/* Effet lumineux de fond dans la carte CTA */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2"></div>
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2"></div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/15 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2"></div>
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/15 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2"></div>
 
               <motion.div
                 initial="hidden"
@@ -1015,7 +1015,7 @@ export default function Home() {
                 className="relative z-10 flex-1"
               >
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 font-sans">
-                  Prêt à <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-emerald-300">simplifier</span> la gestion ?
+                  Prêt à <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-teal-100 to-emerald-400">simplifier</span> la gestion ?
                 </h2>
                 <p className="text-slate-400 text-lg md:text-xl">
                   Rejoignez les établissements qui utilisent déjà Scogestia.
@@ -1043,7 +1043,7 @@ export default function Home() {
       </main>
 
       {/* Footer & Contact (#contact) */}
-      <footer id="contact" className="bg-[#09090b] text-slate-300 pt-16 pb-10 relative overflow-hidden border-t-2 border-violet-900/30">
+      <footer id="contact" className="bg-[#09090b] text-slate-300 pt-16 pb-10 relative overflow-hidden border-t border-emerald-950/60">
 
         {/* Filigrane Géant SCOGESTIA (iziSAAS style) */}
         <div className="absolute top-9 sm:top-10 md:top-6 lg:top-4 left-1/2 -translate-x-1/2 w-full flex justify-center pointer-events-none select-none z-0 overflow-hidden px-2 sm:px-4">

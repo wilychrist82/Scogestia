@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { sendSms } from '@/lib/sms'
 import { sendEmail } from '@/lib/emails/send'
+import { isOwnerEmail } from '@/lib/owner'
 
 export async function sendCommunication(formData: FormData) {
   const supabase = await createClient()
@@ -516,15 +517,15 @@ async function verifyAdminForSchool(
   targetSchoolId?: string
 ): Promise<{ schoolId: string | null; error?: string }> {
   const adminClient = createAdminClient()
+  const ADMIN_ROLES = ['admin', 'super_admin', 'comptable']
 
-  // 1. Détection Super Admin ou propriétaire du SaaS
-  const isOwnerEmail = Boolean(
-    user.email && (
-      user.email.toLowerCase().includes('wilfried') || 
-      user.email.toLowerCase().includes('juste6603') ||
-      user.email.toLowerCase().endsWith('@scogestia.com')
-    )
-  )
+  // 1. Détection Super Admin du SaaS : table super_admins OU liste blanche exacte (env)
+  const { data: superAdminRow } = await adminClient
+    .from('super_admins')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+  const isPlatformOwner = Boolean(superAdminRow) || isOwnerEmail(user.email)
 
   // 2. Récupérer les rôles de l'utilisateur avec adminClient (sans blocage RLS)
   const { data: userRoles, error: rolesError } = await adminClient
@@ -538,44 +539,22 @@ async function verifyAdminForSchool(
 
   // Si une école cible est explicitement spécifiée
   if (targetSchoolId) {
-    if (isOwnerEmail) {
+    if (isPlatformOwner) {
       return { schoolId: targetSchoolId }
     }
     const matchingRole = userRoles?.find(
-      r => r.school_id === targetSchoolId && ['admin', 'super_admin', 'comptable'].includes(r.role)
+      r => r.school_id === targetSchoolId && ADMIN_ROLES.includes(r.role)
     )
     if (matchingRole) {
-      return { schoolId: targetSchoolId }
-    }
-    const anyInSchool = userRoles?.find(r => r.school_id === targetSchoolId)
-    if (anyInSchool) {
       return { schoolId: targetSchoolId }
     }
     return { schoolId: null, error: "Permission refusée. Vous n'avez pas les droits d'administration sur cette école." }
   }
 
-  // Si pas d'école cible, trouver la première école d'administration
-  const adminRole = userRoles?.find(r => ['admin', 'super_admin', 'comptable'].includes(r.role))
+  // Si pas d'école cible, utiliser la première école où l'utilisateur est administrateur
+  const adminRole = userRoles?.find(r => ADMIN_ROLES.includes(r.role))
   if (adminRole?.school_id) {
     return { schoolId: adminRole.school_id }
-  }
-
-  if (isOwnerEmail) {
-    if (userRoles && userRoles.length > 0 && userRoles[0].school_id) {
-      return { schoolId: userRoles[0].school_id }
-    }
-    const { data: firstSchool } = await adminClient
-      .from('schools')
-      .select('id')
-      .limit(1)
-      .maybeSingle()
-    if (firstSchool?.id) {
-      return { schoolId: firstSchool.id }
-    }
-  }
-
-  if (userRoles && userRoles.length > 0 && userRoles[0].school_id) {
-    return { schoolId: userRoles[0].school_id }
   }
 
   return { schoolId: null, error: "Permission refusée. Seul un administrateur peut modifier l'historique." }

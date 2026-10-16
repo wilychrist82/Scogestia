@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { AlertTriangle } from 'lucide-react'
 import { UnauthorizedAccess } from '@/components/shared/UnauthorizedAccess'
 import { getSchoolSubscriptionStatus } from '@/lib/subscription'
+import { isOwnerEmail } from '@/lib/owner'
 
 export default async function AdminLayout({
   children,
@@ -46,17 +47,12 @@ export default async function AdminLayout({
 
   // Vérifier si Super Admin ou propriétaire du SaaS
   const { data: isSuperAdmin } = await supabase.rpc('is_super_admin')
-  const isOwnerEmail = Boolean(
-    user.email && (
-      user.email.toLowerCase().includes('wilfried') || 
-      user.email.toLowerCase().includes('juste6603') ||
-      user.email.toLowerCase().endsWith('@scogestia.com')
-    )
-  )
-  const isPrivileged = Boolean(isSuperAdmin || isOwnerEmail)
+  const isPrivileged = Boolean(isSuperAdmin || isOwnerEmail(user.email))
 
   const userFullName = roleData?.full_name || 'Admin User'
-  const userRoleLabel = isPrivileged ? 'Super Admin (Propriétaire)' : 'Administrateur'
+  const userRoleLabel = isPrivileged
+    ? 'Super Admin (Propriétaire)'
+    : roleData?.role === 'comptable' ? 'Comptable' : 'Administrateur'
   const userAvatar = user?.user_metadata?.avatar_url || null
 
   // Vérification de l'abonnement via l'utilitaire centralisé

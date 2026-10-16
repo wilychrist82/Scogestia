@@ -1,6 +1,7 @@
 import { AdminLayoutWrapper } from '@/components/layout/AdminLayoutWrapper'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { isOwnerEmail } from '@/lib/owner'
 
 export default async function SuperAdminLayout({
   children,
@@ -16,8 +17,9 @@ export default async function SuperAdminLayout({
 
   // Vérifier si l'utilisateur est un Super Admin (bypasses RLS issues)
   const { data: isSuperAdmin } = await supabase.rpc('is_super_admin')
+  const isOwner = isOwnerEmail(user.email)
 
-  if (!isSuperAdmin) {
+  if (!isSuperAdmin && !isOwner) {
     redirect('/connexion?error=unauthorized_super_admin')
   }
 

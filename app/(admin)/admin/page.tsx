@@ -289,7 +289,7 @@ export default async function AdminDashboard() {
       <AuraHeroBanner
         badge="TABLEAU DE BORD"
         title={schoolName}
-        subtitle={`Bienvenue, Wilfried ! Vue d'ensemble de votre établissement · ${todayLabel}`}
+        subtitle={`Bienvenue, ${roleData?.full_name?.split(' ')[0] || 'Wilfried'} ! Vue d'ensemble de votre établissement · ${todayLabel}`}
         stats={[
           { label: 'Élèves', value: studentCount || 0, color: 'text-white' },
           { label: 'Classes', value: classesCount || 0, color: 'text-white' },
@@ -329,111 +329,106 @@ export default async function AdminDashboard() {
         }
       />
 
-      {/* ── KPI BENTO GRID VIBRANT & COLORÉ (STYLE ORIGINAL PRESTIGE) ── */}
+      {/* ── KPI BENTO GRID REFINÉ & EXÉCUTIF (STYLE STRIPE/LINEAR) ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
         
         {/* Élèves — Émeraude */}
-        <div className="relative overflow-hidden rounded-[1.25rem] p-[1.5px] bg-gradient-to-br from-emerald-400/30 via-emerald-600/20 to-transparent group">
-          <div className="relative bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 rounded-[calc(1.25rem-1.5px)] p-5 h-full flex flex-col justify-between gap-3 overflow-hidden shadow-[0_8px_32px_rgba(5,150,105,0.25)]">
-            <div className="absolute -right-3 -bottom-3 opacity-[0.08] group-hover:opacity-[0.16] transition-opacity duration-500">
-              <Users size={72} className="text-white" />
+        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/80 p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_25px_rgba(5,150,105,0.12)] hover:border-emerald-300/80 transition-all duration-300 group flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 text-xs font-semibold tracking-tight">Total élèves</span>
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300">
+              <Users size={17} />
             </div>
-            <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-300">
-              <Users size={17} className="text-white" />
+          </div>
+          <div>
+            <p className="text-[28px] font-black text-slate-900 leading-none tabular-nums tracking-tight">
+              <AnimatedCounter value={studentCount || 0} />
+            </p>
+            <div className="mt-2.5 flex items-center gap-1.5">
+              <span className="inline-flex items-center text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                Inscrits cette année
+              </span>
             </div>
-            <div>
-              <p className="text-[28px] font-black text-white leading-none tabular-nums">
-                <AnimatedCounter value={studentCount || 0} />
-              </p>
-              <p className="text-emerald-200/90 text-[11px] font-semibold mt-1.5 leading-tight">Total élèves</p>
-            </div>
-            <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-emerald-200 px-2 py-0.5 rounded-full w-fit border border-white/10">
-              Inscrits cette année
-            </span>
           </div>
         </div>
 
         {/* Classes — Bleu */}
-        <div className="relative overflow-hidden rounded-[1.25rem] p-[1.5px] bg-gradient-to-br from-blue-400/30 via-blue-600/20 to-transparent group">
-          <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 rounded-[calc(1.25rem-1.5px)] p-5 h-full flex flex-col justify-between gap-3 overflow-hidden shadow-[0_8px_32px_rgba(37,99,235,0.25)]">
-            <div className="absolute -right-3 -bottom-3 opacity-[0.08] group-hover:opacity-[0.16] transition-opacity duration-500">
-              <Presentation size={72} className="text-white" />
+        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/80 p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_25px_rgba(37,99,235,0.12)] hover:border-blue-300/80 transition-all duration-300 group flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 text-xs font-semibold tracking-tight">Classes actives</span>
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+              <Presentation size={17} />
             </div>
-            <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-300">
-              <Presentation size={17} className="text-white" />
+          </div>
+          <div>
+            <p className="text-[28px] font-black text-slate-900 leading-none tabular-nums tracking-tight">
+              <AnimatedCounter value={classesCount || 0} />
+            </p>
+            <div className="mt-2.5 flex items-center gap-1.5">
+              <span className="inline-flex items-center text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md border border-blue-200/60">
+                {academicYear}
+              </span>
             </div>
-            <div>
-              <p className="text-[28px] font-black text-white leading-none tabular-nums">
-                <AnimatedCounter value={classesCount || 0} />
-              </p>
-              <p className="text-blue-200/90 text-[11px] font-semibold mt-1.5 leading-tight">Classes actives</p>
-            </div>
-            <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-blue-200 px-2 py-0.5 rounded-full w-fit border border-white/10">
-              {academicYear}
-            </span>
           </div>
         </div>
 
-        {/* Personnel — Violet */}
-        <div className="relative overflow-hidden rounded-[1.25rem] p-[1.5px] bg-gradient-to-br from-violet-400/30 via-violet-600/20 to-transparent group">
-          <div className="relative bg-gradient-to-br from-violet-600 via-violet-700 to-violet-900 rounded-[calc(1.25rem-1.5px)] p-5 h-full flex flex-col justify-between gap-3 overflow-hidden shadow-[0_8px_32px_rgba(109,40,217,0.25)]">
-            <div className="absolute -right-3 -bottom-3 opacity-[0.08] group-hover:opacity-[0.16] transition-opacity duration-500">
-              <UserCircle size={72} className="text-white" />
+        {/* Personnel — Indigo / Ardoise */}
+        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/80 p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_25px_rgba(99,102,241,0.12)] hover:border-indigo-300/80 transition-all duration-300 group flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 text-xs font-semibold tracking-tight">Membres du staff</span>
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+              <UserCircle size={17} />
             </div>
-            <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-300">
-              <UserCircle size={17} className="text-white" />
+          </div>
+          <div>
+            <p className="text-[28px] font-black text-slate-900 leading-none tabular-nums tracking-tight">
+              <AnimatedCounter value={staffCount || 0} />
+            </p>
+            <div className="mt-2.5 flex items-center gap-1.5">
+              <span className="inline-flex items-center text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md border border-indigo-200/60">
+                Personnel actif
+              </span>
             </div>
-            <div>
-              <p className="text-[28px] font-black text-white leading-none tabular-nums">
-                <AnimatedCounter value={staffCount || 0} />
-              </p>
-              <p className="text-violet-200/90 text-[11px] font-semibold mt-1.5 leading-tight">Membres du staff</p>
-            </div>
-            <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-violet-200 px-2 py-0.5 rounded-full w-fit border border-white/10">
-              Personnel actif
-            </span>
           </div>
         </div>
 
         {/* Recouvrement — Ambre */}
-        <div className="relative overflow-hidden rounded-[1.25rem] p-[1.5px] bg-gradient-to-br from-amber-400/30 via-amber-600/20 to-transparent group">
-          <div className="relative bg-gradient-to-br from-amber-500 via-amber-600 to-amber-800 rounded-[calc(1.25rem-1.5px)] p-5 h-full flex flex-col justify-between gap-3 overflow-hidden shadow-[0_8px_32px_rgba(217,119,6,0.25)]">
-            <div className="absolute -right-3 -bottom-3 opacity-[0.08] group-hover:opacity-[0.16] transition-opacity duration-500">
-              <Wallet size={72} className="text-white" />
+        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/80 p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_25px_rgba(217,119,6,0.12)] hover:border-amber-300/80 transition-all duration-300 group flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 text-xs font-semibold tracking-tight">Taux recouvrement</span>
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300">
+              <Wallet size={17} />
             </div>
-            <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-300">
-              <Wallet size={17} className="text-white" />
+          </div>
+          <div>
+            <p className="text-[28px] font-black text-slate-900 leading-none tabular-nums tracking-tight">
+              <AnimatedCounter value={recouvRate} suffix="%" />
+            </p>
+            <div className="mt-2.5 flex items-center gap-1.5 truncate max-w-full">
+              <span className="inline-flex items-center text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md border border-amber-200/60 truncate" title={totalAttendu > 0 ? `${nf.format(totalEncaisse)} / ${nf.format(totalAttendu)} F` : 'Aucune échéance'}>
+                {totalAttendu > 0 ? `${nf.format(totalEncaisse)} F` : 'Aucune échéance'}
+              </span>
             </div>
-            <div>
-              <p className="text-[28px] font-black text-white leading-none tabular-nums">
-                <AnimatedCounter value={recouvRate} suffix="%" />
-              </p>
-              <p className="text-amber-100/90 text-[11px] font-semibold mt-1.5 leading-tight">Taux recouvrement</p>
-            </div>
-            <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-amber-200 px-2 py-0.5 rounded-full w-fit border border-white/10 truncate max-w-full">
-              {totalAttendu > 0 ? `${nf.format(totalEncaisse)} / ${nf.format(totalAttendu)} F` : 'Aucune échéance'}
-            </span>
           </div>
         </div>
 
         {/* Absences — Rose */}
-        <div className="relative overflow-hidden rounded-[1.25rem] p-[1.5px] bg-gradient-to-br from-rose-400/30 via-rose-600/20 to-transparent group">
-          <div className="relative bg-gradient-to-br from-rose-500 via-rose-600 to-rose-900 rounded-[calc(1.25rem-1.5px)] p-5 h-full flex flex-col justify-between gap-3 overflow-hidden shadow-[0_8px_32px_rgba(225,29,72,0.25)]">
-            <div className="absolute -right-3 -bottom-3 opacity-[0.08] group-hover:opacity-[0.16] transition-opacity duration-500">
-              <CalendarOff size={72} className="text-white" />
+        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/80 p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_25px_rgba(225,29,72,0.12)] hover:border-rose-300/80 transition-all duration-300 group flex flex-col justify-between gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500 text-xs font-semibold tracking-tight">Absences aujourd&apos;hui</span>
+            <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center group-hover:scale-110 group-hover:bg-rose-600 group-hover:text-white transition-all duration-300">
+              <CalendarOff size={17} />
             </div>
-            <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-300">
-              <CalendarOff size={17} className="text-white" />
+          </div>
+          <div>
+            <p className="text-[28px] font-black text-slate-900 leading-none tabular-nums tracking-tight">
+              <AnimatedCounter value={aCount} />
+            </p>
+            <div className="mt-2.5 flex items-center gap-1.5">
+              <span className="inline-flex items-center text-[10px] font-bold bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md border border-rose-200/60">
+                {rCount > 0 ? `+${rCount} retard${rCount > 1 ? 's' : ''}` : 'Aucun retard'}
+              </span>
             </div>
-            <div>
-              <p className="text-[28px] font-black text-white leading-none tabular-nums">
-                <AnimatedCounter value={aCount} />
-              </p>
-              <p className="text-rose-200/90 text-[11px] font-semibold mt-1.5 leading-tight">Absences aujourd&apos;hui</p>
-            </div>
-            <span className="inline-flex items-center gap-1 text-[9.5px] font-bold bg-black/20 text-rose-200 px-2 py-0.5 rounded-full w-fit border border-white/10">
-              {rCount > 0 ? `+${rCount} retard${rCount > 1 ? 's' : ''}` : 'Aucun retard'}
-            </span>
           </div>
         </div>
       </div>

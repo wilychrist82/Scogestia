@@ -74,16 +74,19 @@
   --color-chart-purple: #8B5CF6;
   --color-chart-light-gray: #E5E7EB;
 
-  --font-sans: var(--font-work-sans), "Work Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-body-lg: var(--font-public-sans), "Public Sans", sans-serif;
-  --font-body-md: var(--font-public-sans), "Public Sans", sans-serif;
-  --font-headline-sm: var(--font-work-sans), "Work Sans", sans-serif;
-  --font-headline-lg: var(--font-work-sans), "Work Sans", sans-serif;
-  --font-display-lg: var(--font-work-sans), "Work Sans", sans-serif;
-  --font-headline-lg-mobile: var(--font-work-sans), "Work Sans", sans-serif;
-  --font-label-md: var(--font-public-sans), "Public Sans", sans-serif;
-  --font-headline-md: var(--font-work-sans), "Work Sans", sans-serif;
-  --font-label-sm: var(--font-public-sans), "Public Sans", sans-serif;
+  --font-sans: var(--font-plus-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: var(--font-instrument-serif), "Instrument Serif", Georgia, Cambria, serif;
+  --font-work-sans: var(--font-plus-jakarta), sans-serif;
+  --font-public-sans: var(--font-plus-jakarta), sans-serif;
+  --font-body-lg: var(--font-plus-jakarta), sans-serif;
+  --font-body-md: var(--font-plus-jakarta), sans-serif;
+  --font-headline-sm: var(--font-plus-jakarta), sans-serif;
+  --font-headline-lg: var(--font-plus-jakarta), sans-serif;
+  --font-display-lg: var(--font-plus-jakarta), sans-serif;
+  --font-headline-lg-mobile: var(--font-plus-jakarta), sans-serif;
+  --font-label-md: var(--font-plus-jakarta), sans-serif;
+  --font-headline-md: var(--font-plus-jakarta), sans-serif;
+  --font-label-sm: var(--font-plus-jakarta), sans-serif;
 
   --text-body-lg: 18px;
   --text-body-lg--line-height: 28px;
@@ -165,7 +168,7 @@ body {
   left: -10%;
   width: 70%;
   height: 70%;
-  background: radial-gradient(circle, rgba(109,40,217,0.4) 0%, rgba(0,0,0,0) 70%); /* Violet iziSAAS */
+  background: radial-gradient(circle, rgba(16,185,129,0.35) 0%, rgba(5,150,105,0.15) 40%, rgba(0,0,0,0) 70%); /* Émeraude Scogestia lumineux */
 }
 
 .bg-floating-waves::after {
@@ -173,7 +176,7 @@ body {
   right: -10%;
   width: 80%;
   height: 80%;
-  background: radial-gradient(circle, rgba(5,150,105,0.3) 0%, rgba(0,0,0,0) 70%); /* Emerald Scogestia */
+  background: radial-gradient(circle, rgba(14,165,233,0.25) 0%, rgba(6,95,70,0.2) 45%, rgba(0,0,0,0) 70%); /* Océan / Vert profond */
   animation-delay: -7.5s;
 }
 

@@ -1,13 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import { Work_Sans, Public_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
 import { CookieBanner } from "@/components/layout/CookieBanner";
 import { PwaRegister } from "@/components/providers/PwaRegister";
 import { Toaster } from "react-hot-toast";
 
-const workSans = Work_Sans({ subsets: ["latin"], variable: "--font-work-sans", display: "swap" });
-const publicSans = Public_Sans({ subsets: ["latin"], variable: "--font-public-sans", display: "swap" });
+const plusJakartaSans = Plus_Jakarta_Sans({ 
+  subsets: ["latin"], 
+  variable: "--font-plus-jakarta", 
+  display: "swap" 
+});
+
+const instrumentSerif = Instrument_Serif({ 
+  subsets: ["latin"], 
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-instrument-serif", 
+  display: "swap" 
+});
 
 export const viewport: Viewport = {
   themeColor: '#005841',
@@ -244,7 +255,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`h-full antialiased scroll-smooth ${workSans.variable} ${publicSans.variable}`}>
+    <html lang="fr" className={`h-full antialiased scroll-smooth ${plusJakartaSans.variable} ${instrumentSerif.variable}`}>
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
         <script

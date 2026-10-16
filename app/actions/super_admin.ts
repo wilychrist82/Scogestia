@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { isOwnerEmail } from '@/lib/owner'
 
 export type ActionState = {
   error?: string;
@@ -15,15 +16,9 @@ async function verifySuperAdmin(supabase: any) {
   if (!user) throw new Error('Non authentifié');
 
   const { data: isSuperAdmin } = await supabase.rpc('is_super_admin');
-  const isOwnerEmail = Boolean(
-    user.email && (
-      user.email.toLowerCase().includes('wilfried') || 
-      user.email.toLowerCase().includes('juste6603') ||
-      user.email.toLowerCase().endsWith('@scogestia.com')
-    )
-  );
+  const isOwner = isOwnerEmail(user.email);
 
-  if (!isSuperAdmin && !isOwnerEmail) {
+  if (!isSuperAdmin && !isOwner) {
     throw new Error('Accès refusé. Vous n\'êtes pas un Super Administrateur du SaaS.');
   }
   

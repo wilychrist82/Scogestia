@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Redis } from '@upstash/redis'
 import { redirect } from 'next/navigation'
+import { isOwnerEmail } from '@/lib/owner'
 import { 
   Activity, 
   Database, 
@@ -68,15 +69,9 @@ export default async function HealthDashboard() {
   }
 
   const { data: isSuperAdmin } = await supabase.rpc('is_super_admin')
-  const isOwnerEmail = Boolean(
-    user.email && (
-      user.email.toLowerCase().includes('wilfried') || 
-      user.email.toLowerCase().includes('juste6603') ||
-      user.email.toLowerCase().endsWith('@scogestia.com')
-    )
-  )
+  const isOwner = isOwnerEmail(user.email)
 
-  if (!isSuperAdmin && !isOwnerEmail) {
+  if (!isSuperAdmin && !isOwner) {
     redirect('/connexion?error=unauthorized_super_admin')
   }
 
