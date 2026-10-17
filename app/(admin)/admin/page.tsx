@@ -7,17 +7,15 @@ import {
   Users, Presentation, UserCircle, Wallet, CalendarOff,
   UserPlus, PlusSquare, CalendarPlus,
   Banknote, BookOpenCheck, AlertCircle, ArrowUpRight,
-  FileText, Plus, GraduationCap, AlertTriangle
+  FileText, Plus, GraduationCap, BarChart3, TrendingUp,
+  ClipboardCheck, PieChart as PieIcon, Zap, Clock
 } from 'lucide-react'
-import { 
-  PaymentChart, AttendancePieChart, ClassDistributionPieChart, ClassBarChart,
-  CircularProgress, PaymentData, AttendanceData, ClassDistributionData
-} from '@/components/dashboard/DashboardCharts'
+import type { PaymentData, AttendanceData, ClassDistributionData } from '@/components/dashboard/DashboardCharts'
+import { FluidRecoveryChart, GradientRing, CapsuleBarChart, InteractiveDonut } from '@/components/dashboard/PremiumCharts'
+import { DashboardHero, KpiCard, DashPanel, EmptyState } from '@/components/dashboard/DashboardUI'
 import { OnboardingWizard } from '@/components/admin/OnboardingWizard'
 import { ShortcutsButton } from '@/components/admin/ShortcutsButton'
 import { RaccourcisTrigger } from '@/components/admin/RaccourcisTrigger'
-import { AnimatedCounter } from '@/components/ui/AnimatedCounter'
-import { AuraHeroBanner } from '@/components/ui/AuraHeroBanner'
 
 export const dynamic = 'force-dynamic'
 
@@ -92,11 +90,14 @@ export default async function AdminDashboard() {
     }
   })
 
-  const paymentData: PaymentData[] = monthLabels.map((month, i) => ({
-    month,
+  // Ordre de l'année scolaire : Septembre → Août
+  const academicMonthOrder = [8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7]
+  const paymentData: PaymentData[] = academicMonthOrder.map(i => ({
+    month: monthLabels[i],
     attendu: monthlyAttenduMap[i] || 0,
     encaisse: monthlyEncaisse[i] || 0,
   }))
+  const currentMonthLabel = monthLabels[new Date().getMonth()]
 
   // Date locale (et non UTC) pour ne pas décaler la journée d'appel
   const now = new Date()
@@ -156,7 +157,7 @@ export default async function AdminDashboard() {
     return index !== -1 ? index : 999
   }
 
-  const colors = ['#059669', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4', '#e11d48']
+  const colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4', '#e11d48', '#14b8a6', '#6366f1', '#f97316', '#84cc16', '#a855f7']
   const sortedClassEntries = Object.entries(classCounts).sort(([nameA], [nameB]) => {
     const orderA = getClassOrder(nameA)
     const orderB = getClassOrder(nameB)
@@ -278,492 +279,392 @@ export default async function AdminDashboard() {
 
   const schoolName = schoolData?.name || 'Mon École'
   const todayLabel = format(new Date(), "EEEE d MMMM yyyy", { locale: fr })
+  const firstName = roleData?.full_name?.split(' ')[0] || 'Wilfried'
+  const resteARecouvrer = Math.max(0, totalAttendu - totalEncaisse)
+  const presenceRate = totalAtt > 0 ? Math.round((pCount / totalAtt) * 100) : 0
+  const absenceRate = totalAtt > 0 ? Math.round((aCount / totalAtt) * 100) : 0
+  const overdueTotal = overdueDues.reduce((acc, r) => acc + r.amount, 0)
+  const nowMs = Date.now()
+
+  const quickActions = [
+    { href: '/admin/eleves/nouveau', label: 'Ajouter un élève', hint: 'Inscription', icon: UserPlus, grad: 'from-emerald-400 to-emerald-600 shadow-emerald-500/30', id: 'add-student' },
+    { href: '/admin/classes', label: 'Créer une classe', hint: 'Structure', icon: PlusSquare, grad: 'from-sky-400 to-blue-600 shadow-blue-500/30', id: 'create-class' },
+    { href: '/admin/finance/echeances', label: 'Générer échéance', hint: 'Finance', icon: CalendarPlus, grad: 'from-amber-300 to-orange-500 shadow-amber-500/30', id: 'generate-due' },
+    { href: '/admin/finance/paiements', label: 'Encaisser paiement', hint: 'Caisse', icon: Banknote, grad: 'from-violet-400 to-purple-600 shadow-violet-500/30', id: 'collect-payment' },
+    { href: '/admin/academique/devoirs', label: 'Publier un devoir', hint: 'Pédagogie', icon: BookOpenCheck, grad: 'from-rose-400 to-pink-600 shadow-rose-500/30', id: 'publish-homework' },
+  ]
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto pb-10 px-1">
+    <div className="mx-auto max-w-[1400px] space-y-6 px-1 pb-10">
 
       {/* ── ONBOARDING WIZARD ── */}
       <OnboardingWizard classesCount={classesCount || 0} staffCount={staffCount || 0} studentCount={studentCount || 0} />
 
-      {/* ── HERO BANNER BLEU CROISÉ ÉLÉGANT & ACTIONS RAPIDES ── */}
-      <AuraHeroBanner
-        badge="TABLEAU DE BORD"
-        title={schoolName}
-        subtitle={`Bienvenue, ${roleData?.full_name?.split(' ')[0] || 'Wilfried'} ! Vue d'ensemble de votre établissement · ${todayLabel}`}
+      {/* ── HERO AURORA ── */}
+      <DashboardHero
+        schoolName={schoolName}
+        firstName={firstName}
+        dateLabel={todayLabel}
+        academicYear={academicYear}
+        recouvRate={recouvRate}
         stats={[
-          { label: 'Élèves', value: studentCount || 0, color: 'text-white' },
-          { label: 'Classes', value: classesCount || 0, color: 'text-white' },
-          { label: 'Recouvrement', value: `${recouvRate}%`, color: 'text-emerald-300' },
-          { label: 'Absents/jour', value: aCount, color: 'text-rose-300' },
-          { 
-            label: 'Suivi notes', 
-            value: alertStudentsCount > 0 ? `${alertStudentsCount} alerte${alertStudentsCount > 1 ? 's' : ''}` : '0 alerte', 
-            color: alertStudentsCount > 0 ? 'text-amber-300' : 'text-cyan-300' 
-          },
+          { label: 'Présents aujourd’hui', value: totalAtt > 0 ? `${presenceRate}%` : '—', tone: 'emerald' },
+          { label: 'Absents / jour', value: aCount, tone: aCount > 0 ? 'rose' : 'white' },
+          { label: 'Alertes notes', value: alertStudentsCount, tone: alertStudentsCount > 0 ? 'amber' : 'cyan' },
+          { label: 'Impayés en retard', value: overdueDues.length, tone: overdueDues.length > 0 ? 'rose' : 'emerald' },
         ]}
         actions={
-          <div className="flex items-center gap-2 flex-wrap">
-            <Link
-              href="/admin/finance/rapports"
-              className="inline-flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 font-bold px-4 py-2.5 rounded-xl shadow-md transition-all duration-200 text-xs hover:scale-105 active:scale-95"
-            >
-              <FileText size={15} className="text-slate-700" />
-              <span>Rapport</span>
-            </Link>
+          <>
             <Link
               href="/admin/eleves/nouveau"
-              className="inline-flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-200 text-xs hover:scale-105 active:scale-95"
+              id="hero-new-student"
+              className="dash-sheen group inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[13px] font-bold text-slate-900 shadow-[0_10px_30px_-8px_rgba(255,255,255,0.45)] transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.97]"
             >
-              <Plus size={15} />
-              <span>Nouvel élève</span>
+              <Plus size={15} strokeWidth={2.6} />
+              Nouvel élève
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-900 text-white transition-transform duration-300 group-hover:translate-x-0.5">
+                <ArrowUpRight size={11} />
+              </span>
+            </Link>
+            <Link
+              href="/admin/finance/rapports"
+              id="hero-report"
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] px-4 py-2.5 text-[13px] font-semibold text-white backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/[0.16] active:scale-[0.97]"
+            >
+              <FileText size={15} className="text-sky-300" />
+              Rapport
             </Link>
             <Link
               href="/admin/academique/surveillance"
-              className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white font-bold px-3.5 py-2.5 rounded-xl border border-white/20 backdrop-blur-md transition-all duration-200 text-xs hover:scale-105 active:scale-95 shadow-sm"
+              id="hero-grades-watch"
               title="Surveillance des moyennes inférieures à 10/20"
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.08] px-4 py-2.5 text-[13px] font-semibold text-white backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/[0.16] active:scale-[0.97]"
             >
-              <GraduationCap size={15} className="text-cyan-300" />
-              <span>Suivi des notes</span>
+              <GraduationCap size={15} className="text-emerald-300" />
+              Suivi des notes
             </Link>
-          </div>
+          </>
         }
       />
 
-      {/* ── KPI BENTO GRID REFINÉ & EXÉCUTIF (STYLE STRIPE/LINEAR) ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-        
-        {/* Élèves — Émeraude */}
-        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/80 p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_25px_rgba(5,150,105,0.12)] hover:border-emerald-300/80 transition-all duration-300 group flex flex-col justify-between gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500 text-xs font-semibold tracking-tight">Total élèves</span>
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300">
-              <Users size={17} />
-            </div>
-          </div>
-          <div>
-            <p className="text-[28px] font-black text-slate-900 leading-none tabular-nums tracking-tight">
-              <AnimatedCounter value={studentCount || 0} />
-            </p>
-            <div className="mt-2.5 flex items-center gap-1.5">
-              <span className="inline-flex items-center text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200/60">
-                Inscrits cette année
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Classes — Bleu */}
-        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/80 p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_25px_rgba(37,99,235,0.12)] hover:border-blue-300/80 transition-all duration-300 group flex flex-col justify-between gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500 text-xs font-semibold tracking-tight">Classes actives</span>
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
-              <Presentation size={17} />
-            </div>
-          </div>
-          <div>
-            <p className="text-[28px] font-black text-slate-900 leading-none tabular-nums tracking-tight">
-              <AnimatedCounter value={classesCount || 0} />
-            </p>
-            <div className="mt-2.5 flex items-center gap-1.5">
-              <span className="inline-flex items-center text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md border border-blue-200/60">
-                {academicYear}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Personnel — Indigo / Ardoise */}
-        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/80 p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_25px_rgba(99,102,241,0.12)] hover:border-indigo-300/80 transition-all duration-300 group flex flex-col justify-between gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500 text-xs font-semibold tracking-tight">Membres du staff</span>
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
-              <UserCircle size={17} />
-            </div>
-          </div>
-          <div>
-            <p className="text-[28px] font-black text-slate-900 leading-none tabular-nums tracking-tight">
-              <AnimatedCounter value={staffCount || 0} />
-            </p>
-            <div className="mt-2.5 flex items-center gap-1.5">
-              <span className="inline-flex items-center text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md border border-indigo-200/60">
-                Personnel actif
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Recouvrement — Ambre */}
-        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/80 p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_25px_rgba(217,119,6,0.12)] hover:border-amber-300/80 transition-all duration-300 group flex flex-col justify-between gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500 text-xs font-semibold tracking-tight">Taux recouvrement</span>
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300">
-              <Wallet size={17} />
-            </div>
-          </div>
-          <div>
-            <p className="text-[28px] font-black text-slate-900 leading-none tabular-nums tracking-tight">
-              <AnimatedCounter value={recouvRate} suffix="%" />
-            </p>
-            <div className="mt-2.5 flex items-center gap-1.5 truncate max-w-full">
-              <span className="inline-flex items-center text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md border border-amber-200/60 truncate" title={totalAttendu > 0 ? `${nf.format(totalEncaisse)} / ${nf.format(totalAttendu)} F` : 'Aucune échéance'}>
-                {totalAttendu > 0 ? `${nf.format(totalEncaisse)} F` : 'Aucune échéance'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Absences — Rose */}
-        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/80 p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_25px_rgba(225,29,72,0.12)] hover:border-rose-300/80 transition-all duration-300 group flex flex-col justify-between gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500 text-xs font-semibold tracking-tight">Absences aujourd&apos;hui</span>
-            <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center justify-center group-hover:scale-110 group-hover:bg-rose-600 group-hover:text-white transition-all duration-300">
-              <CalendarOff size={17} />
-            </div>
-          </div>
-          <div>
-            <p className="text-[28px] font-black text-slate-900 leading-none tabular-nums tracking-tight">
-              <AnimatedCounter value={aCount} />
-            </p>
-            <div className="mt-2.5 flex items-center gap-1.5">
-              <span className="inline-flex items-center text-[10px] font-bold bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md border border-rose-200/60">
-                {rCount > 0 ? `+${rCount} retard${rCount > 1 ? 's' : ''}` : 'Aucun retard'}
-              </span>
-            </div>
-          </div>
-        </div>
+      {/* ── KPI ── */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <KpiCard delay={1} href="/admin/eleves" label="Total élèves" value={studentCount || 0} icon={Users} tone="emerald" badge="Inscrits cette année" />
+        <KpiCard delay={2} href="/admin/classes" label="Classes actives" value={classesCount || 0} icon={Presentation} tone="blue" badge={academicYear} />
+        <KpiCard delay={3} href="/admin/personnel" label="Membres du staff" value={staffCount || 0} icon={UserCircle} tone="indigo" badge="Personnel actif" />
+        <KpiCard
+          delay={4}
+          href="/admin/finance/paiements"
+          label="Taux recouvrement"
+          value={recouvRate}
+          suffix="%"
+          icon={Wallet}
+          tone="amber"
+          badge={totalAttendu > 0 ? `${nf.format(totalEncaisse)} F encaissés` : 'Aucune échéance'}
+          progress={recouvRate}
+        />
+        <KpiCard
+          delay={5}
+          href="/admin/academique/presences"
+          label="Absences aujourd’hui"
+          value={aCount}
+          icon={CalendarOff}
+          tone="rose"
+          badge={rCount > 0 ? `+${rCount} retard${rCount > 1 ? 's' : ''}` : 'Aucun retard'}
+          progress={absenceRate}
+        />
       </div>
 
       {/* ── SECTION PRINCIPALE 2 COLONNES (STRUCTURE EXACTE DEMANDÉE PAR WILFRIED) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+
         {/* ── COLONNE GAUCHE ── */}
-        <div className="space-y-6 flex flex-col">
+        <div className="flex flex-col gap-6">
 
-          {/* 1. Effectifs des classes (Bar Chart ordonné de la Maternelle à la Terminale) */}
-          <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
-            <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-base tracking-tight">Effectif des classes</h3>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">Répartition chronologique des élèves par niveau (Maternelle → Terminale)</p>
-                </div>
-              </div>
-              <div className="flex-1 p-6">
-                <ClassBarChart data={classDistributionData} />
-              </div>
-            </div>
-          </div>
+          {/* 1. Effectif des classes */}
+          <DashPanel
+            delay={6}
+            icon={BarChart3}
+            tone="violet"
+            title="Effectif des classes"
+            subtitle="Répartition par niveau · Maternelle → Terminale"
+            action={{ href: '/admin/classes', label: 'Classes' }}
+          >
+            <CapsuleBarChart data={classDistributionData} />
+          </DashPanel>
 
-          {/* 2. Présences du jour (Camembert / Donut) */}
-          <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
-            <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-              <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-                <h3 className="font-bold text-slate-900 tracking-tight">Présences du jour</h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5 capitalize">{format(new Date(), 'EEEE d MMMM', { locale: fr })}</p>
+          {/* 2. Présences du jour */}
+          <DashPanel
+            delay={7}
+            icon={ClipboardCheck}
+            tone="emerald"
+            title="Présences du jour"
+            subtitle={<span className="capitalize">{format(new Date(), 'EEEE d MMMM', { locale: fr })}</span>}
+            action={{ href: '/admin/academique/presences', label: 'Registre' }}
+          >
+            <div className="flex flex-col items-center gap-6 sm:flex-row">
+              <div className="shrink-0">
+                <InteractiveDonut data={attendanceData} centerLabel="élèves relevés" emptyLabel="Pas d’appel" size={190} />
               </div>
-              <div className="p-5 flex flex-col sm:flex-row items-center gap-5">
-                <div className="w-full sm:w-1/2 shrink-0">
-                  <AttendancePieChart data={attendanceData} />
-                </div>
-                <div className="w-full sm:w-1/2 space-y-3">
-                  {attendanceData.map((d, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
-                        <span className="text-sm font-medium text-slate-700">{d.name}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-bold text-slate-900 tabular-nums">{d.value}</span>
-                        <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full font-semibold">
-                          {totalAtt > 0 ? Math.round((d.value/totalAtt)*100) : 0}%
+              <div className="w-full flex-1 space-y-4">
+                {attendanceData.map((d, i) => {
+                  const pct = totalAtt > 0 ? Math.round((d.value / totalAtt) * 100) : 0
+                  return (
+                    <div key={i}>
+                      <div className="mb-1.5 flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2 font-semibold text-slate-700">
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.color, boxShadow: `0 0 0 3px ${d.color}22` }} />
+                          {d.name}
+                        </span>
+                        <span className="flex items-baseline gap-1.5">
+                          <span className="font-black text-slate-900 tabular-nums">{d.value}</span>
+                          <span className="text-[11px] font-semibold text-slate-400 tabular-nums">{pct}%</span>
                         </span>
                       </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div className="dash-bar-grow h-full rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${d.color}99, ${d.color})` }} />
+                      </div>
                     </div>
-                  ))}
-                  <div className="border-t border-slate-100 pt-3 flex justify-between text-sm">
-                    <span className="text-slate-500 font-medium">Total relevé</span>
-                    <span className="font-bold text-slate-900 tabular-nums">{totalAtt}</span>
-                  </div>
+                  )
+                })}
+                <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5 text-sm ring-1 ring-inset ring-slate-100">
+                  <span className="font-medium text-slate-500">Total relevé</span>
+                  <span className="font-black text-slate-900 tabular-nums">{totalAtt}</span>
                 </div>
               </div>
             </div>
-          </div>
+          </DashPanel>
 
-          {/* 3. Activités récentes (Derniers encaissements) */}
-          <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
-            <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-                <div>
-                  <h3 className="font-bold text-slate-900 tracking-tight">Activités récentes</h3>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">Derniers encaissements enregistrés</p>
-                </div>
-                <Link href="/admin/finance/paiements" className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors">
-                  Voir tout <ArrowUpRight size={12} />
-                </Link>
-              </div>
-              <div className="p-5 flex flex-col gap-2.5">
-                {recentPayments.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mb-3 border border-slate-200">
-                      <Wallet className="w-5 h-5 text-slate-400" />
-                    </div>
-                    <p className="font-bold text-slate-800 text-sm">Aucune activité récente</p>
-                    <p className="text-xs text-slate-400 mt-1">Les encaissements enregistrés apparaîtront ici.</p>
-                  </div>
-                ) : recentPayments.map((p, i) => {
-                  const studentName = (p.student as any)
-                    ? `${(p.student as any).last_name || ''} ${(p.student as any).first_name?.charAt(0) || ''}.`.trim()
-                    : 'Élève'
+          {/* 3. Activités récentes */}
+          <DashPanel
+            delay={8}
+            icon={Zap}
+            tone="cyan"
+            title="Activités récentes"
+            subtitle="Derniers encaissements enregistrés"
+            action={{ href: '/admin/finance/paiements', label: 'Voir tout' }}
+          >
+            {recentPayments.length === 0 ? (
+              <EmptyState icon={Wallet} tone="cyan" title="Aucune activité récente" text="Les encaissements enregistrés apparaîtront ici en temps réel." />
+            ) : (
+              <ol className="relative space-y-1 before:absolute before:bottom-4 before:left-[19px] before:top-4 before:w-px before:bg-gradient-to-b before:from-emerald-200 before:via-slate-200 before:to-transparent">
+                {recentPayments.map((p, i) => {
+                  const st = p.student as any
+                  const studentName = st ? `${st.last_name || ''} ${st.first_name?.charAt(0) || ''}.`.trim() : 'Élève'
                   return (
-                    <div key={i} className="flex gap-3 items-center p-2.5 rounded-xl hover:bg-slate-50 transition-colors">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 border border-emerald-100">
+                    <li key={i} className="group relative flex items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-slate-50">
+                      <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-md shadow-emerald-500/25 ring-4 ring-white">
                         <Banknote size={16} />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 truncate">{studentName}</p>
-                        <p className="text-xs text-emerald-700 font-bold">{nf.format(p.amount)} FCFA</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-slate-900">{studentName}</p>
+                        <p className="text-[11px] text-slate-500">{p.paid_at ? format(new Date(p.paid_at), 'd MMM yyyy', { locale: fr }) : '—'}</p>
                       </div>
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                      <span className="rounded-lg bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-700 tabular-nums ring-1 ring-inset ring-emerald-600/15">
+                        +{nf.format(p.amount)} F
+                      </span>
+                    </li>
+                  )
+                })}
+              </ol>
+            )}
+          </DashPanel>
+
+          {/* 4. Surveillance Pédagogique */}
+          <DashPanel
+            delay={9}
+            icon={GraduationCap}
+            tone="amber"
+            live="amber"
+            title="Surveillance pédagogique"
+            subtitle="Élèves en difficulté (moyenne < 10/20)"
+            action={{ href: '/admin/academique/surveillance', label: 'Module complet' }}
+          >
+            {lowAverageStudents.length > 0 ? (
+              <div className="space-y-1.5">
+                {lowAverageStudents.map((item, i) => {
+                  const st = item.student as any
+                  return (
+                    <Link key={i} href={`/admin/eleves/${item.id}`} className="group flex items-center gap-3 rounded-2xl p-2.5 transition-colors hover:bg-amber-50/60">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-xs font-black text-amber-700 ring-1 ring-inset ring-amber-600/15">
+                        {st?.last_name?.charAt(0)}{st?.first_name?.charAt(0)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-slate-900">{st?.last_name} {st?.first_name}</p>
+                        <div className="mt-1 flex items-center gap-2">
+                          <div className="h-1.5 w-full max-w-[140px] overflow-hidden rounded-full bg-slate-100">
+                            <div className="dash-bar-grow h-full rounded-full bg-gradient-to-r from-rose-500 to-amber-400" style={{ width: `${(item.average / 20) * 100}%` }} />
+                          </div>
+                          <span className="truncate text-[11px] text-slate-500">{(st?.classes as any)?.name || 'Classe'}</span>
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <span className="inline-flex rounded-lg bg-rose-50 px-2 py-0.5 text-xs font-black text-rose-600 tabular-nums ring-1 ring-inset ring-rose-600/15">{item.average}/20</span>
+                        <p className="mt-0.5 text-[10px] text-slate-400">{item.gradeCount} note{item.gradeCount > 1 ? 's' : ''}</p>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            ) : (
+              <EmptyState icon={BookOpenCheck} tone="emerald" title="Excellence pédagogique 🎓" text="Aucun élève sous la moyenne recensé pour le moment." />
+            )}
+          </DashPanel>
+        </div>
+
+        {/* ── COLONNE DROITE ── */}
+        <div className="flex flex-col gap-6">
+
+          {/* 1. Recouvrement des paiements */}
+          <DashPanel
+            delay={6}
+            icon={TrendingUp}
+            tone="emerald"
+            title="Recouvrement des paiements"
+            subtitle={`Encaissé vs attendu · Année scolaire ${academicYear}`}
+            bodyClassName="p-0"
+          >
+            <div className="px-5 pb-2 pt-4 sm:px-6">
+              <FluidRecoveryChart data={paymentData} currentMonth={currentMonthLabel} />
+            </div>
+            <div className="mt-2 grid grid-cols-1 items-center gap-4 border-t border-slate-100 bg-gradient-to-b from-slate-50/60 to-white px-5 py-5 sm:grid-cols-[1fr_auto] sm:px-6">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-2xl bg-white p-3 ring-1 ring-inset ring-slate-100">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Attendu</p>
+                  <p className="mt-1 text-base font-black tracking-tight text-slate-900 tabular-nums sm:text-lg">{nf.format(totalAttendu)}<span className="ml-1 text-[10px] font-bold text-slate-400">F</span></p>
+                </div>
+                <div className="rounded-2xl bg-white p-3 ring-1 ring-inset ring-emerald-100">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-600">Encaissé</p>
+                  <p className="mt-1 text-base font-black tracking-tight text-emerald-600 tabular-nums sm:text-lg">{nf.format(totalEncaisse)}<span className="ml-1 text-[10px] font-bold text-emerald-400">F</span></p>
+                </div>
+                <div className="rounded-2xl bg-white p-3 ring-1 ring-inset ring-rose-100">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-rose-500">Reste</p>
+                  <p className="mt-1 text-base font-black tracking-tight text-rose-600 tabular-nums sm:text-lg">{nf.format(resteARecouvrer)}<span className="ml-1 text-[10px] font-bold text-rose-300">F</span></p>
+                </div>
+              </div>
+              <div className="flex items-center justify-center gap-3 sm:justify-end">
+                <GradientRing percentage={recouvRate} label="recouvré" />
+              </div>
+            </div>
+          </DashPanel>
+
+          {/* 2. Répartition par classe */}
+          <DashPanel
+            delay={7}
+            icon={PieIcon}
+            tone="indigo"
+            title="Répartition par classe"
+            subtitle={`${studentCount || 0} élèves au total · survolez le graphique`}
+          >
+            <div className="flex flex-col items-center gap-6 sm:flex-row">
+              <div className="shrink-0">
+                <InteractiveDonut data={classDistributionData} centerLabel="élèves" emptyLabel="Aucune classe" size={200} />
+              </div>
+              <div className="scrollbar-light max-h-[220px] w-full flex-1 space-y-2.5 overflow-y-auto pr-2">
+                {classDistributionData.length === 0 && (
+                  <p className="py-4 text-center text-xs text-slate-400">Aucune classe renseignée.</p>
+                )}
+                {classDistributionData.map((d, i) => {
+                  const pct = (studentCount || 0) > 0 ? Math.round((d.value / (studentCount || 1)) * 100) : 0
+                  return (
+                    <div key={i} className="group">
+                      <div className="mb-1 flex items-center justify-between text-[13px]">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: d.color }} />
+                          <span className="truncate font-semibold text-slate-700" title={d.name}>{d.name}</span>
+                        </span>
+                        <span className="flex items-baseline gap-1.5">
+                          <span className="font-black text-slate-900 tabular-nums">{d.value}</span>
+                          <span className="w-8 text-right text-[10px] font-semibold text-slate-400 tabular-nums">{pct}%</span>
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div className="dash-bar-grow h-full rounded-full" style={{ width: `${Math.max(pct, 2)}%`, backgroundColor: d.color }} />
+                      </div>
                     </div>
                   )
                 })}
               </div>
             </div>
-          </div>
+          </DashPanel>
 
-          {/* 4. Surveillance Pédagogique (Élèves en difficulté < 10/20) */}
-          <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
-            <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-base tracking-tight flex items-center gap-2">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"></span>
-                    </span>
-                    Surveillance Pédagogique
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">Élèves en difficulté (Moyenne &lt; 10/20)</p>
-                </div>
-                <Link href="/admin/academique/surveillance" className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 hover:text-amber-800 uppercase tracking-widest bg-amber-50 px-3 py-1.5 rounded-full hover:bg-amber-100 transition-colors">
-                  Module complet <ArrowUpRight size={12} />
-                </Link>
-              </div>
-              <div className="flex-1 p-4 flex flex-col gap-2">
-                {lowAverageStudents.length > 0 ? lowAverageStudents.map((item, i) => (
-                  <Link key={i} href={`/admin/eleves/${item.id}`} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors group/item">
-                    <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm flex-shrink-0 border border-amber-100 group-hover/item:bg-amber-100">
-                      <GraduationCap size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 truncate">
-                        {(item.student as any)?.last_name} {(item.student as any)?.first_name}
-                      </p>
-                      <p className="text-[11px] text-slate-500">{((item.student as any)?.classes as any)?.name || 'Classe'}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md font-black text-xs bg-rose-50 text-rose-600 border border-rose-200">
-                        {item.average} / 20
-                      </span>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{item.gradeCount} note{item.gradeCount > 1 ? 's' : ''}</p>
-                    </div>
-                  </Link>
-                )) : (
-                  <div className="flex-1 flex flex-col items-center justify-center py-8 text-center">
-                    <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-3 border border-emerald-100">
-                      <BookOpenCheck className="w-6 h-6 text-emerald-500" />
-                    </div>
-                    <p className="font-bold text-slate-900 text-sm">Excellence pédagogique 🎓</p>
-                    <p className="text-xs text-slate-500 mt-1">Aucun élève sous la moyenne recensé.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* ── COLONNE DROITE ── */}
-        <div className="space-y-6 flex flex-col">
-
-          {/* 1. Recouvrement des paiements (Courbe Encaissé vs Attendu) */}
-          <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
-            <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-base tracking-tight">Recouvrement des paiements</h3>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">Mensuel — Année scolaire {academicYear}</p>
-                </div>
-                <div className="flex items-center gap-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shadow-[0_0_8px_rgba(16,185,129,0.4)]"/>Encaissé</span>
-                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shadow-[0_0_8px_rgba(244,63,94,0.4)]"/>Attendu</span>
-                </div>
-              </div>
-              <div className="flex-1 p-6">
-                <PaymentChart data={paymentData} />
-              </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t border-slate-100 px-6 py-4 gap-4 bg-slate-50/30">
-                <div className="flex gap-10">
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Total attendu</p>
-                    <p className="text-xl font-black text-slate-800">{nf.format(totalAttendu)} FCFA</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest mb-1">Total encaissé</p>
-                    <p className="text-xl font-black text-emerald-600">{nf.format(totalEncaisse)} FCFA</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-2xl border border-slate-100 shadow-xs">
-                  <CircularProgress percentage={recouvRate} />
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-tight">Taux de<br/>recouvrement</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 2. Répartition par classe (Diagramme en anneau / rond) */}
-          <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
-            <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-              <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-                <h3 className="font-bold text-slate-900 tracking-tight">Répartition par classe</h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">{studentCount || 0} élèves au total</p>
-              </div>
-              <div className="p-5 flex flex-col sm:flex-row items-center gap-5">
-                <div className="w-full sm:w-1/2 shrink-0">
-                  <ClassDistributionPieChart data={classDistributionData} />
-                </div>
-                <div className="w-full sm:w-1/2 space-y-2.5 max-h-[200px] overflow-y-auto pr-1">
-                  {classDistributionData.length === 0 && (
-                    <p className="text-xs text-slate-400 py-4 text-center">Aucune classe renseignée.</p>
-                  )}
-                  {classDistributionData.map((d, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
-                        <span className="text-sm text-slate-700 truncate max-w-[120px]" title={d.name}>{d.name}</span>
+          {/* 3. Impayés urgents */}
+          <DashPanel
+            delay={8}
+            icon={AlertCircle}
+            tone="rose"
+            live="rose"
+            title="Impayés urgents"
+            subtitle={overdueDues.length > 0 ? `${nf.format(overdueTotal)} FCFA à relancer` : 'Échéances dépassées à relancer'}
+            action={{ href: '/admin/finance/impayes', label: 'Voir tout' }}
+          >
+            {overdueDues.length > 0 ? (
+              <div className="space-y-1.5">
+                {overdueDues.map((row, i) => {
+                  const st = row.student as any
+                  const days = Math.max(0, Math.floor((nowMs - new Date(row.due_date).getTime()) / 86_400_000))
+                  return (
+                    <div key={i} className="group flex items-center gap-3 rounded-2xl p-2.5 transition-colors hover:bg-rose-50/50">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-50 to-rose-100 text-xs font-black text-rose-600 ring-1 ring-inset ring-rose-600/15">
+                        {st?.last_name?.charAt(0)}{st?.first_name?.charAt(0)}
                       </div>
-                      <span className="text-sm font-bold text-slate-900 tabular-nums">{d.value}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-slate-900">{st?.last_name} {st?.first_name?.charAt(0)}.</p>
+                        <p className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                          <span>{(st?.classes as any)?.name || 'Classe'}</span>
+                          <span className="h-0.5 w-0.5 rounded-full bg-slate-300" />
+                          <span className="inline-flex items-center gap-1 font-semibold text-rose-500"><Clock size={10} />{days} j de retard</span>
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-sm font-black text-rose-600 tabular-nums">{nf.format(row.amount)} F</p>
+                        <p className="text-[10px] text-slate-400">{new Date(row.due_date).toLocaleDateString('fr-FR')}</p>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  )
+                })}
               </div>
-            </div>
-          </div>
-
-          {/* 3. Impayés urgents (Échéances dépassées) */}
-          <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group">
-            <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-base tracking-tight flex items-center gap-2">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span>
-                    </span>
-                    Impayés urgents
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">Échéances dépassées à relancer</p>
-                </div>
-                <Link href="/admin/finance/impayes" className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors">
-                  Voir tout <ArrowUpRight size={12} />
-                </Link>
-              </div>
-              <div className="flex-1 p-4 flex flex-col gap-2">
-                {(overdueDues || []).length > 0 ? overdueDues?.map((row, i) => (
-                  <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors">
-                    <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-sm flex-shrink-0 border border-rose-100">
-                      {(row.student as any)?.last_name?.charAt(0)}{(row.student as any)?.first_name?.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 truncate">
-                        {(row.student as any)?.last_name} {(row.student as any)?.first_name?.charAt(0)}.
-                      </p>
-                      <p className="text-[11px] text-slate-500">{((row.student as any)?.classes as any)?.name || 'Classe'}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-black text-rose-600 tabular-nums">{nf.format(row.amount)} FCFA</p>
-                      <p className="text-[10px] text-slate-400">{new Date(row.due_date).toLocaleDateString('fr-FR')}</p>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="flex-1 flex flex-col items-center justify-center py-8 text-center">
-                    <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-3 border border-emerald-100">
-                      <AlertCircle className="w-6 h-6 text-emerald-500" />
-                    </div>
-                    <p className="font-bold text-slate-900 text-sm">Aucun retard 🎉</p>
-                    <p className="text-xs text-slate-500 mt-1">Tous les paiements sont à jour.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* ── ACTIONS RAPIDES COLORÉES & INTERACTIVES (INDIVIDUAL COLORS ON HOVER) ── */}
-      <div className="p-1.5 rounded-[1.75rem] bg-slate-50/70 border border-slate-200/70 shadow-sm flex flex-col group mt-5">
-        <div className="flex-1 rounded-[calc(1.75rem-6px)] overflow-hidden border border-slate-100 bg-white shadow-xs flex flex-col transition-all duration-300 group-hover:shadow-md">
-          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-            <h3 className="font-bold text-slate-900 tracking-tight">Actions rapides</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Raccourcis colorés vers les fonctions clés</p>
-          </div>
-          <div className="p-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            
-            {/* Ajouter un élève — Vert Émeraude */}
-            <Link href="/admin/eleves/nouveau" className="group flex flex-col items-center gap-2 p-3.5 rounded-xl hover:bg-emerald-50 hover:border-emerald-200 border border-transparent transition-all duration-200">
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white group-hover:scale-110 transition-all duration-200 shadow-xs">
-                <UserPlus size={20} />
-              </div>
-              <span className="text-xs font-bold text-slate-800 text-center leading-tight">Ajouter<br/>un élève</span>
-            </Link>
-
-            {/* Créer une classe — Bleu Roi */}
-            <Link href="/admin/classes" className="group flex flex-col items-center gap-2 p-3.5 rounded-xl hover:bg-blue-50 hover:border-blue-200 border border-transparent transition-all duration-200">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white group-hover:scale-110 transition-all duration-200 shadow-xs">
-                <PlusSquare size={20} />
-              </div>
-              <span className="text-xs font-bold text-slate-800 text-center leading-tight">Créer<br/>une classe</span>
-            </Link>
-
-            {/* Générer échéance — Ambre / Orange */}
-            <Link href="/admin/finance/echeances" className="group flex flex-col items-center gap-2 p-3.5 rounded-xl hover:bg-amber-50 hover:border-amber-200 border border-transparent transition-all duration-200">
-              <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white group-hover:scale-110 transition-all duration-200 shadow-xs">
-                <CalendarPlus size={20} />
-              </div>
-              <span className="text-xs font-bold text-slate-800 text-center leading-tight">Générer<br/>échéance</span>
-            </Link>
-
-            {/* Encaisser paiement — Violet */}
-            <Link href="/admin/finance/paiements" className="group flex flex-col items-center gap-2 p-3.5 rounded-xl hover:bg-violet-50 hover:border-violet-200 border border-transparent transition-all duration-200">
-              <div className="w-12 h-12 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center group-hover:bg-violet-600 group-hover:text-white group-hover:scale-110 transition-all duration-200 shadow-xs">
-                <Banknote size={20} />
-              </div>
-              <span className="text-xs font-bold text-slate-800 text-center leading-tight">Encaisser<br/>paiement</span>
-            </Link>
-
-            {/* Publier un devoir — Rose */}
-            <Link href="/admin/academique/devoirs" className="group flex flex-col items-center gap-2 p-3.5 rounded-xl hover:bg-rose-50 hover:border-rose-200 border border-transparent transition-all duration-200">
-              <div className="w-12 h-12 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center group-hover:bg-rose-600 group-hover:text-white group-hover:scale-110 transition-all duration-200 shadow-xs">
-                <BookOpenCheck size={20} />
-              </div>
-              <span className="text-xs font-bold text-slate-800 text-center leading-tight">Publier<br/>un devoir</span>
-            </Link>
-
-            {/* Raccourcis / Recherche — Ardoise */}
-            <RaccourcisTrigger />
-          </div>
+            ) : (
+              <EmptyState icon={AlertCircle} tone="emerald" title="Aucun retard 🎉" text="Tous les paiements sont à jour." />
+            )}
+          </DashPanel>
         </div>
       </div>
+
+      {/* ── ACTIONS RAPIDES ── */}
+      <DashPanel delay={10} icon={Zap} tone="slate" title="Actions rapides" subtitle="Raccourcis vers les fonctions clés">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {quickActions.map(a => (
+            <Link
+              key={a.id}
+              href={a.href}
+              id={`quick-action-${a.id}`}
+              className="dash-sheen group relative flex flex-col items-start gap-4 overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 transition-all duration-500 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_18px_36px_-16px_rgba(15,23,42,0.25)]"
+            >
+              <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg ${a.grad} transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-110`}>
+                <a.icon size={19} />
+              </div>
+              <div>
+                <p className="text-[13px] font-bold leading-tight text-slate-900">{a.label}</p>
+                <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{a.hint}</p>
+              </div>
+              <ArrowUpRight size={14} className="absolute right-3 top-3 text-slate-300 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-slate-700" />
+            </Link>
+          ))}
+          <RaccourcisTrigger />
+        </div>
+      </DashPanel>
 
       {/* Modale de raccourcis */}
       <ShortcutsButton modalOnly />
 
       {/* Footer */}
-      <footer className="pt-6 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 font-medium pb-4">
+      <footer className="flex flex-col items-center justify-between border-t border-slate-200/70 pb-4 pt-6 text-xs font-medium text-slate-500 md:flex-row">
         <p>© {new Date().getFullYear()} Scogestia · Tous droits réservés.</p>
-        <p className="mt-1 md:mt-0">Année scolaire {academicYear}</p>
+        <p className="mt-1 flex items-center gap-2 md:mt-0">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          Année scolaire {academicYear}
+        </p>
       </footer>
     </div>
   )
