@@ -41,3 +41,8 @@ yarn-error.log*
 next-env.d.ts
 android/app/google-services.json
 supabase/functions/send-push-notification/service-account.json
+
+# android binaries & secrets
+*.keystore
+*.jks
+*.aab
