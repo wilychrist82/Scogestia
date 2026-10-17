@@ -107,12 +107,18 @@ export default async function AdminDashboard() {
   let pCount = 0, aCount = 0, rCount = 0
   attendance?.forEach(a => {
     if (a.status === 'present') pCount++
-    else if (a.status === 'absent') aCount++
+    else if (a.status === 'absent' || a.status === 'absent_justifie') aCount++
     else if (a.status === 'retard') rCount++
   })
 
+  // Dans le registre scolaire matricule, seuls les absents et retards sont cochés (+/-).
+  // Si des absents/retards ont été enregistrés mais aucun présent explicite, on déduit les présents par rapport à l'effectif :
+  if (pCount === 0 && (aCount > 0 || rCount > 0) && studentCount) {
+    pCount = Math.max(0, studentCount - aCount - rCount)
+  }
+
   const attendanceData: AttendanceData[] = [
-    { name: 'Présents', value: pCount, color: '#059669' },
+    { name: 'Présents', value: pCount, color: '#10b981' },
     { name: 'Absents',  value: aCount, color: '#ef4444' },
     { name: 'Retards',  value: rCount, color: '#f59e0b' },
   ]
@@ -431,6 +437,11 @@ export default async function AdminDashboard() {
                   <span className="font-medium text-slate-500">Total relevé</span>
                   <span className="font-black text-slate-900 tabular-nums">{totalAtt}</span>
                 </div>
+                {totalAtt === 0 && (
+                  <p className="text-[11px] text-slate-400 text-center italic pt-1">
+                    Aucun appel saisi aujourd&apos;hui (en attente de l&apos;appel des enseignants ou jour chômé).
+                  </p>
+                )}
               </div>
             </div>
           </DashPanel>
