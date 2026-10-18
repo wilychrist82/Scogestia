@@ -58,7 +58,7 @@ export function ParentHeader({ fullName, userAvatar }: { fullName: string, userA
 
   return (
     <header 
-      className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white flex items-center justify-between px-4 sticky top-0 z-50 shadow-md border-b border-white/10"
+      className="bg-gradient-to-r from-[#006039] via-[#05503a] to-[#043323] text-white flex items-center justify-between px-4 sticky top-0 z-50 shadow-[0_8px_24px_-12px_rgba(4,51,35,0.7)] border-b border-amber-200/30"
       style={{
         paddingTop: 'max(0.6rem, env(safe-area-inset-top))',
         paddingBottom: '0.6rem',
@@ -77,10 +77,10 @@ export function ParentHeader({ fullName, userAvatar }: { fullName: string, userA
             <img 
               src={userAvatar} 
               alt={fullName} 
-              className="w-9 h-9 rounded-xl object-cover border border-white/20 shadow-xs" 
+              className="w-10 h-10 rounded-xl object-cover ring-2 ring-amber-200/70 shadow-sm"
             />
           ) : (
-            <div className="w-9 h-9 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center font-bold text-sm text-emerald-200 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-white/10 ring-2 ring-amber-200/70 flex items-center justify-center font-extrabold text-sm text-amber-100 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25)]">
               {initials}
             </div>
           )}
@@ -89,9 +89,9 @@ export function ParentHeader({ fullName, userAvatar }: { fullName: string, userA
               <span className="text-sm sm:text-base font-bold tracking-tight truncate max-w-[150px] sm:max-w-[210px] leading-tight text-white">
                 {fullName}
               </span>
-              <ChevronDown size={14} className={`text-white/60 transition-transform duration-200 group-hover:text-white ${showProfileMenu ? 'rotate-180' : ''}`} />
+              <ChevronDown size={14} className={`text-white/80 transition-transform duration-200 group-hover:text-white ${showProfileMenu ? 'rotate-180' : ''}`} />
             </div>
-            <span className="text-[9.5px] font-bold text-emerald-300 uppercase tracking-widest leading-tight mt-0.5">
+            <span className="text-[10px] font-bold text-amber-200 uppercase tracking-[0.18em] leading-tight mt-0.5">
               Espace Famille
             </span>
           </div>
@@ -109,7 +109,7 @@ export function ParentHeader({ fullName, userAvatar }: { fullName: string, userA
                 onClick={() => setShowProfileMenu(false)}
                 className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
               >
-                <Settings size={15} className="text-slate-400" />
+                <Settings size={15} className="text-slate-700" />
                 <span>Paramètres de mon compte</span>
               </Link>
               <button
@@ -154,7 +154,7 @@ export function ParentHeader({ fullName, userAvatar }: { fullName: string, userA
         >
           <Bell size={19} />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 min-w-[17px] h-[17px] bg-rose-500 text-white text-[9.5px] font-extrabold flex items-center justify-center rounded-full border-2 border-emerald-900 leading-none px-1 shadow-xs animate-pulse">
+            <span className="absolute top-1 right-1 min-w-[17px] h-[17px] bg-rose-500 text-white text-[9.5px] font-extrabold flex items-center justify-center rounded-full border-2 border-[#05503a] leading-none px-1 shadow-[0_0_10px_rgba(244,63,94,0.6)] animate-pulse">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
@@ -183,11 +183,11 @@ export function ParentHeader({ fullName, userAvatar }: { fullName: string, userA
             <div className="max-h-80 overflow-y-auto scrollbar-light divide-y divide-slate-100">
               {notifications.length === 0 ? (
                 <div className="p-8 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-2">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 mx-auto flex items-center justify-center mb-2">
                     <Bell size={20} />
                   </div>
-                  <p className="text-sm font-semibold text-slate-700">Aucune notification</p>
-                  <p className="text-xs text-slate-400 mt-1">Vous n&apos;avez pas de nouveaux messages.</p>
+                  <p className="text-sm font-bold text-slate-900">Aucune notification</p>
+                  <p className="text-xs font-medium text-slate-700 mt-1">Vous n&apos;avez pas de nouveaux messages.</p>
                 </div>
               ) : (
                 notifications.map(notif => (
@@ -205,10 +205,10 @@ export function ParentHeader({ fullName, userAvatar }: { fullName: string, userA
                       <p className={`text-xs ${notif.is_read ? 'font-medium text-slate-700' : 'font-bold text-slate-900'}`}>
                         {notif.title}
                       </p>
-                      <p className="text-xs text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">
+                      <p className="text-xs font-medium text-slate-700 line-clamp-2 mt-0.5 leading-relaxed">
                         {notif.message}
                       </p>
-                      <p className="text-[10px] text-slate-400 mt-1.5">
+                      <p className="text-[11px] font-semibold text-slate-600 mt-1.5">
                         {new Date(notif.created_at).toLocaleDateString('fr-FR', { 
                           day: 'numeric', 
                           month: 'short', 
