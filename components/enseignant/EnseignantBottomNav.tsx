@@ -3,12 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useNotifications } from '@/components/providers/NotificationProvider'
-import { 
-  LayoutDashboard, 
-  MessageSquare, 
-  CalendarCheck, 
-  BookOpen, 
-  GraduationCap 
+import {
+  LayoutDashboard,
+  MessageSquare,
+  CalendarCheck,
+  BookOpen,
+  GraduationCap
 } from 'lucide-react'
 
 const navItems = [
@@ -24,13 +24,10 @@ export function EnseignantBottomNav() {
   const { unreadCount } = useNotifications()
 
   return (
-    <nav 
+    <nav
       aria-label="Navigation mobile enseignant"
-      className="fixed bottom-0 left-0 right-0 w-full bg-white/95 backdrop-blur-xl border-t border-slate-200/80 flex items-center justify-around z-40 md:hidden shadow-[0_-6px_25px_rgba(15,23,42,0.08)]"
-      style={{
-        paddingBottom: 'max(0.35rem, env(safe-area-inset-bottom))',
-        height: 'calc(4.1rem + env(safe-area-inset-bottom))'
-      }}
+      className="fixed left-1/2 z-40 flex h-16 w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 items-center justify-around rounded-[1.75rem] bg-white/75 px-1.5 shadow-[0_12px_40px_-10px_rgba(15,23,42,0.35),inset_0_1px_1px_rgba(255,255,255,0.9)] ring-1 ring-slate-900/10 backdrop-blur-xl md:hidden"
+      style={{ bottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
     >
       {navItems.map(item => {
         const isActive = pathname === item.href || (item.href !== '/enseignant' && pathname.startsWith(`${item.href}/`))
@@ -38,37 +35,38 @@ export function EnseignantBottomNav() {
         const Icon = item.icon
 
         return (
-          <Link 
-            key={item.href} 
+          <Link
+            key={item.href}
             href={item.href}
-            className={`flex flex-col items-center justify-center flex-1 h-full py-1 gap-1 transition-all relative group select-none ${
-              isActive ? 'text-emerald-700 font-bold' : 'text-slate-400 hover:text-slate-700'
-            }`}
+            aria-current={isActive ? 'page' : undefined}
+            className="group relative flex h-full flex-1 select-none flex-col items-center justify-center gap-1 transition-transform active:scale-90"
           >
-            {/* Ligne d'accentuation supérieure active */}
-            {isActive && (
-              <span className="absolute top-0 inset-x-5 h-0.5 bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.7)]" />
-            )}
-
             <div className="relative flex items-center justify-center">
-              <div className={`p-1.5 rounded-xl transition-all ${
-                isActive 
-                  ? 'bg-emerald-50 text-emerald-600 scale-105 shadow-2xs' 
-                  : 'group-hover:bg-slate-50'
+              <div className={`flex h-9 w-12 items-center justify-center rounded-2xl transition-all duration-300 ${
+                isActive
+                  ? 'bg-emerald-700 text-white shadow-[0_6px_16px_-4px_rgba(4,120,87,0.8),inset_0_1px_1px_rgba(255,255,255,0.3)]'
+                  : 'text-slate-700 group-hover:bg-slate-900/5 group-hover:text-slate-900'
               }`}>
-                <Icon size={20} className={isActive ? 'stroke-[2.4]' : 'stroke-[1.8]'} />
+                <Icon size={20} className={isActive ? 'stroke-[2.4]' : 'stroke-[1.9]'} />
               </div>
 
               {isMessages && unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1.5 bg-rose-500 text-white text-[9.5px] font-extrabold min-w-[17px] h-[17px] px-1 rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-pulse">
-                  {unreadCount > 9 ? '9+' : unreadCount}
+                <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px]">
+                  <span aria-hidden className="absolute inset-0 animate-ping rounded-full bg-rose-400 opacity-60" />
+                  <span className="relative flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-extrabold tabular-nums text-white shadow-[0_0_10px_rgba(225,29,72,0.6)] ring-2 ring-white">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
                 </span>
               )}
             </div>
 
-            <span className={`text-[10.5px] tracking-tight leading-none ${isActive ? 'font-bold' : 'font-medium'}`}>
+            <span className={`text-[10.5px] leading-none tracking-tight ${isActive ? 'font-extrabold text-emerald-900' : 'font-semibold text-slate-800'}`}>
               {item.label}
             </span>
+
+            {isActive && (
+              <span aria-hidden className="absolute -bottom-0.5 h-1 w-5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.9)]" />
+            )}
           </Link>
         )
       })}
