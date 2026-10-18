@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link'
-import { motion, AnimatePresence, type Variants } from 'framer-motion'
+import { motion, AnimatePresence, useMotionValue, useSpring, type Variants } from 'framer-motion'
 import { 
   ShieldCheck, Cloud, Zap, CheckCircle2, LayoutDashboard, CreditCard, Users, 
   ArrowRight, BarChart, Smartphone, Globe, Mail, Phone, MapPin, Star, PlayCircle, 
@@ -25,6 +25,55 @@ const staggerContainer: Variants = {
     }
   }
 };
+
+function MagneticArrowButton({ href, children }: { href: string; children: React.ReactNode }) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const springX = useSpring(x, { stiffness: 260, damping: 16, mass: 0.4 });
+  const springY = useSpring(y, { stiffness: 260, damping: 16, mass: 0.4 });
+  const clamp = (v: number, max: number) => Math.max(-max, Math.min(max, v));
+
+  const handleMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    x.set(clamp((e.clientX - (r.left + r.width / 2)) * 0.1, 8));
+    y.set(clamp((e.clientY - (r.top + r.height / 2)) * 0.35, 6));
+  };
+  const handleLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <Link
+      href={href}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      className="group inline-flex h-14 w-full items-center justify-between gap-5 rounded-full bg-white py-1.5 pl-8 pr-1.5 text-base font-bold tracking-tight text-[#050B18] shadow-[0_10px_40px_-8px_rgba(16,185,129,0.55),inset_0_-2px_4px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_50px_-8px_rgba(16,185,129,0.7)] sm:w-auto"
+    >
+      <span>{children}</span>
+      <motion.span
+        style={{ x: springX, y: springY }}
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-[#006039] text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] transition-colors duration-300 group-hover:bg-emerald-500"
+      >
+        <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-0.5" />
+      </motion.span>
+    </Link>
+  );
+}
+
+function BentoCard({ className = '', glow, children }: { className?: string; glow: string; children: React.ReactNode }) {
+  return (
+    <motion.div
+      variants={fadeIn}
+      className={`group relative rounded-[2rem] bg-white/[0.04] p-1.5 ring-1 ring-white/[0.08] transition-all duration-500 hover:-translate-y-1 hover:ring-white/[0.16] ${className}`}
+    >
+      <div className="relative h-full overflow-hidden rounded-[1.65rem] bg-gradient-to-b from-[#0b1628] to-[#070f1d] ring-1 ring-white/[0.06] shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+        <div aria-hidden className={`pointer-events-none absolute -top-24 left-1/2 h-48 w-3/4 -translate-x-1/2 rounded-full bg-gradient-to-b ${glow} to-transparent opacity-60 blur-3xl transition-opacity duration-500 group-hover:opacity-100`} />
+        {children}
+      </div>
+    </motion.div>
+  );
+}
 
 export default function Home() {
   const [demoModalOpen, setDemoModalOpen] = useState(false);
@@ -51,9 +100,9 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-[#006039]/20 selection:text-[#006039]">
+    <div className="min-h-screen bg-[#050B18] font-sans selection:bg-emerald-400/30 selection:text-white">
       {/* Navigation Sticky */}
-      <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/90 backdrop-blur-md shadow-sm">
+      <header className="sticky top-0 z-50 w-full border-b border-white/[0.06] bg-[#050B18]/70 backdrop-blur-xl shadow-[inset_0_-1px_0_rgba(255,255,255,0.04)]">
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link href="#accueil" className="flex items-center gap-2">
@@ -63,55 +112,55 @@ export default function Home() {
           
           {/* Menu Principal */}
           <nav className="hidden lg:flex items-center gap-7">
-            <Link href="#accueil" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+            <Link href="#accueil" className="relative text-sm font-medium text-slate-300 hover:text-white transition-colors group">
               Accueil
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-px bg-emerald-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            <Link href="#fonctionnalites" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+            <Link href="#fonctionnalites" className="relative text-sm font-medium text-slate-300 hover:text-white transition-colors group">
               Fonctionnalités
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-px bg-emerald-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            <Link href="#apercu" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+            <Link href="#apercu" className="relative text-sm font-medium text-slate-300 hover:text-white transition-colors group">
               Aperçu en action
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-px bg-emerald-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            <Link href="#espaces" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+            <Link href="#espaces" className="relative text-sm font-medium text-slate-300 hover:text-white transition-colors group">
               Espaces
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-px bg-emerald-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            <Link href="#tarifs" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+            <Link href="#tarifs" className="relative text-sm font-medium text-slate-300 hover:text-white transition-colors group">
               Tarifs
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-px bg-emerald-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            <Link href="#temoignages" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+            <Link href="#temoignages" className="relative text-sm font-medium text-slate-300 hover:text-white transition-colors group">
               Témoignages
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-px bg-emerald-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            <Link href="#faq" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+            <Link href="#faq" className="relative text-sm font-medium text-slate-300 hover:text-white transition-colors group">
               FAQ
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-px bg-emerald-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            <Link href="#contact" className="relative text-sm font-medium text-slate-600 hover:text-[#006039] transition-colors group">
+            <Link href="#contact" className="relative text-sm font-medium text-slate-300 hover:text-white transition-colors group">
               Contact
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#006039] transition-all duration-300 group-hover:w-full"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-px bg-emerald-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
           </nav>
 
           <div className="flex items-center gap-3 sm:gap-4">
             <Link 
               href="/connexion" 
-              className="hidden sm:inline-flex items-center justify-center h-10 px-4 sm:px-6 text-sm font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 hover:text-[#006039] rounded-full transition-colors"
+              className="hidden sm:inline-flex items-center justify-center h-10 px-4 sm:px-6 text-sm font-medium text-slate-200 bg-white/[0.04] ring-1 ring-white/10 hover:bg-white/[0.08] hover:text-white rounded-full transition-colors"
             >
               Se connecter
             </Link>
             <Link 
               href="/inscription-ecole"
-              className="inline-flex items-center justify-center h-10 px-4 sm:px-6 text-sm font-medium text-white bg-[#006039] hover:bg-[#004d2e] rounded-full transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 whitespace-nowrap"
+              className="inline-flex items-center justify-center h-10 px-4 sm:px-6 text-sm font-semibold text-white bg-[#006039] hover:bg-emerald-600 rounded-full transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_8px_24px_-6px_rgba(16,185,129,0.5)] hover:-translate-y-0.5 whitespace-nowrap"
             >
               Créer mon école
             </Link>
             <button 
-              className="lg:hidden p-2 text-slate-600 hover:text-[#006039] hover:bg-slate-100 rounded-lg transition-colors"
+              className="lg:hidden p-2 text-slate-300 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Menu"
             >
@@ -127,21 +176,21 @@ export default function Home() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden bg-white border-b border-slate-200 shadow-xl overflow-hidden"
+              className="lg:hidden bg-[#050B18]/95 backdrop-blur-xl border-b border-white/[0.06] shadow-xl overflow-hidden"
             >
               <div className="flex flex-col p-4 gap-4">
-                <Link href="#accueil" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Accueil</Link>
-                <Link href="#fonctionnalites" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Fonctionnalités</Link>
-                <Link href="#comment-ca-marche" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Comment ça marche</Link>
-                <Link href="#tarifs" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Tarifs</Link>
-                <Link href="#temoignages" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Témoignages</Link>
-                <Link href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">FAQ</Link>
-                <Link href="#contact" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-700 p-2 hover:bg-slate-50 rounded-lg">Contact</Link>
-                <hr className="border-slate-100 my-2" />
-                <Link 
-                  href="/connexion" 
+                <Link href="#accueil" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-200 p-2 hover:bg-white/[0.06] rounded-lg">Accueil</Link>
+                <Link href="#fonctionnalites" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-200 p-2 hover:bg-white/[0.06] rounded-lg">Fonctionnalités</Link>
+                <Link href="#comment-ca-marche" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-200 p-2 hover:bg-white/[0.06] rounded-lg">Comment ça marche</Link>
+                <Link href="#tarifs" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-200 p-2 hover:bg-white/[0.06] rounded-lg">Tarifs</Link>
+                <Link href="#temoignages" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-200 p-2 hover:bg-white/[0.06] rounded-lg">Témoignages</Link>
+                <Link href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-200 p-2 hover:bg-white/[0.06] rounded-lg">FAQ</Link>
+                <Link href="#contact" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-200 p-2 hover:bg-white/[0.06] rounded-lg">Contact</Link>
+                <hr className="border-white/[0.06] my-2" />
+                <Link
+                  href="/connexion"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="sm:hidden flex items-center justify-center h-12 text-base font-medium text-slate-700 bg-white border border-slate-300 rounded-xl"
+                  className="sm:hidden flex items-center justify-center h-12 text-base font-medium text-slate-100 bg-white/[0.04] ring-1 ring-white/10 rounded-xl"
                 >
                   Se connecter
                 </Link>
@@ -153,240 +202,321 @@ export default function Home() {
 
       <main>
         {/* Section Héro (#accueil) */}
-        <section id="accueil" className="relative pt-20 pb-20 lg:pt-32 lg:pb-24 overflow-hidden bg-floating-waves">
-          
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-              <motion.div 
-                className="w-full lg:w-5/12 flex flex-col items-center lg:items-start text-center lg:text-left"
-                initial="hidden"
-                animate="visible"
-                variants={staggerContainer}
-              >
-
-                <motion.div variants={fadeIn} className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-300 text-xs sm:text-sm font-semibold mb-6 backdrop-blur-md">
-                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-                  Plateforme N°1 de Gestion de l'École en Afrique
-                </motion.div>
-
-                <motion.h1 variants={fadeIn} className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.05] mb-6 font-sans">
-                  Plateforme de gestion
-                  <br />
-                  <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-teal-100 to-emerald-400">
-                    scolaire intelligente.
-                  </span>
-                </motion.h1>
-                
-                <motion.p variants={fadeIn} className="text-lg text-slate-300 mb-10 max-w-xl leading-relaxed">
-                  Le logiciel de gestion scolaire tout-en-un conçu pour le <span className="text-white font-semibold">préscolaire, l'école primaire, le collège et le lycée</span> : inscriptions, suivi des notes, bulletins automatiques, caisse certifiée et communication directe à travers la plateforme Scogestia (messages vocaux & audios, SMS et WhatsApp) entre l'établissement, les enseignants et les parents d'élèves.
-                </motion.p>
-                
-                <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-                  <Link 
-                    href="/inscription-ecole"
-                    className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-base font-bold text-slate-900 bg-white hover:bg-slate-100 rounded-full transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
-                  >
-                    Essai gratuit de 14 jours
-                  </Link>
-                  <button 
-                    onClick={() => setDemoModalOpen(true)}
-                    className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-base font-medium text-white bg-white/5 border-2 border-slate-700 hover:border-emerald-500/50 hover:bg-emerald-900/20 rounded-full transition-all"
-                  >
-                    <PlayCircle className="w-5 h-5 mr-2 text-emerald-400" />
-                    Voir la démo
-                  </button>
-                </motion.div>
-                
-                <motion.div variants={fadeIn} className="mt-10 flex flex-wrap justify-center lg:justify-start gap-6 text-sm text-slate-300 font-medium">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    Aucune carte requise
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    Support WhatsApp 24/7
-                  </div>
-                </motion.div>
-              </motion.div>
-              
-              <motion.div 
-                className="w-full lg:w-7/12 relative"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                <div className="relative overflow-visible group flex justify-center lg:justify-end perspective-1000">
-                    <div className="relative w-full lg:max-w-[110%] transform transition-all duration-700 group-hover:-translate-y-4 group-hover:scale-[1.02] hover-3d">
-                      <img 
-                        src="/image_landing_page1.png" 
-                        alt="Scogestia - Gestion scolaire intuitive" 
-                        className="w-full h-auto object-contain relative z-10 rounded-b-2xl"
-                      />
-                    </div>
-                </div>
-              </motion.div>
-            </div>
+        <section id="accueil" className="relative overflow-hidden bg-[#050B18] pt-16 pb-24 lg:pt-24 lg:pb-32">
+          {/* Aurores émeraude & cyan */}
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <motion.div
+              className="absolute -top-40 left-1/2 h-[640px] w-[820px] -translate-x-[75%] rounded-full bg-[#10b981]/20 blur-[140px]"
+              animate={{ x: [0, 50, 0], opacity: [0.7, 1, 0.7] }}
+              transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="absolute -top-24 left-1/2 h-[560px] w-[720px] translate-x-[5%] rounded-full bg-[#38bdf8]/15 blur-[150px]"
+              animate={{ x: [0, -40, 0], opacity: [1, 0.65, 1] }}
+              transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <div className="absolute top-1/2 -left-32 h-[420px] w-[420px] rounded-full bg-[#043323]/70 blur-[120px]" />
+            <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(to_right,rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.045)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(ellipse_at_top,black_25%,transparent_72%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#050B18]" />
           </div>
 
-          {/* Vagues dynamiques animées Scogestia */}
-          <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-0 h-[80px] md:h-[120px]">
-            {/* Vague Émeraude douce */}
-            <svg className="block absolute bottom-0 w-[200%] h-full animate-wave-continuous-left" viewBox="0 0 2400 120" preserveAspectRatio="none">
-              <path d="M0,60 C300,280 300,-160 600,60 C900,280 900,-160 1200,60 C1500,280 1500,-160 1800,60 C2100,280 2100,-160 2400,60 L2400,120 L0,120 Z" className="fill-emerald-800/80" />
-            </svg>
-            {/* Vague Émeraude profonde */}
-            <svg className="block absolute bottom-0 w-[200%] h-full animate-wave-continuous-right" viewBox="0 0 2400 120" preserveAspectRatio="none">
-              <path d="M0,60 C300,-160 300,280 600,60 C900,-160 900,280 1200,60 C1500,-160 1500,280 1800,60 C2100,-160 2100,280 2400,60 L2400,120 L0,120 Z" className="fill-[#043323]" />
-            </svg>
+          <div className="container relative z-10 mx-auto px-4">
+            <motion.div
+              className="mx-auto flex max-w-5xl flex-col items-center text-center"
+              initial="hidden"
+              animate="visible"
+              variants={staggerContainer}
+            >
+              {/* Eyebrow flottant */}
+              <motion.div variants={fadeIn}>
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+                  className="mb-8 inline-flex items-center gap-2.5 rounded-full bg-white/[0.04] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-200 ring-1 ring-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_8px_30px_-8px_rgba(16,185,129,0.4)] backdrop-blur-xl sm:text-xs"
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                  </span>
+                  Plateforme N°1 de Gestion de l'École en Afrique
+                </motion.div>
+              </motion.div>
+
+              <motion.h1
+                variants={fadeIn}
+                className="mb-8 font-sans text-[2.6rem] font-extrabold leading-[0.98] tracking-[-0.04em] text-white sm:text-7xl lg:text-[5.5rem] xl:text-[6.5rem]"
+              >
+                Plateforme de gestion
+                <br />
+                <span className="inline-block bg-gradient-to-r from-emerald-200 via-white to-cyan-200 bg-clip-text pb-2 pr-3 font-serif text-[1.18em] font-normal italic tracking-[-0.02em] text-transparent">
+                  scolaire intelligente.
+                </span>
+              </motion.h1>
+
+              <motion.p variants={fadeIn} className="mb-12 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">
+                Le logiciel de gestion scolaire tout-en-un conçu pour le <span className="font-semibold text-white">préscolaire, l'école primaire, le collège et le lycée</span> : inscriptions, suivi des notes, bulletins automatiques, caisse certifiée et communication directe à travers la plateforme Scogestia (messages vocaux & audios, SMS et WhatsApp) entre l'établissement, les enseignants et les parents d'élèves.
+              </motion.p>
+
+              <motion.div variants={fadeIn} className="flex w-full flex-col items-center justify-center gap-4 sm:w-auto sm:flex-row">
+                <MagneticArrowButton href="/inscription-ecole">Essai gratuit de 14 jours</MagneticArrowButton>
+                <button
+                  onClick={() => setDemoModalOpen(true)}
+                  className="group inline-flex h-14 w-full items-center justify-center gap-2.5 rounded-full bg-white/[0.04] px-8 text-base font-semibold text-white ring-1 ring-white/15 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)] transition-all duration-300 hover:bg-white/[0.08] hover:ring-emerald-400/40 sm:w-auto"
+                >
+                  <PlayCircle className="h-5 w-5 text-emerald-400 transition-transform duration-300 group-hover:scale-110" />
+                  Voir la démo
+                </button>
+              </motion.div>
+
+              <motion.div variants={fadeIn} className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm font-medium text-slate-300">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  Aucune carte requise
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  Support WhatsApp 24/7
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  Paiements en FCFA
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Mockup Double-Bezel */}
+            <motion.div
+              className="relative mx-auto mt-20 max-w-6xl lg:mt-24"
+              initial={{ opacity: 0, y: 60, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 1, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div aria-hidden className="absolute -inset-x-10 -top-10 bottom-10 -z-10 rounded-full bg-gradient-to-r from-emerald-500/25 via-cyan-400/15 to-emerald-500/25 blur-[90px]" />
+              <div className="rounded-[2.25rem] bg-white/[0.04] p-2 ring-1 ring-white/10 shadow-[0_50px_120px_-30px_rgba(16,185,129,0.3),0_30px_60px_-30px_rgba(0,0,0,0.9)] backdrop-blur-xl md:p-3">
+                <div className="overflow-hidden rounded-[1.7rem] bg-[#070d1c] ring-1 ring-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+                  <div className="flex items-center gap-3 border-b border-white/[0.06] bg-white/[0.02] px-5 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-2.5 w-2.5 rounded-full bg-rose-400/70" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-amber-300/70" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
+                    </div>
+                    <div className="mx-auto flex max-w-xs flex-1 items-center justify-center gap-2 rounded-lg bg-black/30 px-3 py-1 text-[11px] text-slate-400 ring-1 ring-white/[0.06]">
+                      <Lock className="h-3 w-3 text-emerald-400" />
+                      scogestia.com/admin
+                    </div>
+                    <div className="w-10" />
+                  </div>
+                  <img
+                    src="/image_landing_page1.png"
+                    alt="Scogestia - Gestion scolaire intuitive"
+                    className="block h-auto w-full object-contain"
+                  />
+                </div>
+              </div>
+            </motion.div>
           </div>
         </section>
 
-        {/* Section Fonctionnalités & Réassurance (#fonctionnalites) */}
-        <section id="fonctionnalites" className="py-20 lg:py-32 bg-slate-50 relative z-10">
-          <div className="container mx-auto px-4 max-w-6xl">
+        {/* Section Fonctionnalités & Bento (#fonctionnalites) */}
+        <section id="fonctionnalites" className="relative z-10 overflow-hidden bg-[#050B18] py-24 lg:py-32">
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute left-1/2 top-0 h-[500px] w-[900px] -translate-x-1/2 rounded-full bg-[#043323]/50 blur-[140px]" />
+            <div className="absolute bottom-0 right-0 h-[420px] w-[520px] rounded-full bg-[#38bdf8]/[0.07] blur-[140px]" />
+          </div>
+
+          <div className="container relative mx-auto max-w-6xl px-4">
             {/* EN-TÊTE DE SECTION */}
-            <motion.div 
-              className="mb-16 lg:mb-20 flex flex-col items-center text-center"
+            <motion.div
+              className="mb-16 flex flex-col items-center text-center lg:mb-20"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeIn}
             >
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 tracking-tight max-w-4xl leading-tight">
-                Un contrôle total sur l'ensemble de <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-700 via-emerald-800 to-[#006039]">votre établissement.</span>
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/[0.04] px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300 ring-1 ring-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]">
+                <Sparkles className="h-3.5 w-3.5" /> Les piliers de Scogestia
+              </div>
+              <h2 className="mb-6 max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-[-0.03em] text-white md:text-5xl lg:text-6xl">
+                Un contrôle total sur l'ensemble de{' '}
+                <span className="inline-block bg-gradient-to-r from-emerald-200 via-white to-cyan-200 bg-clip-text pb-1 pr-2 font-serif text-[1.15em] font-normal italic tracking-[-0.01em] text-transparent">
+                  votre établissement.
+                </span>
               </h2>
-              <p className="text-xl text-slate-600 max-w-2xl leading-relaxed">
+              <p className="max-w-2xl text-lg leading-relaxed text-slate-300">
                 Des outils financiers puissants aux carnets de notes automatisés, chaque module est conçu pour être invisible et efficace.
               </p>
             </motion.div>
 
-            {/* CARTES DE RÉASSURANCE (BENTO) */}
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20 max-w-5xl mx-auto"
+            {/* BANDEAU DE RÉASSURANCE */}
+            <motion.div
+              className="mx-auto mb-6 grid max-w-5xl grid-cols-1 overflow-hidden rounded-3xl bg-white/[0.03] ring-1 ring-white/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] md:grid-cols-3 md:divide-x md:divide-white/[0.06]"
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true, margin: "-50px" }}
+              viewport={{ once: true, margin: '-50px' }}
               variants={staggerContainer}
             >
-              <motion.div variants={fadeIn} className="flex flex-col items-start p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#006039] mb-6">
-                  <ShieldCheck className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Données 100% sécurisées</h3>
-                <p className="text-slate-600 leading-relaxed text-sm">Chaque école dispose d'une base de données totalement isolée et cryptée. Vos informations ne fuient jamais.</p>
-              </motion.div>
-
-              <motion.div variants={fadeIn} className="flex flex-col items-start p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
-                <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-6">
-                  <Cloud className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Accessible partout</h3>
-                <p className="text-slate-600 leading-relaxed text-sm">Entièrement basé sur le Cloud sécurisé. Accédez à la scolarité de vos élèves depuis n'importe quel appareil.</p>
-              </motion.div>
-
-              <motion.div variants={fadeIn} className="flex flex-col items-start p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">
-                <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 mb-6">
-                  <Zap className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">Ultra-rapide</h3>
-                <p className="text-slate-600 leading-relaxed text-sm">Une interface ultra-légère et optimisée pour fonctionner parfaitement même avec une connexion internet limitée.</p>
-              </motion.div>
+              {[
+                { icon: ShieldCheck, tone: 'text-emerald-300 bg-emerald-400/10 ring-emerald-400/20', title: 'Données 100% sécurisées', desc: "Base de données isolée et cryptée pour chaque école. Vos informations ne fuient jamais." },
+                { icon: Cloud, tone: 'text-cyan-300 bg-cyan-400/10 ring-cyan-400/20', title: 'Accessible partout', desc: "100% Cloud sécurisé : accédez à la scolarité de vos élèves depuis n'importe quel appareil." },
+                { icon: Zap, tone: 'text-amber-200 bg-amber-300/10 ring-amber-300/20', title: 'Ultra-rapide', desc: "Interface ultra-légère, optimisée pour fonctionner même avec une connexion limitée." },
+              ].map((item) => (
+                <motion.div key={item.title} variants={fadeIn} className="flex items-start gap-4 p-6 lg:p-7">
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ${item.tone}`}>
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="mb-1 text-[15px] font-bold tracking-tight text-white">{item.title}</h3>
+                    <p className="text-sm leading-relaxed text-slate-400">{item.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
             </motion.div>
 
-            {/* GRANDES CARTES FONCTIONNALITÉS */}
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-12 gap-6"
+            {/* BENTO GRID ASYMÉTRIQUE */}
+            <motion.div
+              className="grid grid-cols-1 gap-4 md:grid-cols-12 lg:gap-5"
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
+              viewport={{ once: true, margin: '-100px' }}
               variants={staggerContainer}
             >
-              {/* Carte 1 : Finance (Image Background) */}
-              <motion.div variants={fadeIn} className="md:col-span-8 h-[400px] rounded-[2rem] p-10 relative overflow-hidden group">
-                <img src="/images/finance.png" alt="Admin Finance" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
-                
-                <div className="relative z-10 h-full flex flex-col justify-end">
-                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
-                    <Wallet className="w-6 h-6 text-emerald-400" />
+              {/* Finances & Recouvrement FCFA */}
+              <BentoCard className="md:col-span-7" glow="from-amber-300/20">
+                <img src="/images/finance.png" alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover opacity-25 transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#070f1d] via-[#070f1d]/80 to-[#070f1d]/30" />
+                <div className="relative flex h-full min-h-[420px] flex-col justify-between p-8 lg:p-10">
+                  <div>
+                    <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-300/10 text-amber-200 ring-1 ring-inset ring-amber-300/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+                      <Wallet className="h-6 w-6" />
+                    </div>
+                    <h3 className="mb-3 text-3xl font-extrabold tracking-[-0.03em] text-white lg:text-4xl">
+                      Finances & <span className="font-serif text-[1.12em] font-normal italic text-amber-200">Recouvrement</span> FCFA
+                    </h3>
+                    <p className="max-w-lg text-base leading-relaxed text-slate-300 lg:text-lg">
+                      Visualisez instantanément les impayés, relancez les parents par SMS, et automatisez toute votre comptabilité sans tableaux croisés.
+                    </p>
                   </div>
-                  <h3 className="text-3xl font-bold text-white mb-2 font-sans tracking-tight">Suivi Financier & <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-teal-100 to-emerald-400">Recouvrement</span></h3>
-                  <p className="text-slate-300 text-lg max-w-lg leading-relaxed">
-                    Visualisez instantanément les impayés, relancez les parents par SMS, et automatisez toute votre comptabilité sans tableaux croisés.
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Carte 2 : Parents (Image Background) */}
-              <motion.div variants={fadeIn} className="md:col-span-4 h-[300px] md:h-[400px] rounded-[2rem] p-6 md:p-10 relative overflow-hidden group">
-                <img src="/images/parents.png" alt="Portail Parent" className="absolute inset-0 w-full h-full object-cover object-top md:object-right transition-transform duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/70 to-slate-900/20"></div>
-                
-                <div className="relative z-10 h-full flex flex-col justify-end">
-                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
-                    <Smartphone className="w-6 h-6 text-emerald-400" />
+                  <div className="mt-8 rounded-2xl bg-white/[0.04] p-5 ring-1 ring-white/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-md">
+                    <div className="mb-3 flex items-end justify-between">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Encaissé ce trimestre</p>
+                        <p className="mt-1 text-2xl font-extrabold tabular-nums tracking-tight text-white">
+                          12 450 000 <span className="text-sm font-bold text-amber-200">FCFA</span>
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-emerald-400/10 px-2.5 py-1 text-xs font-bold tabular-nums text-emerald-300 ring-1 ring-inset ring-emerald-400/25">87 % recouvré</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                      <div className="h-full w-[87%] rounded-full bg-gradient-to-r from-amber-300 via-emerald-400 to-emerald-300" />
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-semibold text-slate-300">
+                      {['Caisse certifiée', 'Reçus QR', 'Relances SMS', 'Mobile Money'].map((t) => (
+                        <span key={t} className="rounded-full bg-white/[0.05] px-2.5 py-1 ring-1 ring-inset ring-white/[0.08]">{t}</span>
+                      ))}
+                    </div>
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-2 font-sans tracking-tight"><span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-teal-100 to-emerald-400">Portail</span> Parents</h3>
-                  <p className="text-slate-300 text-sm md:text-base">
-                    Transparence totale sur le téléphone des parents : notes, absences, et paiements.
-                  </p>
                 </div>
-              </motion.div>
+              </BentoCard>
 
-              {/* Carte 3 : Administration (Image Background) */}
-              <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] rounded-[2rem] p-10 relative overflow-hidden group">
-                <img src="/images/gestion_scolaire_african.jpg" alt="Gestion Scolaire" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
-                
-                <div className="relative z-10 h-full flex flex-col justify-end">
-                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
-                    <Building2 className="w-6 h-6 text-blue-400" />
+              {/* Bulletins & Carnets scolaires */}
+              <BentoCard className="md:col-span-5" glow="from-emerald-400/20">
+                <img src="/images/academie.png" alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover opacity-20 transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#070f1d] via-[#070f1d]/85 to-[#070f1d]/40" />
+                <div className="relative flex h-full min-h-[420px] flex-col justify-between p-8 lg:p-10">
+                  <div>
+                    <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300 ring-1 ring-inset ring-emerald-400/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+                      <FileCheck className="h-6 w-6" />
+                    </div>
+                    <h3 className="mb-3 text-2xl font-extrabold tracking-[-0.03em] text-white lg:text-3xl">
+                      Bulletins <span className="font-serif text-[1.12em] font-normal italic text-emerald-300">automatisés</span> & carnets officiels
+                    </h3>
+                    <p className="text-base leading-relaxed text-slate-300">
+                      Saisie fluide des notes, moyennes pondérées, rangs et carnets scolaires officiels générés en un clic, prêts à imprimer en PDF.
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight">Gestion <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-teal-100 to-emerald-400">Scolaire</span></h3>
-                  <p className="text-slate-300">
-                    Classes, enseignants, emplois du temps. Une architecture claire pour gérer des milliers d'élèves.
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Carte 4 : Académique / Enseignant (Image Background) */}
-              <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] rounded-[2rem] p-10 relative overflow-hidden group">
-                <img src="/images/academie.png" alt="Enseignant" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
-                
-                <div className="relative z-10 h-full flex flex-col justify-end">
-                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
-                    <GraduationCap className="w-6 h-6 text-amber-400" />
+                  <div className="mt-8 rounded-2xl bg-white/[0.04] p-5 ring-1 ring-white/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-md">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Moyenne générale</p>
+                        <p className="mt-1 text-3xl font-extrabold tabular-nums tracking-tight text-white">14,82<span className="text-sm font-bold text-slate-400"> / 20</span></p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Rang</p>
+                        <p className="mt-1 text-2xl font-extrabold tabular-nums text-emerald-300">3<sup className="text-xs">e</sup><span className="text-sm font-bold text-slate-500"> / 42</span></p>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight"><span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-teal-100 to-emerald-400">Académique</span></h3>
-                  <p className="text-slate-300">
-                    Saisie fluide des notes, bulletins automatisés et statistiques en temps réel.
-                  </p>
                 </div>
-              </motion.div>
+              </BentoCard>
 
-              {/* Carte 5 : Espace Élève / Sécurité (Image Background) */}
-              <motion.div variants={fadeIn} className="md:col-span-4 h-[350px] rounded-[2rem] p-10 relative overflow-hidden group">
-                <img src="/images/securite.png" alt="Sécurité et Contrôle" className="absolute inset-0 w-full h-full object-cover object-right transition-transform duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent"></div>
-                
-                <div className="relative z-10 h-full flex flex-col justify-end">
-                  <div className="bg-white/10 backdrop-blur-md w-fit p-3 rounded-2xl border border-white/10 mb-4 shadow-xl">
-                    <ShieldCheck className="w-6 h-6 text-emerald-400" />
+              {/* Portail Parents & Alertes */}
+              <BentoCard className="md:col-span-5" glow="from-cyan-400/20">
+                <img src="/images/parents.png" alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover object-top opacity-20 transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#070f1d] via-[#070f1d]/85 to-[#070f1d]/40" />
+                <div className="relative flex h-full min-h-[420px] flex-col justify-between p-8 lg:p-10">
+                  <div>
+                    <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400/10 text-cyan-300 ring-1 ring-inset ring-cyan-400/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+                      <Smartphone className="h-6 w-6" />
+                    </div>
+                    <h3 className="mb-3 text-2xl font-extrabold tracking-[-0.03em] text-white lg:text-3xl">
+                      <span className="font-serif text-[1.12em] font-normal italic text-cyan-300">Portail</span> Parents & alertes WhatsApp/SMS
+                    </h3>
+                    <p className="text-base leading-relaxed text-slate-300">
+                      Transparence totale sur le téléphone des parents : notes, absences, et paiements, avec des alertes directes.
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2 font-sans tracking-tight">Sécurité & <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 via-teal-100 to-emerald-400">Contrôle</span></h3>
-                  <p className="text-slate-300">
-                    Vos données sensibles sont cryptées. Personne d'autre que vous n'y a accès. Fiabilité 99.9%.
-                  </p>
+                  <div className="mt-8 space-y-2.5">
+                    <div className="flex items-center gap-3 rounded-2xl bg-white/[0.04] px-4 py-3 ring-1 ring-white/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-md">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#25D366]/15 text-[#25D366] ring-1 ring-inset ring-[#25D366]/30"><MessageSquare className="h-4 w-4" /></span>
+                      <p className="text-xs font-medium text-slate-200">Paiement reçu : <span className="font-bold tabular-nums text-white">25 000 FCFA</span></p>
+                    </div>
+                    <div className="ml-6 flex items-center gap-3 rounded-2xl bg-white/[0.04] px-4 py-3 ring-1 ring-white/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-md">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-400/15 text-cyan-300 ring-1 ring-inset ring-cyan-400/30"><Smartphone className="h-4 w-4" /></span>
+                      <p className="text-xs font-medium text-slate-200">SMS : absence signalée ce matin</p>
+                    </div>
+                  </div>
                 </div>
-              </motion.div>
+              </BentoCard>
 
+              {/* Emplois du temps & Registre d'appel */}
+              <BentoCard className="md:col-span-7" glow="from-emerald-400/20">
+                <img src="/images/gestion_scolaire_african.jpg" alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover opacity-20 transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#070f1d] via-[#070f1d]/85 to-[#070f1d]/40" />
+                <div className="relative flex h-full min-h-[420px] flex-col justify-between p-8 lg:p-10">
+                  <div>
+                    <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300 ring-1 ring-inset ring-emerald-400/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+                      <GraduationCap className="h-6 w-6" />
+                    </div>
+                    <h3 className="mb-3 text-3xl font-extrabold tracking-[-0.03em] text-white lg:text-4xl">
+                      Emplois du temps & <span className="font-serif text-[1.12em] font-normal italic text-emerald-300">registre d'appel</span>
+                    </h3>
+                    <p className="max-w-lg text-base leading-relaxed text-slate-300 lg:text-lg">
+                      Classes, enseignants, emplois du temps et appel numérique quotidien : une architecture claire pour gérer des milliers d'élèves.
+                    </p>
+                  </div>
+                  <div className="mt-8 rounded-2xl bg-white/[0.04] p-5 ring-1 ring-white/[0.08] shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-md">
+                    <div className="grid grid-cols-5 gap-2">
+                      {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'].map((d, i) => (
+                        <div key={d} className="space-y-1.5">
+                          <p className="text-center text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">{d}</p>
+                          <div className={`h-6 rounded-md ring-1 ring-inset ${i % 2 === 0 ? 'bg-emerald-400/15 ring-emerald-400/25' : 'bg-cyan-400/15 ring-cyan-400/25'}`} />
+                          <div className={`h-6 rounded-md ring-1 ring-inset ${i % 2 === 0 ? 'bg-cyan-400/15 ring-cyan-400/25' : 'bg-amber-300/15 ring-amber-300/25'}`} />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 flex items-center justify-between border-t border-white/[0.06] pt-3 text-xs font-medium text-slate-300">
+                      <span className="flex items-center gap-2"><UserCheck className="h-4 w-4 text-emerald-300" /> Registre d'appel clôturé</span>
+                      <span className="font-bold tabular-nums text-white">28 / 30 présents</span>
+                    </div>
+                  </div>
+                </div>
+              </BentoCard>
             </motion.div>
           </div>
         </section>
 
         {/* Section Aperçu Logiciel en Action (#apercu) */}
-        <section id="apercu" className="py-24 bg-slate-900 text-white relative overflow-hidden">
+        <section id="apercu" className="py-24 lg:py-32 bg-[#050B18] text-white relative overflow-hidden border-t border-white/[0.04]">
           <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none"></div>
           <div className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-[140px] pointer-events-none"></div>
 
@@ -448,12 +578,13 @@ export default function Home() {
 
             {/* Cadre de navigateur Mac */}
             <motion.div 
-              className="relative max-w-5xl mx-auto rounded-3xl bg-slate-950/80 border border-slate-800 shadow-[0_25px_60px_rgba(0,0,0,0.6)] overflow-hidden backdrop-blur-xl"
+              className="relative max-w-5xl mx-auto rounded-[2.25rem] p-2 md:p-3 bg-white/[0.04] ring-1 ring-white/10 shadow-[0_50px_120px_-30px_rgba(16,185,129,0.25),0_30px_60px_-30px_rgba(0,0,0,0.9)] backdrop-blur-xl"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
+              <div className="overflow-hidden rounded-[1.7rem] bg-slate-950 ring-1 ring-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
               {/* Barre de contrôle du navigateur */}
               <div className="flex items-center gap-3 px-5 py-3.5 bg-slate-900 border-b border-slate-800/80">
                 <div className="flex items-center gap-2">
@@ -499,6 +630,7 @@ export default function Home() {
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-40"></div>
                   </div>
                 )}
+              </div>
               </div>
             </motion.div>
 
@@ -672,7 +804,7 @@ export default function Home() {
               <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-semibold text-sm tracking-wide uppercase shadow-sm">
                 Déploiement Facile
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">Prêt à l'emploi en <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500">3 étapes simples</span></h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">Prêt à l'emploi en <span className="font-serif italic font-normal text-[1.12em] text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500">3 étapes simples</span></h2>
               <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">Pas besoin de connaissances techniques. Notre processus d'installation est conçu pour être aussi rapide que possible.</p>
             </motion.div>
 
@@ -759,7 +891,7 @@ export default function Home() {
               <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-semibold text-sm tracking-wide uppercase shadow-sm">
                 Tarification
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">Des tarifs simples, <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-400">sans surprise</span></h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">Des tarifs simples, <span className="font-serif italic font-normal text-[1.12em] text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-400">sans surprise</span></h2>
               <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">Commencez gratuitement, puis choisissez le plan qui correspond parfaitement à la taille de votre établissement.</p>
             </motion.div>
 
@@ -867,7 +999,7 @@ export default function Home() {
               <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-sm tracking-wide uppercase shadow-sm backdrop-blur-sm">
                 Témoignages
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">Ils font confiance à <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-200">Scogestia</span></h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">Ils font confiance à <span className="font-serif italic font-normal text-[1.12em] text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-200">Scogestia</span></h2>
               <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">Découvrez ce que les directeurs et comptables pensent de notre plateforme après avoir sauté le pas.</p>
             </motion.div>
 
@@ -936,7 +1068,7 @@ export default function Home() {
               <div className="inline-flex items-center justify-center px-4 py-1.5 mb-6 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-semibold text-sm tracking-wide uppercase shadow-sm">
                 F.A.Q
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">Questions <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-400">Fréquentes</span></h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">Questions <span className="font-serif italic font-normal text-[1.12em] text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-400">Fréquentes</span></h2>
               <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">Tout ce que vous devez savoir sur le déploiement et l'utilisation de Scogestia dans votre établissement.</p>
             </motion.div>
 
@@ -999,9 +1131,9 @@ export default function Home() {
         </section>
 
         {/* Call to Action Pre-Footer */}
-        <section className="py-20 relative bg-slate-50">
+        <section className="py-24 lg:py-32 relative bg-slate-50">
           <div className="container mx-auto px-4">
-            <div className="bg-slate-900 rounded-[2.5rem] relative overflow-hidden shadow-2xl max-w-5xl mx-auto p-12 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 border border-white/10">
+            <div className="bg-[#050B18] rounded-[2.5rem] relative overflow-hidden shadow-2xl max-w-5xl mx-auto p-12 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 border border-white/10">
               
               {/* Effet lumineux de fond dans la carte CTA */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/15 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2"></div>
@@ -1029,12 +1161,7 @@ export default function Home() {
                 variants={fadeIn}
                 className="relative z-10"
               >
-                <Link 
-                  href="/inscription-ecole"
-                  className="w-full sm:w-auto inline-flex items-center justify-center h-14 px-8 text-lg font-bold text-slate-900 bg-white hover:bg-slate-100 rounded-full transition-all shadow-xl hover:shadow-2xl hover:scale-105"
-                >
-                  Démarrer mon essai gratuit
-                </Link>
+                <MagneticArrowButton href="/inscription-ecole">Démarrer mon essai gratuit</MagneticArrowButton>
               </motion.div>
             </div>
           </div>
