@@ -25,7 +25,7 @@ export default async function FinancePage() {
   // Informations sur l'école
   const { data: school } = await supabase
     .from('schools')
-    .select('name, current_academic_year')
+    .select('name, current_academic_year, city')
     .eq('id', schoolId)
     .maybeSingle()
 
@@ -70,6 +70,7 @@ export default async function FinancePage() {
       payments={(payments as any) || []}
       feeTypes={(feeTypes as any) || []}
       schoolName={school?.name || 'Établissement'}
+      schoolCity={(school as any)?.city || ''}
       academicYear={school?.current_academic_year || '2026-2027'}
     />
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   AreaChart,
   Area,
@@ -19,7 +19,6 @@ import {
   Hourglass,
   AlertTriangle,
   ArrowRight,
-  Calendar,
   PlusCircle,
   Receipt,
   Smartphone,
@@ -27,11 +26,13 @@ import {
   Wallet,
   BellRing,
   ArrowUpRight,
-  ShieldCheck,
   FileText,
+  Download,
+  CalendarDays,
+  Activity,
 } from 'lucide-react'
 import { FinanceNavTabs } from './FinanceNavTabs'
-import { FinanceExecutiveBanner } from './FinanceExecutiveBanner'
+import { generatePaymentReceipt } from '@/lib/pdf/receipt'
 
 export type Schedule = {
   id?: string
@@ -72,11 +73,36 @@ type Props = {
   payments: Payment[]
   feeTypes?: FeeType[]
   schoolName?: string
+  schoolCity?: string
   academicYear?: string
   basePath?: string
 }
 
 const MONTHS = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc']
+
+const METHOD_LABELS: Record<string, string> = {
+  especes: 'Espèces',
+  tmoney: 'T-Money',
+  flooz: 'Flooz',
+  wave: 'Wave',
+  banque: 'Virement',
+  autre: 'Autre',
+}
+
+const AVATAR_TONES = [
+  'bg-emerald-100 text-emerald-900 ring-emerald-300',
+  'bg-sky-100 text-sky-900 ring-sky-300',
+  'bg-violet-100 text-violet-900 ring-violet-300',
+  'bg-amber-100 text-amber-900 ring-amber-300',
+  'bg-rose-100 text-rose-900 ring-rose-300',
+  'bg-teal-100 text-teal-900 ring-teal-300',
+]
+
+const avatarTone = (seed: string) => {
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
+  return AVATAR_TONES[h % AVATAR_TONES.length]
+}
 
 const formatCFA = (amount: number) =>
   `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount)} FCFA`
@@ -87,11 +113,72 @@ const compact = (val: number) => {
   return String(val)
 }
 
+function GlassTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="min-w-[180px] rounded-xl border border-white/10 bg-slate-900/85 p-3 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+      <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-200">{label}</p>
+      <div className="space-y-1.5">
+        {payload.map((entry: any) => (
+          <div key={entry.dataKey} className="flex items-center justify-between gap-4 text-xs">
+            <span className="inline-flex items-center gap-2 font-semibold text-slate-100">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.dataKey === 'encaisse' ? '#34d399' : '#cbd5e1' }} />
+              {entry.name}
+            </span>
+            <span className="font-bold tabular-nums text-white">{formatCFA(Number(entry.value))}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+type KpiProps = {
+  label: string
+  value: string
+  icon: React.ComponentType<{ size?: number }>
+  tone: { chip: string; value: string; glow: string }
+  pills: { text: string; className: string; icon?: React.ReactNode }[]
+  linkHref: string
+  linkLabel: string
+}
+
+function KpiCard({ label, value, icon: Icon, tone, pills, linkHref, linkLabel }: KpiProps) {
+  return (
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.06),0_10px_30px_-18px_rgba(15,23,42,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_1px_2px_rgba(15,23,42,0.08),0_18px_40px_-18px_rgba(15,23,42,0.28)]">
+      <div aria-hidden className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full blur-3xl opacity-60 transition-opacity group-hover:opacity-100 ${tone.glow}`} />
+      <div className="relative flex items-center justify-between">
+        <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-slate-800">{label}</span>
+        <div className={`flex h-9 w-9 items-center justify-center rounded-xl ring-1 ring-inset ${tone.chip}`}>
+          <Icon size={17} />
+        </div>
+      </div>
+      <p className={`relative mt-4 mb-1 text-[1.75rem] font-extrabold leading-tight tracking-[-0.03em] tabular-nums xl:text-3xl ${tone.value}`}>
+        {value}
+      </p>
+      <div className="relative mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {pills.map((p) => (
+            <span key={p.text} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ring-1 ring-inset ${p.className}`}>
+              {p.icon}
+              {p.text}
+            </span>
+          ))}
+        </div>
+        <Link href={linkHref} className="text-xs font-bold text-slate-900 underline-offset-4 hover:text-emerald-800 hover:underline">
+          {linkLabel} →
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 export function FinanceDashboard({
   schedules,
   payments,
   feeTypes = [],
   schoolName = 'Établissement',
+  schoolCity = '',
   academicYear = '2026-2027',
   basePath = '/admin/finance',
 }: Props) {
@@ -163,235 +250,244 @@ export function FinanceDashboard({
 
   const [chartType, setChartType] = useState<'area' | 'bar'>('area')
 
+  const [ringReady, setRingReady] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setRingReady(true), 120)
+    return () => clearTimeout(t)
+  }, [])
+
+  const RING_R = 54
+  const RING_C = 2 * Math.PI * RING_R
+
+  const handleReceipt = (p: Payment, idx: number) => {
+    const rawMethod = p.payment_method || 'especes'
+    generatePaymentReceipt({
+      schoolName,
+      schoolCity,
+      studentName: `${p.student?.first_name || ''} ${p.student?.last_name || ''}`.trim(),
+      studentClass: p.student?.classes?.name || 'Non assigné',
+      paymentMethod: METHOD_LABELS[rawMethod] ?? rawMethod,
+      amount: Number(p.amount),
+      date: new Date(p.paid_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+      reference:
+        p.transaction_reference ||
+        p.receipt_number ||
+        `REC-${(p.id || String(idx)).substring(0, 8).toUpperCase()}`,
+    })
+  }
+
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto pb-12 px-1">
+    <div className="mx-auto max-w-[1400px] space-y-6 px-1 pb-12">
 
       {/* ── BARRE DE NAVIGATION D'ONGLETS FINANCE ── */}
       <FinanceNavTabs basePath={basePath} />
 
-      {/* ── BANNIÈRE EXECUTIVE BLEU DOUX (STYLE CLASSPANEL RÉFÉRENCE) ── */}
-      <FinanceExecutiveBanner
-        badge={`CENTRE FINANCIER & TRÉSORERIE · ${academicYear}`}
-        title={`Tableau de bord financier — ${schoolName}`}
-        subtitle="Pilotez la trésorerie de votre école en toute clarté : encaissements, échéances et relances en temps réel."
-        stats={[
-          { label: 'Recouvrement', value: `${stats.taux}%`, color: 'text-emerald-700' },
-          { label: 'Encaissé', value: compact(stats.encaisse), color: 'text-blue-700' },
-          { label: 'Reste', value: compact(stats.reste), color: 'text-amber-700' },
-          { label: 'Impayés', value: compact(stats.impayes), color: 'text-rose-700' },
-        ]}
-        actions={
-          <div className="flex items-center gap-2.5">
-            <Link
-              href={`${basePath}/caisse`}
-              className="inline-flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold px-4 py-2.5 rounded-xl shadow-xs transition-all text-xs sm:text-sm"
-            >
-              <Banknote size={16} />
-              <span>Guichet caisse</span>
-              <ArrowRight size={14} />
-            </Link>
-            <Link
-              href={`${basePath}/rapports`}
-              className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 font-bold px-4 py-2.5 rounded-xl shadow-2xs transition-all text-xs sm:text-sm"
-            >
-              <FileText size={15} className="text-slate-500" />
-              <span>Rapports</span>
-            </Link>
-          </div>
-        }
-      />
-
-      {/* ── 4 CARTES KPI ÉPURÉES & BLANCHES (STYLE CLASSPANEL RÉFÉRENCE) ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* Total Encaissé */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Total Encaissé</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
-              <TrendingUp size={16} />
-            </div>
-          </div>
-          <div className="my-3">
-            <p className="text-2xl font-bold text-slate-900 tabular-nums tracking-tight">
-              {formatCFA(stats.encaisse)}
-            </p>
-          </div>
-          <div className="flex items-center justify-between text-[11px] pt-2 border-t border-slate-100">
-            <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-              <ArrowUpRight size={12} /> {stats.taux}% de recouvrement
-            </span>
-            <Link href={`${basePath}/paiements`} className="text-slate-400 hover:text-slate-700 font-medium">
-              Détails →
-            </Link>
-          </div>
+      {/* ── HERO FINANCIER EXÉCUTIF ── */}
+      <section className="relative overflow-hidden rounded-3xl bg-[#050B18] p-6 shadow-[0_30px_80px_-30px_rgba(5,11,24,0.8)] ring-1 ring-white/10 sm:p-8 lg:p-10">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-20 -top-32 h-[420px] w-[520px] rounded-full bg-emerald-500/20 blur-[120px]" />
+          <div className="absolute -bottom-40 right-0 h-[380px] w-[480px] rounded-full bg-cyan-400/10 blur-[130px]" />
+          <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_left,black_20%,transparent_75%)]" />
         </div>
 
-        {/* Total Attendu */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Total Attendu</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
-              <Wallet size={16} />
+        <div className="relative flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-2xl">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-200 ring-1 ring-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+              <CalendarDays size={13} />
+              Année scolaire {academicYear}
+            </span>
+            <h1 className="mt-5 text-3xl font-extrabold leading-[1.05] tracking-[-0.03em] text-white sm:text-4xl lg:text-5xl">
+              Tableau de bord financier
+            </h1>
+            <p className="mt-2 text-lg font-bold text-emerald-300">{schoolName}</p>
+            <p className="mt-3 max-w-xl text-sm font-medium leading-relaxed text-slate-200 sm:text-base">
+              Pilotez la trésorerie de votre école en toute clarté : encaissements, échéances et relances en temps réel.
+            </p>
+
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <Link
+                href={`${basePath}/caisse`}
+                className="group inline-flex h-12 items-center gap-2.5 rounded-xl bg-emerald-500 px-5 text-sm font-extrabold text-[#04210f] shadow-[0_10px_30px_-8px_rgba(16,185,129,0.7),inset_0_1px_0_rgba(255,255,255,0.35)] transition-all hover:-translate-y-0.5 hover:bg-emerald-400"
+              >
+                <Banknote size={18} />
+                Ouvrir la Caisse
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+              </Link>
+              <Link
+                href={`${basePath}/impayes`}
+                className="inline-flex h-12 items-center gap-2.5 rounded-xl bg-white/[0.06] px-5 text-sm font-bold text-white ring-1 ring-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)] transition-all hover:bg-white/[0.12]"
+              >
+                <BellRing size={17} className="text-rose-300" />
+                Gérer les Impayés
+                {stats.overdueCount > 0 && (
+                  <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[11px] font-extrabold tabular-nums text-white">{stats.overdueCount}</span>
+                )}
+              </Link>
             </div>
           </div>
-          <div className="my-3">
-            <p className="text-2xl font-bold text-slate-900 tabular-nums tracking-tight">
-              {formatCFA(stats.attendu)}
-            </p>
-          </div>
-          <div className="flex items-center justify-between text-[11px] pt-2 border-t border-slate-100">
-            <span className="font-medium text-slate-500">
-              Échéancier scolaire {academicYear}
-            </span>
-            <Link href={`${basePath}/echeances`} className="text-slate-400 hover:text-slate-700 font-medium">
-              Gérer →
-            </Link>
-          </div>
-        </div>
 
-        {/* Reste à Percevoir */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Reste à Percevoir</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-              <Hourglass size={16} />
+          <div className="flex flex-col items-center gap-6 sm:flex-row lg:gap-8">
+            <div className="relative h-44 w-44 shrink-0">
+              <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90" role="img" aria-label={`Taux de recouvrement global : ${stats.taux}%`}>
+                <defs>
+                  <linearGradient id="ringGradient" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#34d399" />
+                    <stop offset="100%" stopColor="#38bdf8" />
+                  </linearGradient>
+                </defs>
+                <circle cx="70" cy="70" r={RING_R} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="12" />
+                <circle
+                  cx="70"
+                  cy="70"
+                  r={RING_R}
+                  fill="none"
+                  stroke="url(#ringGradient)"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                  strokeDasharray={RING_C}
+                  strokeDashoffset={RING_C * (1 - (ringReady ? stats.taux : 0) / 100)}
+                  className="transition-[stroke-dashoffset] duration-[1400ms] ease-out"
+                  style={{ filter: 'drop-shadow(0 0 8px rgba(52,211,153,0.7))' }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-4xl font-extrabold tabular-nums tracking-tight text-white">{stats.taux}<span className="text-xl text-emerald-300">%</span></span>
+                <span className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-200">Recouvré</span>
+              </div>
             </div>
-          </div>
-          <div className="my-3">
-            <p className="text-2xl font-bold text-slate-900 tabular-nums tracking-tight">
-              {formatCFA(stats.reste)}
-            </p>
-          </div>
-          <div className="flex items-center justify-between text-[11px] pt-2 border-t border-slate-100">
-            <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md">
-              {stats.pendingCount} échéance(s) en attente
-            </span>
-            <Link href={`${basePath}/caisse`} className="text-slate-400 hover:text-slate-700 font-medium">
-              Encaisser →
-            </Link>
+
+            <dl className="grid w-full grid-cols-3 gap-2 sm:w-auto sm:grid-cols-1 sm:gap-2.5">
+              {[
+                { label: 'Encaissé', value: compact(stats.encaisse), cls: 'text-emerald-300' },
+                { label: 'Reste', value: compact(stats.reste), cls: 'text-amber-300' },
+                { label: 'Impayés', value: compact(stats.impayes), cls: 'text-rose-300' },
+              ].map((s) => (
+                <div key={s.label} className="flex items-center justify-between gap-6 rounded-xl bg-white/[0.05] px-4 py-2.5 ring-1 ring-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)] max-sm:flex-col max-sm:items-start max-sm:gap-0.5 max-sm:px-3">
+                  <dt className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-200">{s.label}</dt>
+                  <dd className={`text-lg font-extrabold tabular-nums ${s.cls}`}>{s.value}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </div>
+      </section>
 
-        {/* Impayés Échus */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Impayés Échus</span>
-            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center">
-              <AlertTriangle size={16} />
-            </div>
-          </div>
-          <div className="my-3">
-            <p className="text-2xl font-bold text-rose-600 tabular-nums tracking-tight">
-              {formatCFA(stats.impayes)}
-            </p>
-          </div>
-          <div className="flex items-center justify-between text-[11px] pt-2 border-t border-slate-100">
-            <span className="font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md">
-              {stats.overdueCount} dossier(s) en retard
-            </span>
-            <Link href={`${basePath}/impayes`} className="text-rose-600 hover:text-rose-700 font-medium">
-              Relancer →
-            </Link>
-          </div>
-        </div>
-
+      {/* ── 4 CARTES KPI ── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          label="Total Attendu"
+          value={formatCFA(stats.attendu)}
+          icon={Wallet}
+          tone={{ chip: 'bg-sky-50 text-sky-800 ring-sky-300', value: 'text-slate-900', glow: 'bg-sky-300/40' }}
+          pills={[{ text: `Année ${academicYear}`, className: 'bg-sky-50 text-sky-900 ring-sky-300' }]}
+          linkHref={`${basePath}/echeances`}
+          linkLabel="Gérer"
+        />
+        <KpiCard
+          label="Encaissé Réel"
+          value={formatCFA(stats.encaisse)}
+          icon={TrendingUp}
+          tone={{ chip: 'bg-emerald-50 text-emerald-800 ring-emerald-300', value: 'text-emerald-800', glow: 'bg-emerald-300/40' }}
+          pills={[{ text: `${stats.taux}% recouvré`, className: 'bg-emerald-50 text-emerald-900 ring-emerald-300', icon: <ArrowUpRight size={12} /> }]}
+          linkHref={`${basePath}/paiements`}
+          linkLabel="Détails"
+        />
+        <KpiCard
+          label="Reste à Recouvrer"
+          value={formatCFA(stats.reste)}
+          icon={Hourglass}
+          tone={{ chip: 'bg-amber-50 text-amber-900 ring-amber-300', value: 'text-slate-900', glow: 'bg-amber-300/40' }}
+          pills={[
+            { text: `${stats.pendingCount} en attente`, className: 'bg-amber-50 text-amber-900 ring-amber-300' },
+            ...(stats.overdueCount > 0
+              ? [{ text: `${stats.overdueCount} en retard · ${compact(stats.impayes)} F`, className: 'bg-rose-50 text-rose-900 ring-rose-300', icon: <AlertTriangle size={12} /> }]
+              : []),
+          ]}
+          linkHref={`${basePath}/impayes`}
+          linkLabel="Relancer"
+        />
+        <KpiCard
+          label="Caisse du Jour"
+          value={formatCFA(stats.paiementsDuJour)}
+          icon={Banknote}
+          tone={{ chip: 'bg-emerald-50 text-emerald-800 ring-emerald-300', value: 'text-slate-900', glow: 'bg-emerald-300/40' }}
+          pills={[{ text: "Aujourd'hui", className: 'bg-emerald-50 text-emerald-900 ring-emerald-300', icon: <Activity size={12} /> }]}
+          linkHref={`${basePath}/caisse`}
+          linkLabel="Encaisser"
+        />
       </div>
 
-      {/* ── SECTION ANALYTIQUE ÉPURÉE (STYLE CLASSPANEL CÔTE À CÔTE) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      {/* ── FLUX DE TRÉSORERIE & OPÉRATIONS RAPIDES ── */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
 
-        {/* COURBE D'ÉVOLUTION DES ENCAISSEMENTS (GAUCHE - ATTENDU VS ENCAISSÉ) */}
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 sm:p-6 flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+        <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.06),0_10px_30px_-18px_rgba(15,23,42,0.18)] sm:p-6 lg:col-span-8">
+          <div className="mb-5 flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 tracking-tight">
-                Évolution des Encaissements
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Comparatif mensuel des flux attendus et encaissés
-              </p>
+              <h3 className="text-base font-extrabold tracking-tight text-slate-900">Flux de trésorerie</h3>
+              <p className="mt-0.5 text-sm font-medium text-slate-700">Comparatif mensuel des flux attendus et encaissés</p>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2.5 text-xs font-medium text-slate-600">
-                <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-300" />Attendu</span>
-                <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-600" />Encaissé</span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 text-xs font-bold text-slate-800">
+                <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-400" />Attendu</span>
+                <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-600" />Encaissé</span>
               </div>
 
-              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200/60">
-                <button
-                  onClick={() => setChartType('area')}
-                  className={`px-2 py-1 rounded-md text-[11px] font-bold transition-all ${
-                    chartType === 'area' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  Courbe
-                </button>
-                <button
-                  onClick={() => setChartType('bar')}
-                  className={`px-2 py-1 rounded-md text-[11px] font-bold transition-all ${
-                    chartType === 'bar' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  Barres
-                </button>
+              <div role="radiogroup" aria-label="Type de graphique" className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 ring-1 ring-inset ring-slate-200">
+                {(['area', 'bar'] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    role="radio"
+                    aria-checked={chartType === type}
+                    onClick={() => setChartType(type)}
+                    className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all ${
+                      chartType === type
+                        ? 'bg-white text-emerald-800 shadow-[0_1px_3px_rgba(15,23,42,0.2)] ring-1 ring-emerald-600'
+                        : 'text-slate-800 hover:bg-white/70'
+                    }`}
+                  >
+                    {type === 'area' ? 'Courbe' : 'Barres'}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
 
-          <div className="h-[240px] w-full">
+          <div className="h-[300px] w-full">
             {chartData.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center">
-                <p className="text-xs text-slate-400">Aucune donnée mensuelle disponible</p>
+              <div className="flex h-full flex-col items-center justify-center text-center">
+                <p className="text-sm font-semibold text-slate-700">Aucune donnée mensuelle disponible</p>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 {chartType === 'area' ? (
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="blueGlow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#2563EB" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#2563EB" stopOpacity={0.0} />
+                      <linearGradient id="emeraldFlow" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#059669" stopOpacity={0.4} />
+                        <stop offset="100%" stopColor="#059669" stopOpacity={0.02} />
                       </linearGradient>
-                      <linearGradient id="slateGlow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#94A3B8" stopOpacity={0.15} />
-                        <stop offset="95%" stopColor="#94A3B8" stopOpacity={0.0} />
+                      <linearGradient id="slateFlow" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#94A3B8" stopOpacity={0.22} />
+                        <stop offset="100%" stopColor="#94A3B8" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} dy={6} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} tickFormatter={compact} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: '12px',
-                        border: '1px solid #e2e8f0',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-                        fontSize: '12px',
-                        color: '#0f172a',
-                      }}
-                      formatter={(val: any) => formatCFA(Number(val))}
-                    />
-                    <Area type="monotone" dataKey="attendu" name="Attendu" stroke="#94a3b8" strokeWidth={1.5} fill="url(#slateGlow)" />
-                    <Area type="monotone" dataKey="encaisse" name="Encaissé" stroke="#2563EB" strokeWidth={2.5} fill="url(#blueGlow)" />
+                    <CartesianGrid strokeDasharray="2 6" vertical={false} stroke="#cbd5e1" strokeOpacity={0.7} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#334155', fontSize: 12, fontWeight: 600 }} dy={8} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#334155', fontSize: 12, fontWeight: 600 }} tickFormatter={compact} />
+                    <Tooltip content={<GlassTooltip />} cursor={{ stroke: '#0f172a', strokeOpacity: 0.15, strokeDasharray: '4 4' }} />
+                    <Area type="monotone" dataKey="attendu" name="Attendu" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 4" fill="url(#slateFlow)" />
+                    <Area type="monotone" dataKey="encaisse" name="Encaissé" stroke="#059669" strokeWidth={3} fill="url(#emeraldFlow)" activeDot={{ r: 5, fill: '#059669', stroke: '#fff', strokeWidth: 2 }} />
                   </AreaChart>
                 ) : (
                   <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} dy={6} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} tickFormatter={compact} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: '12px',
-                        border: '1px solid #e2e8f0',
-                        fontSize: '12px',
-                      }}
-                      formatter={(val: any) => formatCFA(Number(val))}
-                    />
-                    <Bar dataKey="attendu" name="Attendu" fill="#e2e8f0" radius={[4, 4, 0, 0]} barSize={14} />
-                    <Bar dataKey="encaisse" name="Encaissé" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={14} />
+                    <CartesianGrid strokeDasharray="2 6" vertical={false} stroke="#cbd5e1" strokeOpacity={0.7} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#334155', fontSize: 12, fontWeight: 600 }} dy={8} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#334155', fontSize: 12, fontWeight: 600 }} tickFormatter={compact} />
+                    <Tooltip content={<GlassTooltip />} cursor={{ fill: '#0f172a', fillOpacity: 0.05 }} />
+                    <Bar dataKey="attendu" name="Attendu" fill="#cbd5e1" radius={[6, 6, 0, 0]} barSize={14} />
+                    <Bar dataKey="encaisse" name="Encaissé" fill="#059669" radius={[6, 6, 0, 0]} barSize={14} />
                   </BarChart>
                 )}
               </ResponsiveContainer>
@@ -399,128 +495,124 @@ export function FinanceDashboard({
           </div>
         </div>
 
-        {/* ACTIONS DIRECTES & FLUX DU JOUR (DROITE - ÉPURÉ & ACTIONNABLE) */}
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 sm:p-6 flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+        <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.06),0_10px_30px_-18px_rgba(15,23,42,0.18)] sm:p-6 lg:col-span-4">
+          <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-4">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 tracking-tight">Opérations Rapides</h3>
-              <p className="text-xs text-slate-500">Accès immédiat pour le gestionnaire</p>
+              <h3 className="text-base font-extrabold tracking-tight text-slate-900">Opérations rapides</h3>
+              <p className="mt-0.5 text-sm font-medium text-slate-700">Accès immédiat</p>
             </div>
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-              Guichet Ouvert
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-extrabold text-emerald-900 ring-1 ring-inset ring-emerald-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+              Guichet ouvert
             </span>
           </div>
 
-          <div className="space-y-2.5 my-auto">
-            <Link
-              href={`${basePath}/caisse`}
-              className="group flex items-center justify-between p-3 rounded-xl border border-slate-200/90 hover:border-blue-300 hover:bg-blue-50/40 transition-all"
-            >
+          <div className="my-auto space-y-3">
+            <Link href={`${basePath}/caisse`} className="group flex items-center justify-between rounded-xl border border-slate-200 p-3.5 transition-all hover:border-emerald-600 hover:bg-emerald-50/60">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition-colors">
-                  <Banknote size={17} />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-300 transition-colors group-hover:bg-emerald-700 group-hover:text-white">
+                  <Banknote size={18} />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-900 group-hover:text-blue-900">Encaisser un élève</p>
-                  <p className="text-[11px] text-slate-500">Enregistrer un versement et imprimer le reçu</p>
+                  <p className="text-sm font-extrabold text-slate-900">Encaisser un élève</p>
+                  <p className="text-xs font-medium text-slate-700">Versement et reçu</p>
                 </div>
               </div>
-              <ArrowRight size={14} className="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight size={16} className="text-slate-700 transition-transform group-hover:translate-x-0.5" />
             </Link>
 
-            <Link
-              href={`${basePath}/paiements`}
-              className="group flex items-center justify-between p-3 rounded-xl border border-slate-200/90 hover:border-slate-300 hover:bg-slate-50 transition-all"
-            >
+            <Link href={`${basePath}/paiements`} className="group flex items-center justify-between rounded-xl border border-slate-200 p-3.5 transition-all hover:border-slate-900 hover:bg-slate-50">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 group-hover:bg-slate-800 group-hover:text-white flex items-center justify-center transition-colors">
-                  <Receipt size={17} />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-900 ring-1 ring-inset ring-slate-300 transition-colors group-hover:bg-slate-900 group-hover:text-white">
+                  <Receipt size={18} />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-900">Journal des Paiements</p>
-                  <p className="text-[11px] text-slate-500">Historique complet des transactions et reçus</p>
+                  <p className="text-sm font-extrabold text-slate-900">Journal des paiements</p>
+                  <p className="text-xs font-medium text-slate-700">Transactions et reçus</p>
                 </div>
               </div>
-              <ArrowRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight size={16} className="text-slate-700 transition-transform group-hover:translate-x-0.5" />
             </Link>
 
-            <Link
-              href={`${basePath}/impayes`}
-              className="group flex items-center justify-between p-3 rounded-xl border border-slate-200/90 hover:border-rose-300 hover:bg-rose-50/40 transition-all"
-            >
+            <Link href={`${basePath}/impayes`} className="group flex items-center justify-between rounded-xl border border-slate-200 p-3.5 transition-all hover:border-rose-600 hover:bg-rose-50/60">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-700 group-hover:bg-rose-600 group-hover:text-white flex items-center justify-center transition-colors">
-                  <BellRing size={17} />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-800 ring-1 ring-inset ring-rose-300 transition-colors group-hover:bg-rose-700 group-hover:text-white">
+                  <BellRing size={18} />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-900 group-hover:text-rose-900">Relances des Impayés</p>
-                  <p className="text-[11px] text-slate-500">{stats.overdueCount} dossiers nécessitant une relance</p>
+                  <p className="text-sm font-extrabold text-slate-900">Relances des impayés</p>
+                  <p className="text-xs font-medium text-slate-700">{stats.overdueCount} dossier(s) à relancer</p>
                 </div>
               </div>
-              <ArrowRight size={14} className="text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight size={16} className="text-slate-700 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
 
-          <div className="pt-3 border-t border-slate-100 mt-3 flex items-center justify-between text-xs text-slate-500">
-            <span>Encaissé aujourd&apos;hui :</span>
-            <span className="font-bold text-emerald-700 tabular-nums">{formatCFA(stats.paiementsDuJour)}</span>
+          <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4 text-sm font-semibold text-slate-800">
+            <span>Encaissé aujourd&apos;hui</span>
+            <span className="font-extrabold tabular-nums text-emerald-800">{formatCFA(stats.paiementsDuJour)}</span>
           </div>
         </div>
 
       </div>
 
-      {/* ── SECTION BASSE : JOURNAL DES DERNIERS ENCAISSEMENTS (TABLE ÉPURÉE) ── */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* ── FLUX DES DERNIERS PAIEMENTS ── */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.06),0_10px_30px_-18px_rgba(15,23,42,0.18)]">
+        <div className="flex flex-col justify-between gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:p-6">
           <div>
-            <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
-              Derniers Versements Enregistrés
+            <h3 className="flex items-center gap-2.5 text-base font-extrabold tracking-tight text-slate-900">
+              Derniers versements
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-emerald-900 ring-1 ring-inset ring-emerald-300">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                </span>
+                En direct
+              </span>
             </h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Journal en direct des paiements reçus au guichet
-            </p>
+            <p className="mt-0.5 text-sm font-medium text-slate-700">Journal des paiements reçus</p>
           </div>
 
           <Link
             href={`${basePath}/paiements`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors self-start sm:self-auto"
+            className="inline-flex items-center gap-1.5 self-start rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-900 transition-colors hover:border-emerald-600 hover:text-emerald-800 sm:self-auto"
           >
             <span>Voir tout le journal</span>
-            <ArrowRight size={13} />
+            <ArrowRight size={14} />
           </Link>
         </div>
 
         <div className="overflow-x-auto">
           {payments.length === 0 ? (
-            <div className="py-10 flex flex-col items-center justify-center text-center px-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 mb-2.5">
-                <Banknote size={20} />
+            <div className="flex flex-col items-center justify-center px-4 py-14 text-center">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-800 ring-1 ring-inset ring-slate-300">
+                <Banknote size={22} />
               </div>
-              <p className="text-xs font-bold text-slate-800">Aucun encaissement pour le moment</p>
-              <p className="text-[11px] text-slate-500 mt-0.5 max-w-sm">
+              <p className="text-sm font-extrabold text-slate-900">Aucun encaissement pour le moment</p>
+              <p className="mt-1 max-w-sm text-sm font-medium text-slate-700">
                 Enregistrez un premier versement au guichet pour alimenter le journal de caisse.
               </p>
               <Link
                 href={`${basePath}/caisse`}
-                className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-emerald-800"
               >
-                <PlusCircle size={13} />
+                <PlusCircle size={14} />
                 <span>Encaisser un versement</span>
               </Link>
             </div>
           ) : (
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[10px] bg-slate-50/60">
-                  <th className="py-3 px-5">Élève & Classe</th>
-                  <th className="py-3 px-5">Motif / Échéance</th>
-                  <th className="py-3 px-5">Montant</th>
-                  <th className="py-3 px-5">Mode de paiement</th>
-                  <th className="py-3 px-5">Date</th>
-                  <th className="py-3 px-5 text-right">Statut</th>
+                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-800">
+                  <th className="px-5 py-3.5 sm:px-6">Élève</th>
+                  <th className="px-5 py-3.5">Échéance</th>
+                  <th className="px-5 py-3.5">Mode</th>
+                  <th className="px-5 py-3.5">Date</th>
+                  <th className="px-5 py-3.5 text-right">Montant net</th>
+                  <th className="px-5 py-3.5 text-right sm:px-6">Reçu</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-200">
                 {payments.slice(0, 6).map((p, idx) => {
                   const studentName = p.student
                     ? `${p.student.last_name || ''} ${p.student.first_name || ''}`.trim()
@@ -530,6 +622,17 @@ export function FinanceDashboard({
                     ? `${p.student.last_name.charAt(0)}${p.student.first_name?.charAt(0) || ''}`
                     : 'EC'
                   const method = (p.payment_method || 'espèces').toLowerCase()
+                  const isMobile = ['mobile', 'momo', 'wave', 'tmoney', 'flooz'].some(k => method.includes(k))
+                  const isTransfer = method.includes('virement') || method.includes('banque')
+                  const isCheque = method.includes('cheque') || method.includes('chèque')
+                  const methodText = isMobile ? 'Mobile Money' : isTransfer ? 'Virement' : isCheque ? 'Chèque' : 'Espèces'
+                  const methodTone = isMobile
+                    ? 'bg-sky-50 text-sky-900 ring-sky-300'
+                    : isTransfer
+                      ? 'bg-violet-50 text-violet-900 ring-violet-300'
+                      : isCheque
+                        ? 'bg-amber-50 text-amber-900 ring-amber-300'
+                        : 'bg-emerald-50 text-emerald-900 ring-emerald-300'
                   const dateFormatted = p.paid_at
                     ? new Date(p.paid_at).toLocaleDateString('fr-FR', {
                         day: '2-digit',
@@ -539,44 +642,44 @@ export function FinanceDashboard({
                     : '—'
 
                   return (
-                    <tr key={p.id || idx} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3 px-5">
+                    <tr key={p.id || idx} className="transition-colors hover:bg-slate-50">
+                      <td className="px-5 py-3.5 sm:px-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-800 font-black text-[11px] flex items-center justify-center shrink-0">
-                            {initials}
+                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-extrabold ring-1 ring-inset ${avatarTone(p.student?.id || studentName)}`}>
+                            {initials.toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-bold text-slate-900 truncate">{studentName}</p>
-                            <p className="text-[10px] text-slate-500 font-medium">{className}</p>
+                            <p className="truncate font-extrabold text-slate-900">{studentName}</p>
+                            <span className="mt-0.5 inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold text-slate-800 ring-1 ring-inset ring-slate-300">{className}</span>
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 px-5 font-medium text-slate-700">
+                      <td className="px-5 py-3.5 font-semibold text-slate-900">
                         {p.schedule?.label || 'Frais scolaires'}
                       </td>
-                      <td className="py-3 px-5 font-bold text-slate-900 tabular-nums">
-                        {formatCFA(p.amount)}
-                      </td>
-                      <td className="py-3 px-5">
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10.5px] font-semibold capitalize border border-slate-200">
-                          {method.includes('mobile') || method.includes('momo') || method.includes('wave') ? (
-                            <Smartphone size={11} className="text-blue-600" />
-                          ) : method.includes('virement') || method.includes('banque') ? (
-                            <Building size={11} className="text-violet-600" />
-                          ) : (
-                            <Banknote size={11} className="text-emerald-600" />
-                          )}
-                          <span>{p.payment_method || 'Espèces'}</span>
+                      <td className="px-5 py-3.5">
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset ${methodTone}`}>
+                          {isMobile ? <Smartphone size={12} /> : isTransfer ? <Building size={12} /> : isCheque ? <FileText size={12} /> : <Banknote size={12} />}
+                          {methodText}
                         </span>
                       </td>
-                      <td className="py-3 px-5 text-slate-500 font-medium">
+                      <td className="whitespace-nowrap px-5 py-3.5 font-semibold text-slate-800">
                         {dateFormatted}
                       </td>
-                      <td className="py-3 px-5 text-right">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <span>Validé</span>
-                        </span>
+                      <td className="whitespace-nowrap px-5 py-3.5 text-right text-base font-extrabold tabular-nums tracking-tight text-emerald-800">
+                        +{formatCFA(p.amount)}
+                      </td>
+                      <td className="px-5 py-3.5 text-right sm:px-6">
+                        <button
+                          type="button"
+                          onClick={() => handleReceipt(p, idx)}
+                          title="Télécharger le reçu"
+                          aria-label={`Télécharger le reçu de ${studentName}`}
+                          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-900 transition-all hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-900"
+                        >
+                          <Download size={14} />
+                          <span className="hidden md:inline">Reçu</span>
+                        </button>
                       </td>
                     </tr>
                   )
