@@ -31,6 +31,7 @@ export function FinancePageBanner({
       title={title}
       subtitle={subtitle}
       badge={badge}
+      badgeIcon={icon}
       stats={stats}
       actions={actions}
       className="mb-6"

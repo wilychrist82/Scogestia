@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition, FormEvent } from 'react'
 import Link from 'next/link'
-import { Download, Plus, Search, FileText, X, ChevronRight, Loader2, AlertCircle, Wallet, BellRing, Receipt } from 'lucide-react'
+import { Download, Plus, Search, FileText, X, ChevronRight, Loader2, AlertCircle, Wallet, BellRing, Receipt, Banknote, Smartphone, Landmark } from 'lucide-react'
 import { recordPayment } from '@/app/actions/finance'
 import { generatePaymentReceipt } from '@/lib/pdf/receipt'
 import { FinanceNavTabs } from './FinanceNavTabs'
@@ -54,11 +54,35 @@ const METHOD_LABELS: Record<string, string> = {
 
 const methodLabel = (m: string) => METHOD_LABELS[m] ?? m
 
+const METHOD_STYLES: Record<string, { tone: string; icon: typeof Banknote }> = {
+  especes: { tone: 'bg-emerald-50 text-emerald-900 ring-emerald-300', icon: Banknote },
+  wave: { tone: 'bg-sky-50 text-sky-900 ring-sky-300', icon: Smartphone },
+  tmoney: { tone: 'bg-amber-50 text-amber-900 ring-amber-300', icon: Smartphone },
+  flooz: { tone: 'bg-indigo-50 text-indigo-900 ring-indigo-300', icon: Smartphone },
+  banque: { tone: 'bg-violet-50 text-violet-900 ring-violet-300', icon: Landmark },
+}
+const methodStyle = (m: string) =>
+  METHOD_STYLES[m] ?? { tone: 'bg-slate-100 text-slate-900 ring-slate-300', icon: Wallet }
+
+const AVATAR_TONES = [
+  'bg-emerald-100 text-emerald-900 ring-emerald-300',
+  'bg-sky-100 text-sky-900 ring-sky-300',
+  'bg-violet-100 text-violet-900 ring-violet-300',
+  'bg-amber-100 text-amber-900 ring-amber-300',
+  'bg-rose-100 text-rose-900 ring-rose-300',
+  'bg-teal-100 text-teal-900 ring-teal-300',
+]
+const avatarTone = (seed: string) => {
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
+  return AVATAR_TONES[h % AVATAR_TONES.length]
+}
+
 const formatCFA = (amount: number) =>
   `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount)} FCFA`
 
 const inputCls =
-  'w-full h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/15 outline-none transition-all'
+  'w-full h-11 px-3 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-600 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/15 outline-none transition-all'
 
 const sumPayments = (list?: { amount: number }[] | null) =>
   (list || []).reduce((acc, p) => acc + Number(p.amount || 0), 0)
@@ -216,12 +240,12 @@ export function PaiementsManager({
       )}
 
       {/* Tableau */}
-      <section className="bg-white rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 justify-between sm:items-center">
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.06),0_10px_30px_-18px_rgba(15,23,42,0.18)]">
+        <div className="flex flex-col justify-between gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:p-5">
           <div className="relative w-full sm:max-w-sm">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600" />
             <input
-              className="w-full h-9 pl-9 pr-3 bg-white border border-slate-200 rounded-lg text-sm placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/15 outline-none transition-all"
+              className="h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm font-medium text-slate-900 outline-none transition-all placeholder:text-slate-600 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/15"
               placeholder="Rechercher un élève ou une référence…"
               type="search"
               aria-label="Rechercher dans les paiements"
@@ -229,19 +253,19 @@ export function PaiementsManager({
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-sm font-semibold text-slate-800">
             {filteredPayments.length} paiement{filteredPayments.length > 1 ? 's' : ''}
-            {filteredPayments.length > 0 && <> · <span className="font-medium text-slate-700">{formatCFA(totalFiltered)}</span></>}
+            {filteredPayments.length > 0 && <> · <span className="font-extrabold tabular-nums text-emerald-800">{formatCFA(totalFiltered)}</span></>}
           </p>
         </div>
 
         {filteredPayments.length === 0 ? (
-          <div className="py-16 flex flex-col items-center text-center px-4">
-            <div className="w-10 h-10 rounded-lg bg-slate-50 text-slate-400 border border-slate-200 flex items-center justify-center mb-3">
-              <Wallet size={20} />
+          <div className="flex flex-col items-center px-4 py-16 text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-800 ring-1 ring-inset ring-slate-300">
+              <Wallet size={22} />
             </div>
-            <p className="text-sm font-medium text-slate-800">{searchTerm ? 'Aucun résultat' : 'Aucun paiement enregistré'}</p>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-sm font-extrabold text-slate-900">{searchTerm ? 'Aucun résultat' : 'Aucun paiement enregistré'}</p>
+            <p className="mt-1 text-sm font-medium text-slate-700">
               {searchTerm ? `Aucun paiement ne correspond à « ${searchTerm} ».` : 'Enregistrez votre premier paiement pour le voir apparaître ici.'}
             </p>
           </div>
@@ -249,50 +273,69 @@ export function PaiementsManager({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500">
-                  <th className="py-3 px-5 font-medium">Date</th>
-                  <th className="py-3 px-5 font-medium">Élève</th>
-                  <th className="py-3 px-5 font-medium">Classe</th>
-                  <th className="py-3 px-5 font-medium">Frais</th>
-                  <th className="py-3 px-5 font-medium text-right">Montant</th>
-                  <th className="py-3 px-5 font-medium">Moyen</th>
-                  <th className="py-3 px-5 font-medium text-right">Reçu</th>
+                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-800">
+                  <th className="px-5 py-3.5">Date & heure</th>
+                  <th className="px-5 py-3.5">Élève</th>
+                  <th className="px-5 py-3.5">Tranche réglée</th>
+                  <th className="px-5 py-3.5">Mode</th>
+                  <th className="px-5 py-3.5 text-right">Montant</th>
+                  <th className="px-5 py-3.5 text-right">Reçu</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredPayments.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-5 text-slate-600 whitespace-nowrap">
-                      {new Date(payment.paid_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                      <span className="block text-[11px] text-slate-400">
-                        {new Date(payment.paid_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </td>
-                    <td className="py-3 px-5 font-medium text-slate-900">
-                      {payment.student?.last_name} {payment.student?.first_name}
-                    </td>
-                    <td className="py-3 px-5 text-slate-600">{payment.student?.classes?.name || '—'}</td>
-                    <td className="py-3 px-5 text-slate-600">{payment.schedule?.label || '—'}</td>
-                    <td className="py-3 px-5 text-right font-semibold text-slate-900 tabular-nums whitespace-nowrap">{formatCFA(payment.amount)}</td>
-                    <td className="py-3 px-5">
-                      <span className="inline-flex px-2 py-0.5 rounded-md border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700">
-                        {methodLabel(payment.payment_method)}
-                      </span>
-                    </td>
-                    <td className="py-3 px-5">
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() => handleReceipt(payment)}
-                          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors"
-                          title="Télécharger le reçu (PDF)"
-                        >
-                          <FileText size={13} /> Reçu
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-slate-200">
+                {filteredPayments.map((payment) => {
+                  const style = methodStyle(payment.payment_method)
+                  const MethodIcon = style.icon
+                  const studentName = `${payment.student?.last_name || ''} ${payment.student?.first_name || ''}`.trim()
+                  const initials = `${payment.student?.last_name?.charAt(0) || ''}${payment.student?.first_name?.charAt(0) || ''}`.toUpperCase() || '?'
+
+                  return (
+                    <tr key={payment.id} className="transition-colors hover:bg-slate-50">
+                      <td className="whitespace-nowrap px-5 py-4">
+                        <p className="font-bold text-slate-900">
+                          {new Date(payment.paid_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        </p>
+                        <p className="mt-0.5 text-xs font-semibold tabular-nums text-slate-700">
+                          {new Date(payment.paid_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-extrabold ring-1 ring-inset ${avatarTone(payment.id)}`}>
+                            {initials}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate font-extrabold text-slate-900">{studentName || '—'}</p>
+                            <span className="mt-0.5 inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold text-slate-800 ring-1 ring-inset ring-slate-300">
+                              {payment.student?.classes?.name || 'Sans classe'}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 font-semibold text-slate-900">{payment.schedule?.label || '—'}</td>
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold ring-1 ring-inset ${style.tone}`}>
+                          <MethodIcon size={13} />
+                          {methodLabel(payment.payment_method)}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4 text-right text-base font-extrabold tabular-nums tracking-tight text-slate-900">{formatCFA(payment.amount)}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => handleReceipt(payment)}
+                            className="group inline-flex h-9 items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 text-xs font-extrabold text-emerald-900 transition-all hover:border-emerald-700 hover:bg-emerald-700 hover:text-white"
+                            title="Télécharger le reçu certifié (PDF)"
+                          >
+                            <FileText size={14} /> Reçu
+                            <Download size={13} className="opacity-70 transition-transform group-hover:translate-y-0.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -318,7 +361,7 @@ export function PaiementsManager({
                 onClick={closeModal}
                 disabled={isPending}
                 aria-label="Fermer"
-                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-md hover:bg-slate-100 transition-colors"
+                className="text-slate-700 hover:text-slate-900 p-1.5 rounded-md hover:bg-slate-100 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -335,7 +378,7 @@ export function PaiementsManager({
                 )}
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-slate-700" htmlFor="scheduleId">
+                  <label className="text-sm font-bold text-slate-900" htmlFor="scheduleId">
                     Échéance concernée <span className="text-rose-500">*</span>
                   </label>
                   <select
@@ -357,12 +400,12 @@ export function PaiementsManager({
                     })}
                   </select>
                   {pendingSchedules.length === 0 && (
-                    <p className="text-xs text-slate-500">Aucune échéance en attente. Générez d&apos;abord des échéances.</p>
+                    <p className="text-xs font-medium text-slate-700">Aucune échéance en attente. Générez d&apos;abord des échéances.</p>
                   )}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-slate-700" htmlFor="amount">
+                  <label className="text-sm font-bold text-slate-900" htmlFor="amount">
                     Montant encaissé (FCFA) <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -376,13 +419,13 @@ export function PaiementsManager({
                     required
                   />
                   {selectedRemaining !== undefined && (
-                    <p className="text-xs text-slate-500">Reste dû sur cette échéance : <span className="font-medium text-slate-700">{formatCFA(selectedRemaining)}</span></p>
+                    <p className="text-xs font-medium text-slate-700">Reste dû sur cette échéance : <span className="font-medium text-slate-700">{formatCFA(selectedRemaining)}</span></p>
                   )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-slate-700" htmlFor="paymentMethod">
+                    <label className="text-sm font-bold text-slate-900" htmlFor="paymentMethod">
                       Moyen de paiement <span className="text-rose-500">*</span>
                     </label>
                     <select className={inputCls} id="paymentMethod" name="paymentMethod" required>
@@ -393,8 +436,8 @@ export function PaiementsManager({
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-slate-700" htmlFor="transactionRef">
-                      Référence <span className="text-slate-400 font-normal">(optionnel)</span>
+                    <label className="text-sm font-bold text-slate-900" htmlFor="transactionRef">
+                      Référence <span className="text-slate-600 font-normal">(optionnel)</span>
                     </label>
                     <input className={inputCls} id="transactionRef" name="transactionRef" type="text" placeholder="Ex : TXN-12345678" />
                   </div>

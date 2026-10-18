@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { Send, Search, Phone, MessageCircle, BellRing, Loader2, CheckCircle2, AlertCircle, PartyPopper, X, ChevronRight, AlertTriangle } from 'lucide-react'
+import { Send, Search, Phone, MessageCircle, BellRing, Loader2, CheckCircle2, AlertCircle, PartyPopper, X, ChevronRight, AlertTriangle, Clock, CalendarDays } from 'lucide-react'
 import { sendPaymentReminder, sendBulkPaymentReminders } from '@/app/actions/finance'
 import { FinanceNavTabs } from './FinanceNavTabs'
 import { FinancePageBanner } from './FinancePageBanner'
@@ -33,6 +33,21 @@ type Feedback = { type: 'success' | 'error', message: string } | null
 
 const formatCFA = (amount: number) =>
   `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount)} FCFA`
+
+const AVATAR_TONES = [
+  'bg-emerald-100 text-emerald-900 ring-emerald-300',
+  'bg-sky-100 text-sky-900 ring-sky-300',
+  'bg-violet-100 text-violet-900 ring-violet-300',
+  'bg-amber-100 text-amber-900 ring-amber-300',
+  'bg-rose-100 text-rose-900 ring-rose-300',
+  'bg-teal-100 text-teal-900 ring-teal-300',
+]
+
+const avatarTone = (seed: string) => {
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
+  return AVATAR_TONES[h % AVATAR_TONES.length]
+}
 
 /** Nombre de jours de retard (0 si l'échéance n'est pas encore dépassée). */
 const getDaysLate = (dueDateStr: string) => {
@@ -140,10 +155,10 @@ export function ImpayesManager({ impayes, basePath = '/admin/finance' }: Props &
             type="button"
             disabled={isSendingBulk || filtered.length === 0}
             onClick={handleBulk}
-            className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md transition-colors disabled:opacity-50"
+            className="group inline-flex h-12 items-center justify-center gap-2.5 rounded-xl bg-rose-500 px-5 text-sm font-extrabold text-white shadow-[0_10px_30px_-8px_rgba(244,63,94,0.7),inset_0_1px_0_rgba(255,255,255,0.3)] transition-all hover:-translate-y-0.5 hover:bg-rose-400 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
           >
-            {isSendingBulk ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-            <span>{query ? 'Relancer la sélection' : 'Relancer tous les parents'}</span>
+            {isSendingBulk ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} className="transition-transform group-hover:translate-x-0.5" />}
+            <span>{isSendingBulk ? 'Envoi des relances…' : query ? 'Relancer la sélection' : 'Relancer tous les parents'}</span>
           </button>
         }
       />
@@ -152,114 +167,140 @@ export function ImpayesManager({ impayes, basePath = '/admin/finance' }: Props &
       {feedback && (
         <div
           role="status"
-          className={`flex items-start gap-2.5 rounded-lg border px-4 py-3 text-sm ${
+          className={`flex items-start gap-2.5 rounded-xl border px-4 py-3 text-sm font-semibold ${
             feedback.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              : 'bg-rose-50 border-rose-200 text-rose-800'
+              ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+              : 'bg-rose-50 border-rose-300 text-rose-900'
           }`}
         >
-          {feedback.type === 'success' ? <CheckCircle2 size={16} className="mt-0.5 shrink-0" /> : <AlertCircle size={16} className="mt-0.5 shrink-0" />}
+          {feedback.type === 'success' ? <CheckCircle2 size={17} className="mt-0.5 shrink-0" /> : <AlertCircle size={17} className="mt-0.5 shrink-0" />}
           <p className="flex-1">{feedback.message}</p>
-          <button type="button" onClick={() => setFeedback(null)} aria-label="Fermer" className="opacity-60 hover:opacity-100">
-            <X size={14} />
+          <button type="button" onClick={() => setFeedback(null)} aria-label="Fermer" className="opacity-70 hover:opacity-100">
+            <X size={15} />
           </button>
         </div>
       )}
 
       {/* Tableau */}
-      <section className="bg-white rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 justify-between sm:items-center">
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.06),0_10px_30px_-18px_rgba(15,23,42,0.18)]">
+        <div className="flex flex-col justify-between gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:p-5">
           <div className="relative w-full sm:max-w-sm">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600" />
             <input
               value={query}
               onChange={e => setQuery(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 bg-white border border-slate-200 rounded-lg text-sm placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/15 outline-none transition-all"
+              className="h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm font-medium text-slate-900 outline-none transition-all placeholder:text-slate-600 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/15"
               placeholder="Rechercher un élève, un matricule, une classe…"
               type="search"
               aria-label="Rechercher dans les impayés"
             />
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-sm font-semibold text-slate-800">
             {filtered.length} résultat{filtered.length > 1 ? 's' : ''}
-            {filtered.length > 0 && <> · <span className="font-medium text-slate-700">{formatCFA(totalDu)}</span></>}
+            {filtered.length > 0 && <> · <span className="font-extrabold tabular-nums text-rose-700">{formatCFA(totalDu)}</span></>}
           </p>
         </div>
 
         {rows.length === 0 ? (
-          <div className="py-16 flex flex-col items-center text-center px-4">
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center mb-3">
-              <PartyPopper size={20} />
+          <div className="flex flex-col items-center px-4 py-16 text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-300">
+              <PartyPopper size={22} />
             </div>
-            <p className="text-sm font-medium text-slate-800">Aucun impayé</p>
-            <p className="text-xs text-slate-500 mt-1">Tous les élèves sont à jour dans leurs paiements.</p>
+            <p className="text-sm font-extrabold text-slate-900">Aucun impayé</p>
+            <p className="mt-1 text-sm font-medium text-slate-700">Tous les élèves sont à jour dans leurs paiements.</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-16 text-center px-4">
-            <p className="text-sm font-medium text-slate-800">Aucun résultat</p>
-            <p className="text-xs text-slate-500 mt-1">Aucun dossier ne correspond à « {query} ».</p>
+          <div className="px-4 py-16 text-center">
+            <p className="text-sm font-extrabold text-slate-900">Aucun résultat</p>
+            <p className="mt-1 text-sm font-medium text-slate-700">Aucun dossier ne correspond à « {query} ».</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-500">
-                  <th className="py-3 px-5 font-medium">Élève</th>
-                  <th className="py-3 px-5 font-medium">Classe</th>
-                  <th className="py-3 px-5 font-medium">Contact parent</th>
-                  <th className="py-3 px-5 font-medium text-right">Reste à payer</th>
-                  <th className="py-3 px-5 font-medium text-center">Retard</th>
-                  <th className="py-3 px-5 font-medium text-right">Actions</th>
+                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-800">
+                  <th className="px-5 py-3.5">Élève & Parent</th>
+                  <th className="px-5 py-3.5">Échéance</th>
+                  <th className="px-5 py-3.5 text-right">Reste à payer</th>
+                  <th className="px-5 py-3.5 text-center">Retard</th>
+                  <th className="px-5 py-3.5 text-right">Relance</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-200">
                 {filtered.map((r) => {
                   const { item, remainder, daysLate, parentPhone, parentUserId } = r
                   const waText = `Bonjour, sauf erreur de notre part, le paiement de "${item.label}" (reste : ${formatCFA(remainder)}) pour votre enfant ${item.student?.first_name} ${item.student?.last_name} est en retard de ${daysLate} jour${daysLate > 1 ? 's' : ''}. Merci de régulariser la situation.`
-                  const severity = daysLate > 30 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                  const parentName = item.student?.parent_links?.[0]?.parent_user?.full_name
+                  const initials = `${item.student?.last_name?.charAt(0) || ''}${item.student?.first_name?.charAt(0) || ''}`.toUpperCase() || '?'
+                  const lateBadge = daysLate === 0
+                    ? 'bg-amber-50 text-amber-900 ring-amber-300'
+                    : daysLate > 30
+                      ? 'bg-rose-600 text-white ring-rose-700 shadow-[0_4px_12px_-4px_rgba(225,29,72,0.6)]'
+                      : 'bg-rose-50 text-rose-800 ring-rose-300'
 
                   return (
-                    <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3 px-5">
-                        <p className="font-medium text-slate-900">{item.student?.last_name} {item.student?.first_name}</p>
-                        <p className="text-xs text-slate-500">{item.label}</p>
+                    <tr key={item.id} className="transition-colors hover:bg-slate-50">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3.5">
+                          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ring-1 ring-inset ${avatarTone(item.id)}`}>
+                            {initials}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate font-extrabold text-slate-900">{item.student?.last_name} {item.student?.first_name}</p>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                              <span className="inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold text-slate-800 ring-1 ring-inset ring-slate-300">
+                                {item.student?.classes?.name || 'Sans classe'}
+                              </span>
+                              {parentPhone ? (
+                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-800">
+                                  <Phone size={12} className="text-emerald-700" />
+                                  {parentName ? `${parentName} · ` : ''}<span className="tabular-nums">{parentPhone}</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                                  <Phone size={12} />Parent non renseigné
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </td>
-                      <td className="py-3 px-5 text-slate-600">{item.student?.classes?.name || '—'}</td>
-                      <td className="py-3 px-5 text-slate-600">
-                        {parentPhone ? (
-                          <span className="inline-flex items-center gap-1.5"><Phone size={13} className="text-slate-400" />{parentPhone}</span>
-                        ) : (
-                          <span className="text-slate-400">Non renseigné</span>
-                        )}
+                      <td className="px-5 py-4">
+                        <p className="font-bold text-slate-900">{item.label}</p>
+                        <p className="mt-0.5 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                          <CalendarDays size={12} />
+                          {new Date(item.due_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </p>
                       </td>
-                      <td className="py-3 px-5 text-right font-semibold text-rose-600 tabular-nums whitespace-nowrap">{formatCFA(remainder)}</td>
-                      <td className="py-3 px-5 text-center">
-                        <span className={`inline-flex px-2 py-0.5 rounded-md border text-xs font-medium tabular-nums ${severity}`}>
-                          {daysLate} j
+                      <td className="whitespace-nowrap px-5 py-4 text-right text-base font-extrabold tabular-nums tracking-tight text-rose-700">{formatCFA(remainder)}</td>
+                      <td className="px-5 py-4 text-center">
+                        <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 text-xs font-extrabold tabular-nums ring-1 ring-inset ${lateBadge}`}>
+                          <Clock size={13} />
+                          {daysLate === 0 ? 'À échéance' : `${daysLate} j de retard`}
                         </span>
                       </td>
-                      <td className="py-3 px-5">
-                        <div className="flex justify-end items-center gap-2">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-end gap-2">
                           {parentPhone && (
                             <a
                               href={`https://wa.me/${parentPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(waText)}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="w-8 h-8 rounded-lg border border-slate-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 flex items-center justify-center transition-colors"
+                              className="flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 transition-all hover:border-emerald-700 hover:bg-emerald-700 hover:text-white"
                               title="Relancer par WhatsApp"
                               aria-label="Relancer par WhatsApp"
                             >
-                              <MessageCircle size={15} />
+                              <MessageCircle size={16} />
                             </a>
                           )}
                           <button
                             type="button"
                             disabled={sendingId === item.id || !parentUserId}
                             onClick={() => handleSingle(r)}
-                            title={parentUserId ? 'Envoyer une notification dans l\u2019application' : 'Aucun compte parent associé'}
-                            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={parentUserId ? 'Envoyer une notification dans l’application' : 'Aucun compte parent associé'}
+                            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-900 transition-all hover:border-rose-600 hover:bg-rose-50 hover:text-rose-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-300 disabled:hover:bg-white disabled:hover:text-slate-900"
                           >
-                            {sendingId === item.id ? <Loader2 size={13} className="animate-spin" /> : <BellRing size={13} />}
+                            {sendingId === item.id ? <Loader2 size={14} className="animate-spin" /> : <BellRing size={14} />}
                             Relancer
                           </button>
                         </div>

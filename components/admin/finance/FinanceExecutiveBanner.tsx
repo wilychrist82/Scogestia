@@ -20,6 +20,17 @@ type Props = {
   children?: React.ReactNode
 }
 
+// Les couleurs de stats sont passées par les pages (variantes claires ou sombres) :
+// on les ramène à des teintes lisibles sur le fond #050B18.
+const statTone = (color?: string) => {
+  if (!color) return 'text-white'
+  if (color.includes('emerald') || color.includes('green')) return 'text-emerald-300'
+  if (color.includes('rose') || color.includes('red')) return 'text-rose-300'
+  if (color.includes('amber') || color.includes('orange') || color.includes('yellow')) return 'text-amber-300'
+  if (color.includes('blue') || color.includes('sky') || color.includes('indigo') || color.includes('cyan')) return 'text-sky-300'
+  return 'text-white'
+}
+
 export function FinanceExecutiveBanner({
   title,
   subtitle,
@@ -32,45 +43,48 @@ export function FinanceExecutiveBanner({
 }: Props) {
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#DBEAFE] via-[#EFF6FF] to-[#BFDBFE]/80 border border-blue-200/70 p-6 sm:p-7 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-5 ${className}`}
+      className={`relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl bg-[#050B18] p-6 shadow-[0_30px_80px_-30px_rgba(5,11,24,0.8)] ring-1 ring-white/10 sm:p-8 lg:flex-row lg:items-center ${className}`}
     >
-      {/* Lueur d'ambiance bleue douce en arrière-plan */}
-      <div className="absolute top-0 right-0 w-80 h-80 bg-blue-400/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-10 right-1/4 w-64 h-64 bg-indigo-300/15 rounded-full blur-2xl pointer-events-none" />
+      {/* Aurores émeraude & cyan */}
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-20 -top-32 h-[380px] w-[480px] rounded-full bg-emerald-500/20 blur-[120px]" />
+        <div className="absolute -bottom-40 right-0 h-[340px] w-[440px] rounded-full bg-cyan-400/10 blur-[130px]" />
+        <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_left,black_20%,transparent_75%)]" />
+      </div>
 
-      {/* Contenu gauche : Titre, badge et description claire */}
-      <div className="relative z-10 max-w-xl">
+      {/* Contenu gauche : badge, titre, sous-titre */}
+      <div className="relative z-10 max-w-2xl">
         {badge && (
-          <div className="inline-flex items-center gap-1.5 bg-amber-100/90 border border-amber-300/70 rounded-full px-2.5 py-0.5 mb-2.5 text-amber-900 shadow-2xs">
-            <BadgeIcon size={12} className="text-amber-700" />
-            <span className="text-[10.5px] font-bold uppercase tracking-wider text-amber-900">{badge}</span>
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-400/10 px-3.5 py-1.5 text-emerald-200 ring-1 ring-inset ring-emerald-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]">
+            <BadgeIcon size={13} />
+            <span className="text-[11px] font-bold uppercase tracking-[0.14em]">{badge}</span>
           </div>
         )}
 
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-tight">
+        <h1 className="text-2xl font-extrabold leading-[1.1] tracking-[-0.03em] text-white sm:text-3xl">
           {title}
         </h1>
 
         {subtitle && (
-          <p className="text-xs sm:text-sm text-slate-600 mt-1.5 font-medium leading-relaxed">
+          <p className="mt-2.5 max-w-xl text-sm font-medium leading-relaxed text-slate-200 sm:text-base">
             {subtitle}
           </p>
         )}
       </div>
 
-      {/* Contenu droite : Stats ou boutons d'actions épurés (Style ClassPanel) */}
+      {/* Contenu droite : stats et actions */}
       <div className="relative z-10 flex flex-wrap items-center gap-3 self-start lg:self-center">
         {stats && stats.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap mr-1">
+          <div className="mr-1 flex flex-wrap items-center gap-2.5">
             {stats.map((stat, i) => (
               <div
                 key={i}
-                className="bg-white/80 hover:bg-white border border-blue-200/80 rounded-xl px-3.5 py-2 text-center transition-all shadow-xs min-w-[80px]"
+                className="min-w-[104px] rounded-xl bg-white/[0.05] px-4 py-3 ring-1 ring-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-md transition-colors hover:bg-white/[0.09]"
               >
-                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-200">
                   {stat.label}
                 </p>
-                <p className={`text-base font-black leading-none ${stat.color || 'text-slate-900'}`}>
+                <p className={`whitespace-nowrap text-lg font-extrabold leading-none tabular-nums tracking-tight ${statTone(stat.color)}`}>
                   {stat.value}
                 </p>
               </div>
@@ -79,7 +93,7 @@ export function FinanceExecutiveBanner({
         )}
 
         {actions && (
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex flex-wrap items-center gap-2.5">
             {actions}
           </div>
         )}
