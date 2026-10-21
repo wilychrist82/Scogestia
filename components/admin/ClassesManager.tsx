@@ -4,8 +4,9 @@ import { useState, useTransition, FormEvent } from 'react'
 import Link from 'next/link'
 import { createClass, updateClass, deleteClass } from '@/app/actions/classes'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Presentation, Plus, Users, MoreVertical, Eye, Edit2, Trash2, X } from 'lucide-react'
+import { Presentation, Plus, Users, MoreVertical, Eye, Edit2, Trash2, X, AlertTriangle, GraduationCap, Baby, School } from 'lucide-react'
 import { sortClasses } from '@/lib/classes'
+import { KpiCard } from './KpiCard'
 
 export type ClassItem = {
   id: string
@@ -21,10 +22,14 @@ type Props = {
   classes: ClassItem[]
 }
 
+const labelCls = 'text-xs font-bold uppercase tracking-wider text-slate-700'
+const fieldCls =
+  'w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-base font-medium text-slate-900 placeholder:text-slate-500 outline-none transition-all focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20'
+
 export function ClassesManager({ classes }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [classToEdit, setClassToEdit] = useState<ClassItem | null>(null)
-  
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [classToDelete, setClassToDelete] = useState<ClassItem | null>(null)
   const [openActionId, setOpenActionId] = useState<string | null>(null)
@@ -51,6 +56,8 @@ export function ClassesManager({ classes }: Props) {
     return true;
   }))
 
+  const totalStudents = classes.reduce((acc, cls) => acc + (cls.student_count ?? 0), 0)
+
   const openAddModal = () => {
     setClassToEdit(null)
     setError(null)
@@ -73,7 +80,7 @@ export function ClassesManager({ classes }: Props) {
     e.preventDefault()
     setError(null)
     const formData = new FormData(e.currentTarget)
-    
+
     startTransition(async () => {
       let result;
       if (classToEdit) {
@@ -94,7 +101,7 @@ export function ClassesManager({ classes }: Props) {
   const handleDelete = () => {
     if (!classToDelete) return
     setError(null)
-    
+
     startTransition(async () => {
       const result = await deleteClass(classToDelete.id)
       if (result?.error) {
@@ -106,66 +113,78 @@ export function ClassesManager({ classes }: Props) {
   }
 
   return (
-    <div className="flex flex-col relative w-full">
-      {/* Page Header */}
-      <div className="flex justify-between items-end mb-8">
+    <div className="relative flex w-full flex-col space-y-6">
+      {/* En-tête de page */}
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-3xl font-bold text-[var(--color-on-surface)]">Classes</h1>
-          <p className="text-base text-[var(--color-on-surface-variant)] mt-2">Gérez les classes, les niveaux et les affectations des enseignants.</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Classes</h1>
+          <p className="mt-1 text-sm font-medium text-slate-600">Gérez les classes, les niveaux et les affectations des enseignants.</p>
         </div>
-        <button 
+        <button
           onClick={openAddModal}
-          className="bg-[var(--color-primary)] hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5 text-white px-6 py-3 rounded-lg font-semibold text-sm flex items-center gap-2 transition-all duration-300 shadow-sm active:scale-95 group"
+          className="group inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#006039] to-emerald-600 px-5 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:from-[#004d2e] hover:to-emerald-700 hover:shadow-lg active:scale-95"
         >
-          <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+          <Plus className="h-5 w-5 transition-transform group-hover:rotate-90" />
           Ajouter une classe
         </button>
       </div>
 
+      {/* Cartes KPI */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <KpiCard label="Classes" value={classes.length} icon={Presentation} tone="emerald" hint="Total de l'établissement" />
+        <KpiCard label="Élèves inscrits" value={totalStudents} icon={Users} tone="blue" hint="Toutes classes confondues" />
+        <KpiCard label="Maternelle & Primaire" value={counts.maternelle + counts.primaire} icon={Baby} tone="amber" hint={`${counts.maternelle} mat. · ${counts.primaire} prim.`} />
+        <KpiCard label="Collège & Lycée" value={counts.college + counts.lycee} icon={GraduationCap} tone="violet" hint={`${counts.college} col. · ${counts.lycee} lyc.`} />
+      </div>
+
       {error && (
-        <div className="mb-4 bg-[var(--color-status-retard-bg)] text-[var(--color-status-retard-text)] p-3 rounded text-sm font-medium">
+        <div role="alert" className="flex items-start gap-2.5 rounded-xl border border-rose-300 bg-rose-50 p-3.5 text-sm font-semibold text-rose-900">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           {error}
         </div>
       )}
 
-      {/* Data Table Card */}
-      <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl overflow-hidden shadow-sm">
-        {/* Table Controls / Level Tabs */}
-        <div className="p-4 border-b border-[var(--color-outline-variant)] flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-[var(--color-surface-bright)]">
-          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 hide-scrollbar">
+      {/* Conteneur du tableau */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.03)]">
+        {/* Pills de niveau */}
+        <div className="flex flex-col items-start justify-between gap-3 border-b border-slate-200/80 p-4 md:flex-row md:items-center">
+          <div className="hide-scrollbar flex w-full items-center gap-2 overflow-x-auto pb-1 md:w-auto md:pb-0">
             {[
               { id: 'Toutes', label: 'Toutes', count: classes.length },
               { id: 'Maternelle', label: 'Maternelle', count: counts.maternelle },
               { id: 'Primaire', label: 'Primaire', count: counts.primaire },
               { id: 'Collège', label: 'Collège', count: counts.college },
               { id: 'Lycée', label: 'Lycée', count: counts.lycee },
-            ].map(tab => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setLevelFilter(tab.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                  levelFilter === tab.id
-                    ? 'bg-[var(--color-primary)] text-white shadow-sm'
-                    : 'bg-white text-[var(--color-on-surface-variant)] border border-[var(--color-outline-variant)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)]'
-                }`}
-              >
-                <span>{tab.label}</span>
-                <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-bold ${
-                  levelFilter === tab.id ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-600'
-                }`}>
-                  {tab.count}
-                </span>
-              </button>
-            ))}
+            ].map(tab => {
+              const active = levelFilter === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setLevelFilter(tab.id)}
+                  className={`flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-bold transition-all ${
+                    active
+                      ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-300'
+                      : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span className={`rounded-full px-1.5 py-0.5 text-[11px] font-extrabold tabular-nums ${
+                    active ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-100 text-slate-700'
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              )
+            })}
           </div>
-          <span className="text-xs sm:text-sm font-medium text-[var(--color-on-surface-variant)] whitespace-nowrap">
+          <span className="whitespace-nowrap text-sm font-semibold text-slate-700">
             {filteredClasses.length} classe{filteredClasses.length > 1 ? 's' : ''} affichée{filteredClasses.length > 1 ? 's' : ''}
           </span>
         </div>
 
         {filteredClasses.length === 0 ? (
-          <EmptyState 
+          <EmptyState
             title="Aucune classe trouvée"
             description="Cliquez sur 'Ajouter une classe' pour commencer à structurer votre école."
             icon={Presentation}
@@ -173,85 +192,107 @@ export function ClassesManager({ classes }: Props) {
             onAction={openAddModal}
           />
         ) : (
-          <div className="overflow-x-auto min-h-[300px] pb-32">
-            <table className="w-full text-left border-collapse">
+          <div className="min-h-[300px] overflow-x-auto pb-32">
+            <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="bg-[#eff4ff] border-b border-[var(--color-outline-variant)]">
-                  <th className="py-3 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] whitespace-nowrap">Nom de la classe</th>
-                  <th className="py-3 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] whitespace-nowrap">Niveau</th>
-                  <th className="py-3 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] whitespace-nowrap text-center">Effectif</th>
-                  <th className="py-3 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] whitespace-nowrap text-right">Capacité</th>
-                  <th className="py-3 px-6 text-sm font-semibold text-[var(--color-on-surface-variant)] whitespace-nowrap text-right">Actions</th>
+                <tr className="border-b border-slate-200/80 bg-slate-50/70">
+                  <th className="whitespace-nowrap px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-600">Nom de la classe</th>
+                  <th className="whitespace-nowrap px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-600">Niveau</th>
+                  <th className="whitespace-nowrap px-6 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-slate-600">Effectif</th>
+                  <th className="whitespace-nowrap px-6 py-3.5 text-right text-[11px] font-bold uppercase tracking-wider text-slate-600">Capacité</th>
+                  <th className="whitespace-nowrap px-6 py-3.5 text-right text-[11px] font-bold uppercase tracking-wider text-slate-600">Actions</th>
                 </tr>
               </thead>
-              <tbody className="text-base">
-                {filteredClasses.map(cls => (
-                  <tr key={cls.id} className="border-b border-[var(--color-outline-variant)]/50 hover:bg-[#eff4ff]/50 transition-colors bg-[var(--color-surface-container-lowest)]">
-                    <td className="py-3 px-6 font-semibold text-[var(--color-on-surface)]">{cls.name}</td>
-                    <td className="py-3 px-6 text-[var(--color-on-surface-variant)]">
-                      {['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k)) ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">LYCÉE</span>
-                      ) : ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k)) ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">COLLÈGE</span>
-                      ) : ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k)) ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">PRIMAIRE</span>
-                      ) : ['s1', 's2', 'section1', 'section2', 'maternelle', 'ps', 'ms', 'gs'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k)) ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">MATERNELLE</span>
-                      ) : (
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{cls.level?.toUpperCase() || 'AUTRE'}</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-6 text-center">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                        <Users className="w-3.5 h-3.5" />
-                        {cls.student_count ?? 0} élève{(cls.student_count ?? 0) > 1 ? 's' : ''}
-                      </span>
-                    </td>
-                    <td className="py-3 px-6 text-right text-[var(--color-on-surface-variant)]">{cls.capacity || 'Illimitée'}</td>
-                    <td className="py-3 px-6 text-right relative">
-                      <button 
-                        onClick={() => setOpenActionId(openActionId === cls.id ? null : cls.id)}
-                        className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[#eff4ff] rounded-full transition-all duration-300 hover:rotate-90 inline-block"
-                      >
-                        <MoreVertical className="w-5 h-5" />
-                      </button>
-
-                      {openActionId === cls.id && (
-                        <div className="absolute right-6 top-10 w-40 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg shadow-lg z-20 flex flex-col overflow-hidden text-left py-1 animate-[fadeIn_0.1s_ease-out]">
-                          <Link 
-                            href={`/admin/classes/${cls.id}`} 
-                            className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors w-full text-left"
-                            onClick={() => setOpenActionId(null)}
-                          >
-                            <Eye className="w-4 h-4" />
-                            Voir
-                          </Link>
-                          <button 
-                            className="px-4 py-2 text-sm text-[var(--color-on-surface)] hover:bg-[#eff4ff] hover:text-[var(--color-primary)] flex items-center gap-2 transition-colors w-full text-left"
-                            onClick={() => {
-                              setOpenActionId(null);
-                              openEditModal(cls);
-                            }}
-                          >
-                            <Edit2 className="w-4 h-4" />
-                            Modifier
-                          </button>
-                          <button 
-                            onClick={() => {
-                              setOpenActionId(null);
-                              openDeleteModal(cls);
-                            }}
-                            disabled={isPending}
-                            className="px-4 py-2 text-sm text-[var(--color-status-retard-text)] hover:bg-red-50 flex items-center gap-2 transition-colors w-full text-left disabled:opacity-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Supprimer
-                          </button>
+              <tbody className="text-sm">
+                {filteredClasses.map(cls => {
+                  const students = cls.student_count ?? 0
+                  const fill = cls.capacity ? Math.min(100, Math.round((students / cls.capacity) * 100)) : 0
+                  return (
+                    <tr key={cls.id} className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-emerald-50/30">
+                      <td className="px-6 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200">
+                            <School className="h-4 w-4" />
+                          </span>
+                          <span className="font-extrabold text-slate-900">{cls.name}</span>
                         </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-3.5">
+                        {['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k)) ? (
+                          <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-800 ring-1 ring-inset ring-violet-200">LYCÉE</span>
+                        ) : ['6eme', '5eme', '4eme', '3eme', 'secondaire', 'college', 'collège'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k)) ? (
+                          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-800 ring-1 ring-inset ring-blue-200">COLLÈGE</span>
+                        ) : ['cp1', 'cp2', 'ce1', 'ce2', 'cm1', 'cm2', 'primaire'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k)) ? (
+                          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 ring-1 ring-inset ring-emerald-200">PRIMAIRE</span>
+                        ) : ['s1', 's2', 'section1', 'section2', 'maternelle', 'ps', 'ms', 'gs'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k)) ? (
+                          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800 ring-1 ring-inset ring-amber-200">MATERNELLE</span>
+                        ) : (
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-800 ring-1 ring-inset ring-slate-200">{cls.level?.toUpperCase() || 'AUTRE'}</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-3.5 text-center">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold tabular-nums text-blue-800 ring-1 ring-inset ring-blue-200">
+                          <Users className="h-3.5 w-3.5" />
+                          {students} élève{students > 1 ? 's' : ''}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3.5 text-right">
+                        <span className="font-bold tabular-nums text-slate-900">{cls.capacity || 'Illimitée'}</span>
+                        {cls.capacity > 0 && (
+                          <div className="ml-auto mt-1.5 h-1.5 w-24 overflow-hidden rounded-full bg-slate-100">
+                            <div
+                              className={`h-full rounded-full ${fill >= 95 ? 'bg-rose-500' : fill >= 75 ? 'bg-amber-500' : 'bg-emerald-600'}`}
+                              style={{ width: `${fill}%` }}
+                            />
+                          </div>
+                        )}
+                      </td>
+                      <td className="relative px-6 py-3.5 text-right">
+                        <button
+                          onClick={() => setOpenActionId(openActionId === cls.id ? null : cls.id)}
+                          aria-label="Actions"
+                          className="inline-block rounded-xl p-2 text-slate-700 transition-all hover:bg-slate-100 hover:text-slate-900"
+                        >
+                          <MoreVertical className="h-5 w-5" />
+                        </button>
+
+                        {openActionId === cls.id && (
+                          <div className="absolute right-6 top-12 z-20 flex w-44 animate-[fadeIn_0.1s_ease-out] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-1 text-left shadow-xl">
+                            <Link
+                              href={`/admin/classes/${cls.id}`}
+                              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-800 transition-colors hover:bg-emerald-50 hover:text-emerald-900"
+                              onClick={() => setOpenActionId(null)}
+                            >
+                              <Eye className="h-4 w-4" />
+                              Voir
+                            </Link>
+                            <button
+                              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-800 transition-colors hover:bg-emerald-50 hover:text-emerald-900"
+                              onClick={() => {
+                                setOpenActionId(null);
+                                openEditModal(cls);
+                              }}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                              Modifier
+                            </button>
+                            <button
+                              onClick={() => {
+                                setOpenActionId(null);
+                                openDeleteModal(cls);
+                              }}
+                              disabled={isPending}
+                              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-50 disabled:opacity-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Supprimer
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -260,36 +301,36 @@ export function ClassesManager({ classes }: Props) {
 
       {/* Modal Overlay: Ajouter / Modifier une classe */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0b1c30]/40  transition-opacity">
-          <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-lg rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[var(--color-outline-variant)] flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm transition-opacity">
+          <div className="flex w-full max-w-lg animate-[fadeIn_0.2s_ease-out] flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-[var(--color-outline-variant)] flex justify-between items-center bg-[var(--color-surface-bright)]">
-              <h2 className="text-xl font-semibold text-[var(--color-on-surface)]">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+              <h2 className="text-xl font-extrabold tracking-tight text-slate-900">
                 {classToEdit ? 'Modifier la classe' : 'Ajouter une nouvelle classe'}
               </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] p-1 rounded-full hover:bg-[#dce9ff] transition-colors">
-                <X className="w-5 h-5" />
+              <button onClick={() => setIsModalOpen(false)} aria-label="Fermer" className="rounded-full p-1.5 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">
+                <X className="h-5 w-5" />
               </button>
             </div>
             {/* Modal Body (Form) */}
             <form onSubmit={handleSubmit} className="flex flex-col">
-              <div className="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar space-y-6">
+              <div className="custom-scrollbar max-h-[70vh] space-y-5 overflow-y-auto p-6">
                 {/* Input: Nom de la classe */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="className">
-                    Nom de la classe <span className="text-[var(--color-status-retard-text)]">*</span>
+                <div className="flex flex-col gap-2">
+                  <label className={labelCls} htmlFor="className">
+                    Nom de la classe <span className="text-rose-600">*</span>
                   </label>
-                  <input 
-                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
-                    id="className" name="className" 
-                    placeholder="ex: 2nde S, 1ère D, 6ème A..." 
-                    required 
+                  <input
+                    className={fieldCls}
+                    id="className" name="className"
+                    placeholder="ex: 2nde S, 1ère D, 6ème A..."
+                    required
                     defaultValue={classToEdit?.name || ''}
                     type="text"
                   />
                   {!classToEdit && (
-                    <div className="flex flex-wrap items-center gap-1 mt-1">
-                      <span className="text-[11px] text-slate-500 mr-1">Séries du Lycée :</span>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      <span className="mr-1 text-[11px] font-bold text-slate-700">Séries du Lycée :</span>
                       {['2nde S', '2nde A4', '1ère A4', '1ère D', '1ère C', 'Terminale A4', 'Terminale D', 'Terminale C'].map(name => (
                         <button
                           key={name}
@@ -304,7 +345,7 @@ export function ClassesManager({ classes }: Props) {
                               else if (name.startsWith('T')) select.value = 'Terminale';
                             }
                           }}
-                          className="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors"
+                          className="rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-bold text-violet-800 ring-1 ring-inset ring-violet-200 transition-colors hover:bg-violet-100"
                         >
                           {name}
                         </button>
@@ -313,13 +354,13 @@ export function ClassesManager({ classes }: Props) {
                   )}
                 </div>
                 {/* Input: Niveau */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="classLevel">
-                    Niveau <span className="text-[var(--color-status-retard-text)]">*</span>
+                <div className="flex flex-col gap-2">
+                  <label className={labelCls} htmlFor="classLevel">
+                    Niveau <span className="text-rose-600">*</span>
                   </label>
-                  <select 
-                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12 appearance-none" 
-                    id="classLevel" name="classLevel" 
+                  <select
+                    className={`${fieldCls} appearance-none`}
+                    id="classLevel" name="classLevel"
                     required
                     defaultValue={classToEdit?.level || ''}
                   >
@@ -354,14 +395,14 @@ export function ClassesManager({ classes }: Props) {
                   </select>
                 </div>
                 {/* Input: Capacité */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="capacity">
-                    Capacité d'élèves
+                <div className="flex flex-col gap-2">
+                  <label className={labelCls} htmlFor="capacity">
+                    Capacité d&apos;élèves
                   </label>
-                  <input 
-                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all h-12" 
-                    id="capacity" name="capacity" 
-                    placeholder="ex: 80 (laisser vide si illimité)" 
+                  <input
+                    className={fieldCls}
+                    id="capacity" name="capacity"
+                    placeholder="ex: 80 (laisser vide si illimité)"
                     type="number"
                     min="1"
                     defaultValue={classToEdit?.capacity || 80}
@@ -369,17 +410,17 @@ export function ClassesManager({ classes }: Props) {
                 </div>
               </div>
               {/* Modal Footer (Actions) */}
-              <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end gap-3 mt-auto">
-                <button 
-                  onClick={() => setIsModalOpen(false)} 
-                  className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] hover:text-[var(--color-primary)] transition-all duration-300" 
+              <div className="mt-auto flex justify-end gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-800 transition-all hover:bg-slate-50 hover:text-slate-900"
                   type="button"
                   disabled={isPending}
                 >
                   Annuler
                 </button>
-                <button 
-                  className="px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all duration-300 shadow-sm disabled:opacity-50" 
+                <button
+                  className="h-11 rounded-xl bg-gradient-to-r from-[#006039] to-emerald-600 px-5 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:from-[#004d2e] hover:to-emerald-700 hover:shadow-md active:scale-95 disabled:opacity-50"
                   type="submit"
                   disabled={isPending}
                 >
@@ -393,26 +434,29 @@ export function ClassesManager({ classes }: Props) {
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0b1c30]/40  transition-opacity">
-          <div className="bg-[var(--color-surface-container-lowest)] w-full max-w-sm rounded-xl shadow-lg border border-[var(--color-outline-variant)] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm transition-opacity">
+          <div className="flex w-full max-w-sm flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl">
             <div className="p-6">
-              <h2 className="text-xl font-bold text-[var(--color-on-surface)] mb-2">Supprimer la classe</h2>
-              <p className="text-sm text-[var(--color-on-surface-variant)]">
-                Êtes-vous sûr de vouloir supprimer la classe <strong>{classToDelete?.name}</strong> ? Cette action est irréversible.
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <h2 className="mb-2 text-xl font-extrabold tracking-tight text-slate-900">Supprimer la classe</h2>
+              <p className="text-sm font-medium leading-relaxed text-slate-700">
+                Êtes-vous sûr de vouloir supprimer la classe <strong className="text-slate-900">{classToDelete?.name}</strong> ? Cette action est irréversible.
               </p>
             </div>
-            <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end gap-3">
-              <button 
-                onClick={() => setIsDeleteModalOpen(false)} 
-                className="px-4 py-2 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors" 
+            <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 transition-colors hover:bg-slate-50"
                 type="button"
                 disabled={isPending}
               >
                 Annuler
               </button>
-              <button 
+              <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded-lg bg-[var(--color-status-retard-text)] text-white font-semibold text-sm hover:opacity-90 transition-colors disabled:opacity-50" 
+                className="h-10 rounded-xl bg-rose-600 px-4 text-sm font-bold text-white shadow-sm transition-colors hover:bg-rose-700 disabled:opacity-50"
                 type="button"
                 disabled={isPending}
               >
