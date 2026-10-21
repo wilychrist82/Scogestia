@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { TeacherParametres } from '@/components/enseignant/TeacherParametres'
+import { DataErrorCard } from '@/components/shared/DataErrorCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +18,7 @@ export default async function EnseignantParametresPage() {
     .maybeSingle()
 
   if (roleError || !roleData || roleData.role !== 'enseignant') {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">Accès refusé. Vous devez être enseignant.</div>
+    return <DataErrorCard title="Accès restreint" message="Cette section est exclusivement réservée aux enseignants." actionHref="/enseignant" actionLabel="Retour à l'espace enseignant" />
   }
 
   const userAvatar = user.user_metadata?.avatar_url || ''

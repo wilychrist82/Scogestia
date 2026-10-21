@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ParametresManager } from '@/components/admin/parametres/ParametresManager'
+import { DataErrorCard } from '@/components/shared/DataErrorCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,17 +17,13 @@ export default async function ParametresPage() {
     .eq('user_id', user.id)
     .maybeSingle()
 
-  if (roleError) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur Rôle: {roleError.message} - {roleError.details}</div>
-  }
-
-  if (!roleData?.school_id) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable (pas de rôle).</div>
+  if (roleError || !roleData?.school_id) {
+    return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
   }
 
   // Seul l'admin a accès
   if (roleData.role !== 'admin') {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">Accès refusé. Vous devez être administrateur.</div>
+    return <DataErrorCard title="Accès restreint" message="Cette section de configuration est exclusivement réservée à l'administrateur de l'école." />
   }
 
   const { data: school, error: schoolError } = await supabase
@@ -35,12 +32,8 @@ export default async function ParametresPage() {
     .eq('id', roleData.school_id)
     .maybeSingle()
 
-  if (schoolError) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur École: {schoolError.message}</div>
-  }
-
-  if (!school) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable dans la base. (ID: {roleData.school_id})</div>
+  if (schoolError || !school) {
+    return <DataErrorCard title="Erreur de chargement" message="Impossible de charger les paramètres de l'école. Veuillez rafraîchir la page." />
   }
 
   const userAvatar = user?.user_metadata?.avatar_url || ''

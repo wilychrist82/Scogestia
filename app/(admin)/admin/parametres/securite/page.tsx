@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { SecuritySettings } from '@/components/admin/parametres/SecuritySettings'
+import { DataErrorCard } from '@/components/shared/DataErrorCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +18,7 @@ export default async function SecurityPage() {
     .maybeSingle()
 
   if (!roleData || roleData.role !== 'admin') {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">Accès refusé. Vous devez être administrateur.</div>
+    return <DataErrorCard title="Accès restreint" message="Cette section de sécurité est exclusivement réservée à l'administrateur de l'école." />
   }
 
   // Fetch users with roles for this school
