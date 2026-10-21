@@ -22,11 +22,13 @@ export default async function MatieresPage() {
 
   const schoolId = roleData.school_id
 
-  let { data: subjects, error } = await supabase
+  const { data: initialSubjects, error } = await supabase
     .from('subjects')
     .select('*')
     .eq('school_id', schoolId)
     .order('name')
+
+  let subjects = initialSubjects
 
   if (error) {
     return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur de récupération des matières: {error.message || JSON.stringify(error)}</div>

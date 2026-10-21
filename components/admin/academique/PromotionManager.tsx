@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useMemo } from 'react'
+import { useState, useTransition, useMemo, useEffect } from 'react'
 import { promoteStudents } from '@/app/actions/students'
 import { getNextLevelSuggestion } from '@/lib/classes'
 import { 
@@ -99,7 +99,7 @@ export function PromotionManager({ classes, students }: Props) {
   const [searchTerm, setSearchTerm] = useState('')
 
   // Initialiser les sélections selon la moyenne quand la classe change
-  useMemo(() => {
+  useEffect(() => {
     const initial: Record<string, boolean> = {}
     sourceStudents.forEach(s => {
       // Si la moyenne est >= seuil (5 pour primaire, 10 pour secondaire) ou si l'élève n'a pas de notes, cocher par défaut

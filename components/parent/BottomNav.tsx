@@ -3,14 +3,14 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useNotifications } from '@/components/providers/NotificationProvider'
-import { Home, MessageSquare, Award, CalendarCheck, BookOpen } from 'lucide-react'
+import { Home, MessageSquare, Award, CalendarCheck, Wallet } from 'lucide-react'
 
 const navItems = [
   { label: 'Accueil', href: '/parent', icon: Home },
-  { label: 'Messages', href: '/parent/messages', icon: MessageSquare },
+  { label: 'Paiements', href: '/parent/paiements', icon: Wallet },
   { label: 'Résultats', href: '/parent/bulletins', icon: Award },
   { label: 'Présences', href: '/parent/presences', icon: CalendarCheck },
-  { label: 'Devoirs', href: '/parent/devoirs', icon: BookOpen },
+  { label: 'Messages', href: '/parent/messages', icon: MessageSquare },
 ]
 
 export function BottomNav() {
@@ -34,6 +34,7 @@ export function BottomNav() {
           <Link
             key={item.href}
             href={child ? `${item.href}?child=${child}` : item.href}
+            prefetch={true}
             aria-current={isActive ? 'page' : undefined}
             className="group relative flex h-full flex-1 select-none flex-col items-center justify-center gap-1 transition-transform active:scale-90"
           >

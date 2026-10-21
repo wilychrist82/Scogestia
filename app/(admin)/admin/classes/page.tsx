@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { sortClasses } from '@/lib/classes'
 
+import { DataErrorCard } from '@/components/shared/DataErrorCard'
+
 export const dynamic = 'force-dynamic' // Ensure fresh data
 
 export default async function ClassesPage() {
@@ -22,7 +24,7 @@ export default async function ClassesPage() {
     .limit(1).maybeSingle()
 
   if (roleError || !roleData?.school_id) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur: École introuvable.</div>
+    return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
   }
 
   // 3. Fetch classes for this school with student count
@@ -41,7 +43,7 @@ export default async function ClassesPage() {
     .order('name', { ascending: true })
 
   if (classesError) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur lors de la récupération des classes.</div>
+    return <DataErrorCard title="Erreur de chargement" message="Impossible de récupérer les classes pour le moment. Veuillez rafraîchir la page ou réessayer ultérieurement." />
   }
 
   const formattedClasses = (classes || []).map((c: any) => ({

@@ -265,7 +265,7 @@ async function dispatchAnnouncementNotifications({
   targetClassId?: string | null
 }) {
   const adminClient = createAdminClient()
-  let usersToNotify: string[] = []
+  const usersToNotify: string[] = []
 
   if (targetType === 'all') {
     const audience = targetLevel || 'all'
