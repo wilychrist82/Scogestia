@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { DevoirsManager } from '@/components/admin/academique/DevoirsManager'
 import { sortClasses } from '@/lib/classes'
+import { DataErrorCard } from '@/components/shared/DataErrorCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +19,7 @@ export default async function DevoirsPage() {
     .limit(1).maybeSingle()
 
   if (!roleData?.school_id) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable.</div>
+    return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
   }
 
   const schoolId = roleData.school_id
@@ -87,7 +88,7 @@ export default async function DevoirsPage() {
   })
 
   if (error) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur de récupération des devoirs.</div>
+    return <DataErrorCard title="Erreur de chargement" message="Impossible de récupérer les devoirs pour le moment. Veuillez rafraîchir la page." />
   }
 
   return (

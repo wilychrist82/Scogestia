@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { BulletinsManager } from '@/components/admin/academique/BulletinsManager'
 import { sortClasses } from '@/lib/classes'
+import { DataErrorCard } from '@/components/shared/DataErrorCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +19,7 @@ export default async function BulletinsPage() {
     .limit(1).maybeSingle()
 
   if (!roleData?.school_id) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable: {roleError?.message || 'Inconnu'}</div>
+    return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
   }
 
   if (roleData.role === 'enseignant') {
