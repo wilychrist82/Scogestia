@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getCoefficientForSubject, getPrimarySubjectMaxScore } from '@/lib/academic-curriculum'
+import { DataErrorCard } from '@/components/shared/DataErrorCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,7 +26,7 @@ export default async function StudentDetailPage({
     .limit(1).maybeSingle()
 
   if (!roleData?.school_id) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable.</div>
+    return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
   }
 
   // Fetch student details
@@ -52,9 +53,12 @@ export default async function StudentDetailPage({
 
   if (error || !student) {
     return (
-      <div className="p-8 text-center text-[var(--color-on-surface-variant)]">
-        Élève introuvable ou vous n'avez pas l'autorisation de voir cette fiche.
-      </div>
+      <DataErrorCard
+        title="Élève introuvable"
+        message="Ce dossier scolaire n'existe pas ou vous n'avez pas l'autorisation d'y accéder."
+        actionHref="/admin/eleves"
+        actionLabel="Retour au registre des élèves"
+      />
     )
   }
 

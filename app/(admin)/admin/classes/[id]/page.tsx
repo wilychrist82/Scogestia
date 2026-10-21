@@ -2,6 +2,7 @@ import { ClassDetailsView } from '@/components/admin/ClassDetailsView'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { DataErrorCard } from '@/components/shared/DataErrorCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,7 +24,7 @@ export default async function ClassDetailsPage({
     .limit(1).maybeSingle()
 
   if (!roleData?.school_id) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable.</div>
+    return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
   }
 
   // 1. Fetch class information
@@ -36,13 +37,12 @@ export default async function ClassDetailsPage({
 
   if (classError || !classData) {
     return (
-      <div className="p-8 text-center space-y-4">
-        <h2 className="text-xl font-bold text-slate-800">Classe introuvable</h2>
-        <p className="text-slate-500 text-sm">Cette classe n'existe pas ou vous n'avez pas l'autorisation d'y accéder.</p>
-        <Link href="/admin/classes" className="inline-block px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg text-sm font-semibold">
-          Retour aux classes
-        </Link>
-      </div>
+      <DataErrorCard
+        title="Classe introuvable"
+        message="Cette classe n'existe pas ou vous n'avez pas l'autorisation d'y accéder."
+        actionHref="/admin/classes"
+        actionLabel="Retour à la liste des classes"
+      />
     )
   }
 

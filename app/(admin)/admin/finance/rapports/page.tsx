@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { RapportsFinanciers } from '@/components/admin/finance/RapportsFinanciers'
+import { DataErrorCard } from '@/components/shared/DataErrorCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +18,7 @@ export default async function RapportsFinancePage() {
     .limit(1).maybeSingle()
 
   if (!roleData?.school_id) {
-    return <div className="p-8 text-red-600">École introuvable.</div>
+    return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
   }
 
   const schoolId = roleData.school_id
