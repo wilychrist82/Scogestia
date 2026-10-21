@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { CommunicationManager } from '@/components/admin/communication/CommunicationManager'
 import { Suspense } from 'react'
 import { sortClasses } from '@/lib/classes'
+import { DataErrorCard } from '@/components/shared/DataErrorCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,7 +20,7 @@ export default async function CommunicationPage() {
     .limit(1).maybeSingle()
 
   if (!roleData?.school_id) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable.</div>
+    return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
   }
 
   const schoolId = roleData.school_id

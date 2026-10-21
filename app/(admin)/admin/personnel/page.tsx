@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { PersonnelManager } from '@/components/admin/PersonnelManager'
 
+import { DataErrorCard } from '@/components/shared/DataErrorCard'
+
 export const dynamic = 'force-dynamic'
 
 export default async function PersonnelPage() {
@@ -17,7 +19,7 @@ export default async function PersonnelPage() {
     .limit(1).maybeSingle()
 
   if (!roleData?.school_id) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">École introuvable.</div>
+    return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
   }
 
   const schoolId = roleData.school_id
@@ -31,7 +33,7 @@ export default async function PersonnelPage() {
     .order('created_at', { ascending: false })
 
   if (error) {
-    return <div className="p-8 text-[var(--color-status-retard-text)]">Erreur lors de la récupération du personnel.</div>
+    return <DataErrorCard title="Erreur de chargement" message="Impossible de récupérer la liste du personnel pour le moment. Veuillez rafraîchir la page." />
   }
 
   return (
