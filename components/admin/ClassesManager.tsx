@@ -366,14 +366,10 @@ export function ClassesManager({ classes }: Props) {
                   >
                     <option disabled value="">Sélectionner un niveau</option>
                     <optgroup label="Maternelle">
-                      <option value="ps">Petite Section (PS)</option>
-                      <option value="ms">Moyenne Section (MS)</option>
-                      <option value="gs">Grande Section (GS)</option>
-                      <option value="s1">Section 1 (S1)</option>
-                      <option value="s2">Section 2 (S2)</option>
+                      <option value="s1">S1</option>
+                      <option value="s2">S2</option>
                     </optgroup>
                     <optgroup label="Primaire">
-                      <option value="ci">CI</option>
                       <option value="cp1">CP1</option>
                       <option value="cp2">CP2</option>
                       <option value="ce1">CE1</option>
