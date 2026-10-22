@@ -366,31 +366,31 @@ export function ClassesManager({ classes }: Props) {
                   >
                     <option disabled value="">Sélectionner un niveau</option>
                     <optgroup label="Maternelle">
-                      <option value="s1">S1</option>
-                      <option value="s2">S2</option>
-                      <option value="Maternelle">Maternelle (Général)</option>
+                      <option value="ps">Petite Section (PS)</option>
+                      <option value="ms">Moyenne Section (MS)</option>
+                      <option value="gs">Grande Section (GS)</option>
+                      <option value="s1">Section 1 (S1)</option>
+                      <option value="s2">Section 2 (S2)</option>
                     </optgroup>
                     <optgroup label="Primaire">
+                      <option value="ci">CI</option>
                       <option value="cp1">CP1</option>
                       <option value="cp2">CP2</option>
                       <option value="ce1">CE1</option>
                       <option value="ce2">CE2</option>
                       <option value="cm1">CM1</option>
                       <option value="cm2">CM2</option>
-                      <option value="Primaire">Primaire (Général)</option>
                     </optgroup>
                     <optgroup label="Secondaire - Collège">
                       <option value="6eme">6ème</option>
                       <option value="5eme">5ème</option>
                       <option value="4eme">4ème</option>
                       <option value="3eme">3ème</option>
-                      <option value="Collège">Collège (Général)</option>
                     </optgroup>
                     <optgroup label="Secondaire - Lycée">
                       <option value="Seconde">Seconde</option>
                       <option value="Première">Première</option>
                       <option value="Terminale">Terminale</option>
-                      <option value="Lycée">Lycée (Général)</option>
                     </optgroup>
                   </select>
                 </div>

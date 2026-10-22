@@ -68,6 +68,28 @@ Faites entrer votre école dans l'ère du digital avec Scogestia !
 
 ## 4. Fichiers et Visuels Prêts dans ce dossier
 
-1. 📦 **`app-release.aab`** : Le bundle Android officiel compilé et signé avec la clé `scogestia` pour la production.
+Tous les fichiers requis par Google Play sont prêts et placés dans ce dossier `playstore-assets` :
+
+1. 📦 **`app-release.aab`** : Le bundle Android officiel compilé et signé pour la production.
 2. 🖼️ **`icon-512x512.png`** : L'icône officielle de l'application en haute résolution (512x512 px).
-3. 🎨 **`playstore-feature-graphic-1024x500.png`** : La bannière promotionnelle officielle (1024x500 px) exigée par Google Play.
+3. 🎨 **`playstore-feature-graphic-1024x500.png`** : La bannière promotionnelle officielle (1024x500 px).
+4. 📱 **Captures d'écran pour téléphone (Screenshots) :**
+   - `screenshot-1-dashboard.jpg` : Vue d'ensemble & Tableau de bord
+   - `screenshot-2-notes.jpg` : Gestion des Notes & Bulletins scolaires
+   - `screenshot-3-finances.jpg` : Trésorerie & Frais de scolarité
+   - `screenshot-4-parents.jpg` : Espace Parents & Suivi des élèves
+
+---
+
+## 5. Points Critiques Règlement Google Play (Pour éviter tout rejet)
+
+### A. Accès aux applications (Très important !)
+Dans la Google Play Console > **Contenu de l'application** > **Accès pour l'évaluation** :
+- Sélectionnez **"Certaines ou toutes les fonctionnalités sont restreintes"**.
+- Cliquez sur **"Ajouter des instructions"** et fournissez un compte démo actif (par exemple votre compte administrateur ou un compte de test dédié) :
+  - Nom d'utilisateur / Email : *(votre email de test)*
+  - Mot de passe : *(votre mot de passe de test)*
+  - Instructions supplémentaires : *"Application de gestion scolaire. Utilisez ces identifiants pour vous connecter et tester le tableau de bord, les listes d'élèves et la gestion des notes."*
+
+### B. Mises à jour automatiques en direct
+Grâce à la configuration Capacitor intégrée (`https://scogestia.vercel.app`), chaque mise à jour déployée sur le Web est **automatiquement et instantanément répercutée sur l'application mobile** dès que les utilisateurs ouvrent l'app, sans besoin de soumettre une nouvelle version à Google Play pour chaque petite modification !
