@@ -34,7 +34,7 @@ SELECT
   due_date,
   status,
   created_at,
-  updated_at
+  created_at AS updated_at
 FROM public.payment_schedules;
 
 -- 3. Règle pour permettre les mises à jour transparentes via la vue public.dues
@@ -42,8 +42,7 @@ CREATE OR REPLACE RULE dues_update AS ON UPDATE TO public.dues
 DO INSTEAD
   UPDATE public.payment_schedules 
   SET 
-    status = NEW.status,
-    updated_at = now()
+    status = NEW.status
   WHERE id = NEW.id;
 
 -- 4. Attribution des droits d'accès sur la vue pour tous les rôles
