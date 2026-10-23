@@ -282,7 +282,7 @@ export function EcheancesManager({ schedules, classes, students, basePath = '/ad
       {/* Modale : générer des échéances */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-[2px]"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 transition-opacity"
           onMouseDown={(e) => { if (e.target === e.currentTarget && !isPending) setIsModalOpen(false) }}
         >
           <div

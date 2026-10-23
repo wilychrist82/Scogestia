@@ -525,7 +525,7 @@ export function PersonnelManager({ staffList }: Props) {
 
       {/* Modal Overlay: Modifier un membre */}
       {isEditModalOpen && staffToEdit && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm transition-opacity">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 transition-opacity">
           <div className="flex w-full max-w-lg animate-[fadeIn_0.2s_ease-out] flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
               <h2 className="text-xl font-extrabold tracking-tight text-slate-900">

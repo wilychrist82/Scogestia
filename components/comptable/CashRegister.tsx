@@ -326,7 +326,7 @@ export function CashRegister({ students, schoolData, cashierName }: Props) {
 
       {/* Modale de Paiement */}
       {selectedDue && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 p-4 transition-opacity">
           <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-[0_30px_80px_-20px_rgba(15,23,42,0.5)] ring-1 ring-slate-200 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-start justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
               <div>

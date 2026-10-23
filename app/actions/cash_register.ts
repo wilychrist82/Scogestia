@@ -88,8 +88,35 @@ export async function processCashPayment(data: {
         .eq('id', due.id)
     }
 
+    // 6. Alerter instantanément le parent sur son espace et son smartphone via Push
+    try {
+      const { data: parentLinks } = await supabase
+        .from('parent_student_links')
+        .select('parent_user_id')
+        .eq('student_id', due.student_id)
+
+      if (parentLinks && parentLinks.length > 0) {
+        const studentName = due.students ? `${due.students.first_name} ${due.students.last_name}` : 'votre enfant'
+        for (const link of parentLinks) {
+          if (link.parent_user_id) {
+            await supabase.from('notifications').insert({
+              school_id: due.school_id,
+              user_id: link.parent_user_id,
+              title: 'Paiement reçu avec succès ✅',
+              message: `Un paiement de ${data.amount_paid.toLocaleString('fr-FR')} FCFA a été enregistré pour ${studentName} (${due.label}). Reçu n° ${receiptNumber}.`,
+              type: 'finance',
+              action_url: '/parent/paiements'
+            })
+          }
+        }
+      }
+    } catch (notifErr) {
+      console.warn('Erreur envoi notification parent:', notifErr)
+    }
+
     revalidatePath('/admin/finance/caisse')
     revalidatePath('/admin/finance/paiements')
+    revalidatePath('/parent/paiements')
 
     return { 
       success: true, 
