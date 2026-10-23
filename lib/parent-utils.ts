@@ -1,4 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js'
+import type { ChildItem } from '@/components/parent/ChildSwitchBar'
+
+export type LinkedStudent = ChildItem
 
 export async function resolveStudentId(
   supabase: SupabaseClient, 
@@ -22,7 +25,9 @@ export async function resolveStudentId(
     return { childrenList: [], selectedChild: null, selectedChildId: null }
   }
 
-  const childrenList = links.map(l => l.student).filter(Boolean) as any[]
+  const childrenList = links
+    .map(l => l.student)
+    .filter(Boolean) as unknown as LinkedStudent[]
   
   // Déterminer l'enfant sélectionné
   let selectedChildId = student_id_param

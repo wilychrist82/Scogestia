@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, FormEvent, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import EmojiPicker from 'emoji-picker-react'
@@ -15,7 +15,6 @@ interface Props {
 
 export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Message' }: Props) {
   const [text, setText] = useState('')
-  const [audioUrl, setAudioUrl] = useState<string | null>(null) // Used if we want to preview, but here we auto-send
   const [isRecording, setIsRecording] = useState(false)
   const [recordingSeconds, setRecordingSeconds] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
@@ -100,7 +99,7 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
           // Envoi direct sans aperçu !
           onSend({ text: '', audioUrl: publicUrl })
           
-        } catch(e) {
+        } catch {
           toast.error("Erreur d'envoi.")
         } finally {
           setIsUploading(false)
@@ -183,7 +182,7 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto'
       }
-    } catch(err) {
+    } catch {
       toast.error("Une erreur s'est produite")
     } finally {
       setIsUploading(false)
@@ -216,20 +215,20 @@ export function WhatsAppInputBar({ onSend, isPending = false, placeholder = 'Mes
       cancelRecording()
       toast("Enregistrement annulé", { icon: '🗑️', duration: 2000 })
       startXRef.current = null
-      try { e.currentTarget.releasePointerCapture(e.pointerId) } catch (err) {}
+      try { e.currentTarget.releasePointerCapture(e.pointerId) } catch {}
     }
   }
 
   const handlePointerUp = (e: React.PointerEvent) => {
     if (hasContent) return
     e.preventDefault()
-    try { e.currentTarget.releasePointerCapture(e.pointerId) } catch (err) {}
+    try { e.currentTarget.releasePointerCapture(e.pointerId) } catch {}
     startXRef.current = null
     stopRecordingAndSend()
   }
 
   // Si on quitte vraiment la zone du bouton sans glisser
-  const handlePointerLeave = (e: React.PointerEvent) => {
+  const handlePointerLeave = () => {
     // Optionnel: on le garde comme fallback de sécurité
     // mais le swipe est maintenant géré par handlePointerMove
   }

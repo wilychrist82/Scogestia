@@ -1,4 +1,4 @@
-import { parsePhoneNumberFromString } from 'libphonenumber-js'
+import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js'
 
 const CHARIOW_API_URL = process.env.CHARIOW_API_URL || 'https://api.chariow.com/v1'
 const CHARIOW_API_KEY = process.env.CHARIOW_API_KEY
@@ -48,7 +48,7 @@ export type ChariowCheckoutResponse = {
 export function resolveChariowPhone(phone: string, phoneCountry?: string): { number: string, country_code: string } {
   // 1. Essayer avec le code pays s'il est fourni (via le selecteur)
   if (phoneCountry) {
-    const parsed = parsePhoneNumberFromString(phone, phoneCountry as any)
+    const parsed = parsePhoneNumberFromString(phone, phoneCountry as CountryCode)
     if (parsed && parsed.isValid()) {
       return {
         number: parsed.nationalNumber as string,

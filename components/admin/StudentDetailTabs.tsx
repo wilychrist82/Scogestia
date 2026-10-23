@@ -348,7 +348,7 @@ export function StudentDetailTabs({
             onChange={handleAvatarUpload}
             disabled={isUploading}
           />
-          <div className="w-24 h-24 rounded-lg bg-[#d5e0f8] overflow-hidden flex items-center justify-center text-4xl font-bold text-[#0b1c30] relative border border-[var(--color-outline-variant)]">
+          <div className="w-24 h-24 rounded-2xl bg-emerald-50 overflow-hidden flex items-center justify-center text-3xl font-extrabold text-emerald-900 relative border border-emerald-200/80 shadow-inner">
             {student.avatar_url ? (
               <img src={student.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
@@ -375,7 +375,7 @@ export function StudentDetailTabs({
             <div className="flex gap-3 flex-wrap">
               <button 
                 onClick={() => setIsEditModalOpen(true)}
-                className="h-11 px-4 rounded-xl border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors flex items-center gap-2"
+                className="h-11 px-4 rounded-xl border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold text-sm hover:bg-emerald-50 hover:text-emerald-900 transition-colors flex items-center gap-2"
               >
                 <Edit3 className="w-4 h-4" />
                 Modifier

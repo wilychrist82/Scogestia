@@ -301,7 +301,7 @@ export function ClassesManager({ classes }: Props) {
 
       {/* Modal Overlay: Ajouter / Modifier une classe */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm transition-opacity">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 transition-opacity">
           <div className="flex w-full max-w-lg animate-[fadeIn_0.2s_ease-out] flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
@@ -430,7 +430,7 @@ export function ClassesManager({ classes }: Props) {
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm transition-opacity">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 transition-opacity">
           <div className="flex w-full max-w-sm flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl">
             <div className="p-6">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200">

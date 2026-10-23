@@ -9,7 +9,7 @@ export type ChildItem = {
   id: string
   first_name: string
   last_name: string
-  class_id?: string
+  class_id?: string | null
   className?: string
   classes?: { name: string } | null
 }

@@ -1,3 +1,5 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+
 /**
  * Utilitaire centralisé de gestion des abonnements SaaS et quotas Scogestia
  */
@@ -14,7 +16,7 @@ export type SubscriptionStatus = {
 /**
  * Récupère le statut complet d'abonnement d'un établissement
  */
-export async function getSchoolSubscriptionStatus(supabase: any, schoolId: string): Promise<SubscriptionStatus> {
+export async function getSchoolSubscriptionStatus(supabase: SupabaseClient | any, schoolId: string): Promise<SubscriptionStatus> {
   // 1. Vérifier le statut directement depuis la table schools
   const { data: school } = await supabase
     .from('schools')
@@ -63,7 +65,7 @@ export async function getSchoolSubscriptionStatus(supabase: any, schoolId: strin
 /**
  * Vérifie si l'établissement possède un abonnement valide, sinon déclenche une erreur
  */
-export async function assertActiveSubscription(supabase: any, schoolId: string): Promise<SubscriptionStatus> {
+export async function assertActiveSubscription(supabase: SupabaseClient | any, schoolId: string): Promise<SubscriptionStatus> {
   const status = await getSchoolSubscriptionStatus(supabase, schoolId)
   if (status.isExpired) {
     throw new Error(

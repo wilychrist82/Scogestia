@@ -38,7 +38,7 @@ export const usePushNotifications = () => {
       });
 
       // Écouter les erreurs d'enregistrement
-      PushNotifications.addListener('registrationError', (error: any) => {
+      PushNotifications.addListener('registrationError', (error: unknown) => {
         console.error('Erreur d\'enregistrement Push:', error);
       });
 
@@ -97,7 +97,7 @@ export const usePushNotifications = () => {
 
           // 5. Carillon doux via Web Audio API si tous les filtres sont passés
           try {
-            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
             if (AudioCtx) {
               const ctx = new AudioCtx();
               const notes = [523.25, 659.25, 783.99, 1046.50];

@@ -23,11 +23,12 @@ export async function reconcileChariowPayment(providerSaleId: string, client?: S
   }
 
   // 3. Lire la vente chez Chariow (Source de Vérité)
-  let sale: any
+  let sale: { status: string; amount?: { value?: number | string } }
   try {
     sale = await getChariowSaleStatus(providerSaleId)
-  } catch (err: any) {
-    console.error(`Impossible de lire le statut de la vente ${providerSaleId}`, err.message)
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err)
+    console.error(`Impossible de lire le statut de la vente ${providerSaleId}`, errorMsg)
     return false
   }
 

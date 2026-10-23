@@ -485,13 +485,11 @@ export function calculatePrimaryGeneralAverage(
 ): { totalPoints: number; maxPossible: number; averageOutOf10: number | null } {
   let totalPoints = 0;
   let maxPossible = 0;
-  let count = 0;
 
   for (const entry of entries) {
     if (entry.score !== null && entry.score !== undefined && !isNaN(entry.score)) {
       totalPoints += entry.score;
       maxPossible += (entry.maxScore || 10);
-      count++;
     }
   }
 

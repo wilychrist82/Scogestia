@@ -49,7 +49,7 @@ export function detectClassLevel(className: string): string {
   return 'Secondaire';
 }
 
-export function getRowField(row: Record<string, any>, candidates: string[]): string | undefined {
+export function getRowField(row: Record<string, unknown>, candidates: string[]): string | undefined {
   const entries = Object.entries(row);
   for (const candidate of candidates) {
     const cleanCand = normalizeText(candidate);
@@ -65,7 +65,7 @@ export function getRowField(row: Record<string, any>, candidates: string[]): str
   return undefined;
 }
 
-export function extractNameParts(row: Record<string, any>): { firstName: string, lastName: string } | null {
+export function extractNameParts(row: Record<string, unknown>): { firstName: string, lastName: string } | null {
   const directFirst = getRowField(row, ['prenom', 'first name', 'first_name', 'prenoms', 'prénoms']);
   const directLast = getRowField(row, ['nom', 'last name', 'last_name', 'nom de famille']);
 
@@ -163,7 +163,7 @@ export function extractClassFromFilename(fileName: string, availableClasses: { i
   return undefined;
 }
 
-export function parseFlexibleDate(val: any): string | null {
+export function parseFlexibleDate(val: unknown): string | null {
   if (!val) return null;
   // Cas Excel serial number
   if (typeof val === 'number') {
