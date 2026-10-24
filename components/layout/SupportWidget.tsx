@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, X, ExternalLink, HelpCircle, Headphones } from 'lucide-react'
+import { ContactSupportModal } from './ContactSupportModal'
 
 declare global {
   interface Window {
@@ -32,6 +33,7 @@ export function SupportWidget({
   userEmail,
 }: SupportWidgetProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
   const [tawkLoaded, setTawkLoaded] = useState(false)
   const [pulse, setPulse] = useState(true)
 
@@ -159,9 +161,13 @@ export function SupportWidget({
                   </div>
 
                   {/* Contact email */}
-                  <a
-                    href="mailto:contact@scogestia.com"
-                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-xs font-bold text-white transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false)
+                      setIsSupportModalOpen(true)
+                    }}
+                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-xs font-bold text-white transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                     style={{
                       background: 'linear-gradient(135deg, #059669 0%, #065F46 100%)',
                       boxShadow: '0 4px 20px rgba(5,150,105,0.35)',
@@ -169,7 +175,7 @@ export function SupportWidget({
                   >
                     <MessageCircle className="w-3.5 h-3.5" />
                     Nous écrire par email
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
@@ -224,6 +230,12 @@ export function SupportWidget({
           </AnimatePresence>
         </motion.button>
       </div>
+
+      <ContactSupportModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
+        defaultUserEmail={userEmail}
+      />
     </div>
   )
 }
