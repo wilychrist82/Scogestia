@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, FormEvent, useEffect, useMemo, useRef } from 'react'
-import { savePrimaryGrades, saveSecondaryGrades } from '@/app/actions/academique'
+import { savePrimaryGrades, saveSecondaryGrades, clearStudentGrades } from '@/app/actions/academique'
 import Link from 'next/link'
 import { sortClasses } from '@/lib/classes'
 import { 
@@ -21,7 +21,8 @@ import {
   Search,
   FileText,
   Calculator,
-  Award
+  Award,
+  Trash2
 } from 'lucide-react'
 import { 
   getCoefficientForSubject, 
@@ -416,6 +417,25 @@ export function NotesManager({
     const g = allSecondaryGrades.find(g => g.student_id === studentId && g.subject_id === selectedSubject && g.term === selectedTerm)
     if (!g) return ''
     return type === 'class' ? (g.class_score ?? '') : (g.comp_score ?? '')
+  }
+
+  // Handle Clear all grades for student
+  const handleClearAllGrades = () => {
+    if (!selectedStudent || !currentStudent) return
+    const confirmed = window.confirm(`Voulez-vous vraiment effacer toutes les notes saisies pour ${currentStudent.first_name} ${currentStudent.last_name} ? L'espace parent et les bulletins redeviendront vides pour cet élève.`)
+    if (!confirmed) return
+
+    startTransition(async () => {
+      const res = await clearStudentGrades(selectedStudent)
+      if (res?.error) {
+        setError(res.error)
+      } else {
+        setAllPrimaryGrades(prev => prev.filter(g => g.student_id !== selectedStudent))
+        setStudentScores({})
+        setSuccess(`Toutes les notes de ${currentStudent.first_name} ont été effacées avec succès.`)
+        setTimeout(() => setSuccess(null), 4000)
+      }
+    })
   }
 
   // Handle Form Submission
@@ -912,6 +932,17 @@ export function NotesManager({
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
                       <span>Liste des élèves</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleClearAllGrades}
+                      disabled={isPending}
+                      className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                      title="Effacer toutes les notes de cet élève"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Effacer les notes</span>
                     </button>
 
                     <div className="flex items-center gap-1 bg-[var(--color-surface-container-lowest)] p-1 rounded-xl border border-[var(--color-outline-variant)] shadow-2xs">

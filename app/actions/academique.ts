@@ -805,3 +805,25 @@ export async function saveMonthlyAttendanceGrid(
     return { error: err.message };
   }
 }
+
+export async function clearStudentGrades(studentId: string): Promise<ActionState> {
+  try {
+    const school_id = await getActiveSchoolId();
+    const supabase = await createClient();
+
+    await Promise.all([
+      supabase.from("primary_grades").delete().eq("student_id", studentId).eq("school_id", school_id),
+      supabase.from("secondary_grades").delete().eq("student_id", studentId).eq("school_id", school_id),
+      supabase.from("grades").delete().eq("student_id", studentId).eq("school_id", school_id)
+    ]);
+
+    revalidatePath("/admin/academique/notes");
+    revalidatePath("/admin/academique/bulletins");
+    revalidatePath("/parent/notes");
+    revalidatePath("/parent/bulletins");
+    
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}

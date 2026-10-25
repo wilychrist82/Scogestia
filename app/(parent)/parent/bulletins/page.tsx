@@ -92,6 +92,12 @@ export default async function ParentBulletinsPage({
     return (t || '').replace(/_/g, ' ');
   };
 
+  const className = (fullStudent.classes as any)?.name || '';
+  const classLevel = (fullStudent.classes as any)?.level || '';
+  const fullClassStr = `${classLevel} ${className}`.toLowerCase();
+  const isPrimary = ['cp1', 'cp2', 'cp', 'ce1', 'ce2', 'ce', 'cm1', 'cm2', 'cm', 'ci', 'primaire', 'maternelle', 's1', 's2'].some(k => fullClassStr.includes(k));
+  const maxScale = isPrimary ? 10 : 20;
+
   // Organiser et calculer les moyennes par trimestre / période
   const termData: Record<string, {
     subjects: Record<string, { totalScore: number, totalMax: number, coef: number }>,
@@ -109,9 +115,9 @@ export default async function ParentBulletinsPage({
     if (!termData[term].subjects[subjectName]) {
       termData[term].subjects[subjectName] = { totalScore: 0, totalMax: 0, coef: coef || 1 };
     }
-    const noteSur20 = (score / (maxScore || 20)) * 20;
-    termData[term].subjects[subjectName].totalScore += noteSur20;
-    termData[term].subjects[subjectName].totalMax += 20;
+    const noteNormalisee = (score / (maxScore || maxScale)) * maxScale;
+    termData[term].subjects[subjectName].totalScore += noteNormalisee;
+    termData[term].subjects[subjectName].totalMax += maxScale;
   };
 
   secGrades?.forEach((g: any) => {
@@ -143,7 +149,7 @@ export default async function ParentBulletinsPage({
 
     Object.keys(termData[term].subjects).forEach(subject => {
       const subjData = termData[term].subjects[subject];
-      const subjAverage = subjData.totalMax > 0 ? (subjData.totalScore / subjData.totalMax) * 20 : 0;
+      const subjAverage = subjData.totalMax > 0 ? (subjData.totalScore / subjData.totalMax) * maxScale : 0;
       globalSum += subjAverage * subjData.coef;
       globalCoef += subjData.coef;
     });
@@ -223,9 +229,9 @@ export default async function ParentBulletinsPage({
           {sortedTerms.map(term => {
             const data = termData[term];
             const avg = data.average;
-            const isExcellent = avg >= 15;
-            const isGood = avg >= 12 && avg < 15;
-            const isPassable = avg >= 10 && avg < 12;
+            const isExcellent = isPrimary ? avg >= 7.5 : avg >= 15;
+            const isGood = isPrimary ? (avg >= 6 && avg < 7.5) : (avg >= 12 && avg < 15);
+            const isPassable = isPrimary ? (avg >= 5 && avg < 6) : (avg >= 10 && avg < 12);
             
             const headerColorClass = isExcellent ? 'bg-green-600' : isGood ? 'bg-blue-600' : isPassable ? 'bg-orange-500' : 'bg-red-600';
             const badgeColorClass = isExcellent ? 'text-green-600 bg-green-50' : isGood ? 'text-blue-600 bg-blue-50' : isPassable ? 'text-orange-600 bg-orange-50' : 'text-red-600 bg-red-50';
@@ -236,7 +242,7 @@ export default async function ParentBulletinsPage({
                 <div className={`${headerColorClass} px-5 py-6 text-white text-center relative`}>
                   <h2 className="text-lg font-bold uppercase tracking-wider mb-2 opacity-90">{term}</h2>
                   <div className="text-5xl font-black tracking-tighter drop-shadow-md">
-                    {avg.toFixed(2)}<span className="text-2xl font-bold opacity-75">/20</span>
+                    {avg.toFixed(2)}<span className="text-2xl font-bold opacity-75">/{maxScale}</span>
                   </div>
                   <div className="absolute top-4 right-4 bg-white/20 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm border border-white/30">
                     Moyenne Générale
@@ -256,19 +262,19 @@ export default async function ParentBulletinsPage({
                     <div className="space-y-3">
                       {Object.keys(data.subjects).map(subject => {
                         const subj = data.subjects[subject];
-                        const subjAvg = (subj.totalScore / subj.totalMax) * 20;
-                        const subjPercentage = (subjAvg / 20) * 100;
+                        const subjAvg = (subj.totalScore / subj.totalMax) * maxScale;
+                        const subjPercentage = (subjAvg / maxScale) * 100;
                         
                         return (
                           <div key={subject} className="flex flex-col gap-1">
                             <div className="flex justify-between items-end">
                               <span className="font-bold text-gray-700">{subject}</span>
-                              <span className="font-bold text-gray-900">{subjAvg.toFixed(2)}</span>
+                              <span className="font-bold text-gray-900">{subjAvg.toFixed(2)} <span className="text-xs text-gray-400 font-normal">/{maxScale}</span></span>
                             </div>
                             <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
                               <div 
-                                className={`h-full rounded-full ${subjAvg >= 10 ? 'bg-green-500' : 'bg-red-500'}`} 
-                                style={{ width: `${Math.max(5, subjPercentage)}%` }}
+                                className={`h-full rounded-full ${subjAvg >= (isPrimary ? 5 : 10) ? 'bg-green-500' : 'bg-red-500'}`} 
+                                style={{ width: `${Math.max(5, Math.min(100, subjPercentage))}%` }}
                               ></div>
                             </div>
                           </div>
