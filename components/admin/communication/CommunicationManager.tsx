@@ -46,7 +46,7 @@ type RecipientType = 'all' | 'class' | 'parent' | 'all_teachers' | 'enseignant'
 const RECIPIENT_OPTIONS: { value: RecipientType; label: string; icon: typeof Users }[] = [
   { value: 'all', label: 'Tous les parents', icon: Users },
   { value: 'class', label: 'Une classe', icon: School },
-  { value: 'parent', label: 'Un élève', icon: User },
+  { value: 'parent', label: 'Parent d\'un élève', icon: User },
   { value: 'all_teachers', label: 'Tous les profs', icon: GraduationCap },
   { value: 'enseignant', label: 'Un prof', icon: UserCheck },
 ]
@@ -262,8 +262,8 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
     TargetIcon = School
   } else if (recipientType === 'parent') {
     const name = selectedParent ? studentLabel(selectedParent) : ''
-    targetLabel = name ? `Parent de ${name}` : selectedParent ? 'Parent sélectionné' : 'Parent d\'un élève'
-    targetHint = selectedParent ? 'Message direct' : 'Choisissez un élève à gauche'
+    targetLabel = name ? `Parents de ${name}` : selectedParent ? 'Parents sélectionnés' : 'Parents d\'un élève'
+    targetHint = selectedParent ? 'Message direct envoyé aux parents' : 'Choisissez un élève pour contacter ses parents'
     TargetIcon = User
   } else if (recipientType === 'all_teachers') {
     targetLabel = 'Tous les enseignants'
@@ -381,7 +381,7 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
                   <SearchableSelect
                     value={selectedParent}
                     onChange={(val) => setSelectedParent(val)}
-                    placeholder="Sélectionner l'élève..."
+                    placeholder="Sélectionner l'élève (pour joindre ses parents)..."
                     options={students.map(s => ({
                       value: s.id,
                       label: `${s.first_name} ${s.last_name} ${s.classes?.name ? `(${s.classes.name})` : ''}`
