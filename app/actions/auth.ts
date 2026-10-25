@@ -223,13 +223,15 @@ export async function completeOnboarding(prevState: AuthState, formData: FormDat
     const academicYear = (formData.get('academicYear') as string)?.trim() || '2026-2027';
 
     // Synchroniser l'année académique active sur l'école et ses classes initiales
-    await adminSupabase.from('schools').update({
+    const { error: schoolUpErr } = await adminSupabase.from('schools').update({
       current_academic_year: academicYear
     }).eq('id', schoolId);
+    if (schoolUpErr) console.error('[completeOnboarding] Erreur mise à jour école:', schoolUpErr);
 
-    await adminSupabase.from('classes').update({
+    const { error: classUpErr } = await adminSupabase.from('classes').update({
       academic_year: academicYear
     }).eq('school_id', schoolId);
+    if (classUpErr) console.error('[completeOnboarding] Erreur mise à jour classes:', classUpErr);
 
     const hasMaternelle = formData.get('cycle_maternelle') !== null;
     const hasPrimaire = formData.get('cycle_primaire') !== null;
@@ -349,31 +351,50 @@ async function configureInitialClasses(
       }
     }
 
-    // 2. Si le Collège n'est PAS coché, retirer les classes collège insérées par défaut dans le RPC
+    // Fonction sécurisée pour supprimer les classes décochées UNIQUEMENT si aucun élève n'y est inscrit
+    const safeDeleteClasses = async (classNames: string[]) => {
+      const { data: targetClasses } = await adminSupabase
+        .from('classes')
+        .select('id, name')
+        .eq('school_id', schoolId)
+        .in('name', classNames);
+
+      if (!targetClasses || targetClasses.length === 0) return;
+
+      for (const cls of targetClasses) {
+        const { count } = await adminSupabase
+          .from('students')
+          .select('id', { count: 'exact', head: true })
+          .eq('class_id', cls.id);
+
+        if (!count || count === 0) {
+          const { error: delErr } = await adminSupabase
+            .from('classes')
+            .delete()
+            .eq('id', cls.id)
+            .eq('school_id', schoolId);
+          if (delErr) {
+            console.warn(`[configureInitialClasses] Erreur suppression classe vide ${cls.name}:`, delErr.message);
+          }
+        } else {
+          console.warn(`[configureInitialClasses] Classe ${cls.name} (${cls.id}) conservée : ${count} élève(s) y sont rattaché(s).`);
+        }
+      }
+    };
+
+    // 2. Si le Collège n'est PAS coché, retirer les classes collège (si vides)
     if (!cycles.hasCollege) {
-      await adminSupabase
-        .from('classes')
-        .delete()
-        .eq('school_id', schoolId)
-        .in('name', ['6ème', '5ème', '4ème', '3ème']);
+      await safeDeleteClasses(['6ème', '5ème', '4ème', '3ème']);
     }
 
-    // 3. Si le Primaire n'est PAS coché, retirer les classes primaire insérées par défaut
+    // 3. Si le Primaire n'est PAS coché, retirer les classes primaire (si vides)
     if (!cycles.hasPrimaire) {
-      await adminSupabase
-        .from('classes')
-        .delete()
-        .eq('school_id', schoolId)
-        .in('name', ['CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2']);
+      await safeDeleteClasses(['CP1', 'CP2', 'CE1', 'CE2', 'CM1', 'CM2']);
     }
 
-    // 4. Si la Maternelle n'est PAS cochée, retirer les classes maternelle insérées par défaut
+    // 4. Si la Maternelle n'est PAS cochée, retirer les classes maternelle (si vides)
     if (!cycles.hasMaternelle) {
-      await adminSupabase
-        .from('classes')
-        .delete()
-        .eq('school_id', schoolId)
-        .in('name', ['S1', 'S2']);
+      await safeDeleteClasses(['S1', 'S2']);
     }
   } catch (err) {
     console.error('[configureInitialClasses] Erreur lors de la configuration des classes:', err);

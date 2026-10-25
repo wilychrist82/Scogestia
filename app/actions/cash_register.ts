@@ -82,10 +82,15 @@ export async function processCashPayment(data: {
     }
 
     if (newStatus !== due.status) {
-      await supabase
+      const { error: updateDueErr } = await supabase
         .from('payment_schedules')
         .update({ status: newStatus })
         .eq('id', due.id)
+        .eq('school_id', due.school_id)
+
+      if (updateDueErr) {
+        console.error('Erreur mise à jour échéance cash_register:', updateDueErr)
+      }
     }
 
     // 6. Alerter instantanément le parent sur son espace et son smartphone via Push

@@ -140,7 +140,14 @@ export async function ensureEtudeDeTexteSubject(): Promise<ActionState> {
     if (allEtudes && allEtudes.length > 1) {
       // Nettoyage : garder le premier, supprimer les doublons
       const duplicateIds = allEtudes.slice(1).map(e => e.id);
-      await supabase.from("subjects").delete().in("id", duplicateIds);
+      const { error: delDupError } = await supabase
+        .from("subjects")
+        .delete()
+        .eq("school_id", school_id)
+        .in("id", duplicateIds);
+      if (delDupError) {
+        console.error("Erreur suppression doublons matières:", delDupError);
+      }
     } else if (!allEtudes || allEtudes.length === 0) {
       const { error } = await supabase.from("subjects").insert({
         school_id,
@@ -666,7 +673,11 @@ export async function deleteHomework(homeworkId: string): Promise<ActionState> {
       return { error: "Devoir introuvable ou accès non autorisé." };
     }
 
-    const { error } = await supabase.from("homework").delete().eq("id", homeworkId);
+    const { error } = await supabase
+      .from("homework")
+      .delete()
+      .eq("id", homeworkId)
+      .eq("school_id", school_id);
     if (error) throw error;
 
     revalidatePath("/admin/academique/devoirs");
@@ -811,11 +822,16 @@ export async function clearStudentGrades(studentId: string): Promise<ActionState
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
 
-    await Promise.all([
+    const [primRes, secRes, genRes] = await Promise.all([
       supabase.from("primary_grades").delete().eq("student_id", studentId).eq("school_id", school_id),
       supabase.from("secondary_grades").delete().eq("student_id", studentId).eq("school_id", school_id),
       supabase.from("grades").delete().eq("student_id", studentId).eq("school_id", school_id)
     ]);
+
+    if (primRes.error || secRes.error || genRes.error) {
+      const firstErr = primRes.error || secRes.error || genRes.error;
+      throw new Error(`Erreur lors de la suppression des notes : ${firstErr?.message}`);
+    }
 
     revalidatePath("/admin/academique/notes");
     revalidatePath("/admin/academique/bulletins");

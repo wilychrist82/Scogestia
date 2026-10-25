@@ -161,10 +161,15 @@ export async function activateParentAccount(prevState: any, formData: FormData):
   }
 
   // B. Marquer comme utilisé
-  await adminClient
+  const { error: markUsedError } = await adminClient
     .from('parent_invitation_codes')
     .update({ used_at: new Date().toISOString() })
     .eq('id', inv.id)
+
+  if (markUsedError) {
+    console.error("Erreur mise à jour used_at:", markUsedError)
+    return { error: "Erreur lors de la validation de l'invitation." }
+  }
 
   // C. Lier le parent à l'étudiant
   const { error: linkError } = await adminClient
@@ -291,14 +296,19 @@ export async function linkChildWithCode(code: string): Promise<{ error?: string,
     }
   } else {
     // 5. Marquer le code comme consommé
-    await adminClient
+    const { error: markUsedError } = await adminClient
       .from('parent_invitation_codes')
       .update({ used_at: new Date().toISOString() })
       .eq('id', inv.id)
 
+    if (markUsedError) {
+      console.error('Erreur consommation code:', markUsedError)
+      return { error: 'Impossible de valider ce code d\'activation.' }
+    }
+
     // 6. S'assurer que le rôle parent existe pour cette école
     const parentFullName = user.user_metadata?.full_name || 'Parent'
-    await adminClient
+    const { error: roleUpsertErr } = await adminClient
       .from('user_school_roles')
       .upsert({
         user_id: user.id,
@@ -306,6 +316,10 @@ export async function linkChildWithCode(code: string): Promise<{ error?: string,
         role: 'parent',
         full_name: parentFullName
       }, { onConflict: 'user_id,school_id,role', ignoreDuplicates: true })
+
+    if (roleUpsertErr) {
+      console.warn('Erreur attribution rôle parent:', roleUpsertErr)
+    }
   }
 
   revalidatePath('/parent')
@@ -364,7 +378,8 @@ export async function resetParentPassword(parentUserId: string, newPassword: str
   })
 
   if (updateError) {
-    return { error: `Erreur lors de la mise à jour : ${updateError.message}` }
+    console.error('Erreur updateUserById:', updateError)
+    return { error: 'Erreur lors de la mise à jour du mot de passe.' }
   }
 
   if (studentId) {
@@ -386,18 +401,47 @@ export async function unlinkParentFromStudent(linkId: string, studentId: string)
   if (!user) return { error: 'Non authentifié' }
 
   const adminClient = createAdminClient()
+
+  // 1. Récupérer la liaison pour vérifier l'appartenance à l'école
+  const { data: link, error: linkError } = await adminClient
+    .from('parent_student_links')
+    .select('id, school_id, student_id')
+    .eq('id', linkId)
+    .single()
+
+  if (linkError || !link) {
+    return { error: 'Liaison introuvable.' }
+  }
+
+  // 2. Vérifier que l'utilisateur a un rôle administratif dans cette école
+  const { data: roleData } = await supabase
+    .from('user_school_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('school_id', link.school_id)
+    .in('role', ['admin', 'directeur', 'super_admin'])
+    .maybeSingle()
+
+  if (!roleData) {
+    return { error: 'Accès non autorisé pour cette école.' }
+  }
+
+  // 3. Supprimer avec filtrage strict sur l'ID et l'école
   const { error: delError } = await adminClient
     .from('parent_student_links')
     .delete()
     .eq('id', linkId)
+    .eq('school_id', link.school_id)
 
   if (delError) {
-    return { error: `Erreur lors de la dissociation : ${delError.message}` }
+    console.error('Erreur lors de la dissociation parent-élève:', delError)
+    return { error: 'Erreur lors de la dissociation.' }
   }
 
-  if (studentId) {
-    revalidatePath(`/admin/eleves/${studentId}`)
+  if (studentId || link.student_id) {
+    revalidatePath(`/admin/eleves/${studentId || link.student_id}`)
   }
+  revalidatePath('/admin/eleves')
 
   return { success: true }
 }
@@ -458,10 +502,12 @@ export async function createDirectParentAccess(studentId: string, identifier: st
         // Mettre à jour son mot de passe avec le nouveau demandé par l'admin
         await adminClient.auth.admin.updateUserById(parentUserId, { password })
       } else {
-        return { error: `Un compte existe déjà avec ce contact mais n'a pas pu être associé : ${createError.message}` }
+        console.error('Erreur compte existant non trouvé:', createError)
+        return { error: 'Un compte existe déjà avec ce contact mais n\'a pas pu être associé.' }
       }
     } else {
-      return { error: `Erreur création compte : ${createError.message}` }
+      console.error('Erreur création compte parent:', createError)
+      return { error: 'Erreur lors de la création du compte parent.' }
     }
   } else {
     parentUserId = newUserData.user?.id || null
@@ -490,7 +536,8 @@ export async function createDirectParentAccess(studentId: string, identifier: st
       })
 
     if (linkErr) {
-      return { error: `Erreur liaison élève : ${linkErr.message}` }
+      console.error('Erreur création lien parent-élève:', linkErr)
+      return { error: 'Erreur lors de la liaison de l\'élève.' }
     }
   }
 

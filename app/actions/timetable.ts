@@ -106,6 +106,18 @@ export async function updateTimetableSlot(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Non authentifié' }
 
+  const { data: roleData } = await supabase
+    .from('user_school_roles')
+    .select('school_id')
+    .eq('user_id', user.id)
+    .in('role', ['admin', 'comptable', 'directeur', 'super_admin'])
+    .limit(1)
+    .maybeSingle()
+
+  if (!roleData?.school_id) {
+    return { success: false, error: 'Accès refusé. Privilèges administratifs requis.' }
+  }
+
   if (updates.start_time && updates.end_time && updates.start_time >= updates.end_time) {
     return { success: false, error: 'L\'heure de fin doit être après l\'heure de début.' }
   }
@@ -119,6 +131,7 @@ export async function updateTimetableSlot(
       room: updates.room?.trim() || null,
     })
     .eq('id', slotId)
+    .eq('school_id', roleData.school_id)
     .select()
     .single()
 
@@ -126,7 +139,8 @@ export async function updateTimetableSlot(
     if (error.code === '23P01') {
       return { success: false, error: 'Ce créneau chevauche un créneau existant.' }
     }
-    return { success: false, error: `Erreur: ${error.message}` }
+    console.error('Erreur updateTimetableSlot:', error)
+    return { success: false, error: 'Impossible de modifier le créneau.' }
   }
 
   revalidatePath('/admin/academique/emplois')
@@ -137,13 +151,30 @@ export async function updateTimetableSlot(
 export async function deleteTimetableSlot(slotId: string): Promise<ActionResult> {
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Non authentifié' }
+
+  const { data: roleData } = await supabase
+    .from('user_school_roles')
+    .select('school_id')
+    .eq('user_id', user.id)
+    .in('role', ['admin', 'comptable', 'directeur', 'super_admin'])
+    .limit(1)
+    .maybeSingle()
+
+  if (!roleData?.school_id) {
+    return { success: false, error: 'Accès refusé. Privilèges administratifs requis.' }
+  }
+
   const { error } = await supabase
     .from('timetable_slots')
     .delete()
     .eq('id', slotId)
+    .eq('school_id', roleData.school_id)
 
   if (error) {
-    return { success: false, error: `Erreur: ${error.message}` }
+    console.error('Erreur deleteTimetableSlot:', error)
+    return { success: false, error: 'Impossible de supprimer ce créneau.' }
   }
 
   revalidatePath('/admin/academique/emplois')

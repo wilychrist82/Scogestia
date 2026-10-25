@@ -60,6 +60,7 @@ export async function saveGrade(payload: GradeSavePayload): Promise<{ error?: st
         .from('grades')
         .delete()
         .match({
+          school_id: roleData.school_id,
           student_id: payload.student_id,
           class_id: payload.class_id,
           subject_name: payload.subject_name,

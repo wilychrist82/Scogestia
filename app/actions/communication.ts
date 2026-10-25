@@ -443,7 +443,7 @@ export async function deleteCommunication(id: string, type: 'for_me' | 'for_ever
   const adminClient = await createAdminClient()
   const { data: message, error: getError } = await adminClient
     .from('communications')
-    .select('id, sender_id, deleted_by, is_deleted_for_everyone')
+    .select('id, sender_id, school_id, deleted_by, is_deleted_for_everyone')
     .eq('id', id)
     .single()
 
@@ -458,6 +458,7 @@ export async function deleteCommunication(id: string, type: 'for_me' | 'for_ever
       .from('communications')
       .update({ is_deleted_for_everyone: true })
       .eq('id', id)
+      .eq('school_id', message.school_id)
       
     if (updateError) return { error: 'Erreur lors de la suppression' }
   } else if (type === 'for_me') {
@@ -468,6 +469,7 @@ export async function deleteCommunication(id: string, type: 'for_me' | 'for_ever
         .from('communications')
         .update({ deleted_by: [...currentDeletedBy, user.id] })
         .eq('id', id)
+        .eq('school_id', message.school_id)
         
       if (updateError) return { error: 'Erreur lors de la suppression' }
     }
@@ -489,22 +491,37 @@ export async function markAsRead(ids: string[]) {
 
   const adminClient = await createAdminClient()
   
-  // On récupère les messages concernés pour voir la liste `read_by` actuelle
+  // 1. Récupérer les écoles auxquelles l'utilisateur a accès
+  const { data: userRoles } = await supabase
+    .from('user_school_roles')
+    .select('school_id')
+    .eq('user_id', user.id)
+
+  const userSchoolIds = new Set(userRoles?.map(r => r.school_id) || [])
+
+  // 2. On récupère les messages concernés pour voir la liste `read_by` actuelle et l'école
   const { data: messages } = await adminClient
     .from('communications')
-    .select('id, read_by')
+    .select('id, read_by, school_id')
     .in('id', ids)
     
   if (!messages || messages.length === 0) return { success: true }
 
-  // Mise à jour de chaque message (on pourrait faire un bulk via RPC mais on boucle pour simplifier vu qu'il n'y a pas la fonction)
+  // 3. Mise à jour de chaque message avec contrôle de multi-tenance
   for (const msg of messages) {
+    if (msg.school_id && !userSchoolIds.has(msg.school_id)) continue
+
     const currentReadBy = msg.read_by || []
     if (!currentReadBy.includes(user.id)) {
-      await adminClient
+      const { error: readErr } = await adminClient
         .from('communications')
         .update({ read_by: [...currentReadBy, user.id] })
         .eq('id', msg.id)
+        .eq('school_id', msg.school_id)
+
+      if (readErr) {
+        console.error('Erreur markAsRead communications:', readErr)
+      }
     }
   }
 

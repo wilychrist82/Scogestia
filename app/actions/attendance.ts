@@ -78,6 +78,7 @@ export async function saveClassAttendance(
       const { error: deleteError } = await supabase
         .from('attendance')
         .delete()
+        .eq('school_id', roleData.school_id)
         .eq('class_id', classId)
         .eq('date', date)
         .in('student_id', undefinedStudents)

@@ -206,7 +206,8 @@ export async function recordPayment(prevState: ActionState, formData: FormData):
       const { error: updateError } = await supabase
         .from('payment_schedules')
         .update({ status: newStatus })
-        .eq('id', schedule.id);
+        .eq('id', schedule.id)
+        .eq('school_id', school_id);
         
       if (updateError) throw updateError;
     }
