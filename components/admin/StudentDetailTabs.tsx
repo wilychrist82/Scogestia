@@ -60,6 +60,9 @@ type Props = {
     email?: string | null
     current_academic_year?: string | null
     director_name?: string | null
+    logo_url?: string | null
+    stamp_url?: string | null
+    signature_url?: string | null
   } | null
 }
 
@@ -83,14 +86,19 @@ export function StudentDetailTabs({
     gender: student.gender,
     bloodGroup: student.blood_group,
     className: student.classes?.name || 'Non assignée',
+    classLevel: (student.classes as any)?.level || null,
     parentPhone: student.parent_phone || linkedParents[0]?.phone || null,
     address: student.address,
+    avatarUrl: student.avatar_url || null,
     schoolName: schoolInfo?.name || 'Établissement Scolaire',
     schoolCity: schoolInfo?.city || null,
     schoolPhone: schoolInfo?.phone || null,
     schoolEmail: schoolInfo?.email || null,
     academicYear: schoolInfo?.current_academic_year || '2025-2026',
     directorName: schoolInfo?.director_name || null,
+    schoolLogoUrl: schoolInfo?.logo_url || null,
+    schoolStampUrl: schoolInfo?.stamp_url || null,
+    schoolSignatureUrl: schoolInfo?.signature_url || null,
   })
   const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'presences' | 'paiements'>('info')
   const [isPending, startTransition] = useTransition()

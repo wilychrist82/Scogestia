@@ -4,9 +4,10 @@ import { useState, useMemo, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Users, GraduationCap, ArrowLeft, Download, Search, UserCheck, UserPlus, Eye, Edit2, Trash2, MoreVertical, AlertTriangle, Calendar, Clock, CreditCard, BookOpen, CheckCircle2, FileText, ArrowRight } from 'lucide-react'
+import { Users, GraduationCap, ArrowLeft, Download, Search, UserCheck, UserPlus, Eye, Edit2, Trash2, MoreVertical, AlertTriangle, Calendar, Clock, CreditCard, BookOpen, CheckCircle2, FileText, ArrowRight, IdCard, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { deleteStudent, removeStudentFromClass } from '@/app/actions/students'
+import { generateClassStudentIdCardsPDF, generateStudentIdCardPDF, StudentDocumentData } from '@/lib/pdf/student-documents'
 
 export type ClassStudentItem = {
   id: string
@@ -15,7 +16,11 @@ export type ClassStudentItem = {
   last_name: string
   gender: string | null
   date_of_birth: string | null
+  birth_place?: string | null
+  blood_group?: string | null
+  address?: string | null
   parent_phone: string | null
+  avatar_url?: string | null
   status: string
 }
 
@@ -44,6 +49,17 @@ type Props = {
   timetableSlots?: ClassTimetableSlot[]
   attendances?: any[]
   schedules?: any[]
+  schoolInfo?: {
+    name?: string | null
+    city?: string | null
+    phone?: string | null
+    email?: string | null
+    current_academic_year?: string | null
+    director_name?: string | null
+    logo_url?: string | null
+    stamp_url?: string | null
+    signature_url?: string | null
+  } | null
 }
 
 const DAY_NAMES: Record<number, string> = {
@@ -61,12 +77,53 @@ export function ClassDetailsView({
   timetableSlots = [],
   attendances = [],
   schedules = [],
+  schoolInfo = null,
 }: Props) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'eleves' | 'emploi_du_temps' | 'suivi'>('eleves')
   const [isPending, startTransition] = useTransition()
+  const [isPrintingCards, setIsPrintingCards] = useState(false)
   const [studentToDelete, setStudentToDelete] = useState<ClassStudentItem | null>(null)
   const [openActionId, setOpenActionId] = useState<string | null>(null)
+
+  const buildStudentDocData = (s: ClassStudentItem): StudentDocumentData => ({
+    studentId: s.id,
+    matricule: s.matricule || 'N/A',
+    firstName: s.first_name,
+    lastName: s.last_name,
+    dateOfBirth: s.date_of_birth,
+    birthPlace: s.birth_place || null,
+    gender: s.gender,
+    bloodGroup: s.blood_group || null,
+    className: classInfo.name,
+    classLevel: classInfo.level,
+    parentPhone: s.parent_phone,
+    address: s.address || null,
+    avatarUrl: s.avatar_url || null,
+    schoolName: schoolInfo?.name || 'Établissement Scolaire',
+    schoolCity: schoolInfo?.city || null,
+    schoolPhone: schoolInfo?.phone || null,
+    schoolEmail: schoolInfo?.email || null,
+    academicYear: schoolInfo?.current_academic_year || classInfo.academic_year || '2025-2026',
+    directorName: schoolInfo?.director_name || null,
+    schoolLogoUrl: schoolInfo?.logo_url || null,
+    schoolStampUrl: schoolInfo?.stamp_url || null,
+    schoolSignatureUrl: schoolInfo?.signature_url || null,
+  })
+
+  const handlePrintClassIdCards = async () => {
+    if (students.length === 0) return
+    try {
+      setIsPrintingCards(true)
+      const list = students.map(buildStudentDocData)
+      await generateClassStudentIdCardsPDF(classInfo.name, list)
+      toast.success(`Cartes scolaires de la classe ${classInfo.name} générées !`)
+    } catch {
+      toast.error('Erreur lors de la génération des cartes scolaires.')
+    } finally {
+      setIsPrintingCards(false)
+    }
+  }
 
   const [searchTerm, setSearchTerm] = useState('')
   const [genderFilter, setGenderFilter] = useState<'ALL' | 'M' | 'F'>('ALL')
@@ -186,19 +243,31 @@ export function ClassDetailsView({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-2.5 flex-wrap w-full sm:w-auto">
           {students.length > 0 && (
-            <button
-              onClick={handleExportCSV}
-              className="px-4 py-2.5 bg-[var(--color-surface-container-high)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-sm font-semibold rounded-lg hover:bg-[var(--color-surface-container-highest)] hover:shadow-sm transition-all flex items-center gap-2"
-            >
-              <Download size={16} />
-              Exporter la liste
-            </button>
+            <>
+              <button
+                type="button"
+                disabled={isPrintingCards}
+                onClick={handlePrintClassIdCards}
+                className="px-4 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs sm:text-sm font-bold rounded-lg hover:bg-emerald-100 hover:shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+                title="Générer en 1 clic toutes les cartes scolaires de cette classe (avec photos, cachet et signature)"
+              >
+                {isPrintingCards ? <Loader2 size={16} className="animate-spin text-emerald-700" /> : <IdCard size={16} className="text-emerald-700" />}
+                {isPrintingCards ? 'Génération...' : 'Cartes Scolaires (PDF)'}
+              </button>
+              <button
+                onClick={handleExportCSV}
+                className="px-4 py-2.5 bg-[var(--color-surface-container-high)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-xs sm:text-sm font-semibold rounded-lg hover:bg-[var(--color-surface-container-highest)] hover:shadow-sm transition-all flex items-center gap-2"
+              >
+                <Download size={16} />
+                Exporter CSV
+              </button>
+            </>
           )}
           <Link
             href="/admin/eleves/nouveau"
-            className="px-4 py-2.5 bg-[var(--color-primary)] text-white text-sm font-semibold rounded-lg hover:opacity-90 hover:shadow-md transition-all flex items-center gap-2"
+            className="px-4 py-2.5 bg-[var(--color-primary)] text-white text-xs sm:text-sm font-semibold rounded-lg hover:opacity-90 hover:shadow-md transition-all flex items-center gap-2"
           >
             <UserPlus className="w-4 h-4" />
             Inscrire un élève
@@ -444,6 +513,18 @@ export function ClassDetailsView({
                               <Edit2 className="w-4 h-4" />
                               Modifier
                             </Link>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setOpenActionId(null)
+                                await generateStudentIdCardPDF(buildStudentDocData(student))
+                                toast.success(`Carte scolaire de ${student.first_name} générée !`)
+                              }}
+                              className="px-4 py-2 text-xs font-medium text-emerald-800 hover:bg-emerald-50 flex items-center gap-2.5 transition-colors w-full text-left"
+                            >
+                              <IdCard className="w-4 h-4 text-emerald-600" />
+                              Carte scolaire PDF
+                            </button>
                             <div className="border-t border-[var(--color-outline-variant)]/60 my-1" />
                             <button 
                               type="button"

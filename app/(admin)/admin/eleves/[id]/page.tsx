@@ -53,7 +53,7 @@ export default async function StudentDetailPage({
       .limit(1).maybeSingle(),
     supabase
       .from('schools')
-      .select('name, city, phone, email, current_academic_year, director_name')
+      .select('name, city, phone, email, current_academic_year, director_name, logo_url, stamp_url, signature_url')
       .eq('id', roleData.school_id)
       .limit(1).maybeSingle()
   ])

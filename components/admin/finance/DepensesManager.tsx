@@ -17,8 +17,10 @@ import {
   Calendar,
   User,
   FileText,
+  Printer,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { generateExpenseVoucherPDF } from '@/lib/pdf/student-documents'
 
 export interface SchoolExpenseItem {
   id: string
@@ -35,6 +37,12 @@ export interface SchoolExpenseItem {
 interface DepensesManagerProps {
   expenses: SchoolExpenseItem[]
   totalCollected: number
+  schoolInfo?: {
+    name?: string | null
+    city?: string | null
+    phone?: string | null
+    director_name?: string | null
+  } | null
 }
 
 const EXPENSE_CATEGORIES = [
@@ -55,7 +63,7 @@ const PAYMENT_METHODS: Record<string, string> = {
   cheque: 'Chèque',
 }
 
-export function DepensesManager({ expenses, totalCollected }: DepensesManagerProps) {
+export function DepensesManager({ expenses, totalCollected, schoolInfo = null }: DepensesManagerProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -317,15 +325,42 @@ export function DepensesManager({ expenses, totalCollected }: DepensesManagerPro
                       -{Number(exp.amount).toLocaleString('fr-FR')} FCFA
                     </td>
                     <td className="py-3.5 px-5 text-right">
-                      <button
-                        type="button"
-                        disabled={isPending}
-                        onClick={() => handleDelete(exp.id, exp.label)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                        title="Supprimer cette dépense"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="inline-flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            generateExpenseVoucherPDF({
+                              id: exp.id,
+                              category: exp.category,
+                              label: exp.label,
+                              amount: exp.amount,
+                              paymentMethod: PAYMENT_METHODS[exp.payment_method] || exp.payment_method,
+                              beneficiary: exp.beneficiary,
+                              expenseDate: exp.expense_date,
+                              notes: exp.notes,
+                              schoolName: schoolInfo?.name || 'Établissement Scolaire',
+                              schoolCity: schoolInfo?.city || null,
+                              schoolPhone: schoolInfo?.phone || null,
+                              directorName: schoolInfo?.director_name || null,
+                            })
+                            toast.success('Bon de décaissement / Reçu PDF généré !')
+                          }}
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors inline-flex items-center gap-1"
+                          title="Télécharger le Bon de Caisse ou Reçu de Paie en PDF"
+                        >
+                          <Printer className="w-3.5 h-3.5 text-emerald-700" />
+                          Pièce PDF
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={() => handleDelete(exp.id, exp.label)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          title="Supprimer cette dépense"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

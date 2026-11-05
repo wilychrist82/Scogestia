@@ -46,15 +46,16 @@ export default async function ClassDetailsPage({
     )
   }
 
-  // 2. Fetch all students in this class + timetable + attendance
+  // 2. Fetch all students in this class + timetable + attendance + school info
   const [
     { data: students },
     { data: timetableSlots },
-    { data: attendances }
+    { data: attendances },
+    { data: school }
   ] = await Promise.all([
     supabase
       .from('students')
-      .select('id, matricule, first_name, last_name, gender, date_of_birth, parent_phone, status')
+      .select('id, matricule, first_name, last_name, gender, date_of_birth, birth_place, blood_group, address, parent_phone, avatar_url, status')
       .eq('class_id', id)
       .eq('school_id', roleData.school_id)
       .order('last_name', { ascending: true }),
@@ -69,7 +70,12 @@ export default async function ClassDetailsPage({
       .select('id, student_id, date, status, justification')
       .eq('class_id', id)
       .order('date', { ascending: false })
-      .limit(200)
+      .limit(200),
+    supabase
+      .from('schools')
+      .select('name, city, phone, email, current_academic_year, director_name, logo_url, stamp_url, signature_url')
+      .eq('id', roleData.school_id)
+      .limit(1).maybeSingle()
   ])
 
   const studentIds = (students || []).map(s => s.id)
@@ -89,6 +95,7 @@ export default async function ClassDetailsPage({
       timetableSlots={(timetableSlots as any) || []}
       attendances={(attendances as any) || []}
       schedules={classSchedules}
+      schoolInfo={school || null}
     />
   )
 }

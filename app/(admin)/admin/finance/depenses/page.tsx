@@ -30,7 +30,7 @@ export default async function FinanceDepensesPage() {
     )
   }
 
-  const [{ data: expenses }, { data: payments }] = await Promise.all([
+  const [{ data: expenses }, { data: payments }, { data: school }] = await Promise.all([
     supabase
       .from('school_expenses')
       .select('id, category, label, amount, payment_method, beneficiary, expense_date, notes, created_at')
@@ -41,6 +41,12 @@ export default async function FinanceDepensesPage() {
       .from('payments')
       .select('amount')
       .eq('school_id', roleData.school_id),
+    supabase
+      .from('schools')
+      .select('name, city, phone, director_name')
+      .eq('id', roleData.school_id)
+      .limit(1)
+      .maybeSingle(),
   ])
 
   const totalCollected = (payments || []).reduce(
@@ -52,6 +58,7 @@ export default async function FinanceDepensesPage() {
     <DepensesManager
       expenses={(expenses as any) || []}
       totalCollected={totalCollected}
+      schoolInfo={school || null}
     />
   )
 }
