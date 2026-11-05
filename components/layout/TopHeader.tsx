@@ -36,7 +36,7 @@ export function TopHeader({
   onMenuClick?: () => void,
   schoolName?: string,
   schoolCity?: string,
-  navVariant?: 'admin' | 'enseignant' | 'super_admin'
+  navVariant?: 'admin' | 'comptable' | 'enseignant' | 'super_admin'
 }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -50,6 +50,7 @@ export function TopHeader({
 
   const isEnseignant = navVariant === 'enseignant'
   const isSuperAdmin = navVariant === 'super_admin'
+  const isComptable = navVariant === 'comptable'
 
   const handleNotificationClick = async (notif: any) => {
     if (!notif.is_read) {
@@ -138,7 +139,13 @@ export function TopHeader({
     : notifications.filter(n => !n.is_read)
 
   return (
-    <header className="h-[68px] bg-white/95 backdrop-blur-md border-b border-slate-200/80 flex items-center justify-between px-4 md:px-6 sticky top-0 z-30 w-full transition-colors">
+    <header
+      className="min-h-[68px] bg-white/95 backdrop-blur-md border-b border-slate-200/80 flex items-center justify-between px-4 md:px-6 sticky top-0 z-30 w-full transition-colors"
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        minHeight: 'calc(68px + env(safe-area-inset-top, 0px))',
+      }}
+    >
       
       {/* Gauche : Bouton menu + Titre de page avec hiérarchie soignée */}
       <div className="flex items-center gap-3 min-w-0">
@@ -410,7 +417,7 @@ export function TopHeader({
                   <span>Mon profil personnel</span>
                 </Link>
 
-                {!isEnseignant && !isSuperAdmin && (
+                {!isEnseignant && !isSuperAdmin && !isComptable && (
                   <>
                     <Link 
                       href="/admin/parametres"

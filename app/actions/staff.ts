@@ -11,18 +11,25 @@ export type ActionState = {
   code?: string;
 } | null;
 
-async function getActiveSchoolId() {
+async function getActiveSchoolId(requireAdmin = true) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Non authentifié');
 
-  const { data: roleData, error } = await supabase
+  let query = supabase
     .from('user_school_roles')
-    .select('school_id')
-    .eq('user_id', user.id)
-    .single();
+    .select('school_id, role')
+    .eq('user_id', user.id);
 
-  if (error || !roleData) throw new Error('École introuvable');
+  if (requireAdmin) {
+    query = query.in('role', ['admin', 'super_admin']);
+  }
+
+  const { data: roleData, error } = await query.limit(1).maybeSingle();
+
+  if (error || !roleData) {
+    throw new Error(requireAdmin ? 'Action réservée aux administrateurs de l\'établissement.' : 'École introuvable');
+  }
   return roleData.school_id;
 }
 
@@ -217,11 +224,12 @@ export async function editStaff(staffRoleId: string, formData: FormData): Promis
     const school_id = await getActiveSchoolId();
     const serviceClient = createServiceRoleClient();
 
-    // Récupérer l'user_id correspondant pour mettre à jour le mot de passe si fourni
+    // Récupérer l'user_id correspondant (en vérifiant qu'il appartient bien à cette école)
     const { data: roleData, error: fetchError } = await serviceClient
       .from('user_school_roles')
       .select('user_id')
       .eq('id', staffRoleId)
+      .eq('school_id', school_id)
       .single();
 
     if (fetchError || !roleData) {
@@ -336,7 +344,7 @@ export async function removeTeacherAssignment(assignmentId: string): Promise<Act
 
 export async function getSchoolClassesAndSubjects() {
   try {
-    const school_id = await getActiveSchoolId();
+    const school_id = await getActiveSchoolId(false);
     const supabase = await createClient();
 
     const [classesRes, subjectsRes] = await Promise.all([

@@ -360,12 +360,13 @@ export async function resetParentPassword(parentUserId: string, newPassword: str
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
-  // Vérifier rôle staff/admin
+  // Vérifier rôle staff/admin et école
   const { data: role } = await supabase
     .from('user_school_roles')
-    .select('role')
+    .select('role, school_id')
     .eq('user_id', user.id)
-    .in('role', ['admin', 'directeur', 'secretaire'])
+    .in('role', ['admin', 'super_admin'])
+    .limit(1)
     .maybeSingle()
 
   if (!role) {
@@ -373,6 +374,21 @@ export async function resetParentPassword(parentUserId: string, newPassword: str
   }
 
   const adminClient = createAdminClient()
+
+  // Vérifier que le parent appartient bien au même établissement
+  if (role.role !== 'super_admin') {
+    const { data: parentLink } = await adminClient
+      .from('parent_student_links')
+      .select('id')
+      .eq('parent_user_id', parentUserId)
+      .eq('school_id', role.school_id)
+      .limit(1)
+      .maybeSingle()
+
+    if (!parentLink) {
+      return { error: 'Ce compte parent n\'est pas rattaché à votre établissement.' }
+    }
+  }
   const { error: updateError } = await adminClient.auth.admin.updateUserById(parentUserId, {
     password: newPassword
   })
@@ -419,7 +435,7 @@ export async function unlinkParentFromStudent(linkId: string, studentId: string)
     .select('role')
     .eq('user_id', user.id)
     .eq('school_id', link.school_id)
-    .in('role', ['admin', 'directeur', 'super_admin'])
+    .in('role', ['admin', 'super_admin'])
     .maybeSingle()
 
   if (!roleData) {
@@ -474,6 +490,20 @@ export async function createDirectParentAccess(studentId: string, identifier: st
 
   if (stdError || !student) {
     return { error: 'Élève introuvable.' }
+  }
+
+  // Vérifier que l'appelant est bien administrateur ou comptable de cette école
+  const { data: callerRole } = await supabase
+    .from('user_school_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('school_id', student.school_id)
+    .in('role', ['admin', 'comptable', 'super_admin'])
+    .limit(1)
+    .maybeSingle()
+
+  if (!callerRole) {
+    return { error: 'Action non autorisée pour cet établissement.' }
   }
 
   const cleanId = identifier.trim().replace(/\s+/g, '')

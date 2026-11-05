@@ -18,9 +18,11 @@ async function getActiveSchoolId() {
     .from('user_school_roles')
     .select('school_id')
     .eq('user_id', user.id)
-    .single();
+    .in('role', ['admin', 'comptable', 'super_admin'])
+    .limit(1)
+    .maybeSingle();
 
-  if (error || !roleData) throw new Error('École introuvable');
+  if (error || !roleData) throw new Error('Action non autorisée ou établissement introuvable');
   return roleData.school_id;
 }
 

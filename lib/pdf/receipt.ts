@@ -113,7 +113,26 @@ export function generatePaymentReceipt(data: ReceiptData) {
   doc.text('Ce reçu est généré automatiquement et sert de preuve de paiement.', 105, 270, { align: 'center' })
   doc.text(`Généré le ${new Date().toLocaleString('fr-FR')} par Scogestia`, 105, 276, { align: 'center' })
 
-  // Sauvegarder le PDF
+  // Sauvegarder ou partager le PDF (compatible Web + WebView Android Capacitor)
   const filename = `Reçu_${data.studentName.replace(/\s+/g, '_')}_${data.date.replace(/\//g, '-')}.pdf`
+  try {
+    const isNativeMobile = typeof window !== 'undefined' && Boolean((window as any).Capacitor?.isNativePlatform?.())
+    if (isNativeMobile && typeof navigator !== 'undefined' && navigator.share) {
+      const pdfBlob = doc.output('blob')
+      const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' })
+      if (!navigator.canShare || navigator.canShare({ files: [pdfFile] })) {
+        navigator.share({
+          title: filename,
+          text: `Reçu de paiement — ${data.studentName}`,
+          files: [pdfFile],
+        }).catch(() => {
+          doc.save(filename)
+        })
+        return
+      }
+    }
+  } catch {
+    // Fallback sur doc.save
+  }
   doc.save(filename)
 }

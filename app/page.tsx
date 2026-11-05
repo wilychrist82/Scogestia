@@ -181,7 +181,7 @@ export default function Home() {
               <div className="flex flex-col p-4 gap-4">
                 <Link href="#accueil" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-200 p-2 hover:bg-white/[0.06] rounded-lg">Accueil</Link>
                 <Link href="#fonctionnalites" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-200 p-2 hover:bg-white/[0.06] rounded-lg">Fonctionnalités</Link>
-                <Link href="#comment-ca-marche" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-200 p-2 hover:bg-white/[0.06] rounded-lg">Comment ça marche</Link>
+                <Link href="#apercu" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-200 p-2 hover:bg-white/[0.06] rounded-lg">Aperçu</Link>
                 <Link href="#tarifs" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-200 p-2 hover:bg-white/[0.06] rounded-lg">Tarifs</Link>
                 <Link href="#temoignages" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-200 p-2 hover:bg-white/[0.06] rounded-lg">Témoignages</Link>
                 <Link href="#faq" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-slate-200 p-2 hover:bg-white/[0.06] rounded-lg">FAQ</Link>

@@ -4,7 +4,7 @@ import { useState, useMemo, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Users, GraduationCap, ArrowLeft, Download, Search, UserCheck, UserPlus, Eye, Edit2, Trash2, MoreVertical, AlertTriangle } from 'lucide-react'
+import { Users, GraduationCap, ArrowLeft, Download, Search, UserCheck, UserPlus, Eye, Edit2, Trash2, MoreVertical, AlertTriangle, Calendar, Clock, CreditCard, BookOpen, CheckCircle2, FileText, ArrowRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { deleteStudent, removeStudentFromClass } from '@/app/actions/students'
 
@@ -27,13 +27,43 @@ export type ClassInfo = {
   academic_year: string
 }
 
+export type ClassTimetableSlot = {
+  id: string
+  day_of_week: number
+  start_time: string
+  end_time: string
+  subject_name: string
+  teacher_name: string | null
+  room: string | null
+  color: string
+}
+
 type Props = {
   classInfo: ClassInfo
   students: ClassStudentItem[]
+  timetableSlots?: ClassTimetableSlot[]
+  attendances?: any[]
+  schedules?: any[]
 }
 
-export function ClassDetailsView({ classInfo, students }: Props) {
+const DAY_NAMES: Record<number, string> = {
+  1: 'Lundi',
+  2: 'Mardi',
+  3: 'Mercredi',
+  4: 'Jeudi',
+  5: 'Vendredi',
+  6: 'Samedi',
+}
+
+export function ClassDetailsView({
+  classInfo,
+  students,
+  timetableSlots = [],
+  attendances = [],
+  schedules = [],
+}: Props) {
   const router = useRouter()
+  const [activeTab, setActiveTab] = useState<'eleves' | 'emploi_du_temps' | 'suivi'>('eleves')
   const [isPending, startTransition] = useTransition()
   const [studentToDelete, setStudentToDelete] = useState<ClassStudentItem | null>(null)
   const [openActionId, setOpenActionId] = useState<string | null>(null)
@@ -221,7 +251,68 @@ export function ClassDetailsView({ classInfo, students }: Props) {
         </div>
       </div>
 
-      {/* Roster Controls */}
+      {/* Navigation par onglets de la classe */}
+      <div className="flex items-center justify-between flex-wrap gap-3 border-b border-slate-200 pb-2">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+          <button
+            type="button"
+            onClick={() => setActiveTab('eleves')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all ${
+              activeTab === 'eleves'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Users size={16} />
+            Liste des Élèves ({totalCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('emploi_du_temps')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all ${
+              activeTab === 'emploi_du_temps'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Calendar size={16} />
+            Emploi du temps ({timetableSlots.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('suivi')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all ${
+              activeTab === 'suivi'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <CreditCard size={16} />
+            Assiduité & Finances
+          </button>
+        </div>
+
+        {/* Raccourcis Pédagogiques rapides */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link
+            href="/admin/academique/notes"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:border-emerald-300 hover:text-emerald-700 transition-colors flex items-center gap-1.5"
+          >
+            <BookOpen size={14} className="text-emerald-600" />
+            Saisir notes
+          </Link>
+          <Link
+            href="/admin/academique/bulletins"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:border-emerald-300 hover:text-emerald-700 transition-colors flex items-center gap-1.5"
+          >
+            <FileText size={14} className="text-emerald-600" />
+            Bulletins
+          </Link>
+        </div>
+      </div>
+
+      {/* Onglet 1 : Liste des Élèves */}
+      {activeTab === 'eleves' && (
       <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl shadow-sm overflow-hidden">
         <div className="p-4 border-b border-[var(--color-outline-variant)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[var(--color-surface-bright)]">
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -376,6 +467,180 @@ export function ClassDetailsView({ classInfo, students }: Props) {
           </div>
         )}
       </div>
+      )}
+
+      {/* Onglet 2 : Emploi du temps de la classe */}
+      {activeTab === 'emploi_du_temps' && (
+        <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6 shadow-sm space-y-5">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h3 className="text-lg font-bold text-[var(--color-on-surface)]">
+                Emploi du temps — {classInfo.name}
+              </h3>
+              <p className="text-xs text-[var(--color-on-surface-variant)]">
+                Planning hebdomadaire des cours programmés pour cette classe.
+              </p>
+            </div>
+            <Link
+              href="/admin/academique"
+              className="px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-700 text-white hover:bg-emerald-800 transition-colors flex items-center gap-1.5"
+            >
+              Gérer l&apos;emploi du temps
+              <ArrowRight size={14} />
+            </Link>
+          </div>
+
+          {timetableSlots.length === 0 ? (
+            <EmptyState
+              title="Aucun créneau programmé"
+              description="Configurez l'emploi du temps de cette classe depuis le module Académique > Emploi du temps."
+              icon={Calendar}
+              actionLabel="Configurer l'emploi du temps"
+              onAction={() => router.push('/admin/academique')}
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((dayNum) => {
+                const daySlots = timetableSlots.filter((s) => s.day_of_week === dayNum)
+                if (daySlots.length === 0) return null
+                return (
+                  <div
+                    key={dayNum}
+                    className="rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden"
+                  >
+                    <div className="px-4 py-2.5 bg-emerald-900 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-between">
+                      <span>{DAY_NAMES[dayNum] || `Jour ${dayNum}`}</span>
+                      <span className="text-[11px] font-medium text-emerald-200">
+                        {daySlots.length} cours
+                      </span>
+                    </div>
+                    <div className="divide-y divide-slate-200/70">
+                      {daySlots.map((slot) => (
+                        <div key={slot.id} className="p-3.5 bg-white space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-sm text-slate-900">
+                              {slot.subject_name}
+                            </span>
+                            <span className="text-xs font-mono font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                              {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-slate-500">
+                            <span>{slot.teacher_name || 'Enseignant non précisé'}</span>
+                            {slot.room && <span className="font-medium">Salle {slot.room}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Onglet 3 : Assiduité & Finances de la classe */}
+      {activeTab === 'suivi' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Synthèse Financière de la classe */}
+          <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-[var(--color-on-surface)] flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-emerald-600" />
+                Recouvrement Financier de la Classe
+              </h3>
+              <Link
+                href="/admin/finance"
+                className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1"
+              >
+                Voir Finances <ArrowRight size={13} />
+              </Link>
+            </div>
+            {(() => {
+              const totalExpected = schedules.reduce((acc, s) => acc + Number(s.total_amount || 0), 0)
+              const totalPaid = schedules.reduce((acc, s) => acc + Number(s.paid_amount || 0), 0)
+              const remaining = Math.max(0, totalExpected - totalPaid)
+              const rate = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0
+
+              return (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                      <p className="text-[11px] font-semibold text-slate-500 uppercase">Attendu</p>
+                      <p className="text-sm sm:text-base font-black text-slate-900 mt-1">
+                        {totalExpected.toLocaleString('fr-FR')} F
+                      </p>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                      <p className="text-[11px] font-semibold text-emerald-700 uppercase">Encaissé</p>
+                      <p className="text-sm sm:text-base font-black text-emerald-800 mt-1">
+                        {totalPaid.toLocaleString('fr-FR')} F
+                      </p>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200">
+                      <p className="text-[11px] font-semibold text-rose-700 uppercase">Reste à payer</p>
+                      <p className="text-sm sm:text-base font-black text-rose-800 mt-1">
+                        {remaining.toLocaleString('fr-FR')} F
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs font-semibold mb-1.5">
+                      <span className="text-slate-600">Taux de recouvrement de la classe</span>
+                      <span className="text-emerald-700 font-bold">{rate}%</span>
+                    </div>
+                    <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-600 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, rate)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
+
+          {/* Synthèse Assiduité de la classe */}
+          <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6 shadow-sm space-y-4">
+            <h3 className="text-lg font-bold text-[var(--color-on-surface)] flex items-center gap-2">
+              <Clock className="w-5 h-5 text-amber-600" />
+              Assiduité & Absences Récentes
+            </h3>
+            {(() => {
+              const absCount = attendances.filter((a) => a.status === 'absent').length
+              const justCount = attendances.filter(
+                (a) => a.status === 'absent_justifie' || Boolean(a.justification)
+              ).length
+              const retCount = attendances.filter((a) => a.status === 'retard').length
+
+              return (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-center">
+                      <p className="text-xl font-black text-rose-700">{absCount}</p>
+                      <p className="text-[11px] font-semibold text-rose-700 uppercase">Absences</p>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-center">
+                      <p className="text-xl font-black text-blue-700">{justCount}</p>
+                      <p className="text-[11px] font-semibold text-blue-700 uppercase">Justifiées</p>
+                    </div>
+                    <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-center">
+                      <p className="text-xl font-black text-amber-700">{retCount}</p>
+                      <p className="text-[11px] font-semibold text-amber-700 uppercase">Retards</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Basé sur les {attendances.length} derniers pointages d&apos;appel enregistrés pour la classe {classInfo.name}.
+                  </p>
+                </div>
+              )
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Modal de Confirmation de Suppression */}
       {studentToDelete && (

@@ -48,14 +48,14 @@ export function NetworkStatusIndicator() {
 
       {/* Bannière d'alerte contextuelle en cas de coupure (contexte Togo / réseau instable) */}
       {!isOnline && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-rose-600 text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-3 text-xs font-semibold animate-bounce">
+        <div className="fixed bottom-20 md:bottom-4 left-1/2 -translate-x-1/2 z-50 bg-rose-600 text-white px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-3 text-xs font-semibold animate-bounce">
           <WifiOff size={16} />
           <span>Connexion Internet interrompue. Vos saisies locales sont protégées.</span>
         </div>
       )}
 
       {isOnline && showBanner && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-4 py-2 rounded-xl shadow-xl flex items-center gap-2 text-xs font-semibold animate-in fade-in duration-300">
+        <div className="fixed bottom-20 md:bottom-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-4 py-2 rounded-xl shadow-xl flex items-center gap-2 text-xs font-semibold animate-in fade-in duration-300">
           <Wifi size={15} />
           <span>Connexion rétablie avec succès.</span>
         </div>

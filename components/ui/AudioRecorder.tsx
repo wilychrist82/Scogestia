@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2, Mic, X, Square, Disc } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 interface Props {
   onAudioReady: (url: string | null) => void
@@ -26,7 +27,13 @@ export function AudioRecorder({ onAudioReady, compact = false }: Props) {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      mediaRecorder.current = new MediaRecorder(stream)
+      const mimeType = typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/mp4')
+          ? 'audio/mp4'
+          : ''
+      const ext = mimeType.includes('mp4') ? 'm4a' : 'webm'
+      mediaRecorder.current = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
       audioChunks.current = []
 
       mediaRecorder.current.ondataavailable = (e) => {
@@ -34,16 +41,16 @@ export function AudioRecorder({ onAudioReady, compact = false }: Props) {
       }
 
       mediaRecorder.current.onstop = async () => {
-        const blob = new Blob(audioChunks.current, { type: 'audio/webm' })
+        const blob = new Blob(audioChunks.current, { type: mimeType || 'audio/webm' })
         setIsUploading(true)
         try {
           const supabase = createClient()
-          const fileName = `message_${Date.now()}.webm`
+          const fileName = `message_${Date.now()}.${ext}`
           const { error } = await supabase.storage
             .from('communications')
             .upload(fileName, blob)
           if (error) {
-            alert("Erreur lors de l'envoi du fichier audio.")
+            toast.error("Erreur lors de l'envoi du fichier audio.")
             return
           }
           const { data: { publicUrl } } = supabase.storage
@@ -61,7 +68,7 @@ export function AudioRecorder({ onAudioReady, compact = false }: Props) {
       setRecordingSeconds(0)
       timerRef.current = setInterval(() => setRecordingSeconds(p => p + 1), 1000)
     } catch {
-      alert("Veuillez autoriser l'accès au microphone.")
+      toast.error("Veuillez autoriser l'accès au microphone.")
     }
   }
 

@@ -29,27 +29,34 @@ export default async function StudentDetailPage({
     return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
   }
 
-  // Fetch student details
-  const { data: student, error } = await supabase
-    .from('students')
-    .select(`
-      id,
-      school_id,
-      matricule,
-      first_name,
-      last_name,
-      date_of_birth,
-      birth_place,
-      gender,
-      blood_group,
-      address,
-      parent_phone,
-      avatar_url,
-      classes ( name )
-    `)
-    .eq('id', id)
-    .eq('school_id', roleData.school_id)
-    .limit(1).maybeSingle()
+  // Fetch student details & school details
+  const [{ data: student, error }, { data: school }] = await Promise.all([
+    supabase
+      .from('students')
+      .select(`
+        id,
+        school_id,
+        matricule,
+        first_name,
+        last_name,
+        date_of_birth,
+        birth_place,
+        gender,
+        blood_group,
+        address,
+        parent_phone,
+        avatar_url,
+        classes ( name, level )
+      `)
+      .eq('id', id)
+      .eq('school_id', roleData.school_id)
+      .limit(1).maybeSingle(),
+    supabase
+      .from('schools')
+      .select('name, city, phone, email, current_academic_year, director_name')
+      .eq('id', roleData.school_id)
+      .limit(1).maybeSingle()
+  ])
 
   if (error || !student) {
     return (
@@ -242,6 +249,7 @@ export default async function StudentDetailPage({
         payments={payments || []}
         linkedParents={linkedParents}
         initialInvitationCode={activeCode?.code || null}
+        schoolInfo={school || null}
       />
     </div>
   )

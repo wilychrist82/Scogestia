@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { resolveStudentId } from '@/lib/parent-utils'
 import { ChildSwitchBar } from '@/components/parent/ChildSwitchBar'
-import { UserX, ArrowLeft, CalendarOff, Clock, CheckCircle2, Calendar } from 'lucide-react'
+import { JustifyAbsenceButton } from '@/components/parent/JustifyAbsenceButton'
+import { UserX, ArrowLeft, CalendarOff, Clock, CheckCircle2, Calendar, ShieldCheck } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -113,24 +114,68 @@ export default async function ParentPresencesPage({
           <div className="divide-y divide-[var(--color-outline-variant)]">
             {attendances.map((record: any) => {
               const isAbsent = record.status === 'absent';
+              const isJustified = record.status === 'absent_justifie' || Boolean(record.justification);
+              const isPresent = record.status === 'present';
+
+              const statusLabel =
+                record.status === 'absent_justifie'
+                  ? 'Absence justifiée'
+                  : record.status === 'absent'
+                  ? 'Absent(e)'
+                  : record.status === 'retard'
+                  ? 'Retard'
+                  : record.status === 'present'
+                  ? 'Présent(e)'
+                  : record.status;
+
               return (
                 <div key={record.id} className="p-4 flex items-start gap-4 hover:bg-gray-50 transition-colors">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isAbsent ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'}`}>
-                    {isAbsent ? <CalendarOff className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                      isPresent
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : isJustified
+                        ? 'bg-blue-100 text-blue-700'
+                        : isAbsent
+                        ? 'bg-red-100 text-red-600'
+                        : 'bg-orange-100 text-orange-600'
+                    }`}
+                  >
+                    {isPresent ? (
+                      <CheckCircle2 className="w-5 h-5" />
+                    ) : isJustified ? (
+                      <ShieldCheck className="w-5 h-5" />
+                    ) : isAbsent ? (
+                      <CalendarOff className="w-5 h-5" />
+                    ) : (
+                      <Clock className="w-5 h-5" />
+                    )}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-[var(--color-on-surface)] capitalize">
-                      {record.status}
-                    </h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-[var(--color-on-surface)]">
+                        {statusLabel}
+                      </h3>
+                      {isJustified && (
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Justifié
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-[var(--color-on-surface-variant)] flex items-center gap-1 mt-1">
                       <Calendar className="w-4 h-4 text-slate-400" />
                       {new Date(record.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
                     {record.justification && (
-                      <div className="mt-2 text-sm bg-gray-100 p-2 rounded text-gray-700 italic border-l-2 border-gray-300">
-                        "{record.justification}"
+                      <div className="mt-2 text-xs sm:text-sm bg-emerald-50/70 p-2.5 rounded-lg text-slate-700 italic border-l-3 border-emerald-500">
+                        Motif : &ldquo;{record.justification}&rdquo;
                       </div>
                     )}
+                    <JustifyAbsenceButton
+                      attendanceId={record.id}
+                      currentJustification={record.justification}
+                      status={record.status}
+                    />
                   </div>
                 </div>
               );

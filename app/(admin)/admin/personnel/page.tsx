@@ -14,12 +14,16 @@ export default async function PersonnelPage() {
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('school_id')
+    .select('school_id, role')
     .eq('user_id', user.id)
     .limit(1).maybeSingle()
 
   if (!roleData?.school_id) {
     return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
+  }
+
+  if (roleData.role === 'comptable') {
+    return <DataErrorCard title="Accès restreint" message="La gestion du personnel est exclusivement réservée à la direction de l'établissement." />
   }
 
   const schoolId = roleData.school_id

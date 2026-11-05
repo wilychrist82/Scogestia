@@ -3,12 +3,13 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useNotifications } from '@/components/providers/NotificationProvider'
-import { Home, MessageSquare, Award, CalendarCheck, Wallet } from 'lucide-react'
+import { Home, MessageSquare, Award, CalendarCheck, Wallet, BookOpen } from 'lucide-react'
 
 const navItems = [
   { label: 'Accueil', href: '/parent', icon: Home },
   { label: 'Paiements', href: '/parent/paiements', icon: Wallet },
   { label: 'Résultats', href: '/parent/bulletins', icon: Award },
+  { label: 'Devoirs', href: '/parent/devoirs', icon: BookOpen },
   { label: 'Présences', href: '/parent/presences', icon: CalendarCheck },
   { label: 'Messages', href: '/parent/messages', icon: MessageSquare },
 ]
@@ -26,7 +27,7 @@ export function BottomNav() {
       style={{ bottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
     >
       {navItems.map(item => {
-        const isActive = pathname === item.href
+        const isActive = pathname === item.href || (item.href === '/parent/bulletins' && pathname === '/parent/notes')
         const Icon = item.icon
         const isMessages = item.href === '/parent/messages'
 

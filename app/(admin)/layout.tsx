@@ -85,6 +85,7 @@ export default async function AdminLayout({
         userFullName={userFullName} 
         userRoleLabel={userRoleLabel}
         userAvatar={userAvatar}
+        navVariant={roleData?.role === 'comptable' && !isPrivileged ? 'comptable' : 'admin'}
         schoolName={schoolName}
         schoolCity={schoolCity}
         isExpired={isExpired}

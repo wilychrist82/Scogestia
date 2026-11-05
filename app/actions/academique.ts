@@ -16,7 +16,8 @@ async function getActiveSchoolId() {
     .from("user_school_roles")
     .select("school_id")
     .eq("user_id", user.id)
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   if (error || !roleData) throw new Error("École introuvable");
   return roleData.school_id;
@@ -53,12 +54,13 @@ export async function saveSchoolSubject(
     const school_id = await getActiveSchoolId();
     const supabase = await createClient();
 
-    const dbCycle = (cycle === 'college' || cycle === 'lycee') ? 'secondaire' : cycle;
+    const dbCycle = (cycle === 'college' || cycle === 'lycee' || cycle === 'secondaire') ? 'secondaire' : 'primaire';
+    const resolvedCategory = cycle === 'maternelle' ? (category || 'Maternelle') : (dbCycle === "primaire" ? category : null);
     const { error } = await supabase.from("subjects").insert({
       school_id,
       name,
       cycle: dbCycle,
-      category: dbCycle === "primaire" ? category : null,
+      category: resolvedCategory,
       coefficient: dbCycle === "secondaire" ? coefficient || 1 : 1,
     });
 
@@ -441,16 +443,16 @@ export async function saveBulletinPrimaryGrades(
     }
 
     if (info.appreciation || info.decision) {
-      await supabase.from("primary_bulletin_info").upsert(
+      const { error: infoErr } = await supabase.from("primary_bulletin_info").upsert(
         {
-          school_id,
           student_id: studentId,
           appreciation: info.appreciation,
           director_decision: info.decision,
-          academic_year: getDynamicAcademicYear(),
+          updated_at: new Date().toISOString(),
         },
-        { onConflict: "student_id, academic_year" },
+        { onConflict: "student_id" },
       );
+      if (infoErr) throw infoErr;
     }
 
     revalidatePath("/admin/academique/bulletins");

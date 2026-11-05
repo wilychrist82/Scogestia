@@ -257,7 +257,6 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`h-full antialiased scroll-smooth ${plusJakartaSans.variable} ${instrumentSerif.variable}`}>
       <head>
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -269,7 +268,7 @@ export default function RootLayout({
           {children}
           <CookieBanner />
           <Toaster
-            position="bottom-right"
+            position="top-center"
             gutter={8}
             toastOptions={{
               duration: 4000,

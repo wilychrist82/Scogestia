@@ -78,13 +78,21 @@ export default async function EnseignantNotesPage() {
       return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
     })
     if (!hasEtude) {
-      subjectsMap.set('virtual-etude-de-texte', {
-        id: 'virtual-etude-de-texte',
-        name: 'Étude de texte',
-        cycle: 'primaire',
-        category: 'Français',
-        coefficient: 1
-      })
+      const { data: insertedEtude } = await supabase
+        .from('subjects')
+        .insert({
+          school_id: schoolId,
+          name: 'Étude de texte',
+          cycle: 'primaire',
+          category: 'Français',
+          coefficient: 1
+        })
+        .select('*')
+        .maybeSingle()
+
+      if (insertedEtude) {
+        subjectsMap.set(insertedEtude.id, insertedEtude)
+      }
     }
   }
 

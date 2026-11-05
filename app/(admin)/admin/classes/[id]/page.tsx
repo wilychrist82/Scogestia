@@ -46,18 +46,49 @@ export default async function ClassDetailsPage({
     )
   }
 
-  // 2. Fetch all students in this class
-  const { data: students } = await supabase
-    .from('students')
-    .select('id, matricule, first_name, last_name, gender, date_of_birth, parent_phone, status')
-    .eq('class_id', id)
-    .eq('school_id', roleData.school_id)
-    .order('last_name', { ascending: true })
+  // 2. Fetch all students in this class + timetable + attendance
+  const [
+    { data: students },
+    { data: timetableSlots },
+    { data: attendances }
+  ] = await Promise.all([
+    supabase
+      .from('students')
+      .select('id, matricule, first_name, last_name, gender, date_of_birth, parent_phone, status')
+      .eq('class_id', id)
+      .eq('school_id', roleData.school_id)
+      .order('last_name', { ascending: true }),
+    supabase
+      .from('timetable_slots')
+      .select('id, day_of_week, start_time, end_time, subject_name, teacher_name, room, color')
+      .eq('class_id', id)
+      .order('day_of_week', { ascending: true })
+      .order('start_time', { ascending: true }),
+    supabase
+      .from('attendance')
+      .select('id, student_id, date, status, justification')
+      .eq('class_id', id)
+      .order('date', { ascending: false })
+      .limit(200)
+  ])
+
+  const studentIds = (students || []).map(s => s.id)
+  let classSchedules: any[] = []
+  if (studentIds.length > 0) {
+    const { data: scheds } = await supabase
+      .from('payment_schedules')
+      .select('id, student_id, total_amount, paid_amount, status')
+      .in('student_id', studentIds)
+    classSchedules = scheds || []
+  }
 
   return (
     <ClassDetailsView
       classInfo={classData}
       students={(students as any) || []}
+      timetableSlots={(timetableSlots as any) || []}
+      attendances={(attendances as any) || []}
+      schedules={classSchedules}
     />
   )
 }

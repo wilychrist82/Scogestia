@@ -7,7 +7,8 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   // si "next" est dans les paramètres, on l'utilise, sinon on va vers l'accueil 
   // (le middleware se chargera de rediriger vers le bon tableau de bord ou onboarding)
-  const next = searchParams.get('next') ?? '/'
+  const rawNext = searchParams.get('next') ?? '/'
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/'
 
   if (code) {
     const cookieStore = await cookies()

@@ -12,11 +12,14 @@ export default async function NotesPage() {
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('school_id')
+    .select('school_id, role')
     .eq('user_id', user.id)
     .limit(1).maybeSingle()
 
   if (!roleData?.school_id) return <div className="p-8">École introuvable.</div>
+  if (roleData.role === 'comptable') {
+    return <div className="p-8 text-center text-red-500 font-medium">Accès restreint : La saisie des notes est réservée à la direction et aux enseignants.</div>
+  }
   const schoolId = roleData.school_id
 
   const { data: classes } = await supabase.from('classes').select('id, name, level').eq('school_id', schoolId).order('name')
@@ -73,11 +76,7 @@ export default async function NotesPage() {
       const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
       return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
     });
-    if (allEtudes.length > 1) {
-      const dupes = allEtudes.slice(1).map(e => e.id);
-      await supabase.from('subjects').delete().in('id', dupes);
-      hasChanges = true;
-    } else if (allEtudes.length === 0) {
+    if (allEtudes.length === 0) {
       await supabase.from('subjects').insert({
         school_id: schoolId,
         name: 'Étude de texte',

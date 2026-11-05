@@ -25,7 +25,7 @@ export function AdminLayoutWrapper({
   userFullName: string, 
   userRoleLabel: string,
   userAvatar?: string | null,
-  navVariant?: 'admin' | 'enseignant' | 'super_admin',
+  navVariant?: 'admin' | 'comptable' | 'enseignant' | 'super_admin',
   banner?: React.ReactNode,
   schoolName?: string,
   schoolCity?: string,

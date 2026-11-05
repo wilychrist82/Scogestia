@@ -44,7 +44,7 @@ export type NavItem = {
 export type SidebarProps = {
   userFullName?: string
   userRoleLabel?: string
-  navVariant?: 'admin' | 'enseignant' | 'super_admin'
+  navVariant?: 'admin' | 'comptable' | 'enseignant' | 'super_admin'
   isOpen?: boolean
   onClose?: () => void
   isExpired?: boolean
@@ -70,6 +70,7 @@ const mainNavItems: NavItem[] = [
       { label: 'Caisse (Encaissements)', href: '/admin/finance/caisse' },
       { label: 'Paiements', href: '/admin/finance/paiements' },
       { label: 'Impayés', href: '/admin/finance/impayes' },
+      { label: 'Dépenses (Sorties)', href: '/admin/finance/depenses' },
       { label: 'Rapports financiers', href: '/admin/finance/rapports' },
     ]
   },
@@ -89,10 +90,54 @@ const mainNavItems: NavItem[] = [
       { label: 'Promotion fin d\'année', href: '/admin/academique/promotion' },
     ]
   },
-  { label: 'Communication', href: '/admin/communication', icon: MessageSquare },
-  { label: 'Rapports', href: '/admin/rapports', icon: FileText },
+  { 
+    label: 'Communication', 
+    href: '/admin/communication', 
+    icon: MessageSquare,
+    hasDropdown: true,
+    subItems: [
+      { label: 'Messagerie directe', href: '/admin/communication' },
+      { label: 'Annonces officielles', href: '/admin/communication/annonces' },
+      { label: 'Journal des envois', href: '/admin/communication/historique' },
+    ]
+  },
+  { 
+    label: 'Rapports', 
+    href: '/admin/rapports', 
+    icon: FileText,
+    hasDropdown: true,
+    subItems: [
+      { label: 'Rapport global', href: '/admin/rapports' },
+      { label: 'Rapports académiques', href: '/admin/rapports/academique' },
+      { label: 'Bilans financiers', href: '/admin/rapports/finance' },
+    ]
+  },
   { label: 'Abonnement', href: '/admin/abonnement', icon: CreditCard },
-  { label: 'Paramètres', href: '/admin/parametres', icon: Settings },
+  { 
+    label: 'Paramètres', 
+    href: '/admin/parametres', 
+    icon: Settings,
+    hasDropdown: true,
+    subItems: [
+      { label: 'Configuration école', href: '/admin/parametres' },
+      { label: 'Mon profil', href: '/admin/parametres/profil' },
+      { label: 'Sécurité & accès', href: '/admin/parametres/securite' },
+      { label: 'Journal d\'activités', href: '/admin/parametres/journal' },
+    ]
+  },
+]
+
+const comptableNavItems: NavItem[] = [
+  { label: 'Tableau de bord', href: '/admin/finance', icon: LayoutDashboard },
+  { label: 'Caisse (Encaissements)', href: '/admin/finance/caisse', icon: CircleDollarSign },
+  { label: 'Échéances', href: '/admin/finance/echeances', icon: Calendar },
+  { label: 'Paiements & Reçus', href: '/admin/finance/paiements', icon: CreditCard },
+  { label: 'Impayés & Relances', href: '/admin/finance/impayes', icon: ShieldAlert },
+  { label: 'Dépenses (Sorties)', href: '/admin/finance/depenses', icon: FileText },
+  { label: 'Frais scolaires', href: '/admin/finance/frais', icon: FileText },
+  { label: 'Rapports financiers', href: '/admin/finance/rapports', icon: Activity },
+  { label: 'Élèves (Consultation)', href: '/admin/eleves', icon: Users },
+  { label: 'Mon profil', href: '/admin/parametres/profil', icon: UserCog },
 ]
 
 const enseignantNavItems: NavItem[] = [
@@ -328,14 +373,17 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
         />
       )}
 
-      <aside className={`bg-[#070b14] h-screen w-64 fixed left-0 top-0 flex flex-col py-4 z-50 border-r border-white/[0.08] shadow-[0_0_35px_rgba(0,0,0,0.5)] overflow-hidden transition-transform duration-300 ease-in-out md:translate-x-0 ${isOpen ? 'translate-x-0' : 'max-md:-translate-x-full'}`}>
+      <aside
+        className={`bg-[#070b14] h-screen w-64 fixed left-0 top-0 flex flex-col py-4 z-50 border-r border-white/[0.08] shadow-[0_0_35px_rgba(0,0,0,0.5)] overflow-hidden transition-transform duration-300 ease-in-out md:translate-x-0 ${isOpen ? 'translate-x-0' : 'max-md:-translate-x-full'}`}
+        style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}
+      >
         
         {/* Glow ambient subtil en fond */}
         <div className="pointer-events-none absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-emerald-500/10 via-transparent to-transparent" />
         
         {/* ── Logo & En-tête de marque ── */}
         <div className="mb-4 px-5 flex items-center justify-between flex-shrink-0 relative z-10">
-          <Link href="/admin" className="flex items-center gap-3 group">
+          <Link href={navVariant === 'super_admin' ? '/super_admin' : navVariant === 'enseignant' ? '/enseignant' : navVariant === 'comptable' ? '/admin/finance' : '/admin'} className="flex items-center gap-3 group">
             <div className="w-10 h-10 flex items-center justify-center overflow-hidden rounded-xl bg-white/5 border border-white/10 p-1 group-hover:border-emerald-500/40 transition-colors shadow-inner">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo-scogestia-transparent.png" alt="Scogestia Logo" className="w-full h-full object-contain" />
@@ -385,6 +433,17 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
               isExpired={isExpired}
               unreadCount={unreadCount}
             />
+          ) : navVariant === 'comptable' ? (
+            <NavGroup 
+              title="Espace Comptabilité" 
+              items={comptableNavItems}
+              pathname={pathname}
+              openDropdowns={openDropdowns}
+              onToggleDropdown={handleToggleDropdown}
+              onClose={onClose}
+              isExpired={isExpired}
+              unreadCount={unreadCount}
+            />
           ) : (
             <>
               <NavGroup 
@@ -397,16 +456,18 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
                 isExpired={isExpired}
                 unreadCount={unreadCount}
               />
-              <NavGroup 
-                title="Espaces connectés" 
-                items={currentRoleNavItems}
-                pathname={pathname}
-                openDropdowns={openDropdowns}
-                onToggleDropdown={handleToggleDropdown}
-                onClose={onClose}
-                isExpired={isExpired}
-                unreadCount={unreadCount}
-              />
+              {isSuperAdmin && (
+                <NavGroup 
+                  title="Espaces connectés" 
+                  items={currentRoleNavItems}
+                  pathname={pathname}
+                  openDropdowns={openDropdowns}
+                  onToggleDropdown={handleToggleDropdown}
+                  onClose={onClose}
+                  isExpired={isExpired}
+                  unreadCount={unreadCount}
+                />
+              )}
             </>
           )}
         </div>

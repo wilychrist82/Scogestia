@@ -22,7 +22,7 @@ import { globalSearch, SearchResult } from '@/app/actions/search'
 interface CommandPaletteProps {
   isOpen?: boolean
   onClose?: () => void
-  role?: 'admin' | 'enseignant' | 'super_admin'
+  role?: 'admin' | 'comptable' | 'enseignant' | 'super_admin'
 }
 
 const adminQuickLinks = [
@@ -32,6 +32,20 @@ const adminQuickLinks = [
   { title: 'Échéances de paiement', subtitle: 'Suivi des tranches de scolarité', href: '/admin/finance/echeances', icon: CreditCard },
   { title: 'Bulletins scolaires', subtitle: 'Génération et impression des livrets', href: '/admin/academique/bulletins', icon: BookOpen },
   { title: 'Paramètres école', subtitle: 'Configuration générale & profil', href: '/admin/parametres', icon: Settings },
+]
+
+const comptableQuickLinks = [
+  { title: 'Caisse & Encaissements', subtitle: 'Enregistrer un paiement comptant', href: '/admin/finance/caisse', icon: CircleDollarSign },
+  { title: 'Échéances de paiement', subtitle: 'Suivi des tranches de scolarité', href: '/admin/finance/echeances', icon: CreditCard },
+  { title: 'Paiements & Reçus', subtitle: 'Historique des transactions', href: '/admin/finance/paiements', icon: FileText },
+  { title: 'Impayés & Relances', subtitle: 'Suivi des retards de paiement', href: '/admin/finance/impayes', icon: Clock },
+  { title: 'Rapports financiers', subtitle: 'Bilans et recouvrement', href: '/admin/finance/rapports', icon: BookOpen },
+]
+
+const superAdminQuickLinks = [
+  { title: 'Tour de contrôle SaaS', subtitle: 'Indicateurs globaux de la plateforme', href: '/super_admin', icon: Presentation },
+  { title: 'Écoles & Licences', subtitle: 'Gestion des établissements clients', href: '/super_admin/ecoles', icon: Users },
+  { title: 'Santé système', subtitle: 'Monitoring technique et base de données', href: '/super_admin/health', icon: Settings },
 ]
 
 const teacherQuickLinks = [
@@ -48,7 +62,13 @@ export function CommandPalette({ isOpen: controlledIsOpen, onClose: controlledOn
   const isOpen = isControlled ? controlledIsOpen : internalIsOpen
 
   const isEnseignant = role === 'enseignant'
-  const currentQuickLinks = isEnseignant ? teacherQuickLinks : adminQuickLinks
+  const currentQuickLinks = isEnseignant
+    ? teacherQuickLinks
+    : role === 'comptable'
+      ? comptableQuickLinks
+      : role === 'super_admin'
+        ? superAdminQuickLinks
+        : adminQuickLinks
 
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])

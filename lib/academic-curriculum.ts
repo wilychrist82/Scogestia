@@ -519,20 +519,18 @@ export function calculateCollegeAnnualAverage(
   // Si aucun trimestre n'a de note
   if (t1 === null && t2 === null && t3 === null) return null;
 
-  // Calcul officiel sur les 3 trimestres
-  // S'ils sont tous disponibles : (T1 + T2 + T3) / 3
+  // Calcul sur les trimestres disponibles (si les 3 sont saisis -> divisé par 3, sinon moyenne des trimestres évalués)
   const availableTerms = [t1, t2, t3].filter((t): t is number => t !== null);
   if (availableTerms.length === 0) return null;
 
-  // Règle officielle : divisé par 3
-  const sum = (t1 || 0) + (t2 || 0) + (t3 || 0);
-  return Number((sum / 3).toFixed(2));
+  const sum = availableTerms.reduce((acc, val) => acc + val, 0);
+  return Number((sum / availableTerms.length).toFixed(2));
 }
 
 /**
  * Calcul officiel de la moyenne annuelle au Lycée (Secondaire 2) :
- * Somme des moyennes sur 20 des 2 semestres (S1 + S2) divisée par 2.
- * Calculée au 2ème semestre, donne droit au passage en classe supérieure si >= 10/20.
+ * Somme des moyennes sur 20 des semestres évalués divisée par le nombre de semestres évalués (2 en fin d'année).
+ * Donne droit au passage en classe supérieure si >= 10/20.
  */
 export function calculateLyceeAnnualAverage(
   s1Avg: number | null | undefined,
@@ -541,10 +539,11 @@ export function calculateLyceeAnnualAverage(
   const s1 = (typeof s1Avg === 'number' && !isNaN(s1Avg)) ? s1Avg : null;
   const s2 = (typeof s2Avg === 'number' && !isNaN(s2Avg)) ? s2Avg : null;
 
-  if (s1 === null && s2 === null) return null;
+  const availableSemesters = [s1, s2].filter((s): s is number => s !== null);
+  if (availableSemesters.length === 0) return null;
 
-  const sum = (s1 || 0) + (s2 || 0);
-  return Number((sum / 2).toFixed(2));
+  const sum = availableSemesters.reduce((acc, val) => acc + val, 0);
+  return Number((sum / availableSemesters.length).toFixed(2));
 }
 
 /**

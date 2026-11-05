@@ -11,6 +11,7 @@ import {
   DollarSign,
   FileText,
   PlusCircle,
+  TrendingDown,
 } from 'lucide-react'
 
 type Props = {
@@ -26,6 +27,7 @@ export function FinanceNavTabs({ basePath = '/admin/finance' }: Props) {
     { label: 'Paiements & Reçus', href: `${basePath}/paiements`, icon: Receipt },
     { label: 'Échéancier', href: `${basePath}/echeances`, icon: Calendar },
     { label: 'Impayés & Relances', href: `${basePath}/impayes`, icon: AlertTriangle, alert: true },
+    { label: 'Dépenses (Sorties)', href: `${basePath}/depenses`, icon: TrendingDown },
     { label: 'Frais Scolaires', href: `${basePath}/frais`, icon: DollarSign },
     { label: 'Rapports & Bilans', href: `${basePath}/rapports`, icon: FileText },
   ]

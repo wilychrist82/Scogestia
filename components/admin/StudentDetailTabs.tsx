@@ -9,12 +9,13 @@ import {
   CalendarCheck, CreditCard, CheckCircle2, Clock, CalendarOff, Receipt, Plus,
   Loader2, Edit3, Mail, Trash2, Users, Copy, Key, HeartPulse, X, Mic, 
   ChevronRight, MessageSquare, Info, ArrowLeft, Send, AlertTriangle, ShieldCheck,
-  Lock, Eye, EyeOff, Sparkles, Phone, ExternalLink
+  Lock, Eye, EyeOff, Sparkles, Phone, ExternalLink, FileText, IdCard, Download
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { AudioRecorder } from '@/components/ui/AudioRecorder'
+import { generateSchoolCertificatePDF, generateStudentIdCardPDF } from '@/lib/pdf/student-documents'
 
 type Student = {
   id: string
@@ -52,6 +53,14 @@ type Props = {
   payments?: any[]
   linkedParents?: LinkedParent[]
   initialInvitationCode?: string | null
+  schoolInfo?: {
+    name?: string | null
+    city?: string | null
+    phone?: string | null
+    email?: string | null
+    current_academic_year?: string | null
+    director_name?: string | null
+  } | null
 }
 
 export function StudentDetailTabs({ 
@@ -61,8 +70,28 @@ export function StudentDetailTabs({
   schedules = [], 
   payments = [],
   linkedParents = [],
-  initialInvitationCode = null
+  initialInvitationCode = null,
+  schoolInfo = null
 }: Props) {
+  const buildDocumentData = () => ({
+    studentId: student.id,
+    matricule: student.matricule || 'N/A',
+    firstName: student.first_name,
+    lastName: student.last_name,
+    dateOfBirth: student.date_of_birth,
+    birthPlace: student.birth_place,
+    gender: student.gender,
+    bloodGroup: student.blood_group,
+    className: student.classes?.name || 'Non assignée',
+    parentPhone: student.parent_phone || linkedParents[0]?.phone || null,
+    address: student.address,
+    schoolName: schoolInfo?.name || 'Établissement Scolaire',
+    schoolCity: schoolInfo?.city || null,
+    schoolPhone: schoolInfo?.phone || null,
+    schoolEmail: schoolInfo?.email || null,
+    academicYear: schoolInfo?.current_academic_year || '2025-2026',
+    directorName: schoolInfo?.director_name || null,
+  })
   const [activeTab, setActiveTab] = useState<'info' | 'notes' | 'presences' | 'paiements'>('info')
   const [isPending, startTransition] = useTransition()
   const [invitationCode, setInvitationCode] = useState<string | null>(initialInvitationCode)
@@ -372,7 +401,31 @@ export function StudentDetailTabs({
               <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">{student.first_name} {student.last_name}</h2>
               <p className="text-[var(--color-on-surface-variant)] mt-1">Matricule: #{student.matricule} • Classe: {student.classes?.name || 'Non assigné'}</p>
             </div>
-            <div className="flex gap-3 flex-wrap">
+            <div className="flex gap-2.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  generateSchoolCertificatePDF(buildDocumentData())
+                  toast.success('Certificat de scolarité généré !')
+                }}
+                className="h-11 px-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold text-xs sm:text-sm hover:bg-emerald-100 transition-colors flex items-center gap-2"
+                title="Télécharger le certificat de scolarité en PDF"
+              >
+                <FileText className="w-4 h-4 text-emerald-600" />
+                Certificat PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  generateStudentIdCardPDF(buildDocumentData())
+                  toast.success('Carte scolaire générée !')
+                }}
+                className="h-11 px-3.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 font-semibold text-xs sm:text-sm hover:bg-slate-200/80 transition-colors flex items-center gap-2"
+                title="Télécharger la carte scolaire (Recto/Verso) en PDF"
+              >
+                <IdCard className="w-4 h-4 text-slate-600" />
+                Carte scolaire
+              </button>
               <button 
                 onClick={() => setIsEditModalOpen(true)}
                 className="h-11 px-4 rounded-xl border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold text-sm hover:bg-emerald-50 hover:text-emerald-900 transition-colors flex items-center gap-2"
@@ -648,14 +701,77 @@ export function StudentDetailTabs({
               </div>
             </div>
             
+            {/* Official Documents (1-Click PDF) */}
+            <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6 space-y-4">
+              <h3 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[var(--color-primary)]" />
+                Documents Scolaires Officiels
+              </h3>
+              <p className="text-xs text-[var(--color-on-surface-variant)]">
+                Générez et imprimez instantanément les attestations officielles pré-remplies de l&apos;élève.
+              </p>
+              <div className="grid grid-cols-1 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    generateSchoolCertificatePDF(buildDocumentData())
+                    toast.success('Certificat de scolarité téléchargé !')
+                  }}
+                  className="w-full p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/70 transition-colors flex items-center justify-between text-left group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">Certificat de Scolarité</p>
+                      <p className="text-xs text-slate-500">Format A4 officiel avec référence</p>
+                    </div>
+                  </div>
+                  <Download className="w-4 h-4 text-emerald-700 group-hover:translate-y-0.5 transition-transform" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    generateStudentIdCardPDF(buildDocumentData())
+                    toast.success('Carte scolaire téléchargée !')
+                  }}
+                  className="w-full p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-100 transition-colors flex items-center justify-between text-left group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-slate-800 text-white flex items-center justify-center shrink-0">
+                      <IdCard className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">Carte d&apos;Identité Scolaire</p>
+                      <p className="text-xs text-slate-500">Planche Recto/Verso prête à plastifier</p>
+                    </div>
+                  </div>
+                  <Download className="w-4 h-4 text-slate-700 group-hover:translate-y-0.5 transition-transform" />
+                </button>
+              </div>
+            </div>
+
             {/* Medical Info */}
             <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6">
               <h3 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2 mb-4">
                 <HeartPulse className="w-5 h-5 text-[var(--color-status-retard-text)]" />
-                Info Médicale
+                Info Médicale & Urgence
               </h3>
-              <div className="space-y-4">
-                <p className="text-sm text-[var(--color-on-surface-variant)]">Aucune information médicale enregistrée.</p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm py-1.5 border-b border-slate-100">
+                  <span className="text-[var(--color-on-surface-variant)]">Groupe sanguin</span>
+                  <span className="font-bold text-[var(--color-on-surface)] px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200">
+                    {student.blood_group || 'Non renseigné'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm py-1.5">
+                  <span className="text-[var(--color-on-surface-variant)]">Contact d&apos;urgence</span>
+                  <span className="font-semibold text-[var(--color-on-surface)]">
+                    {student.parent_phone || linkedParents[0]?.phone || 'Non renseigné'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -825,13 +941,36 @@ export function StudentDetailTabs({
                 <div className="divide-y divide-slate-100">
                   {attendances.map(a => {
                     const isAbsent = a.status === 'absent'
+                    const isJustified = a.status === 'absent_justifie' || Boolean(a.justification || a. justified)
+                    const isPresent = a.status === 'present'
+                    const label =
+                      a.status === 'absent_justifie'
+                        ? 'Absence justifiée'
+                        : a.status === 'absent'
+                        ? 'Absence'
+                        : a.status === 'retard'
+                        ? 'Retard'
+                        : a.status === 'present'
+                        ? 'Présent'
+                        : a.status
+                    const motif = a.justification || a.reason
                     return (
                       <div key={a.id} className="p-4 px-6 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
                         <div className="flex items-center gap-3">
-                          <span className={`w-2.5 h-2.5 rounded-full ${isAbsent ? 'bg-rose-500' : 'bg-amber-500'}`} />
+                          <span
+                            className={`w-2.5 h-2.5 rounded-full ${
+                              isPresent
+                                ? 'bg-emerald-500'
+                                : isJustified
+                                ? 'bg-blue-500'
+                                : isAbsent
+                                ? 'bg-rose-500'
+                                : 'bg-amber-500'
+                            }`}
+                          />
                           <div>
-                            <span className="font-semibold text-slate-800 text-sm capitalize">
-                              {a.status === 'absent' ? 'Absence' : 'Retard'}
+                            <span className="font-semibold text-slate-800 text-sm">
+                              {label}
                             </span>
                             <p className="text-xs text-slate-400">
                               {new Date(a.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -840,7 +979,11 @@ export function StudentDetailTabs({
                         </div>
 
                         <div className="text-right">
-                          {a.justified ? (
+                          {isPresent ? (
+                            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-100">
+                              Présent
+                            </span>
+                          ) : isJustified ? (
                             <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-100">
                               Justifié
                             </span>
@@ -849,7 +992,7 @@ export function StudentDetailTabs({
                               Non justifié
                             </span>
                           )}
-                          {a.reason && <p className="text-xs text-slate-500 mt-1 italic">{a.reason}</p>}
+                          {motif && <p className="text-xs text-slate-600 mt-1 italic">&ldquo;{motif}&rdquo;</p>}
                         </div>
                       </div>
                     )

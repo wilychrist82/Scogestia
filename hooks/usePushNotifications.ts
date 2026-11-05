@@ -169,5 +169,24 @@ export const usePushNotifications = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Ré-enregistrer automatiquement le token FCM dès que l'utilisateur se connecte
+  useEffect(() => {
+    if (Capacitor.getPlatform() === 'web' || !fcmToken) return;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session?.user) {
+        try {
+          await registerDeviceToken(fcmToken);
+        } catch (err) {
+          console.error("Erreur de synchronisation du token FCM après connexion:", err);
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [fcmToken, supabase]);
+
   return { fcmToken };
 };

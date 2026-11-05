@@ -21,7 +21,7 @@ export function UnauthorizedAccess({ role }: Props) {
           <br /><br />
           Votre compte actuel ne possède pas ce rôle. Si vous souhaitez tester cet espace, veuillez vous connecter avec un compte approprié.
         </p>
-        <Link href="/admin" className="inline-flex items-center justify-center w-full py-4 px-6 rounded-xl bg-[#006039] font-bold text-white hover:bg-[#004d2e] transition-colors shadow-md">
+        <Link href="/" className="inline-flex items-center justify-center w-full py-4 px-6 rounded-xl bg-[#006039] font-bold text-white hover:bg-[#004d2e] transition-colors shadow-md">
           Retourner au tableau de bord
         </Link>
       </div>

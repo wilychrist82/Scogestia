@@ -7,6 +7,7 @@ import { jsPDF } from 'jspdf'
 import { createClient } from '@/lib/supabase/client'
 import { sortClasses } from '@/lib/classes'
 import { ShieldCheck, FileDown, GraduationCap, Printer } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { 
   getCoefficientForSubject, 
   detectClassSeriesKey, 
@@ -264,7 +265,7 @@ export function BulletinsManager({
         setSaveSuccess(true)
         setTimeout(() => setSaveSuccess(false), 3000)
       } else {
-        alert(res?.error || 'Erreur lors de la sauvegarde')
+        toast.error(res?.error || 'Erreur lors de la sauvegarde')
       }
     })
   }
@@ -278,7 +279,7 @@ export function BulletinsManager({
         setSaveSuccess(true)
         setTimeout(() => setSaveSuccess(false), 3000)
       } else {
-        alert(res?.error || 'Erreur lors de la sauvegarde')
+        toast.error(res?.error || 'Erreur lors de la sauvegarde')
       }
     })
   }
@@ -535,7 +536,7 @@ export function BulletinsManager({
     } catch (err: any) {
       console.error(err)
       setPublishStatus('error')
-      alert("Erreur: " + err.message)
+      toast.error("Erreur: " + err.message)
       setTimeout(() => setPublishStatus('idle'), 3000)
     }
   }
@@ -573,10 +574,22 @@ export function BulletinsManager({
       }
       
       const blob = await response.blob()
+      const fileName = `Bulletins_Classe_${cls?.name}_${selectedTerm}.pdf`
+      const isNativeMobile = typeof window !== 'undefined' && Boolean((window as any).Capacitor?.isNativePlatform?.())
+      if (isNativeMobile && typeof navigator !== 'undefined' && navigator.share) {
+        const pdfFile = new File([blob], fileName, { type: 'application/pdf' })
+        if (!navigator.canShare || navigator.canShare({ files: [pdfFile] })) {
+          await navigator.share({ title: fileName, files: [pdfFile] })
+          setPublishStatus('success')
+          setTimeout(() => setPublishStatus('idle'), 3000)
+          return
+        }
+      }
+
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `Bulletins_Classe_${cls?.name}_${selectedTerm}.pdf`
+      a.download = fileName
       a.click()
       
       setPublishStatus('success')
@@ -584,7 +597,7 @@ export function BulletinsManager({
     } catch (err: any) {
       console.error(err)
       setPublishStatus('error')
-      alert("Erreur: " + err.message)
+      toast.error("Erreur: " + err.message)
       setTimeout(() => setPublishStatus('idle'), 3000)
     }
   }

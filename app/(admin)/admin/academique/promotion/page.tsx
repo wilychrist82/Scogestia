@@ -15,13 +15,13 @@ export default async function PromotionFinAnneePage() {
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('school_id')
+    .select('school_id, role')
     .eq('user_id', user.id)
     .limit(1)
     .maybeSingle()
 
   const schoolId = roleData?.school_id
-  if (!schoolId) {
+  if (!schoolId || roleData?.role === 'comptable') {
     return <div className="p-8 text-center text-red-500 font-medium">Accès refusé.</div>
   }
 
@@ -115,23 +115,23 @@ export default async function PromotionFinAnneePage() {
         }
 
         if (isCollege) {
-          // Collège : (T1 + T2 + T3) / 3
+          // Collège : moyenne des trimestres évalués (3 en fin d'année)
           const t1 = computeTermAvg('1er_trimestre')
           const t2 = computeTermAvg('2e_trimestre')
           const t3 = computeTermAvg('3e_trimestre')
           const validTerms = [t1, t2, t3].filter((t): t is number => t !== null)
           if (validTerms.length > 0) {
-            const sum = (t1 || 0) + (t2 || 0) + (t3 || 0)
-            average = Math.round((sum / 3) * 100) / 100
+            const sum = validTerms.reduce((acc, val) => acc + val, 0)
+            average = Math.round((sum / validTerms.length) * 100) / 100
           }
         } else {
-          // Lycée : (S1 + S2) / 2
+          // Lycée : moyenne des semestres évalués (2 en fin d'année)
           const s1 = computeTermAvg('1er_semestre')
           const s2 = computeTermAvg('2e_semestre')
           const validTerms = [s1, s2].filter((t): t is number => t !== null)
           if (validTerms.length > 0) {
-            const sum = (s1 || 0) + (s2 || 0)
-            average = Math.round((sum / 2) * 100) / 100
+            const sum = validTerms.reduce((acc, val) => acc + val, 0)
+            average = Math.round((sum / validTerms.length) * 100) / 100
           }
         }
       }

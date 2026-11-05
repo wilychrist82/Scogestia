@@ -340,7 +340,7 @@ export async function addFeeType(prevState: ActionState, formData: FormData): Pr
   const { label, amount, periodicity, target } = validatedFields.data;
 
   try {
-    const school_id = await getActiveSchoolId();
+    const school_id = await getActiveSchoolId(FINANCE_ROLES);
     const supabase = await createClient();
     
     const { error } = await supabase.from('fee_types').insert({
@@ -362,7 +362,7 @@ export async function addFeeType(prevState: ActionState, formData: FormData): Pr
 
 export async function deleteFeeType(id: string): Promise<ActionState> {
   try {
-    const school_id = await getActiveSchoolId();
+    const school_id = await getActiveSchoolId(FINANCE_ROLES);
     const supabase = await createClient();
     
     const { error } = await supabase
@@ -382,7 +382,7 @@ export async function deleteFeeType(id: string): Promise<ActionState> {
 
 export async function deleteSchedule(id: string): Promise<ActionState> {
   try {
-    const school_id = await getActiveSchoolId();
+    const school_id = await getActiveSchoolId(FINANCE_ROLES);
     const supabase = await createClient();
     
     // Check if there are any payments attached to this schedule first
@@ -409,5 +409,69 @@ export async function deleteSchedule(id: string): Promise<ActionState> {
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
+  }
+}
+
+export async function addSchoolExpense(formData: FormData): Promise<ActionState> {
+  try {
+    const label = ((formData.get('label') as string) || '').trim()
+    const category = ((formData.get('category') as string) || 'Fonctionnement').trim()
+    const amount = parseFloat(formData.get('amount') as string)
+    const paymentMethod = ((formData.get('payment_method') as string) || 'especes').trim()
+    const beneficiary = ((formData.get('beneficiary') as string) || '').trim()
+    const expenseDate = ((formData.get('expense_date') as string) || new Date().toISOString().split('T')[0]).trim()
+    const notes = ((formData.get('notes') as string) || '').trim()
+
+    if (!label || label.length < 2) {
+      return { error: 'Le libellé de la dépense est requis (min. 2 caractères).' }
+    }
+    if (isNaN(amount) || amount <= 0) {
+      return { error: 'Le montant de la dépense doit être supérieur à 0 FCFA.' }
+    }
+
+    const school_id = await getActiveSchoolId(FINANCE_ROLES)
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    const { error } = await supabase.from('school_expenses').insert({
+      school_id,
+      category,
+      label,
+      amount,
+      payment_method: paymentMethod,
+      beneficiary: beneficiary || null,
+      expense_date: expenseDate,
+      notes: notes || null,
+      recorded_by: user?.id || null,
+    })
+
+    if (error) throw error
+
+    revalidatePath('/admin/finance/depenses')
+    revalidatePath('/admin/finance')
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message || 'Erreur lors de l’enregistrement de la dépense.' }
+  }
+}
+
+export async function deleteSchoolExpense(id: string): Promise<ActionState> {
+  try {
+    const school_id = await getActiveSchoolId(FINANCE_ROLES)
+    const supabase = await createClient()
+
+    const { error } = await supabase
+      .from('school_expenses')
+      .delete()
+      .eq('id', id)
+      .eq('school_id', school_id)
+
+    if (error) throw error
+
+    revalidatePath('/admin/finance/depenses')
+    revalidatePath('/admin/finance')
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message || 'Erreur lors de la suppression de la dépense.' }
   }
 }

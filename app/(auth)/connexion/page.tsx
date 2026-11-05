@@ -235,7 +235,13 @@ export default function LoginPage() {
             <p>
               Parent avec un code d&apos;invitation ?{' '}
               <Link className="font-semibold text-emerald-600 hover:text-emerald-500" href="/activer-parent">
-                Activer mon compte
+                Activer mon compte parent
+              </Link>
+            </p>
+            <p>
+              Enseignant ou personnel avec un code ?{' '}
+              <Link className="font-semibold text-emerald-600 hover:text-emerald-500" href="/activer-personnel">
+                Activer mon compte personnel
               </Link>
             </p>
           </div>

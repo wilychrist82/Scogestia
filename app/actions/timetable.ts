@@ -110,7 +110,7 @@ export async function updateTimetableSlot(
     .from('user_school_roles')
     .select('school_id')
     .eq('user_id', user.id)
-    .in('role', ['admin', 'comptable', 'directeur', 'super_admin'])
+    .in('role', ['admin', 'comptable', 'super_admin'])
     .limit(1)
     .maybeSingle()
 
@@ -158,7 +158,7 @@ export async function deleteTimetableSlot(slotId: string): Promise<ActionResult>
     .from('user_school_roles')
     .select('school_id')
     .eq('user_id', user.id)
-    .in('role', ['admin', 'comptable', 'directeur', 'super_admin'])
+    .in('role', ['admin', 'comptable', 'super_admin'])
     .limit(1)
     .maybeSingle()
 
