@@ -47,21 +47,19 @@ export function DashboardHero({
   const pct = Math.max(0, Math.min(100, recouvRate))
 
   return (
-    <section className="dash-rise dash-grain relative isolate overflow-hidden rounded-[2rem] bg-[#050B18] text-white shadow-[0_30px_60px_-20px_rgba(5,11,24,0.55)] ring-1 ring-white/10" style={{ ['--d' as any]: 0 }}>
-      {/* Aurores */}
+    <section className="dash-rise dash-grain relative isolate overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] text-white shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25" style={{ ['--d' as any]: 0 }}>
+      {/* Aurores Indigo & Saphir style Stripe */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(120%_120%_at_0%_0%,#0B2A4A_0%,#050B18_55%)]" />
-        <div className="dash-float absolute -left-24 -top-32 h-[380px] w-[380px] rounded-full bg-emerald-500/30 blur-[90px]" />
-        <div className="dash-float-slow absolute -right-20 -top-24 h-[420px] w-[420px] rounded-full bg-sky-500/35 blur-[100px]" />
-        <div className="dash-float absolute bottom-[-180px] left-1/3 h-[360px] w-[520px] rounded-full bg-indigo-600/30 blur-[110px]" />
-        <div className="dash-dots absolute inset-0 [mask-image:radial-gradient(70%_80%_at_70%_40%,#000_10%,transparent_75%)]" />
-        <svg className="absolute inset-0 h-full w-full opacity-40" viewBox="0 0 1200 300" preserveAspectRatio="none" fill="none">
+        <div className="dash-float absolute -left-24 -top-32 h-[380px] w-[380px] rounded-full bg-indigo-400/25 blur-[90px]" />
+        <div className="dash-float-slow absolute -right-20 -top-24 h-[420px] w-[420px] rounded-full bg-sky-400/25 blur-[100px]" />
+        <div className="dash-float absolute bottom-[-180px] left-1/3 h-[360px] w-[520px] rounded-full bg-violet-500/25 blur-[110px]" />
+        <svg className="absolute inset-0 h-full w-full opacity-35" viewBox="0 0 1200 300" preserveAspectRatio="none" fill="none">
           <path d="M0 230 C 220 170, 380 290, 620 210 S 1000 120, 1200 170" stroke="url(#heroLine)" strokeWidth="1.5" />
           <path d="M0 260 C 260 210, 420 300, 660 240 S 1020 170, 1200 210" stroke="url(#heroLine)" strokeWidth="1" strokeOpacity="0.5" />
           <defs>
             <linearGradient id="heroLine" x1="0" x2="1">
-              <stop offset="0%" stopColor="#34d399" stopOpacity="0" />
-              <stop offset="50%" stopColor="#34d399" />
+              <stop offset="0%" stopColor="#818cf8" stopOpacity="0" />
+              <stop offset="50%" stopColor="#a5b4fc" />
               <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
             </linearGradient>
           </defs>
@@ -69,30 +67,30 @@ export function DashboardHero({
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
       </div>
 
-      <div className="relative grid gap-8 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center lg:p-10">
+      <div className="relative grid gap-6 p-6 sm:p-7 lg:grid-cols-[1fr_auto] lg:items-center lg:p-8">
         {/* Gauche */}
         <div className="min-w-0">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 backdrop-blur-md">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/15 px-3 py-1 backdrop-blur-md">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-300 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-sky-300" />
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/80">Tableau de bord · {academicYear}</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-100">Tableau de bord · {academicYear}</span>
           </div>
 
-          <h1 className="mt-4 text-[2rem] font-black leading-[1.05] tracking-[-0.03em] sm:text-5xl">
-            <span className="bg-gradient-to-br from-white via-white to-white/60 bg-clip-text text-transparent">{schoolName}</span>
+          <h1 className="mt-3 text-2xl font-extrabold leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
+            {schoolName}
           </h1>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/65 sm:text-[15px]">
-            Bonjour <span className="font-semibold text-white">{firstName}</span>, voici le pouls de votre établissement —{' '}
-            <span className="capitalize text-white/80">{dateLabel}</span>.
+          <p className="mt-2 max-w-xl text-xs font-medium leading-relaxed text-indigo-100/90 sm:text-sm">
+            Bonjour <span className="font-bold text-white">{firstName}</span>, voici le pouls de votre établissement —{' '}
+            <span className="capitalize text-white">{dateLabel}</span>.
           </p>
 
-          <div className="mt-6 flex flex-wrap items-center gap-2.5">{actions}</div>
+          <div className="mt-5 flex flex-wrap items-center gap-2.5">{actions}</div>
         </div>
 
         {/* Droite : panneau verre */}
-        <div className="relative w-full rounded-[1.5rem] border border-white/12 bg-white/[0.05] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-xl lg:w-[400px]">
+        <div className="relative w-full rounded-2xl border border-white/20 bg-white/12 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-xl lg:w-[390px]">
           <div className="flex items-center gap-5">
             <div className="relative shrink-0" style={{ width: size, height: size }}>
               <svg width={size} height={size} className="-rotate-90">

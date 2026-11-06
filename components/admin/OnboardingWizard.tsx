@@ -60,12 +60,12 @@ export function OnboardingWizard({ classesCount, staffCount, studentCount }: Onb
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative overflow-hidden bg-[#0a101f] rounded-3xl p-6 sm:p-8 text-white shadow-2xl mb-8 border border-white/10"
+        className="relative overflow-hidden bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] rounded-2xl p-6 sm:p-7 text-white shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] mb-8 ring-1 ring-indigo-400/25"
       >
         {/* Animated Background Gradients */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-[50%] -right-[10%] w-[70%] h-[200%] bg-[var(--color-primary)]/20 blur-[120px] rounded-full mix-blend-screen"></div>
-          <div className="absolute bottom-[0%] -left-[20%] w-[50%] h-[150%] bg-emerald-500/20 blur-[120px] rounded-full mix-blend-screen"></div>
+          <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-indigo-400/25 blur-3xl" />
+          <div className="absolute -bottom-20 left-1/3 h-48 w-72 rounded-full bg-sky-400/15 blur-3xl" />
         </div>
         
         {/* Glass Pattern Overlay */}

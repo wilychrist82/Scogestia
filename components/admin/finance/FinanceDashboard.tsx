@@ -282,42 +282,41 @@ export function FinanceDashboard({
       {/* ── BARRE DE NAVIGATION D'ONGLETS FINANCE ── */}
       <FinanceNavTabs basePath={basePath} />
 
-      {/* ── HERO FINANCIER EXÉCUTIF ── */}
-      <section className="relative overflow-hidden rounded-3xl bg-[#050B18] p-6 shadow-[0_30px_80px_-30px_rgba(5,11,24,0.8)] ring-1 ring-white/10 sm:p-8 lg:p-10">
+      {/* ── HERO FINANCIER EXÉCUTIF (STYLE STRIPE ROYAL INDIGO) ── */}
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] p-6 shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 sm:p-8">
         <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-20 -top-32 h-[420px] w-[520px] rounded-full bg-emerald-500/20 blur-[120px]" />
-          <div className="absolute -bottom-40 right-0 h-[380px] w-[480px] rounded-full bg-cyan-400/10 blur-[130px]" />
-          <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_left,black_20%,transparent_75%)]" />
+          <div className="absolute -right-12 -top-16 h-60 w-60 rounded-full bg-indigo-400/20 blur-3xl" />
+          <div className="absolute -left-12 -bottom-16 h-52 w-52 rounded-full bg-sky-400/15 blur-3xl" />
         </div>
 
-        <div className="relative flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-200 ring-1 ring-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-indigo-100 ring-1 ring-white/20">
               <CalendarDays size={13} />
               Année scolaire {academicYear}
             </span>
-            <h1 className="mt-5 text-3xl font-extrabold leading-[1.05] tracking-[-0.03em] text-white sm:text-4xl lg:text-5xl">
+            <h1 className="mt-3 text-2xl font-extrabold leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
               Tableau de bord financier
             </h1>
-            <p className="mt-2 text-lg font-bold text-emerald-300">{schoolName}</p>
-            <p className="mt-3 max-w-xl text-sm font-medium leading-relaxed text-slate-200 sm:text-base">
+            <p className="mt-1.5 text-base font-bold text-sky-200">{schoolName}</p>
+            <p className="mt-2 max-w-xl text-xs font-medium leading-relaxed text-indigo-100/90 sm:text-sm">
               Pilotez la trésorerie de votre école en toute clarté : encaissements, échéances et relances en temps réel.
             </p>
 
-            <div className="mt-7 flex flex-wrap items-center gap-3">
+            <div className="mt-5 flex flex-wrap items-center gap-3">
               <Link
                 href={`${basePath}/caisse`}
-                className="group inline-flex h-12 items-center gap-2.5 rounded-xl bg-emerald-500 px-5 text-sm font-extrabold text-[#04210f] shadow-[0_10px_30px_-8px_rgba(16,185,129,0.7),inset_0_1px_0_rgba(255,255,255,0.35)] transition-all hover:-translate-y-0.5 hover:bg-emerald-400"
+                className="group inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 text-xs sm:text-sm font-extrabold text-indigo-950 shadow-md transition-all hover:-translate-y-0.5 hover:bg-indigo-50"
               >
-                <Banknote size={18} />
+                <Banknote size={17} className="text-indigo-700" />
                 Ouvrir la Caisse
-                <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+                <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5 text-indigo-700" />
               </Link>
               <Link
                 href={`${basePath}/impayes`}
-                className="inline-flex h-12 items-center gap-2.5 rounded-xl bg-white/[0.06] px-5 text-sm font-bold text-white ring-1 ring-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)] transition-all hover:bg-white/[0.12]"
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-white/12 px-5 text-xs sm:text-sm font-bold text-white ring-1 ring-white/25 backdrop-blur-md transition-all hover:bg-white/20"
               >
-                <BellRing size={17} className="text-rose-300" />
+                <BellRing size={16} className="text-rose-200" />
                 Gérer les Impayés
                 {stats.overdueCount > 0 && (
                   <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[11px] font-extrabold tabular-nums text-white">{stats.overdueCount}</span>

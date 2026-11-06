@@ -3,8 +3,8 @@ export default function AdminLoading() {
     <div className="space-y-5 max-w-[1400px] mx-auto pb-10 px-1">
       
       {/* Hero Skeleton */}
-      <div className="relative overflow-hidden rounded-[1.75rem] bg-[#070b14] min-h-[160px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-white/[0.06] px-6 sm:px-8 py-6">
-        <div className="absolute -top-16 -left-16 w-80 h-80 bg-emerald-500/8 rounded-full blur-[100px] pointer-events-none" />
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] min-h-[145px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 ring-1 ring-indigo-400/25 px-6 sm:px-7 py-5">
+        <div className="absolute -top-16 -right-12 w-56 h-56 bg-indigo-400/20 rounded-full blur-3xl pointer-events-none" />
         <div className="space-y-3">
           <div className="w-24 h-4 rounded-full bg-white/8 skeleton" />
           <div className="w-56 h-8 rounded-xl bg-white/10 skeleton" />

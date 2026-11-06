@@ -167,17 +167,22 @@ export default async function SurveillancePedagogiquePage() {
         </span>
       </div>
 
-      {/* En-tête */}
-      <div className="bg-gradient-to-r from-[#070D1E] via-[#0E204E] to-[#0A3273] rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl border border-white/10">
+      {/* En-tête Exécutif — Stripe Royal Indigo & Sapphire */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 sm:px-7 sm:py-6">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-indigo-400/25 blur-3xl" />
+          <div className="absolute -bottom-20 left-1/3 h-48 w-72 rounded-full bg-sky-400/15 blur-3xl" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_at_right,black_25%,transparent_75%)]" />
+        </div>
         <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-3 py-1 mb-3">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-cyan-300">Pôle Pédagogique</span>
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 mb-2 ring-1 ring-inset ring-white/25 backdrop-blur-md">
+            <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-indigo-50">Pôle Pédagogique</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+          <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
             Surveillance des Notes & Détection Précoce
           </h1>
-          <p className="text-slate-300 text-sm mt-2 leading-relaxed">
+          <p className="text-indigo-100/90 text-[13px] sm:text-sm mt-1.5 font-medium leading-relaxed">
             Identifiez instantanément les élèves dont la moyenne générale est inférieure à 10/20 avant la fin du trimestre pour mettre en place du soutien scolaire personnalisé.
           </p>
         </div>

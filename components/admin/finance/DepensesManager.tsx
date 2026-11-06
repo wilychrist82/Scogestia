@@ -3,6 +3,7 @@
 import { useState, useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { FinanceNavTabs } from '@/components/admin/finance/FinanceNavTabs'
+import { FinanceExecutiveBanner } from '@/components/admin/finance/FinanceExecutiveBanner'
 import { addSchoolExpense, deleteSchoolExpense } from '@/app/actions/finance'
 import {
   TrendingDown,
@@ -147,38 +148,38 @@ export function DepensesManager({ expenses, totalCollected, schoolInfo = null }:
     <div className="space-y-6">
       <FinanceNavTabs />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-            Dépenses & Décaissements
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Suivez les sorties de caisse (salaires, fournitures, charges) et le solde net disponible.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          {expenses.length > 0 && (
+      <FinanceExecutiveBanner
+        badge="TRÉSORERIE & DÉCAISSEMENTS"
+        badgeIcon={TrendingDown}
+        title="Dépenses & Décaissements"
+        subtitle="Suivez les sorties de caisse (salaires, fournitures, charges) et le solde net disponible."
+        stats={[
+          { label: 'Opérations', value: expenses.length },
+          { label: 'Total sorties', value: `${totalExpenses.toLocaleString('fr-FR')} F`, color: 'rose' },
+        ]}
+        actions={
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {expenses.length > 0 && (
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="px-4 py-2.5 rounded-xl bg-white/15 ring-1 ring-white/25 text-white text-xs sm:text-sm font-bold hover:bg-white/25 transition-colors flex items-center gap-2 backdrop-blur-md"
+              >
+                <Download size={16} />
+                Exporter CSV
+              </button>
+            )}
             <button
               type="button"
-              onClick={handleExportCSV}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs sm:text-sm font-semibold hover:bg-slate-50 transition-colors flex items-center gap-2"
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-white text-indigo-950 text-xs sm:text-sm font-extrabold hover:bg-indigo-50 transition-colors flex items-center gap-2 shadow-md"
             >
-              <Download size={16} />
-              Exporter CSV
+              <Plus size={16} className="text-indigo-700" />
+              Enregistrer une dépense
             </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-emerald-700 text-white text-xs sm:text-sm font-bold hover:bg-emerald-800 transition-colors flex items-center gap-2 shadow-sm"
-          >
-            <Plus size={16} />
-            Enregistrer une dépense
-          </button>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       {/* KPI Cards : Entrées vs Sorties vs Solde Net */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

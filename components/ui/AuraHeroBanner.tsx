@@ -32,94 +32,31 @@ export function AuraHeroBanner({
 }: Props) {
   return (
     <div
-      className={`relative overflow-hidden rounded-[1.75rem] min-h-[145px] sm:min-h-[155px] flex flex-col lg:flex-row lg:items-center justify-between gap-5 p-6 sm:p-8 shadow-[0_20px_50px_rgba(7,13,30,0.4)] border border-white/[0.12] ring-1 ring-inset ring-white/[0.06] bg-[#070D1E] ${className}`}
+      className={`relative overflow-hidden rounded-2xl min-h-[135px] sm:min-h-[145px] flex flex-col lg:flex-row lg:items-center justify-between gap-5 px-6 py-5 sm:px-7 sm:py-6 shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] ${className}`}
     >
-      {/* ── ARRIÈRE-PLAN ÉLÉGANT : BLEU FONCÉ À GAUCHE CROISÉ AVEC BLEU CLAIR CYAN À DROITE (SANS JAUNE/ORANGE) ── */}
+      {/* ── ARRIÈRE-PLAN ÉLÉGANT : STRIPE ROYAL INDIGO & SAPPHIRE ── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-        
-        {/* Fond dégradé bleu nuit exécutif de base */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#070D1E] via-[#0E204E] to-[#0A3273]" />
-
-        {/* Forme vectorielle SVG de la vague fluide bleue */}
-        <svg
-          className="absolute inset-0 w-full h-full"
-          preserveAspectRatio="none"
-          viewBox="0 0 1200 200"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            {/* Dégradé bleu roi profond au centre */}
-            <radialGradient id="auraRoyalBlue" cx="45%" cy="50%" r="55%" fx="35%" fy="50%">
-              <stop offset="0%" stopColor="#2563EB" stopOpacity="0.8" />
-              <stop offset="50%" stopColor="#1D4ED8" stopOpacity="0.75" />
-              <stop offset="85%" stopColor="#1E3A8A" stopOpacity="0.7" />
-              <stop offset="100%" stopColor="#070D1E" stopOpacity="0" />
-            </radialGradient>
-
-            {/* Vague Océanique / Cyan et Bleu Ciel éclatant à droite */}
-            <radialGradient id="auraCyanWave" cx="95%" cy="35%" r="65%">
-              <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.95" />
-              <stop offset="35%" stopColor="#0EA5E9" stopOpacity="0.9" />
-              <stop offset="70%" stopColor="#0284C7" stopOpacity="0.75" />
-              <stop offset="100%" stopColor="#070D1E" stopOpacity="0" />
-            </radialGradient>
-
-            {/* Filtre de flou doux organique */}
-            <filter id="auraBlur" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="25" />
-            </filter>
-          </defs>
-
-          {/* Courbe fluide parabolique enveloppante bleu royal */}
-          <path
-            d="M 400 0 C 470 65, 520 135, 640 200 L 1200 200 L 1200 0 Z"
-            fill="url(#auraRoyalBlue)"
-          />
-
-          {/* Vague cyan et bleu ciel éclatante sur le côté droit */}
-          <path
-            d="M 800 0 C 780 60, 860 140, 1000 200 L 1200 200 L 1200 0 Z"
-            fill="url(#auraCyanWave)"
-            opacity="0.95"
-          />
-
-          {/* Arc lumineux ultra-fin qui traverse la courbe */}
-          <path
-            d="M 680 0 C 680 85, 750 155, 870 200"
-            stroke="rgba(255, 255, 255, 0.4)"
-            strokeWidth="1.5"
-            strokeDasharray="4 2"
-            fill="none"
-          />
-        </svg>
-
-        {/* Lueur bleu roi diffuse au centre */}
-        <div className="absolute top-1/2 left-[52%] -translate-x-1/2 -translate-y-1/2 w-[420px] h-[300px] bg-[radial-gradient(circle,_#2563EB_0%,_#1E40AF_50%,_transparent_75%)] opacity-70 blur-[50px] pointer-events-none" />
-
-        {/* Lueur bleu ciel / cyan électrique au bord droit */}
-        <div className="absolute -top-16 -right-16 w-[420px] h-[420px] bg-[radial-gradient(circle,_#38BDF8_0%,_#0284C7_50%,_transparent_75%)] opacity-85 blur-[55px] pointer-events-none" />
-
-        {/* Fin voilage de verre pour adoucir la brillance */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] via-transparent to-black/[0.2] pointer-events-none" />
+        <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-indigo-400/25 blur-3xl" />
+        <div className="absolute -bottom-20 left-1/3 h-48 w-72 rounded-full bg-sky-400/15 blur-3xl" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_at_right,black_25%,transparent_75%)]" />
       </div>
 
       {/* ── CONTENU GAUCHE : IDENTIFICATION & TITRES ── */}
       <div className="relative z-10 max-w-xl">
         {badge && (
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-3 py-1 mb-2.5 shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300">{badge}</p>
+          <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md ring-1 ring-inset ring-white/25 rounded-full px-3 py-1 mb-2 shadow-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-300" />
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-indigo-50">{badge}</p>
           </div>
         )}
 
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-tight tracking-tight flex items-center gap-3 drop-shadow-sm">
-          {Icon && <Icon size={28} className="text-white shrink-0 drop-shadow-xs" />}
+        <h1 className="text-xl sm:text-2xl font-extrabold text-white leading-tight tracking-tight flex items-center gap-3">
+          {Icon && <Icon size={24} className="text-white shrink-0" />}
           <span>{title}</span>
         </h1>
 
         {subtitle && (
-          <p className="text-white/80 text-xs sm:text-sm mt-1.5 font-medium leading-relaxed drop-shadow-xs">
+          <p className="text-indigo-100/90 text-[13px] sm:text-sm mt-1 font-medium leading-relaxed">
             {subtitle}
           </p>
         )}

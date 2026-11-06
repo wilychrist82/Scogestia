@@ -162,19 +162,19 @@ export default async function EnseignantDashboardPage() {
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 w-full space-y-6">
 
-      {/* ── HERO ENSEIGNANT ── */}
-      <section className="relative overflow-hidden rounded-[2rem] bg-[#050B18] p-6 shadow-[0_30px_80px_-30px_rgba(5,11,24,0.8)] ring-1 ring-white/10 sm:p-8">
+      {/* ── HERO ENSEIGNANT (Stripe Royal Indigo & Sapphire) ── */}
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-6 py-5 shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 sm:px-7 sm:py-6">
         <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-20 -top-28 h-80 w-[26rem] rounded-full bg-emerald-500/20 blur-[110px]" />
-          <div className="absolute -bottom-32 right-0 h-72 w-96 rounded-full bg-cyan-400/10 blur-[120px]" />
-          <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:44px_44px] [mask-image:radial-gradient(ellipse_at_left,black_20%,transparent_75%)]" />
+          <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-indigo-400/25 blur-3xl" />
+          <div className="absolute -bottom-20 left-1/3 h-48 w-72 rounded-full bg-sky-400/15 blur-3xl" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_at_right,black_25%,transparent_75%)]" />
         </div>
 
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4 sm:gap-5">
             <div className="relative shrink-0">
-              <div aria-hidden className="absolute -inset-0.5 rounded-[1.35rem] bg-gradient-to-br from-emerald-300 to-cyan-400 opacity-70 blur-[3px]" />
-              <div className="relative flex h-[4.5rem] w-[4.5rem] items-center justify-center overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-emerald-600 to-emerald-900 text-2xl font-extrabold text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] ring-1 ring-white/30 sm:h-20 sm:w-20 sm:text-3xl">
+              <div aria-hidden className="absolute -inset-0.5 rounded-[1.35rem] bg-gradient-to-br from-sky-300 to-indigo-400 opacity-70 blur-[3px]" />
+              <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-[1.15rem] bg-white/15 text-xl font-extrabold text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] ring-1 ring-white/30 backdrop-blur-md sm:h-[4.5rem] sm:w-[4.5rem] sm:text-2xl">
                 {user.user_metadata?.avatar_url ? (
                   <img src={user.user_metadata.avatar_url} alt="Profile" className="h-full w-full object-cover" />
                 ) : (
@@ -183,34 +183,34 @@ export default async function EnseignantDashboardPage() {
               </div>
             </div>
             <div className="min-w-0">
-              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-200 ring-1 ring-inset ring-emerald-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-indigo-50 ring-1 ring-inset ring-white/25 backdrop-blur-md">
                 <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-300 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-sky-300" />
                 </span>
                 Espace Enseignant
               </span>
-              <h1 className="mt-2.5 line-clamp-2 text-2xl font-extrabold leading-tight tracking-[-0.03em] text-white sm:text-3xl">{roleData.full_name}</h1>
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-                <span className="inline-flex items-center gap-2 text-sm font-semibold capitalize text-slate-100">
-                  <Calendar className="h-4 w-4 text-emerald-300" />
+              <h1 className="mt-2 line-clamp-2 text-xl font-extrabold leading-tight tracking-tight text-white sm:text-2xl">{roleData.full_name}</h1>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span className="inline-flex items-center gap-2 text-[13px] sm:text-sm font-medium capitalize text-indigo-100">
+                  <Calendar className="h-4 w-4 text-sky-300" />
                   {todayLabel}
                 </span>
-                {schoolData?.name && <span className="text-sm font-semibold text-slate-200">· {schoolData.name}</span>}
+                {schoolData?.name && <span className="text-[13px] sm:text-sm font-semibold text-indigo-100/90">· {schoolData.name}</span>}
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:flex lg:flex-wrap">
             {[
-              { label: 'Classes', value: classCount, color: 'text-white', box: 'bg-white/[0.06] ring-white/10' },
-              { label: 'Devoirs semaine', value: devoirsSemaine || 0, color: 'text-emerald-300', box: 'bg-emerald-400/10 ring-emerald-400/25' },
-              { label: 'Devoirs total', value: devoirsCount || 0, color: 'text-white', box: 'bg-white/[0.06] ring-white/10' },
-              { label: 'Appel · absences', value: absencesCount || 0, color: (absencesCount || 0) > 0 ? 'text-rose-300' : 'text-emerald-300', box: (absencesCount || 0) > 0 ? 'bg-rose-400/10 ring-rose-400/25' : 'bg-white/[0.06] ring-white/10' },
+              { label: 'Classes', value: classCount, color: 'text-white', box: 'bg-white/12 ring-white/20' },
+              { label: 'Devoirs semaine', value: devoirsSemaine || 0, color: 'text-sky-200', box: 'bg-white/15 ring-white/25' },
+              { label: 'Devoirs total', value: devoirsCount || 0, color: 'text-white', box: 'bg-white/12 ring-white/20' },
+              { label: 'Appel · absences', value: absencesCount || 0, color: (absencesCount || 0) > 0 ? 'text-rose-200' : 'text-emerald-200', box: (absencesCount || 0) > 0 ? 'bg-rose-400/20 ring-rose-300/35' : 'bg-white/12 ring-white/20' },
             ].map((stat) => (
-              <div key={stat.label} className={`min-w-[104px] rounded-2xl px-4 py-3 ring-1 ring-inset shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-md ${stat.box}`}>
-                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-200">{stat.label}</p>
-                <p className={`text-2xl font-extrabold leading-none tabular-nums tracking-tight ${stat.color}`}>{stat.value}</p>
+              <div key={stat.label} className={`min-w-[100px] rounded-xl px-4 py-2.5 ring-1 ring-inset backdrop-blur-md ${stat.box}`}>
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-200">{stat.label}</p>
+                <p className={`text-xl font-extrabold leading-none tabular-nums tracking-tight ${stat.color}`}>{stat.value}</p>
               </div>
             ))}
           </div>

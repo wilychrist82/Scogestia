@@ -43,30 +43,29 @@ export function FinanceExecutiveBanner({
 }: Props) {
   return (
     <div
-      className={`relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl bg-[#050B18] p-6 shadow-[0_30px_80px_-30px_rgba(5,11,24,0.8)] ring-1 ring-white/10 sm:p-8 lg:flex-row lg:items-center ${className}`}
+      className={`relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 sm:px-7 sm:py-6 lg:flex-row lg:items-center ${className}`}
     >
-      {/* Aurores émeraude & cyan */}
+      {/* Aurores Indigo & Saphir style Stripe */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-20 -top-32 h-[380px] w-[480px] rounded-full bg-emerald-500/20 blur-[120px]" />
-        <div className="absolute -bottom-40 right-0 h-[340px] w-[440px] rounded-full bg-cyan-400/10 blur-[130px]" />
-        <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_left,black_20%,transparent_75%)]" />
+        <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full bg-indigo-400/20 blur-2xl" />
+        <div className="absolute -left-12 -bottom-16 h-40 w-40 rounded-full bg-sky-400/15 blur-2xl" />
       </div>
 
       {/* Contenu gauche : badge, titre, sous-titre */}
       <div className="relative z-10 max-w-2xl">
         {badge && (
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-400/10 px-3.5 py-1.5 text-emerald-200 ring-1 ring-inset ring-emerald-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]">
-            <BadgeIcon size={13} />
-            <span className="text-[11px] font-bold uppercase tracking-[0.14em]">{badge}</span>
+          <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-indigo-100 ring-1 ring-inset ring-white/20">
+            <BadgeIcon size={12} />
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em]">{badge}</span>
           </div>
         )}
 
-        <h1 className="text-2xl font-extrabold leading-[1.1] tracking-[-0.03em] text-white sm:text-3xl">
+        <h1 className="text-xl font-extrabold leading-tight tracking-tight text-white sm:text-2xl">
           {title}
         </h1>
 
         {subtitle && (
-          <p className="mt-2.5 max-w-xl text-sm font-medium leading-relaxed text-slate-200 sm:text-base">
+          <p className="mt-1 max-w-xl text-xs font-medium leading-relaxed text-indigo-100/90 sm:text-sm">
             {subtitle}
           </p>
         )}
@@ -79,9 +78,9 @@ export function FinanceExecutiveBanner({
             {stats.map((stat, i) => (
               <div
                 key={i}
-                className="min-w-[104px] rounded-xl bg-white/[0.05] px-4 py-3 ring-1 ring-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-md transition-colors hover:bg-white/[0.09]"
+                className="min-w-[96px] rounded-xl bg-white/12 px-4 py-2.5 ring-1 ring-white/20 backdrop-blur-md transition-colors hover:bg-white/18"
               >
-                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-200">
+                <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-100">
                   {stat.label}
                 </p>
                 <p className={`whitespace-nowrap text-lg font-extrabold leading-none tabular-nums tracking-tight ${statTone(stat.color)}`}>

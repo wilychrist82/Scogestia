@@ -3,7 +3,7 @@ export default function EnseignantLoading() {
     <div className="max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 w-full space-y-6 animate-pulse">
       
       {/* Hero Banner Enseignant */}
-      <div className="rounded-[2rem] bg-gradient-to-br from-emerald-900/60 via-slate-900 to-slate-900 p-6 sm:p-8 min-h-[180px] border border-white/5 flex flex-col justify-between">
+      <div className="rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-6 py-5 sm:px-7 sm:py-6 min-h-[150px] ring-1 ring-indigo-400/25 flex flex-col justify-between">
         <div className="space-y-3 max-w-md">
           <div className="h-3.5 w-24 bg-white/20 rounded-full" />
           <div className="h-8 sm:h-9 w-72 bg-white/30 rounded-xl" />
