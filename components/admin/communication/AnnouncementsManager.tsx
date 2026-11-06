@@ -224,28 +224,28 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
         {/* Navigation Tabs */}
         <CommunicationNavTabs />
 
-        {/* Bannière Émeraude Royale — Annonces Officielles */}
-        <div className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#064E3B] via-[#047857] to-[#0F766E] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(4,120,87,0.45)] ring-1 ring-emerald-400/20 sm:px-7 sm:py-6 lg:flex-row lg:items-center">
-          <div aria-hidden className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-emerald-300/15 blur-2xl" />
-          <div aria-hidden className="pointer-events-none absolute -left-12 -bottom-16 h-40 w-40 rounded-full bg-teal-200/10 blur-2xl" />
+        {/* Bannière Style Stripe — Royal Indigo & Sapphire */}
+        <div className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 sm:px-7 sm:py-6 lg:flex-row lg:items-center">
+          <div aria-hidden className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-indigo-400/20 blur-2xl" />
+          <div aria-hidden className="pointer-events-none absolute -left-12 -bottom-16 h-40 w-40 rounded-full bg-sky-400/15 blur-2xl" />
 
           <div className="relative z-10 flex items-start sm:items-center gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-white/25 backdrop-blur-md shadow-inner">
-              <Megaphone className="h-6 w-6 text-emerald-100" />
+              <Megaphone className="h-6 w-6 text-indigo-100" />
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-50 ring-1 ring-white/20">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-100 ring-1 ring-white/20">
                   Diffusion officielle
                 </span>
-                <span className="text-xs font-semibold text-emerald-100/90">
+                <span className="text-xs font-semibold text-indigo-100/90">
                   • {announcements.filter(a => a.is_published).length} annonce(s) active(s)
                 </span>
               </div>
               <h2 className="mt-1 text-xl font-extrabold tracking-tight text-white sm:text-2xl">
                 Tableau d&apos;Annonces Officielles
               </h2>
-              <p className="mt-0.5 text-xs font-medium text-emerald-50/90 sm:text-sm">
+              <p className="mt-0.5 text-xs font-medium text-indigo-100/90 sm:text-sm">
                 Informez les familles et les enseignants (réunions, examens, communiqués de la direction).
               </p>
             </div>
@@ -254,13 +254,13 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
           <div className="relative z-10 flex flex-wrap items-center gap-3 self-start lg:self-center">
             <div className="hidden sm:flex items-center gap-2">
               <div className="rounded-xl bg-white/12 px-3.5 py-2 ring-1 ring-white/20 backdrop-blur-md">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-100">Publiées</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-100">Publiées</p>
                 <p className="text-base font-extrabold leading-tight text-white tabular-nums">
                   {announcements.filter(a => a.is_published).length}
                 </p>
               </div>
               <div className="rounded-xl bg-white/12 px-3.5 py-2 ring-1 ring-white/20 backdrop-blur-md">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-100">Total</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-100">Total</p>
                 <p className="text-base font-extrabold leading-tight text-white tabular-nums">
                   {announcements.length}
                 </p>
@@ -269,9 +269,9 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
 
             <button
               onClick={() => { resetForm(); setShowForm(true) }}
-              className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-xs sm:text-sm font-extrabold text-emerald-900 shadow-md transition-all hover:bg-emerald-50 active:scale-[0.98] w-full sm:w-auto shrink-0"
+              className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-xs sm:text-sm font-extrabold text-indigo-950 shadow-md transition-all hover:bg-indigo-50 active:scale-[0.98] w-full sm:w-auto shrink-0"
             >
-              <Plus className="w-4 h-4 text-emerald-700" />
+              <Plus className="w-4 h-4 text-indigo-700" />
               Nouvelle Annonce
             </button>
           </div>
