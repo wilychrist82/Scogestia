@@ -283,41 +283,68 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
         {/* Navigation Tabs */}
         <CommunicationNavTabs />
 
-        {/* Bannière Prestige */}
-        <div className="relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl bg-[#050B18] p-6 shadow-[0_30px_80px_-30px_rgba(5,11,24,0.8)] ring-1 ring-white/10 sm:p-8 lg:flex-row lg:items-center">
-          <div aria-hidden className="pointer-events-none absolute inset-0">
-            <div className="absolute -left-20 -top-32 h-[380px] w-[480px] rounded-full bg-emerald-500/20 blur-[120px]" />
-            <div className="absolute -bottom-40 right-0 h-[340px] w-[440px] rounded-full bg-cyan-400/10 blur-[130px]" />
-            <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_left,black_20%,transparent_75%)]" />
-          </div>
+        {/* En-tête Exécutif Épuré (Style SaaS Moderne) */}
+        <div className="relative flex flex-col justify-between gap-4 overflow-hidden rounded-2xl border border-slate-200/90 bg-white px-5 py-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] sm:px-6 sm:py-5 lg:flex-row lg:items-center">
+          <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-emerald-500 to-teal-600" />
+          <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-emerald-500/[0.04] blur-2xl" />
 
-          <div className="relative z-10 max-w-2xl">
-            <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-300/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-amber-200 ring-1 ring-inset ring-amber-300/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12)]">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-300 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-300" />
-              </span>
-              Échanges & Messagerie directe
-            </span>
-            <h1 className="text-2xl font-extrabold leading-[1.1] tracking-[-0.03em] text-white sm:text-3xl">
-              Centre de Communication
-            </h1>
-            <p className="mt-2.5 max-w-xl text-sm font-medium leading-relaxed text-slate-200 sm:text-base">
-              Envoyez des messages directs, diffusions ciblées et notifications aux parents et enseignants.
-            </p>
+          <div className="relative z-10 flex items-start sm:items-center gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-teal-50/60 text-emerald-700 shadow-2xs">
+              <MessageSquare className="h-6 w-6" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">
+                  Centre de Communication
+                </h1>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Messagerie directe & SMS
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs font-medium text-slate-500 sm:text-sm">
+                Échangez en temps réel avec les parents d&apos;élèves et l&apos;équipe enseignante.
+              </p>
+            </div>
           </div>
 
           <div className="relative z-10 flex flex-wrap items-center gap-2.5 self-start lg:self-center">
-            {[
-              { label: 'Non lus', value: unreadIds.length, cls: unreadIds.length > 0 ? 'text-emerald-300' : 'text-white' },
-              { label: 'Conversations', value: threads.length, cls: 'text-white' },
-              { label: 'Messages', value: visibleComms.length, cls: 'text-white' },
-            ].map(s => (
-              <div key={s.label} className="min-w-[104px] rounded-xl bg-white/[0.05] px-4 py-3 ring-1 ring-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] backdrop-blur-md">
-                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-200">{s.label}</p>
-                <p className={`text-lg font-extrabold leading-none tabular-nums tracking-tight ${s.cls}`}>{s.value}</p>
+            <div
+              className={`flex items-center gap-3 rounded-xl border px-3.5 py-2.5 transition-colors ${
+                unreadIds.length > 0
+                  ? 'border-emerald-200 bg-emerald-50/70 text-emerald-900'
+                  : 'border-slate-200/80 bg-slate-50/70 text-slate-700'
+              }`}
+            >
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Non lus</p>
+                <p
+                  className={`text-base font-extrabold leading-tight tabular-nums ${
+                    unreadIds.length > 0 ? 'text-emerald-700' : 'text-slate-900'
+                  }`}
+                >
+                  {unreadIds.length}
+                </p>
               </div>
-            ))}
+            </div>
+
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3.5 py-2.5">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Conversations</p>
+                <p className="text-base font-extrabold leading-tight tabular-nums text-slate-900">
+                  {threads.length}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3.5 py-2.5">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Messages</p>
+                <p className="text-base font-extrabold leading-tight tabular-nums text-slate-900">
+                  {visibleComms.length}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
