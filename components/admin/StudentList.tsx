@@ -180,6 +180,18 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
           </div>
           <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Gestion des Élèves</h1>
           <p className="mt-1 text-[13px] font-medium text-indigo-100/90 sm:text-sm">Consultez, inscrivez et gérez les fiches et cartes scolaires de vos élèves.</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {[
+              { label: currentNiveau === 'Tous' ? 'Élèves' : `Élèves · ${currentNiveau}`, value: totalCount },
+              { label: 'Classes', value: classes.length },
+              { label: 'Page', value: `${totalCount > 0 ? currentPage : 0}/${totalPages}` },
+            ].map(stat => (
+              <span key={stat.label} className="inline-flex items-baseline gap-1.5 rounded-lg bg-white/12 px-3 py-1.5 ring-1 ring-white/20 backdrop-blur-md">
+                <span className="text-base font-extrabold tabular-nums text-white">{stat.value}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-100">{stat.label}</span>
+              </span>
+            ))}
+          </div>
         </div>
         <div className="relative z-10 flex flex-wrap items-center gap-2.5">
           {/* Import CSV */}
@@ -209,14 +221,6 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
             <UserPlus size={16} className="text-indigo-700" /> Inscrire un élève
           </Link>
         </div>
-      </div>
-
-      {/* Cartes KPI */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label="Élèves" value={totalCount} icon={Users} tone="emerald" hint={currentNiveau === 'Tous' ? 'Tous niveaux' : `Niveau ${currentNiveau}`} />
-        <KpiCard label="Inscrits (page)" value={activeOnPage} icon={UserCheck} tone="blue" hint={`sur ${students.length} affichés`} />
-        <KpiCard label="Classes" value={classes.length} icon={Presentation} tone="violet" hint="Disponibles au filtre" />
-        <KpiCard label="Pagination" value={`${totalCount > 0 ? currentPage : 0}/${totalPages}`} icon={FileText} tone="amber" hint={`${itemsPerPage} par page`} />
       </div>
 
       {actionError && (

@@ -4,7 +4,7 @@ import { useState, useTransition, FormEvent } from 'react'
 import Link from 'next/link'
 import { createClass, updateClass, deleteClass } from '@/app/actions/classes'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Presentation, Plus, Users, MoreVertical, Eye, Edit2, Trash2, X, AlertTriangle, GraduationCap, Baby, School } from 'lucide-react'
+import { Presentation, Plus, Users, MoreVertical, Eye, Edit2, Trash2, X, AlertTriangle, GraduationCap, Baby, School, ArrowRight } from 'lucide-react'
 import { sortClasses } from '@/lib/classes'
 import { KpiCard } from './KpiCard'
 
@@ -57,6 +57,16 @@ export function ClassesManager({ classes }: Props) {
   }))
 
   const totalStudents = classes.reduce((acc, cls) => acc + (cls.student_count ?? 0), 0)
+  const totalCapacity = classes.reduce((acc, cls) => acc + (cls.capacity || 0), 0)
+
+  const getExamBadge = (cls: ClassItem) => {
+    const s = `${cls.name} ${cls.level || ''}`.toLowerCase()
+    if (/\bcm\s*2\b/.test(s)) return 'CEPD'
+    if (/\b(3e|3ème|3eme)\b/.test(s)) return 'BEPC'
+    if (/\b(1ere|1ère|premiere|première)\b/.test(s)) return 'BAC 1'
+    if (/\b(tle|terminale)\b/.test(s)) return 'BAC 2'
+    return null
+  }
 
   const openAddModal = () => {
     setClassToEdit(null)
@@ -128,21 +138,25 @@ export function ClassesManager({ classes }: Props) {
           <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Classes & Niveaux</h1>
           <p className="mt-1 text-[13px] font-medium text-indigo-100/90 sm:text-sm">Gérez les classes, les niveaux et les affectations des enseignants.</p>
         </div>
-        <button
-          onClick={openAddModal}
-          className="relative z-10 group inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-5 text-xs sm:text-sm font-extrabold text-indigo-950 shadow-md transition-all hover:-translate-y-0.5 hover:bg-indigo-50 active:scale-95"
-        >
-          <Plus className="h-4 w-4 text-indigo-700 transition-transform group-hover:rotate-90" />
-          Ajouter une classe
-        </button>
-      </div>
-
-      {/* Cartes KPI */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label="Classes" value={classes.length} icon={Presentation} tone="emerald" hint="Total de l'établissement" />
-        <KpiCard label="Élèves inscrits" value={totalStudents} icon={Users} tone="blue" hint="Toutes classes confondues" />
-        <KpiCard label="Maternelle & Primaire" value={counts.maternelle + counts.primaire} icon={Baby} tone="amber" hint={`${counts.maternelle} mat. · ${counts.primaire} prim.`} />
-        <KpiCard label="Collège & Lycée" value={counts.college + counts.lycee} icon={GraduationCap} tone="violet" hint={`${counts.college} col. · ${counts.lycee} lyc.`} />
+        <div className="relative z-10 flex flex-wrap items-center gap-2.5">
+          {[
+            { label: 'Classes', value: classes.length },
+            { label: 'Élèves inscrits', value: totalStudents },
+            { label: 'Taux de remplissage', value: `${totalCapacity > 0 ? Math.round((totalStudents / totalCapacity) * 100) : 0}%` },
+          ].map(stat => (
+            <div key={stat.label} className="min-w-[96px] rounded-xl bg-white/12 px-4 py-2.5 ring-1 ring-white/20 backdrop-blur-md">
+              <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-100">{stat.label}</p>
+              <p className="text-lg font-extrabold leading-none tabular-nums tracking-tight text-white">{stat.value}</p>
+            </div>
+          ))}
+          <button
+            onClick={openAddModal}
+            className="group inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-white px-5 text-xs sm:text-sm font-extrabold text-indigo-950 shadow-md transition-all hover:-translate-y-0.5 hover:bg-indigo-50 active:scale-95"
+          >
+            <Plus className="h-4 w-4 text-indigo-700 transition-transform group-hover:rotate-90" />
+            Ajouter une classe
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -204,10 +218,9 @@ export function ClassesManager({ classes }: Props) {
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="border-b border-slate-200/80 bg-slate-50/70">
-                  <th className="whitespace-nowrap px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-600">Nom de la classe</th>
-                  <th className="whitespace-nowrap px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-600">Niveau</th>
-                  <th className="whitespace-nowrap px-6 py-3.5 text-center text-[11px] font-bold uppercase tracking-wider text-slate-600">Effectif</th>
-                  <th className="whitespace-nowrap px-6 py-3.5 text-right text-[11px] font-bold uppercase tracking-wider text-slate-600">Capacité</th>
+                  <th className="whitespace-nowrap px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-600">Classe</th>
+                  <th className="whitespace-nowrap px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-600">Cycle</th>
+                  <th className="whitespace-nowrap px-6 py-3.5 text-[11px] font-bold uppercase tracking-wider text-slate-600">Effectif & Remplissage</th>
                   <th className="whitespace-nowrap px-6 py-3.5 text-right text-[11px] font-bold uppercase tracking-wider text-slate-600">Actions</th>
                 </tr>
               </thead>
@@ -215,15 +228,18 @@ export function ClassesManager({ classes }: Props) {
                 {filteredClasses.map(cls => {
                   const students = cls.student_count ?? 0
                   const fill = cls.capacity ? Math.min(100, Math.round((students / cls.capacity) * 100)) : 0
+                  const exam = getExamBadge(cls)
                   return (
-                    <tr key={cls.id} className="border-b border-slate-100 transition-colors last:border-b-0 hover:bg-emerald-50/30">
+                    <tr key={cls.id} className="group border-b border-slate-100 transition-colors last:border-b-0 hover:bg-indigo-50/30">
                       <td className="px-6 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200">
-                            <School className="h-4 w-4" />
-                          </span>
-                          <span className="font-extrabold text-slate-900">{cls.name}</span>
-                        </div>
+                        <Link href={`/admin/classes/${cls.id}`} className="flex items-center gap-2.5">
+                          <span className="text-[15px] font-extrabold text-slate-900 group-hover:text-indigo-700">{cls.name}</span>
+                          {exam && (
+                            <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-amber-800 ring-1 ring-inset ring-amber-300">
+                              Examen {exam}
+                            </span>
+                          )}
+                        </Link>
                       </td>
                       <td className="px-6 py-3.5">
                         {['2nde', 'seconde', '1ere', '1ère', 'premiere', 'tle', 'terminale', 'lycee', 'lycée'].some(k => ((cls.level || '') + ' ' + cls.name).toLowerCase().includes(k)) ? (
@@ -238,31 +254,41 @@ export function ClassesManager({ classes }: Props) {
                           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-800 ring-1 ring-inset ring-slate-200">{cls.level?.toUpperCase() || 'AUTRE'}</span>
                         )}
                       </td>
-                      <td className="px-6 py-3.5 text-center">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold tabular-nums text-blue-800 ring-1 ring-inset ring-blue-200">
-                          <Users className="h-3.5 w-3.5" />
-                          {students} élève{students > 1 ? 's' : ''}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3.5 text-right">
-                        <span className="font-bold tabular-nums text-slate-900">{cls.capacity || 'Illimitée'}</span>
-                        {cls.capacity > 0 && (
-                          <div className="ml-auto mt-1.5 h-1.5 w-24 overflow-hidden rounded-full bg-slate-100">
-                            <div
-                              className={`h-full rounded-full ${fill >= 95 ? 'bg-rose-500' : fill >= 75 ? 'bg-amber-500' : 'bg-emerald-600'}`}
-                              style={{ width: `${fill}%` }}
-                            />
-                          </div>
-                        )}
+                      <td className="px-6 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <span className="min-w-[72px] text-sm tabular-nums text-slate-900">
+                            <strong className="font-extrabold">{students}</strong>
+                            <span className="font-medium text-slate-500"> / {cls.capacity || '∞'}</span>
+                          </span>
+                          {cls.capacity > 0 && (
+                            <>
+                              <div className="h-1.5 w-28 overflow-hidden rounded-full bg-slate-100">
+                                <div
+                                  className={`h-full rounded-full ${fill >= 95 ? 'bg-rose-500' : fill >= 75 ? 'bg-amber-500' : 'bg-indigo-600'}`}
+                                  style={{ width: `${fill}%` }}
+                                />
+                              </div>
+                              <span className={`text-xs font-bold tabular-nums ${fill >= 95 ? 'text-rose-700' : fill >= 75 ? 'text-amber-700' : 'text-slate-500'}`}>{fill}%</span>
+                            </>
+                          )}
+                        </div>
                       </td>
                       <td className="relative px-6 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                        <Link
+                          href={`/admin/classes/${cls.id}`}
+                          className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-slate-800 transition-all hover:border-indigo-600 hover:bg-indigo-600 hover:text-white"
+                        >
+                          Ouvrir <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
                         <button
                           onClick={() => setOpenActionId(openActionId === cls.id ? null : cls.id)}
                           aria-label="Actions"
-                          className="inline-block rounded-xl p-2 text-slate-700 transition-all hover:bg-slate-100 hover:text-slate-900"
+                          className="inline-block rounded-lg p-1.5 text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-900"
                         >
-                          <MoreVertical className="h-5 w-5" />
+                          <MoreVertical className="h-4 w-4" />
                         </button>
+                        </div>
 
                         {openActionId === cls.id && (
                           <div className="absolute right-6 top-12 z-20 flex w-44 animate-[fadeIn_0.1s_ease-out] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-1 text-left shadow-xl">

@@ -206,18 +206,23 @@ export function PersonnelManager({ staffList }: Props) {
             <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Personnel de l'Établissement</h2>
             <p className="mt-1 text-[13px] font-medium text-indigo-100/90 sm:text-sm">Gérez le personnel administratif et enseignant de votre établissement.</p>
           </div>
-          <button onClick={openAddModal} className="relative z-10 group inline-flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 text-xs sm:text-sm font-extrabold text-indigo-950 shadow-md transition-all hover:-translate-y-0.5 hover:bg-indigo-50 active:scale-95 sm:w-auto">
-            <UserPlus className="h-4 w-4 text-indigo-700 transition-transform group-hover:scale-110" />
-            Inviter un membre
-          </button>
-        </div>
-
-        {/* Cartes KPI */}
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <KpiCard label="Membres" value={totalStaff} icon={Users} tone="emerald" hint="Personnel total" />
-          <KpiCard label="Actifs" value={activeStaff} icon={UserCheck} tone="blue" hint={`${totalStaff - activeStaff} en attente`} />
-          <KpiCard label="Enseignants" value={teacherCount} icon={GraduationCap} tone="violet" hint="Corps professoral" />
-          <KpiCard label="Administratif" value={adminStaffCount} icon={Briefcase} tone="amber" hint="Direction & support" />
+          <div className="relative z-10 flex flex-wrap items-center gap-2.5">
+            {[
+              { label: 'Membres', value: totalStaff },
+              { label: 'Enseignants', value: teacherCount },
+              { label: 'Administratif', value: adminStaffCount },
+              { label: 'En attente', value: totalStaff - activeStaff },
+            ].map(stat => (
+              <div key={stat.label} className="min-w-[90px] rounded-xl bg-white/12 px-4 py-2.5 ring-1 ring-white/20 backdrop-blur-md">
+                <p className="mb-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-100">{stat.label}</p>
+                <p className="text-lg font-extrabold leading-none tabular-nums tracking-tight text-white">{stat.value}</p>
+              </div>
+            ))}
+            <button onClick={openAddModal} className="group inline-flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 text-xs sm:text-sm font-extrabold text-indigo-950 shadow-md transition-all hover:-translate-y-0.5 hover:bg-indigo-50 active:scale-95 sm:w-auto">
+              <UserPlus className="h-4 w-4 text-indigo-700 transition-transform group-hover:scale-110" />
+              Inviter un membre
+            </button>
+          </div>
         </div>
 
         {error && (
