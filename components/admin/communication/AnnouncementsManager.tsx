@@ -224,26 +224,57 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
         {/* Navigation Tabs */}
         <CommunicationNavTabs />
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)]">
-          <div>
-            <div className="flex items-center gap-2 text-[var(--color-on-surface-variant)] mb-2">
-              <span className="text-sm font-semibold text-[var(--color-on-surface)]">Communication</span>
-              <span className="text-[var(--color-on-surface-variant)]">/</span>
-              <span className="text-sm font-semibold text-[var(--color-on-surface)]">Annonces</span>
+        {/* Bannière Émeraude Royale — Annonces Officielles */}
+        <div className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#064E3B] via-[#047857] to-[#0F766E] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(4,120,87,0.45)] ring-1 ring-emerald-400/20 sm:px-7 sm:py-6 lg:flex-row lg:items-center">
+          <div aria-hidden className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-emerald-300/15 blur-2xl" />
+          <div aria-hidden className="pointer-events-none absolute -left-12 -bottom-16 h-40 w-40 rounded-full bg-teal-200/10 blur-2xl" />
+
+          <div className="relative z-10 flex items-start sm:items-center gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-white/25 backdrop-blur-md shadow-inner">
+              <Megaphone className="h-6 w-6 text-emerald-100" />
             </div>
-            <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Annonces</h2>
-            <p className="text-base text-[var(--color-on-surface-variant)] mt-1">
-              Publiez des annonces visibles par tous les parents (réunions, événements, fermetures...).
-            </p>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-50 ring-1 ring-white/20">
+                  Diffusion officielle
+                </span>
+                <span className="text-xs font-semibold text-emerald-100/90">
+                  • {announcements.filter(a => a.is_published).length} annonce(s) active(s)
+                </span>
+              </div>
+              <h2 className="mt-1 text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+                Tableau d&apos;Annonces Officielles
+              </h2>
+              <p className="mt-0.5 text-xs font-medium text-emerald-50/90 sm:text-sm">
+                Informez les familles et les enseignants (réunions, examens, communiqués de la direction).
+              </p>
+            </div>
           </div>
-          <button
-            onClick={() => { resetForm(); setShowForm(true) }}
-            className="flex items-center gap-2 bg-[var(--color-primary)] text-white h-12 px-6 rounded-full text-sm font-semibold hover:opacity-90 transition-colors shadow-sm w-full sm:w-auto shrink-0"
-          >
-            <Megaphone className="w-5 h-5" />
-            Nouvelle Annonce
-          </button>
+
+          <div className="relative z-10 flex flex-wrap items-center gap-3 self-start lg:self-center">
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="rounded-xl bg-white/12 px-3.5 py-2 ring-1 ring-white/20 backdrop-blur-md">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-100">Publiées</p>
+                <p className="text-base font-extrabold leading-tight text-white tabular-nums">
+                  {announcements.filter(a => a.is_published).length}
+                </p>
+              </div>
+              <div className="rounded-xl bg-white/12 px-3.5 py-2 ring-1 ring-white/20 backdrop-blur-md">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-100">Total</p>
+                <p className="text-base font-extrabold leading-tight text-white tabular-nums">
+                  {announcements.length}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => { resetForm(); setShowForm(true) }}
+              className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-xs sm:text-sm font-extrabold text-emerald-900 shadow-md transition-all hover:bg-emerald-50 active:scale-[0.98] w-full sm:w-auto shrink-0"
+            >
+              <Plus className="w-4 h-4 text-emerald-700" />
+              Nouvelle Annonce
+            </button>
+          </div>
         </div>
 
         {/* Alerts */}
@@ -361,93 +392,113 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {announcements.map(a => (
-              <div
-                key={a.id}
-                className={`bg-[var(--color-surface-container-lowest)] rounded-xl border shadow-sm overflow-hidden transition-all ${
-                  a.is_published ? 'border-[var(--color-outline-variant)]' : 'border-orange-200 opacity-70'
-                }`}
-              >
-                <div className="p-5 sm:p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-4 min-w-0 flex-1">
-                      <AnnouncementLogo
-                        logoUrl={schoolLogo}
-                        schoolName={schoolName}
-                        isPublished={a.is_published}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3
-                            onClick={() => setSelectedViewAnnouncement(a)}
-                            className="font-bold text-[var(--color-on-surface)] text-base leading-snug cursor-pointer hover:text-[var(--color-primary)] transition-colors"
-                          >
-                            {a.title}
-                          </h3>
-                        </div>
-                        <p className="text-sm text-[var(--color-on-surface-variant)] mt-1.5 line-clamp-2 whitespace-pre-line leading-relaxed">
-                          {a.content}
-                        </p>
-                        <div className="flex items-center gap-3 mt-3 flex-wrap">
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-[var(--color-surface-bright)] text-[var(--color-on-surface-variant)] border border-[var(--color-outline-variant)]">
-                            <Users className="w-3.5 h-3.5" />
-                            {getTargetLabel(a)}
-                          </span>
-                          <span className="text-[11px] text-[var(--color-on-surface-variant)] flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5" />
-                            {format(new Date(a.published_at || a.created_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
-                          </span>
-                          {!a.is_published && (
-                            <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
-                              Brouillon masqué
+          <div className="space-y-3.5">
+            {announcements.map(a => {
+              const isTeachersOnly = a.target_level === 'teachers'
+              const accentClass = !a.is_published
+                ? 'border-l-amber-500'
+                : isTeachersOnly
+                ? 'border-l-indigo-600'
+                : 'border-l-emerald-600'
+
+              return (
+                <div
+                  key={a.id}
+                  className={`group relative rounded-2xl border border-slate-200/90 border-l-4 ${accentClass} bg-white shadow-[0_2px_10px_-4px_rgba(15,23,42,0.06)] hover:shadow-[0_10px_28px_-10px_rgba(15,23,42,0.12)] hover:border-slate-300 transition-all overflow-hidden ${
+                    !a.is_published ? 'opacity-80 bg-amber-50/10' : ''
+                  }`}
+                >
+                  <div className="p-5 sm:px-6 sm:py-5">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="flex items-start gap-4 min-w-0 flex-1">
+                        <AnnouncementLogo
+                          logoUrl={schoolLogo}
+                          schoolName={schoolName}
+                          isPublished={a.is_published}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2.5 flex-wrap">
+                            <h3
+                              onClick={() => setSelectedViewAnnouncement(a)}
+                              className="font-extrabold text-slate-900 text-base sm:text-lg leading-snug cursor-pointer hover:text-emerald-700 transition-colors"
+                            >
+                              {a.title}
+                            </h3>
+                            {a.is_published ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200/80">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                Publiée
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-700 border border-amber-200">
+                                Brouillon masqué
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-slate-600 mt-1.5 line-clamp-2 whitespace-pre-line leading-relaxed">
+                            {a.content}
+                          </p>
+                          <div className="flex items-center gap-3 mt-3.5 flex-wrap">
+                            <span
+                              className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-lg border ${
+                                isTeachersOnly
+                                  ? 'bg-indigo-50/80 text-indigo-800 border-indigo-200/80'
+                                  : 'bg-slate-100/80 text-slate-700 border-slate-200/80'
+                              }`}
+                            >
+                              <Users className="w-3.5 h-3.5" />
+                              {getTargetLabel(a)}
                             </span>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => setSelectedViewAnnouncement(a)}
-                            className="text-[11px] font-semibold text-[var(--color-primary)] hover:underline ml-auto sm:ml-0"
-                          >
-                            Lire l&apos;annonce complète
-                          </button>
+                            <span className="text-xs text-slate-500 font-medium flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-slate-400" />
+                              {format(new Date(a.published_at || a.created_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedViewAnnouncement(a)}
+                              className="text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline ml-auto sm:ml-1"
+                            >
+                              Lire l&apos;annonce complète →
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <button
-                        onClick={() => setSelectedViewAnnouncement(a)}
-                        className="p-2 rounded-lg hover:bg-[var(--color-surface-bright)] transition-colors text-[var(--color-on-surface-variant)]"
-                        title="Consulter l'annonce"
-                      >
-                        <Eye className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleTogglePublish(a)}
-                        className="p-2 rounded-lg hover:bg-[var(--color-surface-bright)] transition-colors text-[var(--color-on-surface-variant)]"
-                        title={a.is_published ? 'Masquer aux parents' : 'Publier et notifier'}
-                      >
-                        {a.is_published ? <EyeOff className="w-5 h-5" /> : <Megaphone className="w-5 h-5" />}
-                      </button>
-                      <button
-                        onClick={() => handleEdit(a)}
-                        className="p-2 rounded-lg hover:bg-[var(--color-surface-bright)] transition-colors text-[var(--color-on-surface-variant)]"
-                        title="Modifier"
-                      >
-                        <Edit2 className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(a.id)}
-                        className="p-2 rounded-lg hover:bg-[#fce8e6] transition-colors text-[var(--color-on-surface-variant)] hover:text-[#d93025]"
-                        title="Supprimer"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
+                      <div className="flex items-center gap-1.5 self-end sm:self-start shrink-0 rounded-xl bg-slate-50 p-1 border border-slate-200/80">
+                        <button
+                          onClick={() => setSelectedViewAnnouncement(a)}
+                          className="p-2 rounded-lg hover:bg-white hover:shadow-2xs transition-all text-slate-600 hover:text-emerald-700"
+                          title="Consulter l'annonce"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleTogglePublish(a)}
+                          className="p-2 rounded-lg hover:bg-white hover:shadow-2xs transition-all text-slate-600 hover:text-amber-700"
+                          title={a.is_published ? 'Masquer aux parents' : 'Publier et notifier'}
+                        >
+                          {a.is_published ? <EyeOff className="w-4 h-4" /> : <Megaphone className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={() => handleEdit(a)}
+                          className="p-2 rounded-lg hover:bg-white hover:shadow-2xs transition-all text-slate-600 hover:text-blue-700"
+                          title="Modifier"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(a.id)}
+                          className="p-2 rounded-lg hover:bg-rose-50 transition-all text-slate-500 hover:text-rose-600"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 

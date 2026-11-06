@@ -222,39 +222,50 @@ export function CommunicationHistoryManager({ initialCommunications, classes, ro
         {/* Navigation Tabs */}
         <CommunicationNavTabs />
 
-        {/* Top Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-2xl border border-[var(--color-outline-variant)] shadow-xs">
-          <div>
-            <div className="flex items-center gap-2 text-[var(--color-on-surface-variant)] mb-2">
-              <span className="text-sm font-semibold text-[var(--color-on-surface)]">Communication</span>
-              <span>/</span>
-              <span className="text-sm font-semibold text-[var(--color-primary)]">Historique des envois</span>
+        {/* Bannière Émeraude Royale — Historique des envois */}
+        <div className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#064E3B] via-[#047857] to-[#0F766E] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(4,120,87,0.45)] ring-1 ring-emerald-400/20 sm:px-7 sm:py-6 lg:flex-row lg:items-center">
+          <div aria-hidden className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-emerald-300/15 blur-2xl" />
+          <div aria-hidden className="pointer-events-none absolute -left-12 -bottom-16 h-40 w-40 rounded-full bg-teal-200/10 blur-2xl" />
+
+          <div className="relative z-10 flex items-start sm:items-center gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-white/25 backdrop-blur-md shadow-inner">
+              <History className="h-6 w-6 text-emerald-100" />
             </div>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-[var(--color-on-surface)] tracking-tight">
-              Historique des Messages
-            </h2>
-            <p className="text-sm md:text-base text-[var(--color-on-surface-variant)] mt-1">
-              Consultez, recherchez et gérez tous les messages et échanges envoyés depuis votre établissement.
-            </p>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-50 ring-1 ring-white/20">
+                  Journal d&apos;audit
+                </span>
+                <span className="text-xs font-semibold text-emerald-100/90">
+                  • {communications.length} envoi(s) tracé(s)
+                </span>
+              </div>
+              <h2 className="mt-1 text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+                Historique des Messages & Envois
+              </h2>
+              <p className="mt-0.5 text-xs font-medium text-emerald-50/90 sm:text-sm">
+                Consultez, filtrez et gérez l&apos;ensemble des messages envoyés depuis votre établissement.
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative z-10 flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
             {communications.length > 0 && (
               <button
                 type="button"
                 onClick={() => setModalState({ type: 'clear_all' })}
                 disabled={isPending}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100 text-rose-700 text-sm font-semibold transition-all shadow-2xs hover:shadow-xs active:scale-98 disabled:opacity-50"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-white ring-1 ring-rose-300/40 text-xs sm:text-sm font-bold transition-all backdrop-blur-md disabled:opacity-50"
               >
-                <Trash2 size={16} className="text-rose-600" />
-                Vider tout l'historique
+                <Trash2 size={15} className="text-rose-200" />
+                Vider l&apos;historique
               </button>
             )}
             <Link
               href="/admin/communication"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark,var(--color-primary))] text-white text-sm font-semibold transition-all shadow-sm active:scale-98"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-900 text-xs sm:text-sm font-extrabold transition-all shadow-md active:scale-98"
             >
-              <Send size={16} />
+              <Send size={15} className="text-emerald-700" />
               Nouveau message
             </Link>
           </div>

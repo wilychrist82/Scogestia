@@ -283,68 +283,49 @@ export function CommunicationManager({ currentUserId, classes, students, teacher
         {/* Navigation Tabs */}
         <CommunicationNavTabs />
 
-        {/* En-tête Exécutif Épuré (Style SaaS Moderne) */}
-        <div className="relative flex flex-col justify-between gap-4 overflow-hidden rounded-2xl border border-slate-200/90 bg-white px-5 py-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] sm:px-6 sm:py-5 lg:flex-row lg:items-center">
-          <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-emerald-500 to-teal-600" />
-          <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-emerald-500/[0.04] blur-2xl" />
+        {/* Bannière Émeraude Royale — Centre de Communication */}
+        <div className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#064E3B] via-[#047857] to-[#0F766E] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(4,120,87,0.45)] ring-1 ring-emerald-400/20 sm:px-7 sm:py-6 lg:flex-row lg:items-center">
+          <div aria-hidden className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-emerald-300/15 blur-2xl" />
+          <div aria-hidden className="pointer-events-none absolute -left-12 -bottom-16 h-40 w-40 rounded-full bg-teal-200/10 blur-2xl" />
 
           <div className="relative z-10 flex items-start sm:items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-teal-50/60 text-emerald-700 shadow-2xs">
-              <MessageSquare className="h-6 w-6" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white ring-1 ring-white/25 backdrop-blur-md shadow-inner">
+              <MessageSquare className="h-6 w-6 text-emerald-100" />
             </div>
             <div>
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">
-                  Centre de Communication
-                </h1>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-50 ring-1 ring-white/20">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
                   Messagerie directe & SMS
                 </span>
               </div>
-              <p className="mt-0.5 text-xs font-medium text-slate-500 sm:text-sm">
+              <h1 className="mt-1 text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+                Centre de Communication
+              </h1>
+              <p className="mt-0.5 text-xs font-medium text-emerald-50/90 sm:text-sm">
                 Échangez en temps réel avec les parents d&apos;élèves et l&apos;équipe enseignante.
               </p>
             </div>
           </div>
 
           <div className="relative z-10 flex flex-wrap items-center gap-2.5 self-start lg:self-center">
-            <div
-              className={`flex items-center gap-3 rounded-xl border px-3.5 py-2.5 transition-colors ${
-                unreadIds.length > 0
-                  ? 'border-emerald-200 bg-emerald-50/70 text-emerald-900'
-                  : 'border-slate-200/80 bg-slate-50/70 text-slate-700'
-              }`}
-            >
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Non lus</p>
-                <p
-                  className={`text-base font-extrabold leading-tight tabular-nums ${
-                    unreadIds.length > 0 ? 'text-emerald-700' : 'text-slate-900'
-                  }`}
-                >
-                  {unreadIds.length}
+            {[
+              { label: 'Non lus', value: unreadIds.length },
+              { label: 'Conversations', value: threads.length },
+              { label: 'Messages', value: visibleComms.length },
+            ].map((s) => (
+              <div
+                key={s.label}
+                className="min-w-[96px] rounded-xl bg-white/12 px-4 py-2.5 ring-1 ring-white/20 backdrop-blur-md"
+              >
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-100">
+                  {s.label}
+                </p>
+                <p className="mt-0.5 text-lg font-extrabold leading-none tabular-nums text-white">
+                  {s.value}
                 </p>
               </div>
-            </div>
-
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3.5 py-2.5">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Conversations</p>
-                <p className="text-base font-extrabold leading-tight tabular-nums text-slate-900">
-                  {threads.length}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3.5 py-2.5">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Messages</p>
-                <p className="text-base font-extrabold leading-tight tabular-nums text-slate-900">
-                  {visibleComms.length}
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
