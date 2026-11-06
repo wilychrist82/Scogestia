@@ -21,9 +21,9 @@ export default async function ParametresPage() {
     return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
   }
 
-  // Seul l'admin a accès
+  // Seul l'admin a accès à la configuration globale de l'école ; les autres rôles sont redirigés vers leur profil personnel
   if (roleData.role !== 'admin') {
-    return <DataErrorCard title="Accès restreint" message="Cette section de configuration est exclusivement réservée à l'administrateur de l'école." />
+    redirect('/admin/parametres/profil')
   }
 
   const { data: school, error: schoolError } = await supabase

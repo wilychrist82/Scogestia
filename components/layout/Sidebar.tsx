@@ -113,18 +113,7 @@ const mainNavItems: NavItem[] = [
     ]
   },
   { label: 'Abonnement', href: '/admin/abonnement', icon: CreditCard },
-  { 
-    label: 'Paramètres', 
-    href: '/admin/parametres', 
-    icon: Settings,
-    hasDropdown: true,
-    subItems: [
-      { label: 'Configuration école', href: '/admin/parametres' },
-      { label: 'Mon profil', href: '/admin/parametres/profil' },
-      { label: 'Sécurité & accès', href: '/admin/parametres/securite' },
-      { label: 'Journal d\'activités', href: '/admin/parametres/journal' },
-    ]
-  },
+  { label: 'Paramètres', href: '/admin/parametres', icon: Settings },
 ]
 
 const comptableNavItems: NavItem[] = [

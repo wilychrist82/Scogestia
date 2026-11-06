@@ -84,16 +84,24 @@ export function AdminProfileManager({ userId, fullName, email, phone, role, user
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* En-tête */}
-        <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-2xl border border-[var(--color-outline-variant)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 font-black text-xl">
+        {/* En-tête Exécutif — Stripe Royal Indigo & Sapphire */}
+        <div className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 sm:px-7 sm:py-6 lg:flex-row lg:items-center">
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-indigo-400/25 blur-3xl" />
+            <div className="absolute -bottom-20 left-1/3 h-48 w-72 rounded-full bg-sky-400/15 blur-3xl" />
+          </div>
+          <div className="relative z-10 flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/15 ring-1 ring-white/25 backdrop-blur-md flex items-center justify-center text-white font-extrabold text-xl shrink-0">
               {fullName ? fullName.charAt(0).toUpperCase() : 'A'}
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">{fullName || 'Mon Compte'}</h1>
-              <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
-                <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+              <div className="mb-1.5 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-50 ring-1 ring-inset ring-white/25 backdrop-blur-md">
+                <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
+                Paramètres · Profil Personnel
+              </div>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">{fullName || 'Mon Compte'}</h1>
+              <p className="text-xs sm:text-sm text-indigo-100/90 mt-1 flex flex-wrap items-center gap-2 font-medium">
+                <span className="font-bold text-white bg-white/15 px-2.5 py-0.5 rounded-md ring-1 ring-white/20">
                   {role === 'admin' ? 'Administrateur / Secrétaire' : role}
                 </span>
                 <span>•</span>
