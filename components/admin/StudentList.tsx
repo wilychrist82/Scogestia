@@ -167,17 +167,26 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
   return (
     <div className="mx-auto max-w-[1280px] space-y-6 pb-8">
       {/* En-tête de page */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Gestion des élèves</h1>
-          <p className="mt-1 text-sm font-medium text-slate-600">Consultez, inscrivez et gérez les fiches de vos élèves.</p>
+      {/* En-tête Exécutif — Stripe Royal Indigo & Sapphire */}
+      <div className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 sm:px-7 sm:py-6 lg:flex-row lg:items-center">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-indigo-400/25 blur-3xl" />
+          <div className="absolute -bottom-20 left-1/3 h-48 w-72 rounded-full bg-sky-400/15 blur-3xl" />
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="relative z-10">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-indigo-50 ring-1 ring-inset ring-white/25 backdrop-blur-md">
+            <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
+            Dossiers Scolaires & Matricules
+          </div>
+          <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Gestion des Élèves</h1>
+          <p className="mt-1 text-[13px] font-medium text-indigo-100/90 sm:text-sm">Consultez, inscrivez et gérez les fiches et cartes scolaires de vos élèves.</p>
+        </div>
+        <div className="relative z-10 flex flex-wrap items-center gap-2.5">
           {/* Import CSV */}
           <button
             type="button"
             onClick={() => setIsImportModalOpen(true)}
-            className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 transition-colors hover:bg-slate-50 hover:text-slate-900"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-white/12 ring-1 ring-white/25 px-4 text-xs sm:text-sm font-bold text-white backdrop-blur-md transition-colors hover:bg-white/20"
           >
             <Upload size={15} /> Importer (CSV)
           </button>
@@ -187,7 +196,7 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
             type="button"
             onClick={handleExportCSV}
             disabled={students.length === 0}
-            className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-white/12 ring-1 ring-white/25 px-4 text-xs sm:text-sm font-bold text-white backdrop-blur-md transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download size={15} /> Exporter
           </button>
@@ -195,9 +204,9 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
           {/* Ajouter élève */}
           <Link
             href="/admin/eleves/nouveau"
-            className="inline-flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-[#006039] to-emerald-600 px-5 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:from-[#004d2e] hover:to-emerald-700 hover:shadow-lg"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-white px-5 text-xs sm:text-sm font-extrabold text-indigo-950 shadow-md transition-all hover:-translate-y-0.5 hover:bg-indigo-50"
           >
-            <UserPlus size={16} /> Inscrire un élève
+            <UserPlus size={16} className="text-indigo-700" /> Inscrire un élève
           </Link>
         </div>
       </div>

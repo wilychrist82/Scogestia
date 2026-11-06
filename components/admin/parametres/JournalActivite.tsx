@@ -78,21 +78,25 @@ export function JournalActivite({ activities, schoolName }: Props) {
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-5xl mx-auto space-y-6">
         
-        {/* En-tête */}
-        <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-2xl border border-[var(--color-outline-variant)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-1">
-              <ShieldCheck size={16} />
+        {/* En-tête Exécutif — Stripe Royal Indigo & Sapphire */}
+        <div className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 sm:px-7 sm:py-6 lg:flex-row lg:items-center">
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-indigo-400/25 blur-3xl" />
+            <div className="absolute -bottom-20 left-1/3 h-48 w-72 rounded-full bg-sky-400/15 blur-3xl" />
+          </div>
+          <div className="relative z-10">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-indigo-50 ring-1 ring-inset ring-white/25 backdrop-blur-md">
+              <ShieldCheck size={14} className="text-sky-300" />
               Audit & Traçabilité
             </div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Journal d'activités</h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Historique chronologique certifié des opérations enregistrées pour <span className="font-semibold text-slate-700">{schoolName}</span>.
+            <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Journal d'Activités</h1>
+            <p className="mt-1 text-[13px] font-medium text-indigo-100/90 sm:text-sm">
+              Historique chronologique certifié des opérations enregistrées pour <span className="font-bold text-white">{schoolName}</span>.
             </p>
           </div>
-          <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-center">
-            <p className="text-[10px] uppercase font-bold text-slate-400">Total événements</p>
-            <p className="text-xl font-black text-slate-800">{activities.length}</p>
+          <div className="relative z-10 rounded-xl bg-white/12 ring-1 ring-white/20 backdrop-blur-md px-4 py-2.5 text-center">
+            <p className="text-[10px] uppercase font-bold tracking-wider text-indigo-200">Total événements</p>
+            <p className="text-xl font-extrabold text-white tabular-nums">{activities.length}</p>
           </div>
         </div>
 

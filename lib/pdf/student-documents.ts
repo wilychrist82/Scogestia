@@ -798,3 +798,530 @@ export function generateExpenseVoucherPDF(expense: {
   const filename = `${isSalary ? 'Recu_Paie' : 'Bon_Caisse'}_${ref}.pdf`
   saveOrSharePdf(doc, filename, `Pièce de caisse ${ref}`)
 }
+
+export interface HonorRollStudentData extends StudentDocumentData {
+  average?: number | null
+  periodLabel?: string | null
+  rankLabel?: string | null
+}
+
+function drawHonorRollPage(
+  doc: jsPDF,
+  data: HonorRollStudentData,
+  assets: {
+    photoDataUrl: string | null
+    logoDataUrl: string | null
+    stampDataUrl: string | null
+    signatureDataUrl: string | null
+  }
+) {
+  const W = 297
+  const H = 210
+
+  // Fond parchemin très subtil
+  doc.setFillColor(255, 253, 247)
+  doc.rect(0, 0, W, H, 'F')
+
+  // Cadre extérieur Bleu Nuit Royal
+  doc.setDrawColor(30, 41, 59)
+  doc.setLineWidth(1.6)
+  doc.rect(10, 10, W - 20, H - 20, 'S')
+
+  // Double cadre intérieur Or Royal (#C9A227)
+  doc.setDrawColor(201, 162, 39)
+  doc.setLineWidth(0.9)
+  doc.rect(13.5, 13.5, W - 27, H - 27, 'S')
+  doc.setLineWidth(0.35)
+  doc.rect(15.5, 15.5, W - 31, H - 31, 'S')
+
+  // Ornements aux 4 coins
+  const corners = [
+    [13.5, 13.5],
+    [W - 19.5, 13.5],
+    [13.5, H - 19.5],
+    [W - 19.5, H - 19.5],
+  ]
+  doc.setFillColor(201, 162, 39)
+  corners.forEach(([cx, cy]) => {
+    doc.rect(cx, cy, 6, 6, 'F')
+  })
+
+  // En-tête République & Ministère
+  doc.setTextColor(30, 41, 59)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9.5)
+  doc.text('RÉPUBLIQUE TOGOLAISE', 30, 26)
+  doc.setFont('helvetica', 'italic')
+  doc.setFontSize(8)
+  doc.setTextColor(100, 116, 139)
+  doc.text('Travail - Liberté - Patrie', 30, 30.5)
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9)
+  doc.setTextColor(30, 41, 59)
+  doc.text(`ANNÉE SCOLAIRE : ${data.academicYear}`, W - 30, 26, { align: 'right' })
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8)
+  doc.setTextColor(100, 116, 139)
+  doc.text(data.periodLabel || 'Bilan Pédagogique Officiel', W - 30, 30.5, { align: 'right' })
+
+  // Logo de l'école au centre haut
+  if (assets.logoDataUrl) {
+    try {
+      doc.addImage(assets.logoDataUrl, 'PNG', W / 2 - 10, 18, 20, 20)
+    } catch {
+      // ignore
+    }
+  }
+
+  // Nom de l'établissement en majuscules centré
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(15)
+  doc.setTextColor(30, 46, 129)
+  doc.text(data.schoolName.toUpperCase(), W / 2, 45, { align: 'center' })
+
+  if (data.schoolCity || data.schoolPhone) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8.5)
+    doc.setTextColor(100, 116, 139)
+    doc.text(
+      [data.schoolCity, data.schoolPhone ? `Tél : ${data.schoolPhone}` : null].filter(Boolean).join(' • '),
+      W / 2,
+      50,
+      { align: 'center' }
+    )
+  }
+
+  // Ruban Or / Indigo du Titre "TABLEAU D'HONNEUR"
+  const avg = typeof data.average === 'number' && !isNaN(data.average) ? data.average : null
+  let distinctionTitle = "TABLEAU D'HONNEUR OFFICIEL"
+  let distinctionSubtitle = 'DÉCERNÉ POUR SON TRAVAIL, SA DISCIPLINE ET SES RÉSULTATS SCOLAIRES'
+  if (avg !== null && avg >= 16) {
+    distinctionTitle = "TABLEAU D'HONNEUR & FÉLICITATIONS"
+    distinctionSubtitle = "DÉCERNÉ AVEC LES FÉLICITATIONS DU CONSEIL DES PROFESSEURS POUR L'EXCELLENCE DE SES RÉSULTATS"
+  } else if (avg !== null && avg >= 14) {
+    distinctionTitle = "TABLEAU D'HONNEUR & ENCOURAGEMENTS"
+    distinctionSubtitle = 'DÉCERNÉ AVEC LES ENCOURAGEMENTS DU CONSEIL POUR LA QUALITÉ DE SON TRAVAIL SCOLAIRE'
+  }
+
+  doc.setFillColor(30, 41, 59)
+  doc.roundedRect(W / 2 - 92, 56, 184, 15, 3, 3, 'F')
+  doc.setDrawColor(201, 162, 39)
+  doc.setLineWidth(0.7)
+  doc.roundedRect(W / 2 - 92, 56, 184, 15, 3, 3, 'S')
+
+  doc.setFont('times', 'bold')
+  doc.setFontSize(18)
+  doc.setTextColor(253, 224, 71)
+  doc.text(distinctionTitle, W / 2, 66, { align: 'center' })
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(8.5)
+  doc.setTextColor(100, 116, 139)
+  doc.text(distinctionSubtitle, W / 2, 78, { align: 'center' })
+
+  // Photo passeport de l'élève à gauche si disponible
+  if (assets.photoDataUrl) {
+    try {
+      doc.setFillColor(255, 255, 255)
+      doc.setDrawColor(201, 162, 39)
+      doc.setLineWidth(0.6)
+      doc.roundedRect(30, 86, 30, 36, 2, 2, 'FD')
+      doc.addImage(assets.photoDataUrl, 'PNG', 31, 87, 28, 34)
+    } catch {
+      // ignore
+    }
+  }
+
+  // Corps du diplôme
+  doc.setFont('times', 'italic')
+  doc.setFontSize(13)
+  doc.setTextColor(51, 65, 85)
+  doc.text("Le Chef d'Établissement et le Conseil des Enseignants certifient que l'élève :", W / 2, 91, {
+    align: 'center',
+  })
+
+  // Nom & Prénoms de l'élève en très grand
+  doc.setFont('times', 'bold')
+  doc.setFontSize(25)
+  doc.setTextColor(15, 23, 42)
+  doc.text(`${data.lastName.toUpperCase()} ${data.firstName}`, W / 2, 105, { align: 'center' })
+
+  // Ligne dorée sous le nom
+  doc.setDrawColor(201, 162, 39)
+  doc.setLineWidth(0.6)
+  doc.line(W / 2 - 65, 109, W / 2 + 65, 109)
+
+  // Détails Classe & Matricule
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11.5)
+  doc.setTextColor(49, 46, 129)
+  doc.text(
+    `Classe : ${data.className}   •   Matricule : ${data.matricule || 'N/A'}`,
+    W / 2,
+    118,
+    { align: 'center' }
+  )
+
+  // Encadré Moyenne / Mention si fourni
+  if (avg !== null) {
+    const mention =
+      avg >= 16
+        ? 'Mention : Très Bien'
+        : avg >= 14
+        ? 'Mention : Bien'
+        : avg >= 12
+        ? 'Mention : Assez Bien'
+        : 'Mérite Scolaire'
+
+    doc.setFillColor(254, 249, 195)
+    doc.setDrawColor(201, 162, 39)
+    doc.setLineWidth(0.5)
+    doc.roundedRect(W / 2 - 58, 124, 116, 12, 2.5, 2.5, 'FD')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.setTextColor(133, 77, 14)
+    doc.text(
+      `Moyenne Générale : ${avg.toFixed(2).replace('.', ',')} / 20   —   ${mention}`,
+      W / 2,
+      131.5,
+      { align: 'center' }
+    )
+  } else {
+    doc.setFont('times', 'italic')
+    doc.setFontSize(12)
+    doc.setTextColor(71, 85, 105)
+    doc.text(
+      "S'est particulièrement distingué(e) par son assiduité, sa conduite exemplaire et son ardeur au travail.",
+      W / 2,
+      131,
+      { align: 'center' }
+    )
+  }
+
+  // Pied : Date, Cachet Officiel, Médaille Or & Signature du Directeur
+  const todayStr = new Date().toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9.5)
+  doc.setTextColor(71, 85, 105)
+  doc.text(`Fait à ${data.schoolCity || 'Lomé'}, le ${todayStr}`, 48, 156, { align: 'center' })
+
+  // Sceau d'or central (Médaille d'honneur)
+  doc.setFillColor(201, 162, 39)
+  doc.circle(W / 2, 165, 13, 'F')
+  doc.setFillColor(254, 240, 138)
+  doc.circle(W / 2, 165, 10.5, 'F')
+  doc.setDrawColor(161, 98, 7)
+  doc.setLineWidth(0.5)
+  doc.circle(W / 2, 165, 9.2, 'S')
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(6.2)
+  doc.setTextColor(133, 77, 14)
+  doc.text('EXCELLENCE', W / 2, 163.5, { align: 'center' })
+  doc.text('SCOLAIRE', W / 2, 167.5, { align: 'center' })
+
+  // Zone Signature & Cachet du Directeur à droite
+  const sigX = W - 62
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(30, 41, 59)
+  doc.text("Le Chef d'Établissement", sigX, 152, { align: 'center' })
+
+  if (assets.stampDataUrl) {
+    try {
+      doc.addImage(assets.stampDataUrl, 'PNG', sigX - 24, 154, 26, 26)
+    } catch {
+      drawOfficialVectorStamp(doc, sigX - 12, 168, 11, data.schoolName, data.schoolCity)
+    }
+  } else {
+    drawOfficialVectorStamp(doc, sigX - 12, 168, 11, data.schoolName, data.schoolCity)
+  }
+
+  if (assets.signatureDataUrl) {
+    try {
+      doc.addImage(assets.signatureDataUrl, 'PNG', sigX - 4, 156, 28, 16)
+    } catch {
+      // ignore
+    }
+  }
+
+  if (data.directorName) {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9.5)
+    doc.setTextColor(15, 23, 42)
+    doc.text(data.directorName, sigX, 184, { align: 'center' })
+  }
+}
+
+/**
+ * Génère un Diplôme de Tableau d'Honneur individuel (A4 Paysage)
+ */
+export async function generateHonorRollPDF(data: HonorRollStudentData) {
+  const [photoDataUrl, logoDataUrl, stampDataUrl, signatureDataUrl] = await Promise.all([
+    loadImageAsPngDataUrl(data.avatarUrl),
+    loadImageAsPngDataUrl(data.schoolLogoUrl),
+    loadImageAsPngDataUrl(data.schoolStampUrl),
+    loadImageAsPngDataUrl(data.schoolSignatureUrl),
+  ])
+
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+  drawHonorRollPage(doc, data, {
+    photoDataUrl,
+    logoDataUrl,
+    stampDataUrl,
+    signatureDataUrl,
+  })
+
+  const filename = `Tableau_Honneur_${data.lastName}_${data.firstName}.pdf`
+  saveOrSharePdf(doc, filename, `Tableau d'Honneur — ${data.firstName} ${data.lastName}`)
+}
+
+/**
+ * Génère les Tableaux d'Honneur de toute une classe en un seul fichier PDF multi-pages (A4 Paysage)
+ */
+export async function generateClassHonorRollPDF(
+  className: string,
+  studentsData: HonorRollStudentData[]
+) {
+  if (!studentsData.length) return
+  const first = studentsData[0]
+  const [logoDataUrl, stampDataUrl, signatureDataUrl] = await Promise.all([
+    loadImageAsPngDataUrl(first.schoolLogoUrl),
+    loadImageAsPngDataUrl(first.schoolStampUrl),
+    loadImageAsPngDataUrl(first.schoolSignatureUrl),
+  ])
+
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+
+  for (let i = 0; i < studentsData.length; i++) {
+    if (i > 0) doc.addPage('a4', 'landscape')
+    const st = studentsData[i]
+    const photoDataUrl = await loadImageAsPngDataUrl(st.avatarUrl)
+    drawHonorRollPage(doc, st, {
+      photoDataUrl,
+      logoDataUrl,
+      stampDataUrl,
+      signatureDataUrl,
+    })
+  }
+
+  const cleanClass = className.replace(/\s+/g, '_')
+  const filename = `Tableaux_Honneur_Classe_${cleanClass}_${first.academicYear.replace(/\//g, '-')}.pdf`
+  saveOrSharePdf(doc, filename, `Tableaux d'Honneur — Classe ${className}`)
+}
+
+/**
+ * Génère la Liste Officielle des Candidats aux Examens (CEPD, BEPC, BAC 1, BAC 2) ou Liste Officielle de Classe (A4 Portrait)
+ */
+export async function generateOfficialExamCandidatesPDF(
+  className: string,
+  classLevel: string,
+  studentsData: StudentDocumentData[]
+) {
+  if (!studentsData.length) return
+  const first = studentsData[0]
+  const examBadge = detectOfficialExamLabel(className, classLevel)
+
+  const [logoDataUrl, stampDataUrl, signatureDataUrl] = await Promise.all([
+    loadImageAsPngDataUrl(first.schoolLogoUrl),
+    loadImageAsPngDataUrl(first.schoolStampUrl),
+    loadImageAsPngDataUrl(first.schoolSignatureUrl),
+  ])
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  const sorted = [...studentsData].sort((a, b) =>
+    `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`, 'fr')
+  )
+
+  const girlsCount = sorted.filter((s) => (s.gender || '').toUpperCase().startsWith('F')).length
+  const boysCount = sorted.filter((s) => (s.gender || '').toUpperCase().startsWith('M')).length
+
+  const rowsPerPage = 25
+  const totalPages = Math.max(1, Math.ceil(sorted.length / rowsPerPage))
+
+  for (let page = 0; page < totalPages; page++) {
+    if (page > 0) doc.addPage()
+
+    // En-tête officiel République Togolaise
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(8.5)
+    doc.setTextColor(15, 23, 42)
+    doc.text('RÉPUBLIQUE TOGOLAISE', 14, 14)
+    doc.setFont('helvetica', 'italic')
+    doc.setFontSize(7.5)
+    doc.setTextColor(100, 116, 139)
+    doc.text('Travail - Liberté - Patrie', 14, 18)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7)
+    doc.text('Ministère des Enseignements Primaire, Secondaire et Technique', 14, 22)
+
+    if (logoDataUrl) {
+      try {
+        doc.addImage(logoDataUrl, 'PNG', 97, 10, 16, 16)
+      } catch {
+        // ignore
+      }
+    }
+
+    // Infos Établissement à droite
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.setTextColor(30, 46, 129)
+    doc.text(first.schoolName.toUpperCase(), 196, 14, { align: 'right' })
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7.5)
+    doc.setTextColor(71, 85, 105)
+    doc.text(
+      [first.schoolCity, first.schoolPhone ? `Tél: ${first.schoolPhone}` : null].filter(Boolean).join(' • ') ||
+        'Établissement Scolaire Officiel',
+      196,
+      18,
+      { align: 'right' }
+    )
+    doc.setFont('helvetica', 'bold')
+    doc.text(`Année Académique : ${first.academicYear}`, 196, 22, { align: 'right' })
+
+    // Bandeau Titre Officiel
+    doc.setFillColor(30, 41, 59)
+    doc.roundedRect(14, 28, 182, 14, 2, 2, 'F')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.setTextColor(255, 255, 255)
+    const mainTitle = examBadge
+      ? `LISTE OFFICIELLE DES CANDIDATS — ${examBadge} (CLASSE : ${className.toUpperCase()})`
+      : `LISTE NOMINATIVE OFFICIELLE DES ÉLÈVES — CLASSE : ${className.toUpperCase()}`
+    doc.text(mainTitle, 105, 34, { align: 'center' })
+
+    doc.setFontSize(8)
+    doc.setTextColor(199, 210, 254)
+    doc.text(
+      `Effectif Total : ${sorted.length} élève(s)   •   Filles : ${girlsCount}   •   Garçons : ${boysCount}   •   Page ${page + 1}/${totalPages}`,
+      105,
+      39.5,
+      { align: 'center' }
+    )
+
+    // En-tête du tableau
+    let y = 46
+    doc.setFillColor(241, 245, 249)
+    doc.setDrawColor(203, 213, 225)
+    doc.setLineWidth(0.3)
+    doc.rect(14, y, 182, 7.5, 'FD')
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(7.5)
+    doc.setTextColor(30, 41, 59)
+    doc.text('N°', 18, y + 5, { align: 'center' })
+    doc.text('MATRICULE', 35, y + 5, { align: 'center' })
+    doc.text('NOM & PRÉNOMS', 52, y + 5)
+    doc.text('SEXE', 124, y + 5, { align: 'center' })
+    doc.text('DATE DE NAISS.', 145, y + 5, { align: 'center' })
+    doc.text('TÉL. PARENT', 176, y + 5, { align: 'center' })
+
+    y += 7.5
+
+    const slice = sorted.slice(page * rowsPerPage, (page + 1) * rowsPerPage)
+    slice.forEach((st, idx) => {
+      const globalIdx = page * rowsPerPage + idx + 1
+      const rowH = 7.2
+      if (idx % 2 === 1) {
+        doc.setFillColor(248, 250, 252)
+        doc.rect(14, y, 182, rowH, 'F')
+      }
+      doc.setDrawColor(226, 232, 240)
+      doc.rect(14, y, 182, rowH, 'S')
+
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(7.5)
+      doc.setTextColor(71, 85, 105)
+      doc.text(String(globalIdx).padStart(2, '0'), 18, y + 4.8, { align: 'center' })
+
+      doc.setFont('courier', 'bold')
+      doc.setTextColor(30, 46, 129)
+      doc.text((st.matricule || '—').slice(0, 14), 35, y + 4.8, { align: 'center' })
+
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(15, 23, 42)
+      doc.text(`${st.lastName.toUpperCase()} ${st.firstName}`.slice(0, 38), 52, y + 4.8)
+
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(51, 65, 85)
+      const genderCode = (st.gender || '').toUpperCase().startsWith('F')
+        ? 'F'
+        : (st.gender || '').toUpperCase().startsWith('M')
+        ? 'M'
+        : '—'
+      doc.text(genderCode, 124, y + 4.8, { align: 'center' })
+
+      doc.setFont('helvetica', 'normal')
+      const dobStr = st.dateOfBirth
+        ? new Date(st.dateOfBirth).toLocaleDateString('fr-FR')
+        : 'Non renseignée'
+      doc.text(dobStr, 145, y + 4.8, { align: 'center' })
+
+      doc.text((st.parentPhone || '—').slice(0, 16), 176, y + 4.8, { align: 'center' })
+
+      y += rowH
+    })
+
+    // Si dernière page, ajouter l'arrêté officiel + signature et cachet
+    if (page === totalPages - 1) {
+      const footerY = Math.min(242, y + 8)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(8.5)
+      doc.setTextColor(30, 41, 59)
+      doc.text(
+        `Arrêté la présente liste officielle à ${sorted.length} élève(s), dont ${girlsCount} fille(s) et ${boysCount} garçon(s).`,
+        14,
+        footerY
+      )
+
+      const todayStr = new Date().toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      })
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8.5)
+      doc.text(`Fait à ${first.schoolCity || 'Lomé'}, le ${todayStr}`, 155, footerY + 6, { align: 'center' })
+      doc.setFont('helvetica', 'bold')
+      doc.text("Le Chef d'Établissement", 155, footerY + 11, { align: 'center' })
+
+      if (stampDataUrl) {
+        try {
+          doc.addImage(stampDataUrl, 'PNG', 132, footerY + 13, 22, 22)
+        } catch {
+          drawOfficialVectorStamp(doc, 142, footerY + 24, 9.5, first.schoolName, first.schoolCity)
+        }
+      } else {
+        drawOfficialVectorStamp(doc, 142, footerY + 24, 9.5, first.schoolName, first.schoolCity)
+      }
+
+      if (signatureDataUrl) {
+        try {
+          doc.addImage(signatureDataUrl, 'PNG', 152, footerY + 15, 24, 14)
+        } catch {
+          // ignore
+        }
+      }
+
+      if (first.directorName) {
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(8.5)
+        doc.text(first.directorName, 155, footerY + 36, { align: 'center' })
+      }
+    }
+  }
+
+  const cleanClass = className.replace(/\s+/g, '_')
+  const filename = examBadge
+    ? `Liste_Officielle_Candidats_${cleanClass}_${first.academicYear.replace(/\//g, '-')}.pdf`
+    : `Liste_Officielle_Classe_${cleanClass}_${first.academicYear.replace(/\//g, '-')}.pdf`
+  saveOrSharePdf(doc, filename, `Liste officielle — Classe ${className}`)
+}
+

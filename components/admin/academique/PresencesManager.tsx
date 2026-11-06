@@ -19,11 +19,12 @@ import {
   Wifi,
   WifiOff,
   CloudUpload,
-  RefreshCw
+  RefreshCw,
+  MessageCircle
 } from 'lucide-react'
 
 type ClassItem = { id: string; name: string }
-type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string; gender: string; status: string }
+type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string; gender: string; status: string; parent_phone?: string | null }
 
 type Props = {
   classes: ClassItem[]
@@ -419,32 +420,33 @@ export function PresencesManager({ classes, students }: Props) {
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)] relative">
       <div className="max-w-[1400px] mx-auto space-y-6">
         
-        {/* Top Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)]">
-          <div>
-            <div className="flex items-center gap-2 text-[var(--color-on-surface-variant)] mb-2">
-              <Link href="/admin/academique" className="hover:text-[var(--color-primary)] transition-colors text-sm font-semibold">
-                Académique
-              </Link>
-              <ChevronRight className="w-4 h-4 text-sm" />
-              <span className="text-sm font-semibold text-[var(--color-on-surface)]">Registre d'Appel</span>
+        {/* En-tête Exécutif — Stripe Royal Indigo & Sapphire */}
+        <div className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 sm:px-7 sm:py-6 lg:flex-row lg:items-center">
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-indigo-400/25 blur-3xl" />
+            <div className="absolute -bottom-20 left-1/3 h-48 w-72 rounded-full bg-sky-400/15 blur-3xl" />
+          </div>
+          <div className="relative z-10">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-indigo-50 ring-1 ring-inset ring-white/25 backdrop-blur-md">
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
+              Académique · Registre d'Appel
             </div>
-            <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Registre d'Appel Journalier</h2>
-            <p className="text-base text-[var(--color-on-surface-variant)] mt-1">
+            <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Registre d'Appel Journalier</h2>
+            <p className="mt-1 text-[13px] font-medium text-indigo-100/90 sm:text-sm">
               Gérez les absences mensuelles. Cliquez sur une case pour marquer une absence (- matin, + journée entière).
             </p>
           </div>
 
           {/* Network & Offline Status Pill */}
-          <div className="flex items-center gap-3">
+          <div className="relative z-10 flex items-center gap-3">
             {isOnline ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/15 text-white ring-1 ring-white/25 backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 En ligne
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 shadow-2xs">
-                <WifiOff className="w-3.5 h-3.5 text-amber-600" />
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-400/20 text-amber-100 ring-1 ring-amber-300/40 backdrop-blur-md">
+                <WifiOff className="w-3.5 h-3.5 text-amber-300" />
                 Mode Hors-ligne
               </span>
             )}
@@ -780,8 +782,31 @@ export function PresencesManager({ classes, students }: Props) {
                             </td>
                           )
                         })}
-                        <td className="border border-gray-400 py-2 px-2 text-center font-bold text-gray-700 bg-gray-50/50 text-xs sm:text-sm">
-                          {getTotalAbsences(student.id)}
+                        <td className="border border-gray-400 py-1.5 px-2 text-center font-bold text-gray-700 bg-gray-50/50 text-xs sm:text-sm">
+                          {(() => {
+                            const totalAbs = getTotalAbsences(student.id)
+                            const rawPhone = student.parent_phone || ''
+                            const digits = rawPhone.replace(/[^0-9]/g, '')
+                            const waPhone = digits.length === 8 ? `228${digits}` : digits.startsWith('00') ? digits.slice(2) : digits
+                            const monthLabel = MONTHS.find(m => m.value === selectedMonth)?.label || ''
+                            const waMsg = `Bonjour cher parent, l'établissement vous informe que votre enfant ${student.first_name} ${student.last_name} comptabilise ${totalAbs} demi-journée(s) d'absence sur le mois de ${monthLabel} ${selectedYear}. Merci de contacter la direction ou de soumettre un justificatif sur votre espace parent Scogestia.`
+                            return (
+                              <div className="flex items-center justify-center gap-1.5">
+                                <span className={totalAbs > 0 ? 'text-rose-700 font-extrabold' : ''}>{totalAbs}</span>
+                                {totalAbs > 0 && waPhone && (
+                                  <a
+                                    href={`https://wa.me/${waPhone}?text=${encodeURIComponent(waMsg)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title={`Alerter le parent sur WhatsApp (${rawPhone})`}
+                                    className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-emerald-50 text-emerald-700 ring-1 ring-emerald-300 hover:bg-emerald-600 hover:text-white transition-colors print:hidden"
+                                  >
+                                    <MessageCircle className="w-3.5 h-3.5" />
+                                  </a>
+                                )}
+                              </div>
+                            )
+                          })()}
                         </td>
                       </tr>
                     )

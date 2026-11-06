@@ -281,18 +281,23 @@ export function ImpayesManager({ impayes, basePath = '/admin/finance' }: Props &
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-end gap-2">
-                          {parentPhone && (
-                            <a
-                              href={`https://wa.me/${parentPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(waText)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 transition-all hover:border-emerald-700 hover:bg-emerald-700 hover:text-white"
-                              title="Relancer par WhatsApp"
-                              aria-label="Relancer par WhatsApp"
-                            >
-                              <MessageCircle size={16} />
-                            </a>
-                          )}
+                          {parentPhone && (() => {
+                            const digits = parentPhone.replace(/[^0-9]/g, '')
+                            const waPhone = digits.length === 8 ? `228${digits}` : digits.startsWith('00') ? digits.slice(2) : digits
+                            return (
+                              <a
+                                href={`https://wa.me/${waPhone}?text=${encodeURIComponent(waText)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 text-xs font-extrabold text-emerald-800 transition-all hover:border-emerald-700 hover:bg-emerald-700 hover:text-white"
+                                title="Relancer gratuitement par WhatsApp"
+                                aria-label="Relancer par WhatsApp"
+                              >
+                                <MessageCircle size={15} />
+                                <span>WhatsApp</span>
+                              </a>
+                            )
+                          })()}
                           <button
                             type="button"
                             disabled={sendingId === item.id || !parentUserId}

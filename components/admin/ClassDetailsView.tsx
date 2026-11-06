@@ -4,10 +4,18 @@ import { useState, useMemo, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Users, GraduationCap, ArrowLeft, Download, Search, UserCheck, UserPlus, Eye, Edit2, Trash2, MoreVertical, AlertTriangle, Calendar, Clock, CreditCard, BookOpen, CheckCircle2, FileText, ArrowRight, IdCard, Loader2 } from 'lucide-react'
+import { Users, GraduationCap, ArrowLeft, Download, Search, UserCheck, UserPlus, Eye, Edit2, Trash2, MoreVertical, AlertTriangle, Calendar, Clock, CreditCard, BookOpen, CheckCircle2, FileText, ArrowRight, IdCard, Loader2, Award } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { deleteStudent, removeStudentFromClass } from '@/app/actions/students'
-import { generateClassStudentIdCardsPDF, generateStudentIdCardPDF, StudentDocumentData } from '@/lib/pdf/student-documents'
+import {
+  generateClassStudentIdCardsPDF,
+  generateStudentIdCardPDF,
+  generateClassHonorRollPDF,
+  generateHonorRollPDF,
+  generateOfficialExamCandidatesPDF,
+  detectOfficialExamLabel,
+  StudentDocumentData,
+} from '@/lib/pdf/student-documents'
 
 export type ClassStudentItem = {
   id: string
@@ -83,8 +91,12 @@ export function ClassDetailsView({
   const [activeTab, setActiveTab] = useState<'eleves' | 'emploi_du_temps' | 'suivi'>('eleves')
   const [isPending, startTransition] = useTransition()
   const [isPrintingCards, setIsPrintingCards] = useState(false)
+  const [isPrintingHonorRolls, setIsPrintingHonorRolls] = useState(false)
+  const [isPrintingExamList, setIsPrintingExamList] = useState(false)
   const [studentToDelete, setStudentToDelete] = useState<ClassStudentItem | null>(null)
   const [openActionId, setOpenActionId] = useState<string | null>(null)
+
+  const examLabel = detectOfficialExamLabel(classInfo.name, classInfo.level)
 
   const buildStudentDocData = (s: ClassStudentItem): StudentDocumentData => ({
     studentId: s.id,
@@ -122,6 +134,34 @@ export function ClassDetailsView({
       toast.error('Erreur lors de la génération des cartes scolaires.')
     } finally {
       setIsPrintingCards(false)
+    }
+  }
+
+  const handlePrintClassHonorRolls = async () => {
+    if (students.length === 0) return
+    try {
+      setIsPrintingHonorRolls(true)
+      const list = students.map(buildStudentDocData)
+      await generateClassHonorRollPDF(classInfo.name, list)
+      toast.success(`Tableaux d'Honneur de la classe ${classInfo.name} générés !`)
+    } catch {
+      toast.error("Erreur lors de la génération des Tableaux d'Honneur.")
+    } finally {
+      setIsPrintingHonorRolls(false)
+    }
+  }
+
+  const handlePrintOfficialExamList = async () => {
+    if (students.length === 0) return
+    try {
+      setIsPrintingExamList(true)
+      const list = students.map(buildStudentDocData)
+      await generateOfficialExamCandidatesPDF(classInfo.name, classInfo.level, list)
+      toast.success(`Liste officielle de la classe ${classInfo.name} générée !`)
+    } catch {
+      toast.error('Erreur lors de la génération de la liste officielle.')
+    } finally {
+      setIsPrintingExamList(false)
     }
   }
 
@@ -220,56 +260,85 @@ export function ClassDetailsView({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Top Navigation & Title */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-[var(--color-outline-variant)]">
-        <div className="flex items-center gap-3">
+      {/* En-tête Exécutif — Stripe Royal Indigo & Sapphire */}
+      <div className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 sm:px-7 sm:py-6 lg:flex-row lg:items-center">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-indigo-400/25 blur-3xl" />
+          <div className="absolute -bottom-20 left-1/3 h-48 w-72 rounded-full bg-sky-400/15 blur-3xl" />
+        </div>
+        <div className="relative z-10 flex items-center gap-3.5">
           <Link 
             href="/admin/classes" 
-            className="p-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] hover:bg-[#eff4ff] rounded-xl border border-[var(--color-outline-variant)] transition-all"
+            className="p-2.5 text-white/90 hover:text-white bg-white/12 hover:bg-white/20 rounded-xl ring-1 ring-white/25 backdrop-blur-md transition-all"
             title="Retour aux classes"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} />
           </Link>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-on-surface)]">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
                 Classe {classInfo.name}
               </h1>
               {getLevelBadge(classInfo.level)}
+              {examLabel && (
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-300 text-slate-950 shadow-xs">
+                  {examLabel}
+                </span>
+              )}
             </div>
-            <p className="text-sm text-[var(--color-on-surface-variant)] mt-1">
-              Année Académique : <strong>{classInfo.academic_year || '2026-2027'}</strong> • Capacité : <strong>{classInfo.capacity || 'Illimitée'}</strong>
+            <p className="text-[13px] sm:text-sm text-indigo-100/90 mt-1 font-medium">
+              Année Académique : <strong className="text-white">{classInfo.academic_year || '2026-2027'}</strong> • Capacité : <strong className="text-white">{classInfo.capacity || 'Illimitée'}</strong>
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap w-full sm:w-auto">
+        <div className="relative z-10 flex items-center gap-2 flex-wrap w-full lg:w-auto">
           {students.length > 0 && (
             <>
               <button
                 type="button"
+                disabled={isPrintingExamList}
+                onClick={handlePrintOfficialExamList}
+                className="px-3.5 py-2 bg-white/15 hover:bg-white/25 ring-1 ring-white/25 backdrop-blur-md text-white text-xs font-extrabold rounded-xl transition-all flex items-center gap-1.5 disabled:opacity-50"
+                title="Exporter la liste officielle nominative (prête pour l'Inspection / Examen CEPD, BEPC, BAC)"
+              >
+                {isPrintingExamList ? <Loader2 size={15} className="animate-spin text-sky-300" /> : <FileText size={15} className="text-sky-300" />}
+                {examLabel ? `Liste Candidats (${examLabel.replace('EXAMEN : ', '')})` : 'Liste Officielle (PDF)'}
+              </button>
+              <button
+                type="button"
+                disabled={isPrintingHonorRolls}
+                onClick={handlePrintClassHonorRolls}
+                className="px-3.5 py-2 bg-amber-400/20 hover:bg-amber-400/30 ring-1 ring-amber-300/40 backdrop-blur-md text-amber-100 text-xs font-extrabold rounded-xl transition-all flex items-center gap-1.5 disabled:opacity-50"
+                title="Générer les diplômes de Tableau d'Honneur pour la classe"
+              >
+                {isPrintingHonorRolls ? <Loader2 size={15} className="animate-spin text-amber-300" /> : <Award size={15} className="text-amber-300" />}
+                Tableaux d&apos;Honneur (PDF)
+              </button>
+              <button
+                type="button"
                 disabled={isPrintingCards}
                 onClick={handlePrintClassIdCards}
-                className="px-4 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs sm:text-sm font-bold rounded-lg hover:bg-emerald-100 hover:shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+                className="px-3.5 py-2 bg-white/15 hover:bg-white/25 ring-1 ring-white/25 backdrop-blur-md text-white text-xs font-extrabold rounded-xl transition-all flex items-center gap-1.5 disabled:opacity-50"
                 title="Générer en 1 clic toutes les cartes scolaires de cette classe (avec photos, cachet et signature)"
               >
-                {isPrintingCards ? <Loader2 size={16} className="animate-spin text-emerald-700" /> : <IdCard size={16} className="text-emerald-700" />}
+                {isPrintingCards ? <Loader2 size={15} className="animate-spin text-emerald-300" /> : <IdCard size={15} className="text-emerald-300" />}
                 {isPrintingCards ? 'Génération...' : 'Cartes Scolaires (PDF)'}
               </button>
               <button
                 onClick={handleExportCSV}
-                className="px-4 py-2.5 bg-[var(--color-surface-container-high)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-xs sm:text-sm font-semibold rounded-lg hover:bg-[var(--color-surface-container-highest)] hover:shadow-sm transition-all flex items-center gap-2"
+                className="px-3.5 py-2 bg-white/12 hover:bg-white/20 ring-1 ring-white/20 backdrop-blur-md text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
               >
-                <Download size={16} />
-                Exporter CSV
+                <Download size={15} />
+                CSV
               </button>
             </>
           )}
           <Link
             href="/admin/eleves/nouveau"
-            className="px-4 py-2.5 bg-[var(--color-primary)] text-white text-xs sm:text-sm font-semibold rounded-lg hover:opacity-90 hover:shadow-md transition-all flex items-center gap-2"
+            className="px-4 py-2 bg-white text-indigo-950 text-xs sm:text-sm font-extrabold rounded-xl hover:bg-indigo-50 shadow-md transition-all flex items-center gap-1.5"
           >
-            <UserPlus className="w-4 h-4" />
+            <UserPlus className="w-4 h-4 text-indigo-700" />
             Inscrire un élève
           </Link>
         </div>
@@ -524,6 +593,18 @@ export function ClassDetailsView({
                             >
                               <IdCard className="w-4 h-4 text-emerald-600" />
                               Carte scolaire PDF
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setOpenActionId(null)
+                                await generateHonorRollPDF(buildStudentDocData(student))
+                                toast.success(`Tableau d'Honneur de ${student.first_name} généré !`)
+                              }}
+                              className="px-4 py-2 text-xs font-medium text-amber-800 hover:bg-amber-50 flex items-center gap-2.5 transition-colors w-full text-left"
+                            >
+                              <Award className="w-4 h-4 text-amber-600" />
+                              Tableau d&apos;Honneur PDF
                             </button>
                             <div className="border-t border-[var(--color-outline-variant)]/60 my-1" />
                             <button 

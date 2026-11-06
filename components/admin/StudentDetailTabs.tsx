@@ -9,13 +9,13 @@ import {
   CalendarCheck, CreditCard, CheckCircle2, Clock, CalendarOff, Receipt, Plus,
   Loader2, Edit3, Mail, Trash2, Users, Copy, Key, HeartPulse, X, Mic, 
   ChevronRight, MessageSquare, Info, ArrowLeft, Send, AlertTriangle, ShieldCheck,
-  Lock, Eye, EyeOff, Sparkles, Phone, ExternalLink, FileText, IdCard, Download
+  Lock, Eye, EyeOff, Sparkles, Phone, ExternalLink, FileText, IdCard, Download, Award
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { AudioRecorder } from '@/components/ui/AudioRecorder'
-import { generateSchoolCertificatePDF, generateStudentIdCardPDF } from '@/lib/pdf/student-documents'
+import { generateSchoolCertificatePDF, generateStudentIdCardPDF, generateHonorRollPDF } from '@/lib/pdf/student-documents'
 
 type Student = {
   id: string
@@ -433,6 +433,18 @@ export function StudentDetailTabs({
               >
                 <IdCard className="w-4 h-4 text-slate-600" />
                 Carte scolaire
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  generateHonorRollPDF(buildDocumentData())
+                  toast.success("Tableau d'Honneur généré !")
+                }}
+                className="h-11 px-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-semibold text-xs sm:text-sm hover:bg-amber-100 transition-colors flex items-center gap-2"
+                title="Télécharger le diplôme officiel de Tableau d'Honneur en PDF"
+              >
+                <Award className="w-4 h-4 text-amber-600" />
+                Tableau d&apos;Honneur
               </button>
               <button 
                 onClick={() => setIsEditModalOpen(true)}

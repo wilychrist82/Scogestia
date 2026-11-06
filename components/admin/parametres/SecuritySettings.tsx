@@ -46,14 +46,19 @@ export function SecuritySettings({ users, schoolId }: Props) {
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-4xl mx-auto space-y-6">
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)]">
-          <div>
-            <div className="flex items-center gap-2 text-[var(--color-on-surface-variant)] mb-2">
-              <span className="text-sm font-semibold text-[var(--color-on-surface)]">Paramètres</span>
+        {/* En-tête Exécutif — Stripe Royal Indigo & Sapphire */}
+        <div className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 sm:px-7 sm:py-6 lg:flex-row lg:items-center">
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-indigo-400/25 blur-3xl" />
+            <div className="absolute -bottom-20 left-1/3 h-48 w-72 rounded-full bg-sky-400/15 blur-3xl" />
+          </div>
+          <div className="relative z-10">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-indigo-50 ring-1 ring-inset ring-white/25 backdrop-blur-md">
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
+              Paramètres · Contrôle d'Accès
             </div>
-            <h2 className="text-3xl font-bold text-[var(--color-on-surface)]">Sécurité & Permissions</h2>
-            <p className="text-base text-[var(--color-on-surface-variant)] mt-1">Gérez les comptes utilisateurs et les droits d&apos;accès.</p>
+            <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Sécurité & Permissions</h2>
+            <p className="mt-1 text-[13px] font-medium text-indigo-100/90 sm:text-sm">Gérez les comptes utilisateurs et les droits d&apos;accès de votre établissement.</p>
           </div>
         </div>
 

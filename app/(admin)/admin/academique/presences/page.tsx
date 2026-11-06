@@ -31,7 +31,7 @@ export default async function PresencesPage() {
 
   const { data: students } = await supabase
     .from('students')
-    .select('id, matricule, last_name, first_name, class_id, gender, status')
+    .select('id, matricule, last_name, first_name, class_id, gender, status, parent_phone')
     .eq('school_id', schoolId)
     .eq('status', 'actif')
     .order('last_name')
