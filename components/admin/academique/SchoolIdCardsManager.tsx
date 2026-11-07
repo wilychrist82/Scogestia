@@ -150,9 +150,9 @@ export function SchoolIdCardsManager({ classes, students, schoolInfo }: Props) {
   return (
     <div className="space-y-5 pb-10">
       {/* EN-TÊTE ÉDITORIAL & SÉLECTEUR PAR LISTES DÉROULANTES (STYLE CLAUDE) */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] overflow-hidden">
         {/* Bandeau de titre épuré */}
-        <div className="px-6 py-4 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-gradient-to-r from-slate-50/80 via-white to-slate-50/80">
+        <div className="px-6 py-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white">
           <div className="flex items-start sm:items-center gap-3.5">
             <div className="h-11 w-11 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-xs">
               <IdCard className="h-5 w-5 text-amber-300" />
@@ -206,7 +206,7 @@ export function SchoolIdCardsManager({ classes, students, schoolInfo }: Props) {
         </div>
 
         {/* Barre de Sélection par Menus Déroulants (Flèches descendantes uniquement — sans liste horizontale encombrante) */}
-        <div className="px-6 py-4 bg-white grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+        <div className="px-6 py-4 bg-slate-50/50 grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
           {/* 1. Niveau Scolaire (Menu déroulant avec flèche descendante) */}
           <div className="md:col-span-4 space-y-1.5">
             <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
@@ -217,7 +217,7 @@ export function SchoolIdCardsManager({ classes, students, schoolInfo }: Props) {
               <select
                 value={selectedCycle}
                 onChange={(e) => setSelectedCycle(e.target.value as CycleKey)}
-                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 pl-3.5 pr-9 py-2.5 text-xs font-semibold text-slate-900 outline-none focus:border-slate-900 focus:bg-white focus:ring-2 focus:ring-slate-900/10 transition-all cursor-pointer"
+                className="w-full appearance-none rounded-lg border border-slate-200 bg-white hover:border-slate-300 pl-3.5 pr-9 py-2.5 text-xs font-medium text-slate-900 shadow-2xs outline-none focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all duration-150 cursor-pointer"
               >
                 {CYCLE_OPTIONS.map((opt) => {
                   const count =
@@ -248,7 +248,7 @@ export function SchoolIdCardsManager({ classes, students, schoolInfo }: Props) {
                   setSelectedClassId(e.target.value)
                   setInitialActiveStudentId('')
                 }}
-                className="w-full appearance-none rounded-xl border border-indigo-200 bg-indigo-50/40 hover:bg-indigo-50/70 pl-3.5 pr-9 py-2.5 text-xs font-bold text-indigo-950 outline-none focus:border-indigo-600 focus:bg-white focus:ring-2 focus:ring-indigo-500/15 transition-all cursor-pointer"
+                className="w-full appearance-none rounded-lg border border-indigo-200 bg-white hover:border-indigo-300 pl-3.5 pr-9 py-2.5 text-xs font-semibold text-indigo-950 shadow-2xs outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150 cursor-pointer"
               >
                 {filteredClasses.map((cls) => {
                   const count = students.filter((s) => s.class_id === cls.id).length
@@ -274,7 +274,7 @@ export function SchoolIdCardsManager({ classes, students, schoolInfo }: Props) {
                 value={initialActiveStudentId || classStudents[0]?.id || ''}
                 onChange={(e) => setInitialActiveStudentId(e.target.value)}
                 disabled={classStudents.length === 0}
-                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 pl-3.5 pr-9 py-2.5 text-xs font-semibold text-slate-900 outline-none focus:border-slate-900 focus:bg-white focus:ring-2 focus:ring-slate-900/10 transition-all cursor-pointer disabled:opacity-50"
+                className="w-full appearance-none rounded-lg border border-slate-200 bg-white hover:border-slate-300 pl-3.5 pr-9 py-2.5 text-xs font-medium text-slate-900 shadow-2xs outline-none focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5 transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {classStudents.length === 0 ? (
                   <option value="">Aucun élève dans cette classe</option>

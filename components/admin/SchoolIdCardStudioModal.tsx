@@ -1301,7 +1301,7 @@ export function SchoolIdCardStudioModal({
           {/* SECTION 1 : Personnalisation Intégrale de la Carte + Aperçu en Direct + Édition Élève par Élève */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
             {/* COLONNE GAUCHE (5 cols) : Paramètres Globaux de la Carte + Cachet / Signature / Logo */}
-            <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-4">
+            <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] space-y-5">
               <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
                 <h3 className="text-xs font-extrabold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
                   <Building2 className="h-4 w-4 text-indigo-600" />
@@ -1670,7 +1670,7 @@ export function SchoolIdCardStudioModal({
                   <label className="block text-[10.5px] font-bold text-slate-600 mb-1.5">
                     Choisir l&apos;élément de la carte à personnaliser :
                   </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                  <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100/80 p-1">
                     {TYPOGRAPHY_ZONE_TABS.map((tab) => {
                       const isTabActive = activeTypoZone === tab.key
                       return (
@@ -1678,10 +1678,10 @@ export function SchoolIdCardStudioModal({
                           key={tab.key}
                           type="button"
                           onClick={() => setActiveTypoZone(tab.key)}
-                          className={`px-2 py-1.5 rounded-lg text-[10.5px] font-extrabold text-left truncate border transition-all ${
+                          className={`px-2.5 py-1 rounded-lg text-[10.5px] font-semibold whitespace-nowrap transition-all duration-150 ${
                             isTabActive
-                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                              ? 'bg-white text-indigo-700 shadow-[0_1px_2px_rgba(15,23,42,0.12)] ring-1 ring-slate-200'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                           }`}
                         >
                           {tab.label}
@@ -1692,7 +1692,7 @@ export function SchoolIdCardStudioModal({
                 </div>
 
                 {/* Barre d'outils de la zone active : Police + Taille + Gras / Italique / Souligné / Majuscules + Couleur */}
-                <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 space-y-2.5">
+                <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
                     {/* Police de la zone */}
                     <div className="sm:col-span-7">
@@ -1772,7 +1772,7 @@ export function SchoolIdCardStudioModal({
 
                   {/* Boutons Style : Gras (B), Italique (I), Souligné (U), Majuscules (AA) */}
                   <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-0.5 rounded-lg bg-white p-0.5 ring-1 ring-slate-200 [&>button]:!border-transparent [&>button]:!shadow-none [&>button]:!rounded-md">
                       <button
                         type="button"
                         onClick={() =>
@@ -1916,7 +1916,7 @@ export function SchoolIdCardStudioModal({
             </div>
 
             {/* COLONNE DROITE (7 cols) : Aperçu Temps Réel + Saisie Élève par Élève (Enregistrer -> Suivant) */}
-            <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-4">
+            <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] space-y-5">
               {/* Barre de navigation Alphabétique Élève par Élève (Toujours visible) */}
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
