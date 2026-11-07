@@ -110,6 +110,31 @@ const DEFAULT_CARD_THEMES: CardThemeOption[] = [
     name: 'Thème 5 — Azur Cristallin',
     url: '/card-themes/theme-5-azur-cristal.jpg',
   },
+  {
+    id: 'theme-6',
+    name: 'Thème 6 — Floral Saphir & Or',
+    url: '/card-themes/theme-6-floral-saphir-or.jpg',
+  },
+  {
+    id: 'theme-7',
+    name: 'Thème 7 — Rubans Rouge & Marine',
+    url: '/card-themes/theme-7-rubans-rouge-marine.jpg',
+  },
+  {
+    id: 'theme-8',
+    name: "Thème 8 — Ruban d'Or & Bleu Royal",
+    url: '/card-themes/theme-8-ruban-or-bleu.jpg',
+  },
+  {
+    id: 'theme-9',
+    name: 'Thème 9 — Cadre Impérial Marine & Or',
+    url: '/card-themes/theme-9-cadre-imperial.jpg',
+  },
+  {
+    id: 'theme-10',
+    name: 'Thème 10 — Royal Fleur de Lys & Or',
+    url: '/card-themes/theme-10-fleur-de-lys-or.jpg',
+  },
 ]
 
 const MONTHS_FR = [
