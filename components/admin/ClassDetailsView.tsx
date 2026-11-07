@@ -124,9 +124,7 @@ export function ClassDetailsView({
   })
 
   const handleOpenClassIdCardStudio = () => {
-    if (students.length === 0) return
-    setStudioTargetStudents(null)
-    setIsCardStudioOpen(true)
+    router.push(`/admin/academique/cartes-scolaires?classId=${classInfo.id}`)
   }
 
   const handlePrintClassHonorRolls = async () => {
@@ -577,8 +575,9 @@ export function ClassDetailsView({
                               type="button"
                               onClick={() => {
                                 setOpenActionId(null)
-                                setStudioTargetStudents([student])
-                                setIsCardStudioOpen(true)
+                                router.push(
+                                  `/admin/academique/cartes-scolaires?classId=${classInfo.id}&studentId=${student.id}`
+                                )
                               }}
                               className="px-4 py-2 text-xs font-medium text-emerald-800 hover:bg-emerald-50 flex items-center gap-2.5 transition-colors w-full text-left"
                             >
@@ -850,18 +849,6 @@ export function ClassDetailsView({
           </div>
         </div>
       )}
-
-      {/* Studio de Génération des Cartes Scolaires Officielles (10 élèves / page A4) */}
-      <SchoolIdCardStudioModal
-        isOpen={isCardStudioOpen}
-        onClose={() => setIsCardStudioOpen(false)}
-        className={classInfo.name}
-        classLevel={classInfo.level}
-        academicYear={classInfo.academic_year}
-        students={studioTargetStudents || students}
-        schoolInfo={schoolInfo}
-        onStudentsUpdated={() => router.refresh()}
-      />
     </div>
   )
 }

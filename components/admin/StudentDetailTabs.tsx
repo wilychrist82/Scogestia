@@ -4,10 +4,10 @@ import { useState, useTransition, useRef } from 'react'
 import Link from 'next/link'
 import { generateParentCode, resetParentPassword, unlinkParentFromStudent, createDirectParentAccess } from '@/app/actions/invitations'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { 
-  FileEdit, CalendarDays, Banknote, Camera, User, GraduationCap, 
+import {
+  FileEdit, CalendarDays, Banknote, Camera, User, GraduationCap,
   CalendarCheck, CreditCard, CheckCircle2, Clock, CalendarOff, Receipt, Plus,
-  Loader2, Edit3, Mail, Trash2, Users, Copy, Key, HeartPulse, X, Mic, 
+  Loader2, Edit3, Mail, Trash2, Users, Copy, Key, HeartPulse, X, Mic,
   ChevronRight, MessageSquare, Info, ArrowLeft, Send, AlertTriangle, ShieldCheck,
   Lock, Eye, EyeOff, Sparkles, Phone, ExternalLink, FileText, IdCard, Download, Award
 } from 'lucide-react'
@@ -67,11 +67,11 @@ type Props = {
   } | null
 }
 
-export function StudentDetailTabs({ 
-  student, 
-  grades = [], 
-  attendances = [], 
-  schedules = [], 
+export function StudentDetailTabs({
+  student,
+  grades = [],
+  attendances = [],
+  schedules = [],
   payments = [],
   linkedParents = [],
   initialInvitationCode = null,
@@ -105,7 +105,7 @@ export function StudentDetailTabs({
   const [isPending, startTransition] = useTransition()
   const [invitationCode, setInvitationCode] = useState<string | null>(initialInvitationCode)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Modale Réinitialisation Mot de passe Parent
   const [parentToReset, setParentToReset] = useState<LinkedParent | null>(null)
   const [newParentPassword, setNewParentPassword] = useState('')
@@ -119,14 +119,14 @@ export function StudentDetailTabs({
   const [directFullName, setDirectFullName] = useState(`Parent de ${student.first_name}`)
   const [directError, setDirectError] = useState<string | null>(null)
   const [directSuccessData, setDirectSuccessData] = useState<{ phone: string, password: string } | null>(null)
-  
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
-  
+
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isCardStudioOpen, setIsCardStudioOpen] = useState(false)
-  
+
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -161,21 +161,21 @@ export function StudentDetailTabs({
       }
     })
   }
-  
+
   const handleVoiceMessageSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!audioUrl) {
       toast.error("Veuillez enregistrer un message vocal.")
       return
     }
-    
+
     const formData = new FormData()
     formData.append('recipientType', 'parent')
     formData.append('selectedParent', student.id)
     formData.append('subject', 'Message vocal')
     formData.append('message', 'Vous avez reçu un nouveau message vocal.')
     formData.append('audioUrl', audioUrl)
-    
+
     startTransition(async () => {
       const { sendCommunication } = await import('@/app/actions/communication')
       const result = await sendCommunication(formData)
@@ -240,12 +240,12 @@ export function StudentDetailTabs({
     setEditError(null)
     const formData = new FormData(e.currentTarget)
     formData.append('student_id', student.id)
-    
+
     startTransition(async () => {
       // Import the action dynamically to avoid circular dependencies or server issues
       const { updateStudent } = await import('@/app/actions/students')
       const result = await updateStudent(null, formData)
-      
+
       if (result?.error) {
         setEditError(result.error)
       } else {
@@ -266,7 +266,7 @@ export function StudentDetailTabs({
     try {
       setIsUploading(true)
       const supabase = createClient()
-      
+
       // Upload to storage
       const fileExt = file.name.split('.').pop()
       const fileName = `${student.id}-${Date.now()}.${fileExt}`
@@ -379,11 +379,11 @@ export function StudentDetailTabs({
       {/* Profile Header Card */}
       <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center gap-6">
         <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-          <input 
-            type="file" 
-            accept="image/*" 
-            className="hidden" 
-            ref={fileInputRef} 
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            ref={fileInputRef}
             onChange={handleAvatarUpload}
             disabled={isUploading}
           />
@@ -426,15 +426,6 @@ export function StudentDetailTabs({
               </button>
               <button
                 type="button"
-                onClick={() => setIsCardStudioOpen(true)}
-                className="h-11 px-3.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 font-semibold text-xs sm:text-sm hover:bg-indigo-100 transition-colors flex items-center gap-2"
-                title="Ouvrir le générateur de Carte d'Identité Scolaire Officielle (Recto / Planche de 10 cartes)"
-              >
-                <IdCard className="w-4 h-4 text-indigo-600" />
-                Carte scolaire
-              </button>
-              <button
-                type="button"
                 onClick={() => {
                   generateHonorRollPDF(buildDocumentData())
                   toast.success("Tableau d'Honneur généré !")
@@ -445,21 +436,21 @@ export function StudentDetailTabs({
                 <Award className="w-4 h-4 text-amber-600" />
                 Tableau d&apos;Honneur
               </button>
-              <button 
+              <button
                 onClick={() => setIsEditModalOpen(true)}
                 className="h-11 px-4 rounded-xl border border-[var(--color-primary)] text-[var(--color-primary)] font-semibold text-sm hover:bg-emerald-50 hover:text-emerald-900 transition-colors flex items-center gap-2"
               >
                 <Edit3 className="w-4 h-4" />
                 Modifier
               </button>
-              <button 
+              <button
                 onClick={() => { setIsContactModalOpen(true); setActiveContactView('list'); }}
                 className="h-11 px-4 rounded-xl bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors flex items-center gap-2"
               >
                 <Mail className="w-4 h-4" />
                 Contacter
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={() => setIsDeleteModalOpen(true)}
                 className="h-11 px-4 rounded-xl border border-red-200 text-red-600 font-semibold text-sm hover:bg-red-50 hover:border-red-300 transition-colors flex items-center gap-2"
@@ -475,50 +466,46 @@ export function StudentDetailTabs({
 
       {/* Tabbed Navigation */}
       <div className="border-b border-slate-200 flex gap-2 overflow-x-auto no-scrollbar pb-px">
-        <button 
+        <button
           type="button"
           onClick={() => setActiveTab('info')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all ${
-            activeTab === 'info' 
-              ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/60' 
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all ${activeTab === 'info'
+              ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/60'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
-          }`}
+            }`}
         >
           <User size={16} className={activeTab === 'info' ? 'text-emerald-600' : 'text-slate-400'} />
           Informations
         </button>
-        <button 
+        <button
           type="button"
           onClick={() => setActiveTab('notes')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all ${
-            activeTab === 'notes' 
-              ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/60' 
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all ${activeTab === 'notes'
+              ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/60'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
-          }`}
+            }`}
         >
           <GraduationCap size={16} className={activeTab === 'notes' ? 'text-emerald-600' : 'text-slate-400'} />
           Notes & Bulletins
         </button>
-        <button 
+        <button
           type="button"
           onClick={() => setActiveTab('presences')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all ${
-            activeTab === 'presences' 
-              ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/60' 
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all ${activeTab === 'presences'
+              ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/60'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
-          }`}
+            }`}
         >
           <CalendarCheck size={16} className={activeTab === 'presences' ? 'text-emerald-600' : 'text-slate-400'} />
           Présences & Appel
         </button>
-        <button 
+        <button
           type="button"
           onClick={() => setActiveTab('paiements')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all ${
-            activeTab === 'paiements' 
-              ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/60' 
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all ${activeTab === 'paiements'
+              ? 'bg-emerald-50 text-emerald-700 shadow-2xs border border-emerald-200/60'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
-          }`}
+            }`}
         >
           <CreditCard size={16} className={activeTab === 'paiements' ? 'text-emerald-600' : 'text-slate-400'} />
           Paiements & Échéances
@@ -561,7 +548,7 @@ export function StudentDetailTabs({
               </div>
             </div>
           </div>
-          
+
           {/* Contact & Medical */}
           <div className="space-y-6">
             {/* Parent Contact & Access */}
@@ -580,7 +567,7 @@ export function StudentDetailTabs({
               {linkedParents.length > 0 ? (
                 <div className="space-y-3">
                   {linkedParents.map((parent) => (
-                    <div 
+                    <div
                       key={parent.linkId}
                       className="p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/30 flex flex-col gap-3 shadow-2xs"
                     >
@@ -682,7 +669,7 @@ export function StudentDetailTabs({
                     Créer un accès direct (Téléphone + MdP)
                   </button>
 
-                  <button 
+                  <button
                     onClick={handleGenerateCode}
                     disabled={isPending}
                     className="flex-1 h-10 px-3.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
@@ -703,7 +690,7 @@ export function StudentDetailTabs({
                       {invitationCode}
                     </div>
 
-                    <button 
+                    <button
                       onClick={() => {
                         const siteUrl = window.location.origin;
                         const message = `Bonjour, voici votre lien pour activer votre accès parent Scogestia et suivre la scolarité de ${student.first_name} ${student.last_name} :\n👉 ${siteUrl}/activer-parent?code=${invitationCode}\n\nCode d'activation : ${invitationCode}`;
@@ -717,55 +704,6 @@ export function StudentDetailTabs({
                     </button>
                   </div>
                 )}
-              </div>
-            </div>
-            
-            {/* Official Documents (1-Click PDF) */}
-            <div className="bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-xl p-6 space-y-4">
-              <h3 className="text-xl font-semibold text-[var(--color-on-surface)] flex items-center gap-2">
-                <FileText className="w-5 h-5 text-[var(--color-primary)]" />
-                Documents Scolaires Officiels
-              </h3>
-              <p className="text-xs text-[var(--color-on-surface-variant)]">
-                Générez et imprimez instantanément les attestations officielles pré-remplies de l&apos;élève.
-              </p>
-              <div className="grid grid-cols-1 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    generateSchoolCertificatePDF(buildDocumentData())
-                    toast.success('Certificat de scolarité téléchargé !')
-                  }}
-                  className="w-full p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/70 transition-colors flex items-center justify-between text-left group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900">Certificat de Scolarité</p>
-                      <p className="text-xs text-slate-500">Format A4 officiel avec référence</p>
-                    </div>
-                  </div>
-                  <Download className="w-4 h-4 text-emerald-700 group-hover:translate-y-0.5 transition-transform" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsCardStudioOpen(true)}
-                  className="w-full p-3.5 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/70 transition-colors flex items-center justify-between text-left group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-indigo-700 text-white flex items-center justify-center shrink-0">
-                      <IdCard className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900">Carte d&apos;Identité Scolaire</p>
-                      <p className="text-xs text-slate-500">Modèle officiel (Recto • 1 ou 10 cartes / page A4)</p>
-                    </div>
-                  </div>
-                  <Download className="w-4 h-4 text-indigo-700 group-hover:translate-y-0.5 transition-transform" />
-                </button>
               </div>
             </div>
 
@@ -798,7 +736,7 @@ export function StudentDetailTabs({
       {activeTab === 'notes' && (
         <div className="pt-4 space-y-6">
           {grades.length === 0 ? (
-            <EmptyState 
+            <EmptyState
               title="Aucune note enregistrée"
               description="Aucune évaluation n'a encore été saisie pour cet élève dans le système."
               actionLabel="Accéder à la saisie des notes"
@@ -840,9 +778,8 @@ export function StudentDetailTabs({
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-slate-500 font-medium">Moyenne trimestrielle :</span>
-                          <span className={`text-sm font-black px-3 py-1 rounded-lg ${
-                            isPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-                          }`}>
+                          <span className={`text-sm font-black px-3 py-1 rounded-lg ${isPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                            }`}>
                             {avg} / 20
                           </span>
                         </div>
@@ -880,9 +817,8 @@ export function StudentDetailTabs({
                                     {g.coefficient || 1}
                                   </td>
                                   <td className="px-4 py-3.5 text-center">
-                                    <span className={`font-bold px-2.5 py-1 rounded-md text-xs ${
-                                      isGood ? 'bg-emerald-50 text-emerald-700 font-bold' : 'bg-rose-50 text-rose-700 font-bold'
-                                    }`}>
+                                    <span className={`font-bold px-2.5 py-1 rounded-md text-xs ${isGood ? 'bg-emerald-50 text-emerald-700 font-bold' : 'bg-rose-50 text-rose-700 font-bold'
+                                      }`}>
                                       {noteOn20} / 20
                                     </span>
                                   </td>
@@ -957,32 +893,31 @@ export function StudentDetailTabs({
                 <div className="divide-y divide-slate-100">
                   {attendances.map(a => {
                     const isAbsent = a.status === 'absent'
-                    const isJustified = a.status === 'absent_justifie' || Boolean(a.justification || a. justified)
+                    const isJustified = a.status === 'absent_justifie' || Boolean(a.justification || a.justified)
                     const isPresent = a.status === 'present'
                     const label =
                       a.status === 'absent_justifie'
                         ? 'Absence justifiée'
                         : a.status === 'absent'
-                        ? 'Absence'
-                        : a.status === 'retard'
-                        ? 'Retard'
-                        : a.status === 'present'
-                        ? 'Présent'
-                        : a.status
+                          ? 'Absence'
+                          : a.status === 'retard'
+                            ? 'Retard'
+                            : a.status === 'present'
+                              ? 'Présent'
+                              : a.status
                     const motif = a.justification || a.reason
                     return (
                       <div key={a.id} className="p-4 px-6 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
                         <div className="flex items-center gap-3">
                           <span
-                            className={`w-2.5 h-2.5 rounded-full ${
-                              isPresent
+                            className={`w-2.5 h-2.5 rounded-full ${isPresent
                                 ? 'bg-emerald-500'
                                 : isJustified
-                                ? 'bg-blue-500'
-                                : isAbsent
-                                ? 'bg-rose-500'
-                                : 'bg-amber-500'
-                            }`}
+                                  ? 'bg-blue-500'
+                                  : isAbsent
+                                    ? 'bg-rose-500'
+                                    : 'bg-amber-500'
+                              }`}
                           />
                           <div>
                             <span className="font-semibold text-slate-800 text-sm">
@@ -1024,7 +959,7 @@ export function StudentDetailTabs({
       {activeTab === 'paiements' && (
         <div className="pt-4 space-y-6">
           {schedules.length === 0 && payments.length === 0 ? (
-            <EmptyState 
+            <EmptyState
               title="Aucune donnée financière"
               description="Aucune échéance de frais scolaires ni aucun paiement n'a encore été rattaché à cet élève."
               actionLabel="Créer une échéance"
@@ -1051,17 +986,14 @@ export function StudentDetailTabs({
                       <span className="text-2xl font-black text-emerald-700">{totalEncaisse.toLocaleString('fr-FR')} <span className="text-sm font-semibold text-emerald-600">FCFA</span></span>
                     </div>
 
-                    <div className={`rounded-2xl p-5 border ${
-                      resteDu > 0 ? 'bg-amber-50/70 border-amber-100' : 'bg-emerald-50/70 border-emerald-100'
-                    }`}>
-                      <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${
-                        resteDu > 0 ? 'text-amber-700' : 'text-emerald-700'
+                    <div className={`rounded-2xl p-5 border ${resteDu > 0 ? 'bg-amber-50/70 border-amber-100' : 'bg-emerald-50/70 border-emerald-100'
                       }`}>
+                      <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${resteDu > 0 ? 'text-amber-700' : 'text-emerald-700'
+                        }`}>
                         Reste à payer
                       </p>
-                      <span className={`text-2xl font-black ${
-                        resteDu > 0 ? 'text-amber-700' : 'text-emerald-700'
-                      }`}>
+                      <span className={`text-2xl font-black ${resteDu > 0 ? 'text-amber-700' : 'text-emerald-700'
+                        }`}>
                         {resteDu.toLocaleString('fr-FR')} <span className="text-sm font-semibold">FCFA</span>
                       </span>
                     </div>
@@ -1090,9 +1022,8 @@ export function StudentDetailTabs({
                         </div>
                         <div className="text-right flex items-center gap-3">
                           <span className="font-bold text-sm text-slate-800">{Number(s.amount_due).toLocaleString('fr-FR')} FCFA</span>
-                          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
-                            isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                          }`}>
+                          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${isPaid ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                            }`}>
                             {isPaid ? 'Soldé' : 'En attente'}
                           </span>
                         </div>
@@ -1150,7 +1081,7 @@ export function StudentDetailTabs({
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleEditSubmit} className="flex flex-col max-h-[80vh]">
               <div className="p-6 overflow-y-auto custom-scrollbar space-y-5">
                 {editError && (
@@ -1158,15 +1089,15 @@ export function StudentDetailTabs({
                     {editError}
                   </div>
                 )}
-                
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="birth_place">
                     Lieu de naissance
                   </label>
-                  <input 
-                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all" 
-                    id="birth_place" name="birth_place" 
-                    placeholder="Ex: Lomé" 
+                  <input
+                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all"
+                    id="birth_place" name="birth_place"
+                    placeholder="Ex: Lomé"
                     defaultValue={student.birth_place || ''}
                   />
                 </div>
@@ -1175,9 +1106,9 @@ export function StudentDetailTabs({
                   <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="gender">
                     Genre
                   </label>
-                  <select 
-                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all" 
-                    id="gender" name="gender" 
+                  <select
+                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all"
+                    id="gender" name="gender"
                     defaultValue={student.gender || ''}
                   >
                     <option value="">Sélectionner un genre</option>
@@ -1190,9 +1121,9 @@ export function StudentDetailTabs({
                   <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="blood_group">
                     Groupe Sanguin
                   </label>
-                  <select 
-                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all" 
-                    id="blood_group" name="blood_group" 
+                  <select
+                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all"
+                    id="blood_group" name="blood_group"
                     defaultValue={student.blood_group || ''}
                   >
                     <option value="">Non renseigné</option>
@@ -1211,10 +1142,10 @@ export function StudentDetailTabs({
                   <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="address">
                     Adresse Domicile
                   </label>
-                  <textarea 
-                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all min-h-[100px] resize-y" 
-                    id="address" name="address" 
-                    placeholder="Adresse complète du domicile" 
+                  <textarea
+                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all min-h-[100px] resize-y"
+                    id="address" name="address"
+                    placeholder="Adresse complète du domicile"
                     defaultValue={student.address || ''}
                   ></textarea>
                 </div>
@@ -1223,28 +1154,28 @@ export function StudentDetailTabs({
                   <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="parent_phone">
                     Téléphone du parent
                   </label>
-                  <input 
+                  <input
                     type="tel"
-                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all" 
-                    id="parent_phone" name="parent_phone" 
-                    placeholder="Ex: +228 90 00 00 00" 
+                    className="w-full px-4 py-3 bg-[var(--color-surface-container-lowest)] border border-[var(--color-outline-variant)] rounded-lg text-base focus:outline-none focus:border-[var(--color-primary)] focus:border-2 transition-all"
+                    id="parent_phone" name="parent_phone"
+                    placeholder="Ex: +228 90 00 00 00"
                     defaultValue={student.parent_phone || ''}
                   />
                 </div>
               </div>
-              
+
               <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end gap-3 shrink-0">
-                <button 
+                <button
                   type="button"
-                  onClick={() => setIsEditModalOpen(false)} 
-                  className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors" 
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors"
                   disabled={isPending}
                 >
                   Annuler
                 </button>
-                <button 
+                <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors shadow-sm disabled:opacity-50" 
+                  className="px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors shadow-sm disabled:opacity-50"
                   disabled={isPending}
                 >
                   {isPending ? 'Mise à jour...' : 'Enregistrer'}
@@ -1267,15 +1198,15 @@ export function StudentDetailTabs({
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             {activeContactView === 'list' ? (
               <div className="p-6 space-y-4">
                 <p className="text-sm text-[var(--color-on-surface-variant)]">
                   Sélectionnez un moyen de communication pour contacter le parent ou tuteur de <span className="font-semibold text-[var(--color-on-surface)]">{student.first_name}</span>.
                 </p>
-                
+
                 <div className="grid grid-cols-1 gap-3 mt-4">
-                  <button 
+                  <button
                     onClick={() => setActiveContactView('vocal')}
                     className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group cursor-pointer"
                   >
@@ -1291,71 +1222,71 @@ export function StudentDetailTabs({
                     <ChevronRight className="w-5 h-5 text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]" />
                   </button>
 
-                <button 
-                  onClick={() => setActiveContactView('sms')}
-                  className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
-                      <MessageSquare className="w-5 h-5" />
+                  <button
+                    onClick={() => setActiveContactView('sms')}
+                    className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
+                        <MessageSquare className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-[var(--color-on-surface)] text-sm">Envoyer un SMS</p>
+                        <p className="text-xs text-[var(--color-on-surface-variant)]">Écrire un SMS via la plateforme</p>
+                      </div>
                     </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-[var(--color-on-surface)] text-sm">Envoyer un SMS</p>
-                      <p className="text-xs text-[var(--color-on-surface-variant)]">Écrire un SMS via la plateforme</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]" />
-                </button>
+                    <ChevronRight className="w-5 h-5 text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]" />
+                  </button>
 
-                <a 
-                  href={student.parent_phone ? `https://wa.me/${student.parent_phone.replace(/[^0-9]/g, '')}` : '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => { if (!student.parent_phone) { e.preventDefault(); alert("Le numéro de téléphone du parent n'est pas encore renseigné. Veuillez l'ajouter dans les informations de l'élève."); } }}
-                  className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[#25D366] hover:bg-[#dcf8c6]/30 transition-all group cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#dcf8c6] text-[#25D366] flex items-center justify-center group-hover:bg-[#25D366] group-hover:text-white transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
-                      </svg>
+                  <a
+                    href={student.parent_phone ? `https://wa.me/${student.parent_phone.replace(/[^0-9]/g, '')}` : '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => { if (!student.parent_phone) { e.preventDefault(); alert("Le numéro de téléphone du parent n'est pas encore renseigné. Veuillez l'ajouter dans les informations de l'élève."); } }}
+                    className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[#25D366] hover:bg-[#dcf8c6]/30 transition-all group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#dcf8c6] text-[#25D366] flex items-center justify-center group-hover:bg-[#25D366] group-hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
+                        </svg>
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-[var(--color-on-surface)] text-sm">WhatsApp</p>
+                        <p className="text-xs text-[var(--color-on-surface-variant)]">Ouvrir l'application WhatsApp</p>
+                      </div>
                     </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-[var(--color-on-surface)] text-sm">WhatsApp</p>
-                      <p className="text-xs text-[var(--color-on-surface-variant)]">Ouvrir l'application WhatsApp</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-[var(--color-on-surface-variant)] group-hover:text-[#25D366]" />
-                </a>
+                    <ChevronRight className="w-5 h-5 text-[var(--color-on-surface-variant)] group-hover:text-[#25D366]" />
+                  </a>
 
-                <a 
-                  href={student.parent_email ? `mailto:${student.parent_email}` : '#'}
-                  onClick={(e) => { if (!student.parent_email) { e.preventDefault(); alert("L'email du parent n'est pas encore renseigné. Veuillez l'ajouter dans les informations de l'élève."); } }}
-                  className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
-                      <Mail className="w-5 h-5" />
+                  <a
+                    href={student.parent_email ? `mailto:${student.parent_email}` : '#'}
+                    onClick={(e) => { if (!student.parent_email) { e.preventDefault(); alert("L'email du parent n'est pas encore renseigné. Veuillez l'ajouter dans les informations de l'élève."); } }}
+                    className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#e6eeff] text-[var(--color-primary)] flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
+                        <Mail className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-[var(--color-on-surface)] text-sm">Envoyer un Email</p>
+                        <p className="text-xs text-[var(--color-on-surface-variant)]">Ouvrir votre boîte mail</p>
+                      </div>
                     </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-[var(--color-on-surface)] text-sm">Envoyer un Email</p>
-                      <p className="text-xs text-[var(--color-on-surface-variant)]">Ouvrir votre boîte mail</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]" />
-                </a>
+                    <ChevronRight className="w-5 h-5 text-[var(--color-on-surface-variant)] group-hover:text-[var(--color-primary)]" />
+                  </a>
+                </div>
+
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+                  <Info className="w-5 h-5 text-amber-600 shrink-0" />
+                  <p className="text-xs text-amber-800 leading-tight">
+                    Ces options utiliseront les coordonnées renseignées par le parent une fois son compte activé (voir section <b>Contact Parent</b>).
+                  </p>
+                </div>
               </div>
-              
-              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
-                <Info className="w-5 h-5 text-amber-600 shrink-0" />
-                <p className="text-xs text-amber-800 leading-tight">
-                  Ces options utiliseront les coordonnées renseignées par le parent une fois son compte activé (voir section <b>Contact Parent</b>).
-                </p>
-              </div>
-            </div>
             ) : activeContactView === 'vocal' ? (
               <div className="p-6 space-y-4">
-                <button 
+                <button
                   onClick={() => setActiveContactView('list')}
                   className="flex items-center gap-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors text-sm font-semibold mb-2"
                 >
@@ -1363,14 +1294,14 @@ export function StudentDetailTabs({
                   Retour aux options
                 </button>
                 <h3 className="font-semibold text-[var(--color-on-surface)]">Enregistrer un message vocal pour le parent de {student.first_name}</h3>
-                
+
                 <form onSubmit={handleVoiceMessageSubmit} className="flex flex-col gap-4">
                   <div className="p-4 bg-[var(--color-surface)] border border-[var(--color-outline-variant)] rounded-xl flex flex-col gap-4">
                     <AudioRecorder onAudioReady={(url) => setAudioUrl(url)} />
                   </div>
                   <div className="flex justify-end gap-3 mt-2">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       disabled={isPending || !audioUrl}
                       className="bg-[var(--color-primary)] text-white px-6 py-2.5 rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
                     >
@@ -1382,7 +1313,7 @@ export function StudentDetailTabs({
               </div>
             ) : activeContactView === 'sms' ? (
               <div className="p-6 space-y-4">
-                <button 
+                <button
                   onClick={() => setActiveContactView('list')}
                   className="flex items-center gap-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors text-sm font-semibold mb-2"
                 >
@@ -1392,10 +1323,10 @@ export function StudentDetailTabs({
                 <h3 className="font-semibold text-[var(--color-on-surface)]">
                   Envoyer un SMS au parent de {student.first_name}
                 </h3>
-                
+
                 <form onSubmit={(e) => handleTextSubmit(e, 'sms')} className="flex flex-col gap-4">
                   <div className="flex flex-col gap-2">
-                    <textarea 
+                    <textarea
                       name="message"
                       rows={4}
                       placeholder="Tapez votre message ici..."
@@ -1406,8 +1337,8 @@ export function StudentDetailTabs({
                     </p>
                   </div>
                   <div className="flex justify-end gap-3 mt-2">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       disabled={isPending}
                       className="bg-[var(--color-primary)] text-white px-6 py-2.5 rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
                     >
@@ -1759,32 +1690,6 @@ export function StudentDetailTabs({
           </div>
         </div>
       )}
-
-      {/* Studio de Génération de la Carte Scolaire Officielle */}
-      <SchoolIdCardStudioModal
-        isOpen={isCardStudioOpen}
-        onClose={() => setIsCardStudioOpen(false)}
-        className={student.classes?.name || 'Non assignée'}
-        classLevel={(student.classes as any)?.level || null}
-        academicYear={schoolInfo?.current_academic_year || '2025-2026'}
-        students={[
-          {
-            id: student.id,
-            matricule: student.matricule || 'N/A',
-            first_name: student.first_name,
-            last_name: student.last_name,
-            gender: student.gender || null,
-            date_of_birth: student.date_of_birth,
-            birth_place: student.birth_place || null,
-            blood_group: student.blood_group || null,
-            address: student.address || null,
-            parent_phone: student.parent_phone || null,
-            avatar_url: student.avatar_url || null,
-          },
-        ]}
-        schoolInfo={schoolInfo}
-        onStudentsUpdated={() => router.refresh()}
-      />
     </div>
   )
 }

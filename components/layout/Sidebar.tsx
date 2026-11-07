@@ -87,6 +87,7 @@ const mainNavItems: NavItem[] = [
       { label: 'Devoirs', href: '/admin/academique/devoirs' },
       { label: 'Saisie des notes', href: '/admin/academique/notes' },
       { label: 'Bulletins & Livrets', href: '/admin/academique/bulletins' },
+      { label: 'Carte scolaire', href: '/admin/academique/cartes-scolaires' },
       { label: 'Promotion fin d\'année', href: '/admin/academique/promotion' },
     ]
   },

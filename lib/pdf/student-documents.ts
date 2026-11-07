@@ -1,5 +1,91 @@
 import jsPDF from 'jspdf'
 
+export type CardFontFamily =
+  | 'times'
+  | 'helvetica'
+  | 'courier'
+  | 'georgia'
+  | 'palatino'
+  | 'verdana'
+
+export interface CardZoneTextStyle {
+  fontFamily: CardFontFamily
+  sizeScale: number // 0.75 à 1.45 (1 = normal)
+  bold: boolean
+  italic: boolean
+  underline: boolean
+  uppercase: boolean
+  color: string // Hex ex: '#B41218'
+}
+
+export interface CardTypographyConfig {
+  schoolName: CardZoneTextStyle
+  headerOfficial: CardZoneTextStyle
+  bannerTitle: CardZoneTextStyle
+  bannerBgColor: string
+  studentName: CardZoneTextStyle
+  studentDetails: CardZoneTextStyle
+  footerInfo: CardZoneTextStyle
+}
+
+export const DEFAULT_CARD_TYPOGRAPHY: CardTypographyConfig = {
+  schoolName: {
+    fontFamily: 'times',
+    sizeScale: 1,
+    bold: true,
+    italic: false,
+    underline: false,
+    uppercase: true,
+    color: '#B41218',
+  },
+  headerOfficial: {
+    fontFamily: 'times',
+    sizeScale: 1,
+    bold: true,
+    italic: false,
+    underline: false,
+    uppercase: false,
+    color: '#0F1D5F',
+  },
+  bannerTitle: {
+    fontFamily: 'times',
+    sizeScale: 1,
+    bold: true,
+    italic: true,
+    underline: true,
+    uppercase: true,
+    color: '#122AB9',
+  },
+  bannerBgColor: '#FDE0C6',
+  studentName: {
+    fontFamily: 'times',
+    sizeScale: 1,
+    bold: true,
+    italic: false,
+    underline: false,
+    uppercase: false,
+    color: '#99121C',
+  },
+  studentDetails: {
+    fontFamily: 'times',
+    sizeScale: 1,
+    bold: true,
+    italic: false,
+    underline: false,
+    uppercase: false,
+    color: '#0F172A',
+  },
+  footerInfo: {
+    fontFamily: 'times',
+    sizeScale: 1,
+    bold: true,
+    italic: true,
+    underline: false,
+    uppercase: false,
+    color: '#A5181C',
+  },
+}
+
 export interface StudentDocumentData {
   studentId: string
   matricule: string
@@ -33,6 +119,7 @@ export interface StudentDocumentData {
   hideFallbackEmblem?: boolean
   hideFallbackStamp?: boolean
   themeBackgroundUrl?: string | null
+  typography?: CardTypographyConfig | null
 }
 
 /**
@@ -583,6 +670,64 @@ function drawTogoleseCardOfficialStamp(
   doc.text(shortSchool, centerX, centerY + radius * 0.81, { align: 'center' })
 }
 
+function hexToRgbTuple(hex: string, fallback: [number, number, number]): [number, number, number] {
+  const clean = (hex || '').replace('#', '').trim()
+  if (clean.length === 6) {
+    const r = parseInt(clean.slice(0, 2), 16)
+    const g = parseInt(clean.slice(2, 4), 16)
+    const b = parseInt(clean.slice(4, 6), 16)
+    if (!Number.isNaN(r) && !Number.isNaN(g) && !Number.isNaN(b)) {
+      return [r, g, b]
+    }
+  }
+  return fallback
+}
+
+function mapPdfFontFamily(fontFamily: CardFontFamily): 'times' | 'helvetica' | 'courier' {
+  if (fontFamily === 'helvetica' || fontFamily === 'verdana') return 'helvetica'
+  if (fontFamily === 'courier') return 'courier'
+  return 'times'
+}
+
+function mapPdfFontStyle(style: CardZoneTextStyle): 'normal' | 'bold' | 'italic' | 'bolditalic' {
+  if (style.bold && style.italic) return 'bolditalic'
+  if (style.bold) return 'bold'
+  if (style.italic) return 'italic'
+  return 'normal'
+}
+
+function applyPdfZoneStyle(
+  doc: jsPDF,
+  zone: CardZoneTextStyle,
+  baseFontSize: number,
+  overrideColorHex?: string
+) {
+  doc.setFont(mapPdfFontFamily(zone.fontFamily), mapPdfFontStyle(zone))
+  const scale = Math.max(0.65, Math.min(1.6, zone.sizeScale || 1))
+  doc.setFontSize(Number((baseFontSize * scale).toFixed(2)))
+  const [r, g, b] = hexToRgbTuple(overrideColorHex || zone.color, [15, 23, 42])
+  doc.setTextColor(r, g, b)
+}
+
+function drawUnderlineForText(
+  doc: jsPDF,
+  text: string,
+  x: number,
+  y: number,
+  colorHex: string,
+  align: 'left' | 'center' | 'right' = 'left'
+) {
+  if (!text) return
+  const w = doc.getTextWidth(text)
+  const [r, g, b] = hexToRgbTuple(colorHex, [15, 23, 42])
+  doc.setDrawColor(r, g, b)
+  doc.setLineWidth(0.24)
+  let startX = x
+  if (align === 'center') startX = x - w / 2
+  else if (align === 'right') startX = x - w
+  doc.line(startX, y + 0.42, startX + w, y + 0.42)
+}
+
 /**
  * Dessine une Carte d'Identité Scolaire Officielle Togolaise (RECTO UNIQUEMENT)
  * Format optimisé pour planche de 10 cartes par page A4 (2 colonnes x 5 lignes)
@@ -602,6 +747,11 @@ function drawStudentIdCardRecto(
     themeDataUrl?: string | null
   }
 ) {
+  const typo: CardTypographyConfig = {
+    ...DEFAULT_CARD_TYPOGRAPHY,
+    ...(data.typography || {}),
+  }
+
   // Repères de découpe très fins aux 4 coins
   doc.setDrawColor(203, 213, 225)
   doc.setLineWidth(0.15)
@@ -649,9 +799,7 @@ function drawStudentIdCardRecto(
     data.ministryAcronym !== undefined ? (data.ministryAcronym || '').trim() : 'MEPST'
 
   if (ministryStr.toUpperCase() === 'MEPST') {
-    doc.setFont('times', 'bold')
-    doc.setFontSize(7.6)
-    doc.setTextColor(15, 23, 42)
+    applyPdfZoneStyle(doc, typo.headerOfficial, 7.6, '#0F172A')
     doc.text('ME', innerX + 1.4, mepstY)
     doc.setTextColor(210, 16, 52) // P en Rouge
     doc.text('P', innerX + 6.3, mepstY)
@@ -660,10 +808,14 @@ function drawStudentIdCardRecto(
     doc.setTextColor(29, 78, 216) // T en Bleu
     doc.text('T', innerX + 9.9, mepstY)
   } else if (ministryStr.length > 0) {
-    doc.setFont('times', 'bold')
-    doc.setFontSize(7.2)
-    doc.setTextColor(15, 23, 42)
-    doc.text(ministryStr.slice(0, 12), innerX + 1.4, mepstY)
+    applyPdfZoneStyle(doc, typo.headerOfficial, 7.2)
+    const minFormatted = typo.headerOfficial.uppercase
+      ? ministryStr.toUpperCase().slice(0, 12)
+      : ministryStr.slice(0, 12)
+    doc.text(minFormatted, innerX + 1.4, mepstY)
+    if (typo.headerOfficial.underline) {
+      drawUnderlineForText(doc, minFormatted, innerX + 1.4, mepstY, typo.headerOfficial.color, 'left')
+    }
   }
 
   // Logo de l'établissement (ou Emblème RT si activé, sinon reste blanc) sous le sigle du ministère
@@ -697,46 +849,48 @@ function drawStudentIdCardRecto(
       : 'Travail-Liberté-Patrie'
 
   if (republicStr) {
-    doc.setTextColor(15, 23, 42)
-    doc.setFont('times', 'bold')
-    doc.setFontSize(6.6)
-    doc.text(republicStr.slice(0, 28), rightHeaderCenterX, innerY + 3.1, { align: 'center' })
+    applyPdfZoneStyle(doc, typo.headerOfficial, 6.6, '#0F172A')
+    const repOut = (typo.headerOfficial.uppercase ? republicStr.toUpperCase() : republicStr).slice(0, 28)
+    doc.text(repOut, rightHeaderCenterX, innerY + 3.1, { align: 'center' })
   }
 
   if (mottoStr) {
-    doc.setTextColor(15, 23, 42)
-    doc.setFont('times', 'bold')
-    doc.setFontSize(5.7)
+    applyPdfZoneStyle(doc, typo.headerOfficial, 5.7, '#0F172A')
     doc.text(mottoStr.slice(0, 32), rightHeaderCenterX, innerY + 5.6, { align: 'center' })
   }
 
-  // 4. EN-TÊTE CENTRAL : IEPP / Inspection + NOM DE L'ÉCOLE (Rouge) + Centre d'Écrit
+  // 4. EN-TÊTE CENTRAL : IEPP / Inspection + NOM DE L'ÉCOLE + Centre d'Écrit
   const titleCenterX = innerX + innerW * 0.54
 
   // Ligne Inspection / DRE / IEPP (si vide, reste blanc)
   const inspectionText =
     data.inspectionName !== undefined
-      ? (data.inspectionName || '').trim().toUpperCase()
-      : (data.schoolCity
-          ? `DRE / INSPECTION — ${data.schoolCity.toUpperCase()}`
-          : 'MINISTÈRE DES ENSEIGNEMENTS (MEPST)'
-        ).toUpperCase()
+      ? (data.inspectionName || '').trim()
+      : data.schoolCity
+        ? `DRE / INSPECTION — ${data.schoolCity.toUpperCase()}`
+        : 'MINISTÈRE DES ENSEIGNEMENTS (MEPST)'
 
   if (inspectionText) {
-    doc.setFont('times', 'bold')
-    doc.setFontSize(6.4)
-    doc.setTextColor(15, 29, 95) // Bleu marine profond
-    doc.text(inspectionText.slice(0, 38), titleCenterX, innerY + 8.7, { align: 'center' })
+    applyPdfZoneStyle(doc, typo.headerOfficial, 6.4)
+    const inspOut = (
+      typo.headerOfficial.uppercase ? inspectionText.toUpperCase() : inspectionText
+    ).slice(0, 38)
+    doc.text(inspOut, titleCenterX, innerY + 8.7, { align: 'center' })
+    if (typo.headerOfficial.underline) {
+      drawUnderlineForText(doc, inspOut, titleCenterX, innerY + 8.7, typo.headerOfficial.color, 'center')
+    }
   }
 
-  // Nom de l'Établissement en Grand Rouge Cramoisi
-  const schoolUpper = (data.schoolName || '').trim().toUpperCase()
-  if (schoolUpper) {
-    const schoolFontSize = schoolUpper.length > 28 ? 7.4 : schoolUpper.length > 22 ? 8.4 : 9.5
-    doc.setFont('times', 'bold')
-    doc.setFontSize(schoolFontSize)
-    doc.setTextColor(180, 18, 24) // Rouge officiel
-    doc.text(schoolUpper.slice(0, 34), titleCenterX, innerY + 12.4, { align: 'center' })
+  // Nom de l'Établissement (Zone schoolName)
+  const schoolRaw = (data.schoolName || '').trim()
+  if (schoolRaw) {
+    const schoolOut = (typo.schoolName.uppercase ? schoolRaw.toUpperCase() : schoolRaw).slice(0, 34)
+    const baseSchoolSize = schoolOut.length > 28 ? 7.4 : schoolOut.length > 22 ? 8.4 : 9.5
+    applyPdfZoneStyle(doc, typo.schoolName, baseSchoolSize)
+    doc.text(schoolOut, titleCenterX, innerY + 12.4, { align: 'center' })
+    if (typo.schoolName.underline) {
+      drawUnderlineForText(doc, schoolOut, titleCenterX, innerY + 12.4, typo.schoolName.color, 'center')
+    }
   }
 
   // Ligne Centre d'Écrit : [Ville / Centre] (si vide, reste blanc)
@@ -748,17 +902,25 @@ function drawStudentIdCardRecto(
   if (centerValue) {
     const centerLabel =
       data.examCenterLabel !== undefined ? data.examCenterLabel || '' : "Centre d'Ecrit: "
-    doc.setFont('times', 'bold')
-    doc.setFontSize(6.8)
+    applyPdfZoneStyle(doc, typo.headerOfficial, 6.8, '#0F172A')
     const labelW = doc.getTextWidth(centerLabel)
     const valW = doc.getTextWidth(centerValue)
     const totalCenterW = labelW + valW
     const startCenterX = titleCenterX - totalCenterW / 2
 
-    doc.setTextColor(15, 23, 42)
     doc.text(centerLabel, startCenterX, innerY + 15.5)
-    doc.setTextColor(25, 42, 185) // Bleu royal
+    applyPdfZoneStyle(doc, typo.headerOfficial, 6.8)
     doc.text(centerValue, startCenterX + labelW, innerY + 15.5)
+    if (typo.headerOfficial.underline) {
+      drawUnderlineForText(
+        doc,
+        centerValue,
+        startCenterX + labelW,
+        innerY + 15.5,
+        typo.headerOfficial.color,
+        'left'
+      )
+    }
   }
 
   // 5. SÉPARATEUR HORIZONTAL TRICOLORE (Rouge / Vert / Jaune)
@@ -816,9 +978,10 @@ function drawStudentIdCardRecto(
   const rightX = photoX + photoW + 0.5
   const rightW = innerX + innerW - rightX - 0.2
 
-  // Bandeau saumon/pêche sous le séparateur
+  // Bandeau sous le séparateur (couleur personnalisable via typo.bannerBgColor)
   const bannerH = 4.3
-  doc.setFillColor(253, 224, 198) // #FDE0C6
+  const [bgR, bgG, bgB] = hexToRgbTuple(typo.bannerBgColor || '#FDE0C6', [253, 224, 198])
+  doc.setFillColor(bgR, bgG, bgB)
   doc.rect(rightX, bodyTopY, rightW, bannerH, 'F')
 
   const bannerTitle =
@@ -827,21 +990,13 @@ function drawStudentIdCardRecto(
       : "CARTE D'IDENTITE SCOLAIRE"
   const bannerCenterX = rightX + rightW / 2
   if (bannerTitle) {
-    doc.setFont('times', 'bolditalic')
-    doc.setFontSize(7.1)
-    doc.setTextColor(18, 42, 185) // Bleu royal
-    doc.text(bannerTitle.slice(0, 34), bannerCenterX, bodyTopY + 3.0, { align: 'center' })
+    const bannerOut = (typo.bannerTitle.uppercase ? bannerTitle.toUpperCase() : bannerTitle).slice(0, 34)
+    applyPdfZoneStyle(doc, typo.bannerTitle, 7.1)
+    doc.text(bannerOut, bannerCenterX, bodyTopY + 3.0, { align: 'center' })
 
-    // Soulignement bleu sous "CARTE D'IDENTITE SCOLAIRE"
-    const bannerTitleW = doc.getTextWidth(bannerTitle.slice(0, 34))
-    doc.setDrawColor(18, 42, 185)
-    doc.setLineWidth(0.28)
-    doc.line(
-      bannerCenterX - bannerTitleW / 2,
-      bodyTopY + 3.45,
-      bannerCenterX + bannerTitleW / 2,
-      bodyTopY + 3.45
-    )
+    if (typo.bannerTitle.underline) {
+      drawUnderlineForText(doc, bannerOut, bannerCenterX, bodyTopY + 3.0, typo.bannerTitle.color, 'center')
+    }
   }
 
   // Champs d'état civil de l'élève
@@ -850,50 +1005,60 @@ function drawStudentIdCardRecto(
   const lineStep = 4.15
 
   // Nom: ADAM
-  doc.setFont('times', 'bold')
-  doc.setFontSize(7.8)
-  doc.setTextColor(15, 23, 42)
+  applyPdfZoneStyle(doc, typo.studentDetails, 7.8)
   const nomLabel = 'Nom: '
   doc.text(nomLabel, fieldsX, lineY)
   const nomLabelW = doc.getTextWidth(nomLabel)
-  doc.setTextColor(153, 18, 28) // Rouge bordeaux foncé
-  doc.text((data.lastName || '').toUpperCase().slice(0, 22), fieldsX + nomLabelW, lineY)
+
+  applyPdfZoneStyle(doc, typo.studentName, 7.8)
+  const lastNameOut = (
+    typo.studentName.uppercase ? (data.lastName || '').toUpperCase() : (data.lastName || '').toUpperCase()
+  ).slice(0, 22)
+  doc.text(lastNameOut, fieldsX + nomLabelW, lineY)
+  if (typo.studentName.underline) {
+    drawUnderlineForText(doc, lastNameOut, fieldsX + nomLabelW, lineY, typo.studentName.color, 'left')
+  }
 
   // Prénoms: Rachida
   lineY += lineStep
-  doc.setFont('times', 'bold')
-  doc.setFontSize(7.6)
-  doc.setTextColor(15, 23, 42)
+  applyPdfZoneStyle(doc, typo.studentDetails, 7.6)
   const prenomLabel = 'Prénoms: '
   doc.text(prenomLabel, fieldsX, lineY)
   const prenomLabelW = doc.getTextWidth(prenomLabel)
-  doc.setTextColor(153, 18, 28)
-  doc.text((data.firstName || '').slice(0, 25), fieldsX + prenomLabelW, lineY)
+
+  applyPdfZoneStyle(doc, typo.studentName, 7.6)
+  const firstNameOut = (
+    typo.studentName.uppercase ? (data.firstName || '').toUpperCase() : data.firstName || ''
+  ).slice(0, 25)
+  doc.text(firstNameOut, fieldsX + prenomLabelW, lineY)
+  if (typo.studentName.underline) {
+    drawUnderlineForText(doc, firstNameOut, fieldsX + prenomLabelW, lineY, typo.studentName.color, 'left')
+  }
 
   // Né (e) le 19/6/2014 à Lomé
   lineY += lineStep
-  doc.setFont('times', 'bold')
-  doc.setFontSize(7.2)
-  doc.setTextColor(15, 23, 42)
+  applyPdfZoneStyle(doc, typo.studentDetails, 7.2)
   const dobFormatted = data.dateOfBirth
     ? new Date(data.dateOfBirth).toLocaleDateString('fr-FR')
     : 'Non renseigné'
   const birthPlaceStr = data.birthPlace?.trim() || data.schoolCity?.trim() || 'Lomé'
-  const birthLine = `Né (e) le ${dobFormatted} à ${birthPlaceStr}`
-  doc.text(birthLine.slice(0, 36), fieldsX, lineY)
+  const birthRaw = `Né (e) le ${dobFormatted} à ${birthPlaceStr}`
+  const birthLine = (typo.studentDetails.uppercase ? birthRaw.toUpperCase() : birthRaw).slice(0, 36)
+  doc.text(birthLine, fieldsX, lineY)
+  if (typo.studentDetails.underline) {
+    drawUnderlineForText(doc, birthLine, fieldsX, lineY, typo.studentDetails.color, 'left')
+  }
 
   // Sexe : F   (+ Matricule discret à droite)
   lineY += lineStep
-  doc.setFont('times', 'bold')
-  doc.setFontSize(7.5)
-  doc.setTextColor(217, 70, 25) // Orange-rouge comme sur le modèle
+  applyPdfZoneStyle(doc, typo.studentDetails, 7.5, '#D94619')
   const sexeLabel = 'Sexe '
   doc.text(sexeLabel, fieldsX, lineY)
   const sexeW = doc.getTextWidth(sexeLabel)
-  doc.setTextColor(15, 23, 42)
+  applyPdfZoneStyle(doc, typo.studentDetails, 7.5)
   doc.text(': ', fieldsX + sexeW, lineY)
   const colonW = doc.getTextWidth(': ')
-  doc.setTextColor(18, 42, 185) // Bleu royal
+  applyPdfZoneStyle(doc, typo.studentName, 7.5, '#122AB9')
   const genderChar = data.gender?.toUpperCase() === 'F' ? 'F' : data.gender?.toUpperCase() === 'M' ? 'M' : '—'
   doc.text(genderChar, fieldsX + sexeW + colonW, lineY)
 
@@ -906,14 +1071,12 @@ function drawStudentIdCardRecto(
 
   // 8. BAS GAUCHE DE LA COLONNE DROITE : Année Scolaire + 2025-2026 + Classe
   const yearLabelY = bodyTopY + bodyH - 8.8
-  doc.setFont('times', 'bolditalic')
-  doc.setFontSize(6.8)
-  doc.setTextColor(15, 23, 42)
+  applyPdfZoneStyle(doc, typo.footerInfo, 6.8, '#0F172A')
   const anneePart1 = 'Année '
   const anneePart2 = 'Scolaire'
   doc.text(anneePart1, fieldsX, yearLabelY)
   const anneePart1W = doc.getTextWidth(anneePart1)
-  doc.setTextColor(18, 42, 185)
+  applyPdfZoneStyle(doc, typo.footerInfo, 6.8, '#122AB9')
   doc.text(anneePart2, fieldsX + anneePart1W, yearLabelY)
   const anneeTotalW = anneePart1W + doc.getTextWidth(anneePart2)
 
@@ -924,22 +1087,27 @@ function drawStudentIdCardRecto(
 
   // Valeur Année Scolaire (ex: 2025-2026)
   const yearValY = yearLabelY + 3.8
-  doc.setFont('times', 'bolditalic')
-  doc.setFontSize(8.2)
-  doc.setTextColor(165, 24, 28) // Rouge bordeaux
-  doc.text(data.academicYear || '2025-2026', fieldsX + 1.2, yearValY)
+  applyPdfZoneStyle(doc, typo.footerInfo, 8.2)
+  const yearValStr = data.academicYear || '2025-2026'
+  doc.text(yearValStr, fieldsX + 1.2, yearValY)
+  if (typo.footerInfo.underline) {
+    drawUnderlineForText(doc, yearValStr, fieldsX + 1.2, yearValY, typo.footerInfo.color, 'left')
+  }
 
   // Classe : CM2
   const classY = bodyTopY + bodyH - 1.1
-  doc.setFont('times', 'italic')
-  doc.setFontSize(7.6)
-  doc.setTextColor(15, 23, 42)
+  applyPdfZoneStyle(doc, typo.footerInfo, 7.6, '#0F172A')
   const classeLabel = 'Classe : '
   doc.text(classeLabel, fieldsX, classY)
   const classeLabelW = doc.getTextWidth(classeLabel)
-  doc.setFont('times', 'bolditalic')
-  doc.setTextColor(25, 42, 185)
-  doc.text((data.className || '').slice(0, 12), fieldsX + classeLabelW, classY)
+  applyPdfZoneStyle(doc, typo.footerInfo, 7.6, '#192AB9')
+  const classValStr = (
+    typo.footerInfo.uppercase ? (data.className || '').toUpperCase() : data.className || ''
+  ).slice(0, 12)
+  doc.text(classValStr, fieldsX + classeLabelW, classY)
+  if (typo.footerInfo.underline) {
+    drawUnderlineForText(doc, classValStr, fieldsX + classeLabelW, classY, '#192AB9', 'left')
+  }
 
   // 9. BAS DROITE DE LA COLONNE DROITE : Cachet + Signature (issus de Paramètres ou importés) + Nom du Directeur
   const stampCenterX = rightX + rightW - 18.5
@@ -973,16 +1141,18 @@ function drawStudentIdCardRecto(
     }
   }
 
-  // Nom du Directeur en bas à droite en italique gras rouge (si vide, reste blanc)
+  // Nom du Directeur en bas à droite (si vide, reste blanc)
   const directorText =
     data.directorName !== undefined
       ? (data.directorName || '').trim().slice(0, 24)
       : 'Le Directeur'
   if (directorText) {
-    doc.setFont('times', 'bolditalic')
-    doc.setFontSize(6.8)
-    doc.setTextColor(165, 24, 28)
-    doc.text(directorText, rightX + rightW - 1.0, classY, { align: 'right' })
+    const dirOut = typo.footerInfo.uppercase ? directorText.toUpperCase() : directorText
+    applyPdfZoneStyle(doc, typo.footerInfo, 6.8)
+    doc.text(dirOut, rightX + rightW - 1.0, classY, { align: 'right' })
+    if (typo.footerInfo.underline) {
+      drawUnderlineForText(doc, dirOut, rightX + rightW - 1.0, classY, typo.footerInfo.color, 'right')
+    }
   }
 }
 

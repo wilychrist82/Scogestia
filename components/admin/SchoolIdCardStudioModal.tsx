@@ -25,12 +25,23 @@ import {
   Image as ImageIcon,
   Layers,
   Palette,
+  Type,
+  Bold,
+  Italic,
+  Underline,
+  RotateCcw,
+  Minus,
+  Plus,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import {
   generateClassStudentIdCardsPDF,
   StudentDocumentData,
+  CardTypographyConfig,
+  CardZoneTextStyle,
+  CardFontFamily,
+  DEFAULT_CARD_TYPOGRAPHY,
 } from '@/lib/pdf/student-documents'
 import { updateSchoolAssetUrl } from '@/app/actions/parametres'
 
@@ -183,16 +194,83 @@ type SchoolMeta = {
 
 type Props = {
   isOpen: boolean
-  onClose: () => void
+  onClose?: () => void
   className: string
   classLevel?: string | null
   academicYear?: string | null
   students: StudioStudentItem[]
   schoolInfo?: SchoolMeta | null
   onStudentsUpdated?: () => void
+  mode?: 'modal' | 'embedded'
 }
 
-const STORAGE_KEY = 'scogestia_idcard_studio_config_v2'
+const STORAGE_KEY = 'scogestia_idcard_studio_config_v3'
+
+type TypographyZoneKey =
+  | 'schoolName'
+  | 'headerOfficial'
+  | 'bannerTitle'
+  | 'studentName'
+  | 'studentDetails'
+  | 'footerInfo'
+
+const TYPOGRAPHY_ZONE_TABS: { key: TypographyZoneKey; label: string; basePt: number }[] = [
+  { key: 'schoolName', label: "Nom de l'École", basePt: 9.5 },
+  { key: 'headerOfficial', label: 'En-tête (MEPST, IEPP...)', basePt: 6.8 },
+  { key: 'bannerTitle', label: 'Titre Bandeau', basePt: 7.1 },
+  { key: 'studentName', label: 'Nom & Prénoms Élève', basePt: 7.8 },
+  { key: 'studentDetails', label: 'Infos (Né le, Sexe)', basePt: 7.5 },
+  { key: 'footerInfo', label: 'Année, Classe & Directeur', basePt: 7.6 },
+]
+
+const FONT_FAMILY_OPTIONS: { value: CardFontFamily; label: string; cssFont: string }[] = [
+  { value: 'times', label: 'Times New Roman (Officiel)', cssFont: '"Times New Roman", Times, serif' },
+  { value: 'georgia', label: 'Georgia (Prestige)', cssFont: 'Georgia, Cambria, serif' },
+  { value: 'palatino', label: 'Palatino (Élégant)', cssFont: '"Palatino Linotype", "Book Antiqua", Palatino, serif' },
+  { value: 'helvetica', label: 'Arial / Helvetica (Moderne)', cssFont: 'Arial, Helvetica, sans-serif' },
+  { value: 'verdana', label: 'Verdana (Large & Lisible)', cssFont: 'Verdana, Geneva, sans-serif' },
+  { value: 'courier', label: 'Courier (Administratif)', cssFont: '"Courier New", Courier, monospace' },
+]
+
+const QUICK_COLOR_PALETTE = [
+  { hex: '#0F172A', name: 'Noir Officiel' },
+  { hex: '#B41218', name: 'Rouge École' },
+  { hex: '#99121C', name: 'Bordeaux Élève' },
+  { hex: '#122AB9', name: 'Bleu Royal' },
+  { hex: '#0F1D5F', name: 'Bleu Marine' },
+  { hex: '#007A33', name: 'Vert Togo' },
+  { hex: '#D94619', name: 'Orange Officiel' },
+  { hex: '#B45309', name: 'Or Foncé' },
+  { hex: '#4338CA', name: 'Indigo' },
+]
+
+const BANNER_BG_PALETTE = [
+  { hex: '#FDE0C6', name: 'Pêche Officiel' },
+  { hex: '#DBEAFE', name: 'Bleu Clair' },
+  { hex: '#DCFCE7', name: 'Vert Clair' },
+  { hex: '#FEF3C7', name: 'Or Clair' },
+  { hex: '#FCE7F3', name: 'Rose Clair' },
+  { hex: '#FFFFFF', name: 'Blanc Pur' },
+]
+
+function getZoneCssStyle(
+  zone: CardZoneTextStyle,
+  basePx: number,
+  overrideColor?: string
+): React.CSSProperties {
+  const fontObj =
+    FONT_FAMILY_OPTIONS.find((f) => f.value === zone.fontFamily) || FONT_FAMILY_OPTIONS[0]
+  const scale = Math.max(0.65, Math.min(1.6, zone.sizeScale || 1))
+  return {
+    fontFamily: fontObj.cssFont,
+    fontSize: `${(basePx * scale).toFixed(1)}px`,
+    fontWeight: zone.bold ? 900 : 400,
+    fontStyle: zone.italic ? 'italic' : 'normal',
+    textDecoration: zone.underline ? 'underline' : 'none',
+    textTransform: zone.uppercase ? 'uppercase' : 'none',
+    color: overrideColor || zone.color,
+  }
+}
 
 export type CardThemeOption = {
   id: string
@@ -411,6 +489,7 @@ export function SchoolIdCardStudioModal({
   students: initialStudents,
   schoolInfo = null,
   onStudentsUpdated,
+  mode = 'modal',
 }: Props) {
   const [localStudents, setLocalStudents] = useState<StudioStudentItem[]>(() =>
     sortStudentsAlphabetically(initialStudents)
@@ -428,6 +507,43 @@ export function SchoolIdCardStudioModal({
   const [isGenerating, setIsGenerating] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterMode, setFilterMode] = useState<'all' | 'missing_photo' | 'missing_info'>('all')
+
+  // Personnalisation complète des Polices, Styles (Gras, Italique, Souligné, Majuscules), Tailles et Couleurs
+  const [typographyConfig, setTypographyConfig] = useState<CardTypographyConfig>(
+    () => DEFAULT_CARD_TYPOGRAPHY
+  )
+  const [activeTypoZone, setActiveTypoZone] = useState<TypographyZoneKey>('schoolName')
+
+  const updateZoneTypography = (
+    zoneKey: TypographyZoneKey,
+    patch: Partial<CardZoneTextStyle>
+  ) => {
+    setTypographyConfig((prev) => ({
+      ...prev,
+      [zoneKey]: {
+        ...prev[zoneKey],
+        ...patch,
+      },
+    }))
+  }
+
+  const applyFontFamilyToAllZones = (fontFamily: CardFontFamily) => {
+    setTypographyConfig((prev) => ({
+      ...prev,
+      schoolName: { ...prev.schoolName, fontFamily },
+      headerOfficial: { ...prev.headerOfficial, fontFamily },
+      bannerTitle: { ...prev.bannerTitle, fontFamily },
+      studentName: { ...prev.studentName, fontFamily },
+      studentDetails: { ...prev.studentDetails, fontFamily },
+      footerInfo: { ...prev.footerInfo, fontFamily },
+    }))
+    toast.success('Police appliquée à toute la carte !')
+  }
+
+  const resetTypographyToDefault = () => {
+    setTypographyConfig(DEFAULT_CARD_TYPOGRAPHY)
+    toast.success('Polices, tailles et couleurs réinitialisées au modèle officiel !')
+  }
 
   // Champs 100% modifiables de la carte (si un champ est vidé, il reste blanc sur la carte)
   const [ministryAcronym, setMinistryAcronym] = useState('MEPST')
@@ -614,6 +730,12 @@ export function SchoolIdCardStudioModal({
         if (Array.isArray(parsed.customThemes)) {
           setCustomThemes(parsed.customThemes)
         }
+        if (parsed.typographyConfig) {
+          setTypographyConfig({
+            ...DEFAULT_CARD_TYPOGRAPHY,
+            ...parsed.typographyConfig,
+          })
+        }
       }
     } catch {
       // Ignore
@@ -638,6 +760,7 @@ export function SchoolIdCardStudioModal({
           cardBannerTitle,
           activeThemeIndex,
           customThemes,
+          typographyConfig,
           logoUrl: overrides?.logoUrl !== undefined ? overrides.logoUrl : logoUrl,
           stampUrl: overrides?.stampUrl !== undefined ? overrides.stampUrl : stampUrl,
           signatureUrl:
@@ -983,6 +1106,7 @@ export function SchoolIdCardStudioModal({
     hideFallbackEmblem: !showVectorEmblemIfNoLogo,
     hideFallbackStamp: !showVectorStampIfNoStamp,
     themeBackgroundUrl: activeTheme?.url || null,
+    typography: typographyConfig,
   })
 
   // Génère soit tous les lots de 10 (ex: 47 élèves -> 10, 10, 10, 10, 7), soit un lot spécifique de 10 (ou le reste)
@@ -1045,9 +1169,23 @@ export function SchoolIdCardStudioModal({
   const remainderOnLastPage =
     selectedCount === 0 ? 0 : selectedCount % 10 === 0 ? 10 : selectedCount % 10
 
+  const currentZoneMeta =
+    TYPOGRAPHY_ZONE_TABS.find((t) => t.key === activeTypoZone) || TYPOGRAPHY_ZONE_TABS[0]
+  const currentZoneStyle = typographyConfig[activeTypoZone]
+
+  const wrapperClass =
+    mode === 'embedded'
+      ? 'w-full'
+      : 'fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto'
+
+  const cardContainerClass =
+    mode === 'embedded'
+      ? 'relative w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col'
+      : 'relative w-full max-w-6xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[95vh] animate-in fade-in zoom-in-95 duration-200'
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto">
-      <div className="relative w-full max-w-6xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[95vh] animate-in fade-in zoom-in-95 duration-200">
+    <div className={wrapperClass}>
+      <div className={cardContainerClass}>
         {/* Bandeau Supérieur — Stripe Royal Indigo & Sapphire */}
         <div className="relative flex items-center justify-between gap-4 bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-5 py-3.5 text-white shrink-0">
           <div className="flex items-center gap-3">
@@ -1065,22 +1203,24 @@ export function SchoolIdCardStudioModal({
                 </span>
               </div>
               <p className="text-xs text-indigo-100/90 mt-0.5">
-                Classe : <strong className="text-white">{className}</strong> • Tout est modifiable sur la carte (Logo, Sigle Ministère, Cachet & Signature synchronisés avec Paramètres).
+                Classe : <strong className="text-white">{className}</strong> • Polices, tailles, gras, italique, souligné, couleurs, thèmes, logo, cachet & signature 100% personnalisables.
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-xl bg-white/10 p-2 text-white/80 hover:bg-white/20 hover:text-white transition-colors"
-            title="Fermer"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          {mode === 'modal' && onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl bg-white/10 p-2 text-white/80 hover:bg-white/20 hover:text-white transition-colors"
+              title="Fermer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         {/* Contenu Principal Défilant */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 bg-slate-50/70">
+        <div className={mode === 'embedded' ? 'p-4 sm:p-5 space-y-5 bg-slate-50/70' : 'flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 bg-slate-50/70'}>
           {/* SECTION 1 : Personnalisation Intégrale de la Carte + Aperçu en Direct + Édition Élève par Élève */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
             {/* COLONNE GAUCHE (5 cols) : Paramètres Globaux de la Carte + Cachet / Signature / Logo */}
@@ -1407,6 +1547,295 @@ export function SchoolIdCardStudioModal({
                   </div>
                 </div>
               </div>
+
+              {/* BLOC TYPOGRAPHIE : Polices, Styles (Gras, Italique, Souligné, Majuscules), Tailles & Couleurs */}
+              <div className="pt-3 border-t border-slate-100 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
+                    <Type className="h-3.5 w-3.5 text-indigo-600" />
+                    Polices, Style, Taille, Gras, Italique, Souligné & Couleurs
+                  </span>
+                  <button
+                    type="button"
+                    onClick={resetTypographyToDefault}
+                    className="inline-flex items-center gap-1 rounded-lg bg-slate-100 hover:bg-slate-200 px-2 py-1 text-[10px] font-bold text-slate-700 transition-colors"
+                    title="Réinitialiser toutes les polices, tailles et couleurs au modèle officiel"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Par défaut
+                  </button>
+                </div>
+
+                {/* Changement rapide de la police sur toute la carte d'un seul clic */}
+                <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-2.5 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10.5px] font-bold text-indigo-950">
+                      Police globale (Appliquer à toute la carte) :
+                    </span>
+                    <select
+                      value={currentZoneStyle.fontFamily}
+                      onChange={(e) =>
+                        applyFontFamilyToAllZones(e.target.value as CardFontFamily)
+                      }
+                      className="rounded-lg border border-indigo-200 bg-white px-2 py-1 text-[11px] font-extrabold text-indigo-950 outline-none focus:border-indigo-600"
+                    >
+                      {FONT_FAMILY_OPTIONS.map((f) => (
+                        <option key={f.value} value={f.value}>
+                          {f.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Sélecteur de Zone à personnaliser */}
+                <div>
+                  <label className="block text-[10.5px] font-bold text-slate-600 mb-1.5">
+                    Choisir l&apos;élément de la carte à personnaliser :
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                    {TYPOGRAPHY_ZONE_TABS.map((tab) => {
+                      const isTabActive = activeTypoZone === tab.key
+                      return (
+                        <button
+                          key={tab.key}
+                          type="button"
+                          onClick={() => setActiveTypoZone(tab.key)}
+                          className={`px-2 py-1.5 rounded-lg text-[10.5px] font-extrabold text-left truncate border transition-all ${
+                            isTabActive
+                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Barre d'outils de la zone active : Police + Taille + Gras / Italique / Souligné / Majuscules + Couleur */}
+                <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 space-y-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                    {/* Police de la zone */}
+                    <div className="sm:col-span-7">
+                      <label className="block text-[10px] font-bold text-slate-500 mb-0.5">
+                        Police ({currentZoneMeta.label})
+                      </label>
+                      <select
+                        value={currentZoneStyle.fontFamily}
+                        onChange={(e) =>
+                          updateZoneTypography(activeTypoZone, {
+                            fontFamily: e.target.value as CardFontFamily,
+                          })
+                        }
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-900 outline-none focus:border-indigo-600"
+                      >
+                        {FONT_FAMILY_OPTIONS.map((f) => (
+                          <option key={f.value} value={f.value}>
+                            {f.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Taille de police (- / +) */}
+                    <div className="sm:col-span-5">
+                      <label className="block text-[10px] font-bold text-slate-500 mb-0.5">
+                        Taille ({(currentZoneMeta.basePt * currentZoneStyle.sizeScale).toFixed(1)} pt •{' '}
+                        {Math.round(currentZoneStyle.sizeScale * 100)}%)
+                      </label>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateZoneTypography(activeTypoZone, {
+                              sizeScale: Math.max(
+                                0.7,
+                                Number((currentZoneStyle.sizeScale - 0.08).toFixed(2))
+                              ),
+                            })
+                          }
+                          className="h-7 w-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-700"
+                          title="Réduire la taille"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <input
+                          type="range"
+                          min={0.7}
+                          max={1.45}
+                          step={0.05}
+                          value={currentZoneStyle.sizeScale}
+                          onChange={(e) =>
+                            updateZoneTypography(activeTypoZone, {
+                              sizeScale: parseFloat(e.target.value),
+                            })
+                          }
+                          className="flex-1 accent-indigo-600 cursor-pointer"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateZoneTypography(activeTypoZone, {
+                              sizeScale: Math.min(
+                                1.45,
+                                Number((currentZoneStyle.sizeScale + 0.08).toFixed(2))
+                              ),
+                            })
+                          }
+                          className="h-7 w-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-700"
+                          title="Augmenter la taille"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Boutons Style : Gras (B), Italique (I), Souligné (U), Majuscules (AA) */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateZoneTypography(activeTypoZone, {
+                            bold: !currentZoneStyle.bold,
+                          })
+                        }
+                        className={`px-2.5 py-1.5 rounded-lg border text-xs font-black flex items-center gap-1 transition-all ${
+                          currentZoneStyle.bold
+                            ? 'bg-indigo-950 text-white border-indigo-950 shadow-2xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                        title="Gras (Bold)"
+                      >
+                        <Bold className="h-3.5 w-3.5" />
+                        Gras
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateZoneTypography(activeTypoZone, {
+                            italic: !currentZoneStyle.italic,
+                          })
+                        }
+                        className={`px-2.5 py-1.5 rounded-lg border text-xs italic font-bold flex items-center gap-1 transition-all ${
+                          currentZoneStyle.italic
+                            ? 'bg-indigo-950 text-white border-indigo-950 shadow-2xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                        title="Italique"
+                      >
+                        <Italic className="h-3.5 w-3.5" />
+                        Italique
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateZoneTypography(activeTypoZone, {
+                            underline: !currentZoneStyle.underline,
+                          })
+                        }
+                        className={`px-2.5 py-1.5 rounded-lg border text-xs underline font-bold flex items-center gap-1 transition-all ${
+                          currentZoneStyle.underline
+                            ? 'bg-indigo-950 text-white border-indigo-950 shadow-2xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                        title="Souligné"
+                      >
+                        <Underline className="h-3.5 w-3.5" />
+                        Souligné
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateZoneTypography(activeTypoZone, {
+                            uppercase: !currentZoneStyle.uppercase,
+                          })
+                        }
+                        className={`px-2 py-1.5 rounded-lg border text-[11px] font-extrabold transition-all ${
+                          currentZoneStyle.uppercase
+                            ? 'bg-indigo-950 text-white border-indigo-950 shadow-2xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                        title="Forcer en MAJUSCULES"
+                      >
+                        AA
+                      </button>
+                    </div>
+
+                    {/* Sélecteur de couleur libre */}
+                    <label
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 cursor-pointer"
+                      title="Choisir une couleur personnalisée"
+                    >
+                      <input
+                        type="color"
+                        value={currentZoneStyle.color}
+                        onChange={(e) =>
+                          updateZoneTypography(activeTypoZone, { color: e.target.value })
+                        }
+                        className="h-5 w-5 rounded border-0 cursor-pointer bg-transparent"
+                      />
+                      <span className="text-[10.5px] font-mono font-bold text-slate-700 uppercase">
+                        {currentZoneStyle.color}
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Pastilles de couleurs rapides */}
+                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                    <span className="text-[10px] font-bold text-slate-500 mr-1">Couleur :</span>
+                    {QUICK_COLOR_PALETTE.map((c) => (
+                      <button
+                        key={c.hex}
+                        type="button"
+                        onClick={() => updateZoneTypography(activeTypoZone, { color: c.hex })}
+                        className={`h-5 w-5 rounded-full border transition-transform ${
+                          currentZoneStyle.color.toUpperCase() === c.hex.toUpperCase()
+                            ? 'scale-125 ring-2 ring-indigo-500 border-white'
+                            : 'border-slate-300 hover:scale-110'
+                        }`}
+                        style={{ backgroundColor: c.hex }}
+                        title={c.name}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Si la zone active est le Bandeau Titre, proposer aussi la couleur de fond du bandeau */}
+                  {activeTypoZone === 'bannerTitle' && (
+                    <div className="flex items-center gap-1.5 flex-wrap pt-1.5 border-t border-slate-200/80">
+                      <span className="text-[10px] font-bold text-slate-600 mr-1">
+                        Fond du bandeau :
+                      </span>
+                      {BANNER_BG_PALETTE.map((bg) => (
+                        <button
+                          key={bg.hex}
+                          type="button"
+                          onClick={() =>
+                            setTypographyConfig((prev) => ({
+                              ...prev,
+                              bannerBgColor: bg.hex,
+                            }))
+                          }
+                          className={`h-5 px-2 rounded-md border text-[9.5px] font-bold transition-all ${
+                            typographyConfig.bannerBgColor.toUpperCase() === bg.hex.toUpperCase()
+                              ? 'ring-2 ring-indigo-600 border-indigo-600 text-slate-900'
+                              : 'border-slate-300 text-slate-700'
+                          }`}
+                          style={{ backgroundColor: bg.hex }}
+                        >
+                          {bg.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* COLONNE DROITE (7 cols) : Aperçu Temps Réel + Saisie Élève par Élève (Enregistrer -> Suivant) */}
@@ -1579,7 +2008,10 @@ export function SchoolIdCardStudioModal({
                       <div className="flex items-start justify-between gap-2">
                         {/* Gauche : Sigle Ministère (MEPST ou personnalisé ou blanc) + Logo École (ou Emblème RT ou blanc) */}
                         <div className="flex flex-col items-center shrink-0 min-w-[44px]">
-                          <div className="font-serif font-black text-[13px] leading-none tracking-tight h-[14px]">
+                          <div
+                            className="leading-none tracking-tight h-[14px]"
+                            style={getZoneCssStyle(typographyConfig.headerOfficial, 13, '#0F172A')}
+                          >
                             {ministryAcronym.trim().toUpperCase() === 'MEPST' ? (
                               <>
                                 <span className="text-slate-950">ME</span>
@@ -1588,7 +2020,7 @@ export function SchoolIdCardStudioModal({
                                 <span className="text-blue-700">T</span>
                               </>
                             ) : ministryAcronym.trim().length > 0 ? (
-                              <span className="text-slate-950">
+                              <span style={getZoneCssStyle(typographyConfig.headerOfficial, 12.5)}>
                                 {ministryAcronym.trim().slice(0, 10)}
                               </span>
                             ) : null}
@@ -1616,14 +2048,28 @@ export function SchoolIdCardStudioModal({
 
                         {/* Centre + Droite */}
                         <div className="flex-1 flex flex-col">
-                          <div className="text-right font-serif leading-tight min-h-[22px]">
+                          <div className="text-right leading-tight min-h-[22px]">
                             {republicTitle.trim() && (
-                              <div className="text-[10.5px] font-black tracking-tight text-slate-950 uppercase">
+                              <div
+                                className="tracking-tight"
+                                style={getZoneCssStyle(
+                                  typographyConfig.headerOfficial,
+                                  10.5,
+                                  '#0F172A'
+                                )}
+                              >
                                 {republicTitle}
                               </div>
                             )}
                             {republicMotto.trim() && (
-                              <div className="text-[9.5px] font-bold text-slate-900 pr-2">
+                              <div
+                                className="pr-2"
+                                style={getZoneCssStyle(
+                                  typographyConfig.headerOfficial,
+                                  9.5,
+                                  '#0F172A'
+                                )}
+                              >
                                 {republicMotto}
                               </div>
                             )}
@@ -1631,19 +2077,30 @@ export function SchoolIdCardStudioModal({
 
                           <div className="text-center mt-0.5 space-y-0.5">
                             {inspectionName.trim() && (
-                              <div className="font-serif font-black text-[10.5px] text-[#0F1D5F] uppercase tracking-wide truncate">
+                              <div
+                                className="tracking-wide truncate"
+                                style={getZoneCssStyle(typographyConfig.headerOfficial, 10.5)}
+                              >
                                 {inspectionName}
                               </div>
                             )}
                             {schoolNameOverride.trim() && (
-                              <div className="font-serif font-black text-[15px] leading-none text-[#B41218] uppercase tracking-tight truncate">
+                              <div
+                                className="leading-none tracking-tight truncate"
+                                style={getZoneCssStyle(typographyConfig.schoolName, 15)}
+                              >
                                 {schoolNameOverride}
                               </div>
                             )}
                             {examCenter.trim() && (
-                              <div className="font-serif font-extrabold text-[11px] leading-tight">
+                              <div
+                                className="leading-tight"
+                                style={getZoneCssStyle(typographyConfig.headerOfficial, 11)}
+                              >
                                 <span className="text-slate-950">Centre d&apos;Ecrit: </span>
-                                <span className="text-[#192AB9]">{examCenter}</span>
+                                <span style={{ color: typographyConfig.headerOfficial.color }}>
+                                  {examCenter}
+                                </span>
                               </div>
                             )}
                           </div>
@@ -1704,30 +2161,43 @@ export function SchoolIdCardStudioModal({
                       {/* Informations d'état civil (Droite) */}
                       <div className="col-span-8 flex flex-col justify-between pb-1.5 pr-1.5">
                         <div>
-                          {/* Bandeau pêche CARTE D'IDENTITE SCOLAIRE */}
-                          <div className="bg-[#FDE0C6] py-0.5 px-2 text-center border-b border-amber-200/80 min-h-[20px]">
+                          {/* Bandeau CARTE D'IDENTITE SCOLAIRE */}
+                          <div
+                            className="py-0.5 px-2 text-center border-b border-amber-200/80 min-h-[20px]"
+                            style={{ backgroundColor: typographyConfig.bannerBgColor || '#FDE0C6' }}
+                          >
                             {cardBannerTitle.trim() && (
-                              <span className="font-serif font-black italic text-[11.5px] text-[#122AB9] underline decoration-[#122AB9] tracking-tight">
+                              <span
+                                className="tracking-tight"
+                                style={getZoneCssStyle(typographyConfig.bannerTitle, 11.5)}
+                              >
                                 {cardBannerTitle}
                               </span>
                             )}
                           </div>
 
-                          <div className="px-2 pt-1.5 space-y-0.5 font-serif text-[12px] leading-snug">
+                          <div className="px-2 pt-1.5 space-y-0.5 leading-snug">
                             <div className="truncate">
-                              <span className="font-black text-slate-950">Nom: </span>
-                              <span className="font-black text-[#99121C] uppercase">
+                              <span style={getZoneCssStyle(typographyConfig.studentDetails, 12)}>
+                                Nom:{' '}
+                              </span>
+                              <span
+                                className="uppercase"
+                                style={getZoneCssStyle(typographyConfig.studentName, 12)}
+                              >
                                 {activeStudent.last_name}
                               </span>
                             </div>
                             <div className="truncate">
-                              <span className="font-black text-slate-950">Prénoms: </span>
-                              <span className="font-black text-[#99121C]">
+                              <span style={getZoneCssStyle(typographyConfig.studentDetails, 12)}>
+                                Prénoms:{' '}
+                              </span>
+                              <span style={getZoneCssStyle(typographyConfig.studentName, 12)}>
                                 {activeStudent.first_name}
                               </span>
                             </div>
-                            <div className="truncate text-[11.5px]">
-                              <span className="font-black text-slate-950">
+                            <div className="truncate">
+                              <span style={getZoneCssStyle(typographyConfig.studentDetails, 11.5)}>
                                 Né (e) le{' '}
                                 {activeStudent.date_of_birth
                                   ? new Date(activeStudent.date_of_birth).toLocaleDateString(
@@ -1741,9 +2211,25 @@ export function SchoolIdCardStudioModal({
                             </div>
                             <div className="flex items-center justify-between">
                               <div>
-                                <span className="font-black text-[#D94619]">Sexe </span>
-                                <span className="font-black text-slate-950">: </span>
-                                <span className="font-black text-[#122AB9]">
+                                <span
+                                  style={getZoneCssStyle(
+                                    typographyConfig.studentDetails,
+                                    12,
+                                    '#D94619'
+                                  )}
+                                >
+                                  Sexe{' '}
+                                </span>
+                                <span style={getZoneCssStyle(typographyConfig.studentDetails, 12)}>
+                                  :{' '}
+                                </span>
+                                <span
+                                  style={getZoneCssStyle(
+                                    typographyConfig.studentName,
+                                    12,
+                                    '#122AB9'
+                                  )}
+                                >
                                   {activeStudent.gender || '—'}
                                 </span>
                               </div>
@@ -1756,17 +2242,32 @@ export function SchoolIdCardStudioModal({
 
                         {/* Bas de la carte : Année scolaire + Classe + Vrai Cachet/Signature (ou blanc) + Directeur */}
                         <div className="px-2 pt-1 flex items-end justify-between relative">
-                          <div className="font-serif leading-tight">
-                            <div className="italic font-black text-[11px] underline decoration-[#122AB9]">
+                          <div className="leading-tight">
+                            <div
+                              className="underline decoration-[#122AB9]"
+                              style={getZoneCssStyle(typographyConfig.footerInfo, 11, '#0F172A')}
+                            >
                               <span className="text-slate-950">Année </span>
                               <span className="text-[#122AB9]">Scolaire</span>
                             </div>
-                            <div className="italic font-black text-[13px] text-[#A5181C] pl-1 min-h-[16px]">
+                            <div
+                              className="pl-1 min-h-[16px]"
+                              style={getZoneCssStyle(typographyConfig.footerInfo, 13)}
+                            >
                               {cardAcademicYear}
                             </div>
-                            <div className="italic text-[12px] mt-0.5">
+                            <div
+                              className="mt-0.5"
+                              style={getZoneCssStyle(typographyConfig.footerInfo, 12, '#0F172A')}
+                            >
                               <span className="text-slate-950 font-semibold">Classe : </span>
-                              <span className="font-black text-[#192AB9]">
+                              <span
+                                style={getZoneCssStyle(
+                                  typographyConfig.footerInfo,
+                                  12,
+                                  '#192AB9'
+                                )}
+                              >
                                 {classNameOverride || className}
                               </span>
                             </div>
@@ -1803,7 +2304,10 @@ export function SchoolIdCardStudioModal({
                             </div>
 
                             {directorName.trim() && (
-                              <div className="font-serif italic font-black text-[11px] text-[#A5181C] leading-none mt-0.5">
+                              <div
+                                className="leading-none mt-0.5"
+                                style={getZoneCssStyle(typographyConfig.footerInfo, 11)}
+                              >
                                 {directorName}
                               </div>
                             )}
@@ -1945,7 +2449,23 @@ export function SchoolIdCardStudioModal({
                     </strong>
                   </span>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      disabled={isGenerating}
+                      onClick={() =>
+                        handleGenerateSheets(
+                          [activeStudent],
+                          `${activeStudent.last_name}_${activeStudent.first_name}`
+                        )
+                      }
+                      className="px-3 py-2 rounded-xl border border-indigo-200 bg-white hover:bg-indigo-50 text-indigo-900 text-xs font-extrabold transition-colors flex items-center gap-1.5"
+                      title="Générer uniquement la carte de cet élève en PDF"
+                    >
+                      <Printer className="h-3.5 w-3.5 text-indigo-600" />
+                      Carte de cet élève (PDF)
+                    </button>
+
                     <button
                       type="button"
                       disabled={isSavingCurrent}
@@ -2274,13 +2794,15 @@ export function SchoolIdCardStudioModal({
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap w-full sm:w-auto justify-end">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors"
-            >
-              Fermer
-            </button>
+            {mode === 'modal' && onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors"
+              >
+                Fermer
+              </button>
+            )}
 
             <button
               type="button"
