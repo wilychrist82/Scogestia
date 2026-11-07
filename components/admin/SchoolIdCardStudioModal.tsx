@@ -135,6 +135,31 @@ const DEFAULT_CARD_THEMES: CardThemeOption[] = [
     name: 'Thème 10 — Royal Fleur de Lys & Or',
     url: '/card-themes/theme-10-fleur-de-lys-or.jpg',
   },
+  {
+    id: 'theme-11',
+    name: 'Thème 11 — Futuriste Azur & Croissance',
+    url: '/card-themes/theme-11-futuriste-azur.jpg',
+  },
+  {
+    id: 'theme-12',
+    name: "Thème 12 — Médaille d'Or & Bleu Nuit",
+    url: '/card-themes/theme-12-medaille-or-marine.jpg',
+  },
+  {
+    id: 'theme-13',
+    name: 'Thème 13 — Cadre Turquoise & Marine',
+    url: '/card-themes/theme-13-cadre-turquoise-marine.jpg',
+  },
+  {
+    id: 'theme-14',
+    name: 'Thème 14 — Géométrique Bleu & Orange',
+    url: '/card-themes/theme-14-geometrique-bleu-orange.jpg',
+  },
+  {
+    id: 'theme-15',
+    name: 'Thème 15 — Tech Institutionnel Bleu & Or',
+    url: '/card-themes/theme-15-tech-bleu-or.jpg',
+  },
 ]
 
 const MONTHS_FR = [
