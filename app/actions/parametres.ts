@@ -95,3 +95,48 @@ export async function updateUserProfile(prevState: ActionState, formData: FormDa
     return { error: message };
   }
 }
+
+export async function updateSchoolAssetUrl(
+  assetType: 'logo' | 'stamp' | 'signature',
+  url: string | null
+): Promise<ActionState> {
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) throw new Error('Non authentifié')
+
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_school_roles')
+      .select('school_id, role')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (roleError || !roleData?.school_id) {
+      throw new Error('Établissement introuvable')
+    }
+
+    const updatePayload =
+      assetType === 'logo'
+        ? { logo_url: url }
+        : assetType === 'stamp'
+          ? { stamp_url: url }
+          : { signature_url: url }
+
+    const { error } = await supabase
+      .from('schools')
+      .update(updatePayload)
+      .eq('id', roleData.school_id)
+
+    if (error) throw error
+
+    revalidatePath('/admin/parametres')
+    revalidatePath('/admin/classes')
+    revalidatePath('/admin/eleves')
+    return { success: true }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erreur inconnue'
+    return { error: message }
+  }
+}

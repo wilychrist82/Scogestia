@@ -36,36 +36,95 @@ export interface StudentDocumentData {
 }
 
 /**
- * Convertit n'importe quelle URL d'image (PNG, JPG, WebP) en PNG Base64 compatible jsPDF
+ * Convertit n'importe quelle URL d'image (PNG, JPG, WebP, DataURL) en PNG Base64 compatible jsPDF.
+ * Si `transparentWhiteAndCrop` est activé (pour les captures de cachets et signatures),
+ * supprime automatiquement le fond blanc papier et recadre au plus près du dessin.
  */
-async function loadImageAsPngDataUrl(url?: string | null): Promise<string | null> {
+async function loadImageAsPngDataUrl(
+  url?: string | null,
+  options?: { transparentWhiteAndCrop?: boolean }
+): Promise<string | null> {
   if (!url || typeof window === 'undefined') return null
   return new Promise((resolve) => {
     const img = new Image()
-    img.crossOrigin = 'anonymous'
-    const timeout = setTimeout(() => resolve(null), 4500)
+    if (!url.startsWith('data:')) {
+      img.crossOrigin = 'anonymous'
+    }
+    const timeout = setTimeout(() => resolve(null), 6500)
 
     img.onload = () => {
       clearTimeout(timeout)
       try {
+        const w = img.naturalWidth || 300
+        const h = img.naturalHeight || 300
         const canvas = document.createElement('canvas')
-        canvas.width = img.naturalWidth || 300
-        canvas.height = img.naturalHeight || 300
+        canvas.width = w
+        canvas.height = h
         const ctx = canvas.getContext('2d')
         if (!ctx) {
           resolve(null)
           return
         }
-        ctx.drawImage(img, 0, 0)
+        ctx.drawImage(img, 0, 0, w, h)
+
+        if (options?.transparentWhiteAndCrop) {
+          const imgData = ctx.getImageData(0, 0, w, h)
+          const d = imgData.data
+          let minX = w
+          let minY = h
+          let maxX = 0
+          let maxY = 0
+          let foundInk = false
+
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              const idx = (y * w + x) * 4
+              const r = d[idx]
+              const g = d[idx + 1]
+              const b = d[idx + 2]
+              const a = d[idx + 3]
+
+              if (a > 0 && r > 234 && g > 234 && b > 234) {
+                d[idx + 3] = 0
+              } else if (a > 25) {
+                foundInk = true
+                if (x < minX) minX = x
+                if (y < minY) minY = y
+                if (x > maxX) maxX = x
+                if (y > maxY) maxY = y
+              }
+            }
+          }
+
+          ctx.putImageData(imgData, 0, 0)
+
+          if (foundInk && maxX > minX && maxY > minY) {
+            const pad = 4
+            const cropX = Math.max(0, minX - pad)
+            const cropY = Math.max(0, minY - pad)
+            const cropW = Math.min(w - cropX, maxX - minX + 1 + pad * 2)
+            const cropH = Math.min(h - cropY, maxY - minY + 1 + pad * 2)
+            const cropped = document.createElement('canvas')
+            cropped.width = cropW
+            cropped.height = cropH
+            const croppedCtx = cropped.getContext('2d')
+            if (croppedCtx) {
+              croppedCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH)
+              resolve(cropped.toDataURL('image/png'))
+              return
+            }
+          }
+        }
+
         resolve(canvas.toDataURL('image/png'))
       } catch {
-        resolve(null)
+        resolve(url.startsWith('data:image/') ? url : null)
       }
     }
 
     img.onerror = () => {
       clearTimeout(timeout)
-      resolve(null)
+      resolve(url.startsWith('data:image/') ? url : null)
     }
 
     img.src = url
@@ -884,8 +943,8 @@ function drawStudentIdCardRecto(
 
   // 9. BAS DROITE DE LA COLONNE DROITE : Cachet + Signature (issus de Paramètres ou importés) + Nom du Directeur
   const stampCenterX = rightX + rightW - 18.5
-  const stampCenterY = bodyTopY + bodyH - 7.8
-  const stampRadius = 6.6
+  const stampCenterY = bodyTopY + bodyH - 8.2
+  const stampRadius = 7.4
 
   if (assets.stampDataUrl) {
     try {
@@ -908,7 +967,7 @@ function drawStudentIdCardRecto(
 
   if (assets.signatureDataUrl) {
     try {
-      doc.addImage(assets.signatureDataUrl, 'PNG', rightX + rightW - 16, stampCenterY - 3.5, 14, 6.2)
+      doc.addImage(assets.signatureDataUrl, 'PNG', rightX + rightW - 17, stampCenterY - 3.8, 16, 7.2)
     } catch {
       // Ignore
     }
@@ -939,8 +998,8 @@ export async function generateStudentIdCardPDF(
     await Promise.all([
       loadImageAsPngDataUrl(data.avatarUrl),
       loadImageAsPngDataUrl(data.schoolLogoUrl),
-      loadImageAsPngDataUrl(data.schoolStampUrl),
-      loadImageAsPngDataUrl(data.schoolSignatureUrl),
+      loadImageAsPngDataUrl(data.schoolStampUrl, { transparentWhiteAndCrop: true }),
+      loadImageAsPngDataUrl(data.schoolSignatureUrl, { transparentWhiteAndCrop: true }),
       loadCardThemeAsPngDataUrl(data.themeBackgroundUrl),
     ])
 
@@ -991,8 +1050,8 @@ export async function generateClassStudentIdCardsPDF(
   const [logoDataUrl, stampDataUrl, signatureDataUrl, themeDataUrl, ...photoDataUrls] =
     await Promise.all([
       loadImageAsPngDataUrl(first.schoolLogoUrl),
-      loadImageAsPngDataUrl(first.schoolStampUrl),
-      loadImageAsPngDataUrl(first.schoolSignatureUrl),
+      loadImageAsPngDataUrl(first.schoolStampUrl, { transparentWhiteAndCrop: true }),
+      loadImageAsPngDataUrl(first.schoolSignatureUrl, { transparentWhiteAndCrop: true }),
       loadCardThemeAsPngDataUrl(first.themeBackgroundUrl),
       ...studentsData.map((s) => loadImageAsPngDataUrl(s.avatarUrl)),
     ])

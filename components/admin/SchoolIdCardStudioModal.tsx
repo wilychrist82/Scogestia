@@ -32,6 +32,127 @@ import {
   generateClassStudentIdCardsPDF,
   StudentDocumentData,
 } from '@/lib/pdf/student-documents'
+import { updateSchoolAssetUrl } from '@/app/actions/parametres'
+
+/**
+ * Traite n'importe quelle capture ou image (66 Ko, 90 Ko, jusqu'à 15 Mo) de Cachet, Signature ou Logo :
+ * - Supprime automatiquement le fond blanc papier sur les captures de cachet/signature
+ * - Recadre automatiquement les marges vides autour du cachet/signature pour qu'il soit bien grand et lisible
+ * - Retourne immédiatement un DataURL PNG haute netteté + un Blob PNG léger prêt à sauvegarder
+ */
+async function processAssetImageFile(
+  file: File,
+  type: 'logo' | 'stamp' | 'signature'
+): Promise<{ dataUrl: string; blob: Blob }> {
+  const rawDataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(new Error('Impossible de lire le fichier image'))
+    reader.readAsDataURL(file)
+  })
+
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      try {
+        const maxDim = 650
+        let w = img.naturalWidth || 300
+        let h = img.naturalHeight || 300
+        if (w > maxDim || h > maxDim) {
+          const ratio = Math.min(maxDim / w, maxDim / h)
+          w = Math.max(1, Math.round(w * ratio))
+          h = Math.max(1, Math.round(h * ratio))
+        }
+
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve({ dataUrl: rawDataUrl, blob: file })
+          return
+        }
+
+        ctx.drawImage(img, 0, 0, w, h)
+
+        // Pour un cachet ou une signature (souvent importé depuis une capture d'écran sur fond blanc/gris clair) :
+        // on rend le fond blanc transparent et on recadre au plus près du dessin !
+        if (type === 'stamp' || type === 'signature') {
+          const imgData = ctx.getImageData(0, 0, w, h)
+          const d = imgData.data
+          let minX = w
+          let minY = h
+          let maxX = 0
+          let maxY = 0
+          let foundInk = false
+
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              const idx = (y * w + x) * 4
+              const r = d[idx]
+              const g = d[idx + 1]
+              const b = d[idx + 2]
+              const a = d[idx + 3]
+
+              // Si le pixel est blanc ou gris très clair (fond papier d'une capture)
+              if (a > 0 && r > 234 && g > 234 && b > 234) {
+                d[idx + 3] = 0
+              } else if (a > 25) {
+                foundInk = true
+                if (x < minX) minX = x
+                if (y < minY) minY = y
+                if (x > maxX) maxX = x
+                if (y > maxY) maxY = y
+              }
+            }
+          }
+
+          ctx.putImageData(imgData, 0, 0)
+
+          if (foundInk && maxX > minX && maxY > minY) {
+            const pad = 6
+            const cropX = Math.max(0, minX - pad)
+            const cropY = Math.max(0, minY - pad)
+            const cropW = Math.min(w - cropX, maxX - minX + 1 + pad * 2)
+            const cropH = Math.min(h - cropY, maxY - minY + 1 + pad * 2)
+
+            const croppedCanvas = document.createElement('canvas')
+            croppedCanvas.width = cropW
+            croppedCanvas.height = cropH
+            const croppedCtx = croppedCanvas.getContext('2d')
+            if (croppedCtx) {
+              croppedCtx.drawImage(
+                canvas,
+                cropX,
+                cropY,
+                cropW,
+                cropH,
+                0,
+                0,
+                cropW,
+                cropH
+              )
+              const finalDataUrl = croppedCanvas.toDataURL('image/png')
+              croppedCanvas.toBlob((b) => {
+                resolve({ dataUrl: finalDataUrl, blob: b || file })
+              }, 'image/png')
+              return
+            }
+          }
+        }
+
+        const finalDataUrl = canvas.toDataURL('image/png')
+        canvas.toBlob((b) => {
+          resolve({ dataUrl: finalDataUrl, blob: b || file })
+        }, 'image/png')
+      } catch {
+        resolve({ dataUrl: rawDataUrl, blob: file })
+      }
+    }
+    img.onerror = () => resolve({ dataUrl: rawDataUrl, blob: file })
+    img.src = rawDataUrl
+  })
+}
 
 export type StudioStudentItem = {
   id: string
@@ -401,13 +522,30 @@ export function SchoolIdCardStudioModal({
   useEffect(() => {
     if (!isOpen) return
 
-    if (schoolInfo?.logo_url) setLogoUrl(schoolInfo.logo_url)
-    if (schoolInfo?.stamp_url) setStampUrl(schoolInfo.stamp_url)
-    if (schoolInfo?.signature_url) setSignatureUrl(schoolInfo.signature_url)
+    // Vérifier d'abord si l'utilisateur a déjà importé un cachet/signature/logo mémorisé localement
+    let localSaved: Record<string, any> = {}
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY)
+        if (raw) localSaved = JSON.parse(raw)
+      } catch {
+        // Ignore
+      }
+    }
+
+    if (localSaved.logoUrl) setLogoUrl(localSaved.logoUrl)
+    else if (schoolInfo?.logo_url) setLogoUrl(schoolInfo.logo_url)
+
+    if (localSaved.stampUrl) setStampUrl(localSaved.stampUrl)
+    else if (schoolInfo?.stamp_url) setStampUrl(schoolInfo.stamp_url)
+
+    if (localSaved.signatureUrl) setSignatureUrl(localSaved.signature_url)
+    else if (schoolInfo?.signature_url) setSignatureUrl(schoolInfo.signature_url)
+
     if (schoolInfo?.director_name) setDirectorName(schoolInfo.director_name)
     if (schoolInfo?.name) setSchoolNameOverride(schoolInfo.name)
 
-    // Requête directe vers `schools` pour être sûr à 100% d'avoir le cachet et la signature définis dans Paramètres
+    // Requête directe vers `user_school_roles` + `schools` pour récupérer les paramètres de l'école
     const fetchLatestSchoolSettings = async () => {
       try {
         const supabase = createClient()
@@ -416,13 +554,13 @@ export function SchoolIdCardStudioModal({
         } = await supabase.auth.getUser()
         if (!user) return
 
-        const { data: profile } = await supabase
-          .from('profiles')
+        const { data: roleRow } = await supabase
+          .from('user_school_roles')
           .select('school_id')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .maybeSingle()
 
-        const targetSchoolId = profile?.school_id || schoolInfo?.id
+        const targetSchoolId = roleRow?.school_id || schoolInfo?.id
         if (!targetSchoolId) return
         setSchoolId(targetSchoolId)
 
@@ -435,9 +573,11 @@ export function SchoolIdCardStudioModal({
           .maybeSingle()
 
         if (schoolRow) {
-          if (schoolRow.logo_url) setLogoUrl(schoolRow.logo_url)
-          if (schoolRow.stamp_url) setStampUrl(schoolRow.stamp_url)
-          if (schoolRow.signature_url) setSignatureUrl(schoolRow.signature_url)
+          if (!localSaved.logoUrl && schoolRow.logo_url) setLogoUrl(schoolRow.logo_url)
+          if (!localSaved.stampUrl && schoolRow.stamp_url) setStampUrl(schoolRow.stamp_url)
+          if (!localSaved.signatureUrl && schoolRow.signature_url) {
+            setSignatureUrl(schoolRow.signature_url)
+          }
           if (schoolRow.director_name) setDirectorName(schoolRow.director_name)
           if (schoolRow.name) setSchoolNameOverride(schoolRow.name)
           if (schoolRow.current_academic_year) {
@@ -450,7 +590,7 @@ export function SchoolIdCardStudioModal({
     }
 
     fetchLatestSchoolSettings()
-  }, [isOpen, schoolInfo])
+  }, [isOpen])
 
   // Charger les textes personnalisés mémorisés dans localStorage
   useEffect(() => {
@@ -465,6 +605,9 @@ export function SchoolIdCardStudioModal({
         if (parsed.inspectionName !== undefined) setInspectionName(parsed.inspectionName)
         if (parsed.examCenter !== undefined) setExamCenter(parsed.examCenter)
         if (parsed.cardBannerTitle !== undefined) setCardBannerTitle(parsed.cardBannerTitle)
+        if (parsed.logoUrl) setLogoUrl(parsed.logoUrl)
+        if (parsed.stampUrl) setStampUrl(parsed.stampUrl)
+        if (parsed.signatureUrl) setSignatureUrl(parsed.signatureUrl)
         if (typeof parsed.activeThemeIndex === 'number') {
           setActiveThemeIndex(parsed.activeThemeIndex)
         }
@@ -477,7 +620,11 @@ export function SchoolIdCardStudioModal({
     }
   }, [])
 
-  const persistHeaderConfig = () => {
+  const persistHeaderConfig = (overrides?: {
+    logoUrl?: string
+    stampUrl?: string
+    signatureUrl?: string
+  }) => {
     if (typeof window === 'undefined') return
     try {
       window.localStorage.setItem(
@@ -491,6 +638,10 @@ export function SchoolIdCardStudioModal({
           cardBannerTitle,
           activeThemeIndex,
           customThemes,
+          logoUrl: overrides?.logoUrl !== undefined ? overrides.logoUrl : logoUrl,
+          stampUrl: overrides?.stampUrl !== undefined ? overrides.stampUrl : stampUrl,
+          signatureUrl:
+            overrides?.signatureUrl !== undefined ? overrides.signatureUrl : signatureUrl,
         })
       )
     } catch {
@@ -498,50 +649,69 @@ export function SchoolIdCardStudioModal({
     }
   }
 
-  // Upload direct du Logo, du Cachet ou de la Signature depuis un document + sauvegarde dans `schools` (Paramètres)
+  // Upload direct du Logo, du Cachet ou de la Signature (supporte captures 66 Ko, 90 Ko, jusqu'à 15 Mo)
   const handleSchoolAssetUpload = async (
     type: 'logo' | 'stamp' | 'signature',
     file?: File | null
   ) => {
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("L'image est trop volumineuse (max 5 Mo).")
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("L'image est trop volumineuse (max 15 Mo).")
       return
     }
 
     try {
       setUploadingAssetType(type)
+
+      // 1. Traitement immédiat côté navigateur (détourage du fond blanc de capture + recadrage)
+      const processed = await processAssetImageFile(file, type)
+
+      // Affichage immédiat sur la carte + mémorisation locale garantie
+      if (type === 'logo') {
+        setLogoUrl(processed.dataUrl)
+        persistHeaderConfig({ logoUrl: processed.dataUrl })
+      } else if (type === 'stamp') {
+        setStampUrl(processed.dataUrl)
+        persistHeaderConfig({ stampUrl: processed.dataUrl })
+      } else {
+        setSignatureUrl(processed.dataUrl)
+        persistHeaderConfig({ signatureUrl: processed.dataUrl })
+      }
+
+      // 2. Envoi du PNG optimisé sur Supabase Storage + synchronisation avec `schools` (Paramètres)
       const supabase = createClient()
-      const ext = file.name.split('.').pop() || 'png'
       const folder = schoolId ? `school_${schoolId}/${type}` : `school_assets/${type}`
-      const fileName = `${folder}/${type}_${Date.now()}.${ext}`
+      const fileName = `${folder}/${type}_${Date.now()}.png`
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true })
+        .upload(fileName, processed.blob, {
+          upsert: true,
+          contentType: 'image/png',
+        })
 
-      if (uploadError) throw uploadError
+      if (!uploadError) {
+        const { data: publicUrlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName)
 
-      const { data: publicUrlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName)
-
-      const url = publicUrlData.publicUrl
-
-      if (type === 'logo') setLogoUrl(url)
-      if (type === 'stamp') setStampUrl(url)
-      if (type === 'signature') setSignatureUrl(url)
-
-      // Sauvegarder automatiquement dans la table `schools` pour que ce soit lié à Paramètres
-      if (schoolId) {
-        const updatePayload =
-          type === 'logo'
-            ? { logo_url: url }
-            : type === 'stamp'
-              ? { stamp_url: url }
-              : { signature_url: url }
-
-        await supabase.from('schools').update(updatePayload).eq('id', schoolId)
+        const remoteUrl = publicUrlData?.publicUrl
+        if (remoteUrl) {
+          if (type === 'logo') {
+            setLogoUrl(remoteUrl)
+            persistHeaderConfig({ logoUrl: remoteUrl })
+          } else if (type === 'stamp') {
+            setStampUrl(remoteUrl)
+            persistHeaderConfig({ stampUrl: remoteUrl })
+          } else {
+            setSignatureUrl(remoteUrl)
+            persistHeaderConfig({ signatureUrl: remoteUrl })
+          }
+          await updateSchoolAssetUrl(type, remoteUrl)
+        }
+      } else {
+        // Même si le bucket refuse, on sauvegarde le DataURL dans `schools` pour que ça marche partout
+        await updateSchoolAssetUrl(type, processed.dataUrl)
       }
 
       const labelFr =
@@ -550,8 +720,7 @@ export function SchoolIdCardStudioModal({
           : type === 'stamp'
             ? 'Cachet officiel'
             : 'Signature du Directeur'
-      toast.success(`${labelFr} importé et synchronisé avec Paramètres !`)
-      onStudentsUpdated?.()
+      toast.success(`${labelFr} importé et appliqué sur la carte !`)
     } catch (err) {
       console.error(err)
       toast.error("Erreur lors de l'import du fichier.")
@@ -1074,9 +1243,11 @@ export function SchoolIdCardStudioModal({
                           accept="image/*"
                           className="hidden"
                           disabled={uploadingAssetType === 'logo'}
-                          onChange={(e) =>
-                            handleSchoolAssetUpload('logo', e.target.files?.[0])
-                          }
+                          onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            e.currentTarget.value = ''
+                            handleSchoolAssetUpload('logo', f)
+                          }}
                         />
                         {uploadingAssetType === 'logo' ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
@@ -1090,6 +1261,8 @@ export function SchoolIdCardStudioModal({
                           type="button"
                           onClick={() => {
                             setLogoUrl('')
+                            persistHeaderConfig({ logoUrl: '' })
+                            updateSchoolAssetUrl('logo', null)
                             setShowVectorEmblemIfNoLogo(false)
                           }}
                           className="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
@@ -1134,9 +1307,11 @@ export function SchoolIdCardStudioModal({
                           accept="image/*"
                           className="hidden"
                           disabled={uploadingAssetType === 'stamp'}
-                          onChange={(e) =>
-                            handleSchoolAssetUpload('stamp', e.target.files?.[0])
-                          }
+                          onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            e.currentTarget.value = ''
+                            handleSchoolAssetUpload('stamp', f)
+                          }}
                         />
                         {uploadingAssetType === 'stamp' ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
@@ -1150,6 +1325,8 @@ export function SchoolIdCardStudioModal({
                           type="button"
                           onClick={() => {
                             setStampUrl('')
+                            persistHeaderConfig({ stampUrl: '' })
+                            updateSchoolAssetUrl('stamp', null)
                             setShowVectorStampIfNoStamp(false)
                           }}
                           className="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
@@ -1194,9 +1371,11 @@ export function SchoolIdCardStudioModal({
                           accept="image/*"
                           className="hidden"
                           disabled={uploadingAssetType === 'signature'}
-                          onChange={(e) =>
-                            handleSchoolAssetUpload('signature', e.target.files?.[0])
-                          }
+                          onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            e.currentTarget.value = ''
+                            handleSchoolAssetUpload('signature', f)
+                          }}
                         />
                         {uploadingAssetType === 'signature' ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
@@ -1208,7 +1387,11 @@ export function SchoolIdCardStudioModal({
                       {signatureUrl && (
                         <button
                           type="button"
-                          onClick={() => setSignatureUrl('')}
+                          onClick={() => {
+                            setSignatureUrl('')
+                            persistHeaderConfig({ signatureUrl: '' })
+                            updateSchoolAssetUrl('signature', null)
+                          }}
                           className="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
                           title="Retirer la signature (laisser blanc)"
                         >
@@ -1590,13 +1773,13 @@ export function SchoolIdCardStudioModal({
                           </div>
 
                           {/* Zone Cachet + Signature + Nom du Directeur (si rien n'est saisi, reste blanc !) */}
-                          <div className="flex flex-col items-end min-w-[90px] min-h-[54px] justify-end">
-                            <div className="relative flex items-center justify-center h-12 w-24">
+                          <div className="flex flex-col items-end min-w-[100px] min-h-[58px] justify-end">
+                            <div className="relative flex items-center justify-center h-14 w-28">
                               {stampUrl ? (
                                 <img
                                   src={stampUrl}
                                   alt="Cachet officiel"
-                                  className="h-12 w-12 object-contain"
+                                  className="h-14 w-16 object-contain"
                                 />
                               ) : showVectorStampIfNoStamp ? (
                                 <div className="h-12 w-12 rounded-full border-2 border-[#122ABE] flex flex-col items-center justify-center text-[#122ABE] text-center p-0.5 bg-white/60">
@@ -1614,7 +1797,7 @@ export function SchoolIdCardStudioModal({
                                 <img
                                   src={signatureUrl}
                                   alt="Signature Directeur"
-                                  className="h-9 w-16 object-contain absolute right-0 bottom-0"
+                                  className="h-11 w-20 object-contain absolute right-0 bottom-0 pointer-events-none"
                                 />
                               )}
                             </div>

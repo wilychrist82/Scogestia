@@ -22,11 +22,12 @@ export function ImageUpload({ bucket, folder = 'uploads', defaultUrl, onUploadSu
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
 
-    // Vérification de base de la taille et du type
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Le fichier est trop volumineux (max 5 Mo).")
+    // Vérification de base de la taille (jusqu'à 15 Mo) et du type
+    if (file.size > 15 * 1024 * 1024) {
+      setError("Le fichier est trop volumineux (max 15 Mo).")
       return
     }
     if (!file.type.startsWith('image/')) {
@@ -38,30 +39,37 @@ export function ImageUpload({ bucket, folder = 'uploads', defaultUrl, onUploadSu
     setError(null)
 
     try {
-      // Prévisualisation locale
-      const objectUrl = URL.createObjectURL(file)
-      setPreview(objectUrl)
+      // Lecture immédiate en DataURL pour affichage instantané garanti
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = () => reject(new Error('Lecture du fichier impossible'))
+        reader.readAsDataURL(file)
+      })
+      setPreview(dataUrl)
 
-      const fileExt = file.name.split('.').pop()
+      const fileExt = (file.name.split('.').pop() || 'png').replace(/[^a-zA-Z0-9]/g, '')
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`
       const filePath = `${folder}/${fileName}`
 
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(filePath, file)
+        .upload(filePath, file, { upsert: true })
 
-      if (uploadError) throw uploadError
+      if (!uploadError) {
+        const { data: publicUrlData } = supabase.storage
+          .from(bucket)
+          .getPublicUrl(filePath)
 
-      const { data: publicUrlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filePath)
-
-      if (publicUrlData?.publicUrl) {
-        setPreview(publicUrlData.publicUrl)
-        if (onUploadSuccess) onUploadSuccess(publicUrlData.publicUrl)
-      } else {
-        throw new Error("Impossible de récupérer l'URL de l'image.")
+        if (publicUrlData?.publicUrl) {
+          setPreview(publicUrlData.publicUrl)
+          if (onUploadSuccess) onUploadSuccess(publicUrlData.publicUrl)
+          return
+        }
       }
+
+      // Fallback garanti sur le DataURL si le bucket bloque
+      if (onUploadSuccess) onUploadSuccess(dataUrl)
     } catch (err: any) {
       setError(err.message)
     } finally {
