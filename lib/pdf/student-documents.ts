@@ -25,6 +25,13 @@ export interface StudentDocumentData {
   schoolSignatureUrl?: string | null
   inspectionName?: string | null
   examCenter?: string | null
+  ministryAcronym?: string | null
+  republicTitle?: string | null
+  republicMotto?: string | null
+  cardBannerTitle?: string | null
+  examCenterLabel?: string | null
+  hideFallbackEmblem?: boolean
+  hideFallbackStamp?: boolean
 }
 
 /**
@@ -497,21 +504,30 @@ function drawStudentIdCardRecto(
   doc.setFillColor(248, 250, 252)
   doc.rect(innerX, innerY + headerH, innerW, innerH - headerH, 'F')
 
-  // 2. EN-TÊTE GAUCHE : "MEPST" multicolore + Emblème RT (ou Logo école)
+  // 2. EN-TÊTE GAUCHE : Sigle du Ministère (ex: "MEPST" ou personnalisé, ou vide si effacé) + Logo école (ou Emblème RT)
   const mepstY = innerY + 3.2
-  doc.setFont('times', 'bold')
-  doc.setFontSize(7.6)
+  const ministryStr =
+    data.ministryAcronym !== undefined ? (data.ministryAcronym || '').trim() : 'MEPST'
 
-  doc.setTextColor(15, 23, 42)
-  doc.text('ME', innerX + 1.4, mepstY)
-  doc.setTextColor(210, 16, 52) // P en Rouge
-  doc.text('P', innerX + 6.3, mepstY)
-  doc.setTextColor(234, 138, 0) // S en Jaune/Or
-  doc.text('S', innerX + 8.2, mepstY)
-  doc.setTextColor(29, 78, 216) // T en Bleu
-  doc.text('T', innerX + 9.9, mepstY)
+  if (ministryStr.toUpperCase() === 'MEPST') {
+    doc.setFont('times', 'bold')
+    doc.setFontSize(7.6)
+    doc.setTextColor(15, 23, 42)
+    doc.text('ME', innerX + 1.4, mepstY)
+    doc.setTextColor(210, 16, 52) // P en Rouge
+    doc.text('P', innerX + 6.3, mepstY)
+    doc.setTextColor(234, 138, 0) // S en Jaune/Or
+    doc.text('S', innerX + 8.2, mepstY)
+    doc.setTextColor(29, 78, 216) // T en Bleu
+    doc.text('T', innerX + 9.9, mepstY)
+  } else if (ministryStr.length > 0) {
+    doc.setFont('times', 'bold')
+    doc.setFontSize(7.2)
+    doc.setTextColor(15, 23, 42)
+    doc.text(ministryStr.slice(0, 12), innerX + 1.4, mepstY)
+  }
 
-  // Emblème RT ou Logo de l'établissement sous MEPST
+  // Logo de l'établissement (ou Emblème RT si activé, sinon reste blanc) sous le sigle du ministère
   const emblemCenterX = innerX + 7.2
   const emblemCenterY = innerY + 10.1
   if (assets.logoDataUrl) {
@@ -522,59 +538,89 @@ function drawStudentIdCardRecto(
       doc.circle(emblemCenterX, emblemCenterY, 5.6, 'FD')
       doc.addImage(assets.logoDataUrl, 'PNG', emblemCenterX - 4.8, emblemCenterY - 4.8, 9.6, 9.6)
     } catch {
-      drawTogoleseEmblemVector(doc, emblemCenterX, emblemCenterY, 5.4, 6.0)
+      if (!data.hideFallbackEmblem) {
+        drawTogoleseEmblemVector(doc, emblemCenterX, emblemCenterY, 5.4, 6.0)
+      }
     }
-  } else {
+  } else if (!data.hideFallbackEmblem) {
     drawTogoleseEmblemVector(doc, emblemCenterX, emblemCenterY, 5.4, 6.0)
   }
 
   // 3. EN-TÊTE DROITE : REPUBLIQUE TOGOLAISE / Travail-Liberté-Patrie
   const rightHeaderCenterX = innerX + innerW - 22.5
-  doc.setTextColor(15, 23, 42)
-  doc.setFont('times', 'bold')
-  doc.setFontSize(6.6)
-  doc.text('REPUBLIQUE TOGOLAISE', rightHeaderCenterX, innerY + 3.1, { align: 'center' })
+  const republicStr =
+    data.republicTitle !== undefined
+      ? (data.republicTitle || '').trim()
+      : 'REPUBLIQUE TOGOLAISE'
+  const mottoStr =
+    data.republicMotto !== undefined
+      ? (data.republicMotto || '').trim()
+      : 'Travail-Liberté-Patrie'
 
-  doc.setFont('times', 'bold')
-  doc.setFontSize(5.7)
-  doc.text('Travail-Liberté-Patrie', rightHeaderCenterX, innerY + 5.6, { align: 'center' })
+  if (republicStr) {
+    doc.setTextColor(15, 23, 42)
+    doc.setFont('times', 'bold')
+    doc.setFontSize(6.6)
+    doc.text(republicStr.slice(0, 28), rightHeaderCenterX, innerY + 3.1, { align: 'center' })
+  }
+
+  if (mottoStr) {
+    doc.setTextColor(15, 23, 42)
+    doc.setFont('times', 'bold')
+    doc.setFontSize(5.7)
+    doc.text(mottoStr.slice(0, 32), rightHeaderCenterX, innerY + 5.6, { align: 'center' })
+  }
 
   // 4. EN-TÊTE CENTRAL : IEPP / Inspection + NOM DE L'ÉCOLE (Rouge) + Centre d'Écrit
   const titleCenterX = innerX + innerW * 0.54
 
-  // Ligne Inspection / DRE / IEPP
-  const inspectionText = (
-    data.inspectionName?.trim() ||
-    (data.schoolCity ? `DRE / INSPECTION — ${data.schoolCity.toUpperCase()}` : 'MINISTÈRE DES ENSEIGNEMENTS (MEPST)')
-  ).toUpperCase()
-  doc.setFont('times', 'bold')
-  doc.setFontSize(6.4)
-  doc.setTextColor(15, 29, 95) // Bleu marine profond
-  doc.text(inspectionText.slice(0, 38), titleCenterX, innerY + 8.7, { align: 'center' })
+  // Ligne Inspection / DRE / IEPP (si vide, reste blanc)
+  const inspectionText =
+    data.inspectionName !== undefined
+      ? (data.inspectionName || '').trim().toUpperCase()
+      : (data.schoolCity
+          ? `DRE / INSPECTION — ${data.schoolCity.toUpperCase()}`
+          : 'MINISTÈRE DES ENSEIGNEMENTS (MEPST)'
+        ).toUpperCase()
+
+  if (inspectionText) {
+    doc.setFont('times', 'bold')
+    doc.setFontSize(6.4)
+    doc.setTextColor(15, 29, 95) // Bleu marine profond
+    doc.text(inspectionText.slice(0, 38), titleCenterX, innerY + 8.7, { align: 'center' })
+  }
 
   // Nom de l'Établissement en Grand Rouge Cramoisi
-  const schoolUpper = (data.schoolName || 'ÉTABLISSEMENT SCOLAIRE').toUpperCase()
-  const schoolFontSize = schoolUpper.length > 28 ? 7.4 : schoolUpper.length > 22 ? 8.4 : 9.5
-  doc.setFont('times', 'bold')
-  doc.setFontSize(schoolFontSize)
-  doc.setTextColor(180, 18, 24) // Rouge officiel
-  doc.text(schoolUpper.slice(0, 34), titleCenterX, innerY + 12.4, { align: 'center' })
+  const schoolUpper = (data.schoolName || '').trim().toUpperCase()
+  if (schoolUpper) {
+    const schoolFontSize = schoolUpper.length > 28 ? 7.4 : schoolUpper.length > 22 ? 8.4 : 9.5
+    doc.setFont('times', 'bold')
+    doc.setFontSize(schoolFontSize)
+    doc.setTextColor(180, 18, 24) // Rouge officiel
+    doc.text(schoolUpper.slice(0, 34), titleCenterX, innerY + 12.4, { align: 'center' })
+  }
 
-  // Ligne Centre d'Écrit : [Ville / Centre]
-  const centerLabel = "Centre d'Ecrit: "
-  const centerValue = (data.examCenter?.trim() || data.schoolCity?.trim() || data.schoolName || 'Lomé').slice(0, 24)
-  doc.setFont('times', 'bold')
-  doc.setFontSize(6.8)
-  const labelW = doc.getTextWidth(centerLabel)
-  doc.setTextColor(29, 48, 185)
-  const valW = doc.getTextWidth(centerValue)
-  const totalCenterW = labelW + valW
-  const startCenterX = titleCenterX - totalCenterW / 2
+  // Ligne Centre d'Écrit : [Ville / Centre] (si vide, reste blanc)
+  const centerValue =
+    data.examCenter !== undefined
+      ? (data.examCenter || '').trim().slice(0, 26)
+      : (data.schoolCity?.trim() || data.schoolName || 'Lomé').slice(0, 26)
 
-  doc.setTextColor(15, 23, 42)
-  doc.text(centerLabel, startCenterX, innerY + 15.5)
-  doc.setTextColor(25, 42, 185) // Bleu royal
-  doc.text(centerValue, startCenterX + labelW, innerY + 15.5)
+  if (centerValue) {
+    const centerLabel =
+      data.examCenterLabel !== undefined ? data.examCenterLabel || '' : "Centre d'Ecrit: "
+    doc.setFont('times', 'bold')
+    doc.setFontSize(6.8)
+    const labelW = doc.getTextWidth(centerLabel)
+    const valW = doc.getTextWidth(centerValue)
+    const totalCenterW = labelW + valW
+    const startCenterX = titleCenterX - totalCenterW / 2
+
+    doc.setTextColor(15, 23, 42)
+    doc.text(centerLabel, startCenterX, innerY + 15.5)
+    doc.setTextColor(25, 42, 185) // Bleu royal
+    doc.text(centerValue, startCenterX + labelW, innerY + 15.5)
+  }
 
   // 5. SÉPARATEUR HORIZONTAL TRICOLORE (Rouge / Vert / Jaune)
   const sepY = innerY + headerH
@@ -636,23 +682,28 @@ function drawStudentIdCardRecto(
   doc.setFillColor(253, 224, 198) // #FDE0C6
   doc.rect(rightX, bodyTopY, rightW, bannerH, 'F')
 
-  const bannerTitle = "CARTE D'IDENTITE SCOLAIRE"
+  const bannerTitle =
+    data.cardBannerTitle !== undefined
+      ? (data.cardBannerTitle || '').trim()
+      : "CARTE D'IDENTITE SCOLAIRE"
   const bannerCenterX = rightX + rightW / 2
-  doc.setFont('times', 'bolditalic')
-  doc.setFontSize(7.1)
-  doc.setTextColor(18, 42, 185) // Bleu royal
-  doc.text(bannerTitle, bannerCenterX, bodyTopY + 3.0, { align: 'center' })
+  if (bannerTitle) {
+    doc.setFont('times', 'bolditalic')
+    doc.setFontSize(7.1)
+    doc.setTextColor(18, 42, 185) // Bleu royal
+    doc.text(bannerTitle.slice(0, 34), bannerCenterX, bodyTopY + 3.0, { align: 'center' })
 
-  // Soulignement bleu sous "CARTE D'IDENTITE SCOLAIRE"
-  const bannerTitleW = doc.getTextWidth(bannerTitle)
-  doc.setDrawColor(18, 42, 185)
-  doc.setLineWidth(0.28)
-  doc.line(
-    bannerCenterX - bannerTitleW / 2,
-    bodyTopY + 3.45,
-    bannerCenterX + bannerTitleW / 2,
-    bodyTopY + 3.45
-  )
+    // Soulignement bleu sous "CARTE D'IDENTITE SCOLAIRE"
+    const bannerTitleW = doc.getTextWidth(bannerTitle.slice(0, 34))
+    doc.setDrawColor(18, 42, 185)
+    doc.setLineWidth(0.28)
+    doc.line(
+      bannerCenterX - bannerTitleW / 2,
+      bodyTopY + 3.45,
+      bannerCenterX + bannerTitleW / 2,
+      bodyTopY + 3.45
+    )
+  }
 
   // Champs d'état civil de l'élève
   const fieldsX = rightX + 1.2
@@ -751,7 +802,7 @@ function drawStudentIdCardRecto(
   doc.setTextColor(25, 42, 185)
   doc.text((data.className || '').slice(0, 12), fieldsX + classeLabelW, classY)
 
-  // 9. BAS DROITE DE LA COLONNE DROITE : Cachet Rond Bleu Officiel + Signature + Nom du Directeur
+  // 9. BAS DROITE DE LA COLONNE DROITE : Cachet + Signature (issus de Paramètres ou importés) + Nom du Directeur
   const stampCenterX = rightX + rightW - 18.5
   const stampCenterY = bodyTopY + bodyH - 7.8
   const stampRadius = 6.6
@@ -767,9 +818,11 @@ function drawStudentIdCardRecto(
         stampRadius * 2
       )
     } catch {
-      drawTogoleseCardOfficialStamp(doc, stampCenterX, stampCenterY, stampRadius, data.schoolName)
+      if (!data.hideFallbackStamp) {
+        drawTogoleseCardOfficialStamp(doc, stampCenterX, stampCenterY, stampRadius, data.schoolName)
+      }
     }
-  } else {
+  } else if (!data.hideFallbackStamp) {
     drawTogoleseCardOfficialStamp(doc, stampCenterX, stampCenterY, stampRadius, data.schoolName)
   }
 
@@ -781,12 +834,17 @@ function drawStudentIdCardRecto(
     }
   }
 
-  // Nom du Directeur en bas à droite en italique gras rouge
-  const directorText = (data.directorName?.trim() || 'Le Directeur').slice(0, 22)
-  doc.setFont('times', 'bolditalic')
-  doc.setFontSize(6.8)
-  doc.setTextColor(165, 24, 28)
-  doc.text(directorText, rightX + rightW - 1.0, classY, { align: 'right' })
+  // Nom du Directeur en bas à droite en italique gras rouge (si vide, reste blanc)
+  const directorText =
+    data.directorName !== undefined
+      ? (data.directorName || '').trim().slice(0, 24)
+      : 'Le Directeur'
+  if (directorText) {
+    doc.setFont('times', 'bolditalic')
+    doc.setFontSize(6.8)
+    doc.setTextColor(165, 24, 28)
+    doc.text(directorText, rightX + rightW - 1.0, classY, { align: 'right' })
+  }
 }
 
 /**

@@ -15,16 +15,20 @@ import {
   Square,
   Save,
   Building2,
-  MapPin,
-  UserCheck,
-  Calendar,
   Eye,
+  ChevronLeft,
+  ChevronRight,
+  Upload,
+  Trash2,
+  Stamp,
+  PenTool,
+  Image as ImageIcon,
+  Layers,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import {
   generateClassStudentIdCardsPDF,
-  generateStudentIdCardPDF,
   StudentDocumentData,
 } from '@/lib/pdf/student-documents'
 
@@ -43,6 +47,7 @@ export type StudioStudentItem = {
 }
 
 type SchoolMeta = {
+  id?: string | null
   name?: string | null
   city?: string | null
   phone?: string | null
@@ -65,7 +70,126 @@ type Props = {
   onStudentsUpdated?: () => void
 }
 
-const STORAGE_KEY = 'scogestia_idcard_studio_config_v1'
+const STORAGE_KEY = 'scogestia_idcard_studio_config_v2'
+
+const MONTHS_FR = [
+  { value: '01', label: '01 - Janvier' },
+  { value: '02', label: '02 - Février' },
+  { value: '03', label: '03 - Mars' },
+  { value: '04', label: '04 - Avril' },
+  { value: '05', label: '05 - Mai' },
+  { value: '06', label: '06 - Juin' },
+  { value: '07', label: '07 - Juillet' },
+  { value: '08', label: '08 - Août' },
+  { value: '09', label: '09 - Septembre' },
+  { value: '10', label: '10 - Octobre' },
+  { value: '11', label: '11 - Novembre' },
+  { value: '12', label: '12 - Décembre' },
+]
+
+const DAYS_LIST = Array.from({ length: 31 }, (_, i) =>
+  String(i + 1).padStart(2, '0')
+)
+
+const CURRENT_YEAR = new Date().getFullYear()
+const YEARS_LIST = Array.from({ length: 40 }, (_, i) =>
+  String(CURRENT_YEAR - 2 - i)
+)
+
+/**
+ * Sélecteur de Date de Naissance intuitif à 3 menus (Jour / Mois / Année)
+ */
+function BirthDateSelect({
+  value,
+  onChange,
+  compact = false,
+}: {
+  value: string | null | undefined
+  onChange: (isoDate: string) => void
+  compact?: boolean
+}) {
+  const clean = (value || '').slice(0, 10)
+  const parts = clean.split('-')
+  const yearVal = parts[0]?.length === 4 ? parts[0] : ''
+  const monthVal = parts[1]?.length === 2 ? parts[1] : ''
+  const dayVal = parts[2]?.length === 2 ? parts[2] : ''
+
+  const handlePartChange = (part: 'day' | 'month' | 'year', newVal: string) => {
+    const y = part === 'year' ? newVal : yearVal || '2012'
+    const m = part === 'month' ? newVal : monthVal || '01'
+    const d = part === 'day' ? newVal : dayVal || '01'
+    if (!newVal && !yearVal && !monthVal && !dayVal) {
+      onChange('')
+      return
+    }
+    onChange(`${y}-${m}-${d}`)
+  }
+
+  const selectClass = compact
+    ? 'rounded-lg border border-slate-200 bg-white px-1.5 py-1 text-[11px] font-bold text-slate-800 focus:border-indigo-600 outline-none'
+    : 'rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-indigo-600 outline-none'
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <select
+        value={dayVal}
+        onChange={(e) => handlePartChange('day', e.target.value)}
+        className={selectClass}
+        title="Jour de naissance"
+      >
+        <option value="">Jour</option>
+        {DAYS_LIST.map((d) => (
+          <option key={d} value={d}>
+            {d}
+          </option>
+        ))}
+      </select>
+
+      <select
+        value={monthVal}
+        onChange={(e) => handlePartChange('month', e.target.value)}
+        className={selectClass}
+        title="Mois de naissance"
+      >
+        <option value="">Mois</option>
+        {MONTHS_FR.map((m) => (
+          <option key={m.value} value={m.value}>
+            {compact ? m.value : m.label}
+          </option>
+        ))}
+      </select>
+
+      <select
+        value={yearVal}
+        onChange={(e) => handlePartChange('year', e.target.value)}
+        className={selectClass}
+        title="Année de naissance"
+      >
+        <option value="">Année</option>
+        {YEARS_LIST.map((y) => (
+          <option key={y} value={y}>
+            {y}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+/**
+ * Tri alphabétique strict par Nom puis Prénoms
+ */
+function sortStudentsAlphabetically(list: StudioStudentItem[]): StudioStudentItem[] {
+  return [...list].sort((a, b) => {
+    const lastCmp = (a.last_name || '').localeCompare(b.last_name || '', 'fr', {
+      sensitivity: 'base',
+    })
+    if (lastCmp !== 0) return lastCmp
+    return (a.first_name || '').localeCompare(b.first_name || '', 'fr', {
+      sensitivity: 'base',
+    })
+  })
+}
 
 export function SchoolIdCardStudioModal({
   isOpen,
@@ -77,21 +201,27 @@ export function SchoolIdCardStudioModal({
   schoolInfo = null,
   onStudentsUpdated,
 }: Props) {
-  const [localStudents, setLocalStudents] = useState<StudioStudentItem[]>(initialStudents)
+  const [localStudents, setLocalStudents] = useState<StudioStudentItem[]>(() =>
+    sortStudentsAlphabetically(initialStudents)
+  )
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set(initialStudents.map((s) => s.id))
   )
-  const [previewStudentId, setPreviewStudentId] = useState<string>(
-    initialStudents[0]?.id || ''
-  )
+  const [activeStudentId, setActiveStudentId] = useState<string>('')
   const [uploadingId, setUploadingId] = useState<string | null>(null)
+  const [uploadingAssetType, setUploadingAssetType] = useState<
+    'logo' | 'stamp' | 'signature' | null
+  >(null)
   const [dirtyStudentIds, setDirtyStudentIds] = useState<Set<string>>(new Set())
-  const [isSavingAll, setIsSavingAll] = useState(false)
+  const [isSavingCurrent, setIsSavingCurrent] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterMode, setFilterMode] = useState<'all' | 'missing_photo' | 'missing_info'>('all')
 
-  // Champs d'en-tête officiels de la carte scolaire togolaise
+  // Champs 100% modifiables de la carte (si un champ est vidé, il reste blanc sur la carte)
+  const [ministryAcronym, setMinistryAcronym] = useState('MEPST')
+  const [republicTitle, setRepublicTitle] = useState('REPUBLIQUE TOGOLAISE')
+  const [republicMotto, setRepublicMotto] = useState('Travail-Liberté-Patrie')
   const [inspectionName, setInspectionName] = useState(
     schoolInfo?.city ? `IEPP / DRE ${schoolInfo.city.toUpperCase()}` : 'IEPP LACS-OUEST'
   )
@@ -99,59 +229,206 @@ export function SchoolIdCardStudioModal({
     schoolInfo?.name || 'ÉTABLISSEMENT SCOLAIRE'
   )
   const [examCenter, setExamCenter] = useState(
-    schoolInfo?.city || schoolInfo?.name || 'Lomé'
+    schoolInfo?.city || schoolInfo?.name || ''
   )
+  const [cardBannerTitle, setCardBannerTitle] = useState("CARTE D'IDENTITE SCOLAIRE")
   const [directorName, setDirectorName] = useState(
-    schoolInfo?.director_name || 'Le Directeur'
+    schoolInfo?.director_name || ''
   )
   const [cardAcademicYear, setCardAcademicYear] = useState(
     schoolInfo?.current_academic_year || academicYear || '2025-2026'
   )
+  const [classNameOverride, setClassNameOverride] = useState(className)
 
+  // Assets officiels (chargés automatiquement depuis Paramètres `schools`, ou importables ici)
+  const [schoolId, setSchoolId] = useState<string | null>(schoolInfo?.id || null)
+  const [logoUrl, setLogoUrl] = useState<string>(schoolInfo?.logo_url || '')
+  const [stampUrl, setStampUrl] = useState<string>(schoolInfo?.stamp_url || '')
+  const [signatureUrl, setSignatureUrl] = useState<string>(
+    schoolInfo?.signature_url || ''
+  )
+  const [showVectorEmblemIfNoLogo, setShowVectorEmblemIfNoLogo] = useState<boolean>(true)
+  const [showVectorStampIfNoStamp, setShowVectorStampIfNoStamp] = useState<boolean>(false)
+
+  // Initialisation et tri alphabétique des élèves
   useEffect(() => {
-    setLocalStudents(initialStudents)
-    setSelectedIds(new Set(initialStudents.map((s) => s.id)))
-    if (initialStudents.length > 0) {
-      setPreviewStudentId((prev) =>
-        initialStudents.some((s) => s.id === prev) ? prev : initialStudents[0].id
+    const sorted = sortStudentsAlphabetically(initialStudents)
+    setLocalStudents(sorted)
+    setSelectedIds(new Set(sorted.map((s) => s.id)))
+    if (sorted.length > 0) {
+      setActiveStudentId((prev) =>
+        sorted.some((s) => s.id === prev) ? prev : sorted[0].id
       )
     }
   }, [initialStudents])
 
-  // Charger la configuration mémorisée dans le navigateur
+  useEffect(() => {
+    setClassNameOverride(className)
+  }, [className])
+
+  // Synchronisation automatique avec les paramètres de l'école (Logo, Cachet, Signature, Directeur)
+  useEffect(() => {
+    if (!isOpen) return
+
+    if (schoolInfo?.logo_url) setLogoUrl(schoolInfo.logo_url)
+    if (schoolInfo?.stamp_url) setStampUrl(schoolInfo.stamp_url)
+    if (schoolInfo?.signature_url) setSignatureUrl(schoolInfo.signature_url)
+    if (schoolInfo?.director_name) setDirectorName(schoolInfo.director_name)
+    if (schoolInfo?.name) setSchoolNameOverride(schoolInfo.name)
+
+    // Requête directe vers `schools` pour être sûr à 100% d'avoir le cachet et la signature définis dans Paramètres
+    const fetchLatestSchoolSettings = async () => {
+      try {
+        const supabase = createClient()
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('school_id')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        const targetSchoolId = profile?.school_id || schoolInfo?.id
+        if (!targetSchoolId) return
+        setSchoolId(targetSchoolId)
+
+        const { data: schoolRow } = await supabase
+          .from('schools')
+          .select(
+            'id, name, city, current_academic_year, director_name, logo_url, stamp_url, signature_url'
+          )
+          .eq('id', targetSchoolId)
+          .maybeSingle()
+
+        if (schoolRow) {
+          if (schoolRow.logo_url) setLogoUrl(schoolRow.logo_url)
+          if (schoolRow.stamp_url) setStampUrl(schoolRow.stamp_url)
+          if (schoolRow.signature_url) setSignatureUrl(schoolRow.signature_url)
+          if (schoolRow.director_name) setDirectorName(schoolRow.director_name)
+          if (schoolRow.name) setSchoolNameOverride(schoolRow.name)
+          if (schoolRow.current_academic_year) {
+            setCardAcademicYear(schoolRow.current_academic_year)
+          }
+        }
+      } catch {
+        // Ignore
+      }
+    }
+
+    fetchLatestSchoolSettings()
+  }, [isOpen, schoolInfo])
+
+  // Charger les textes personnalisés mémorisés dans localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY)
       if (saved) {
         const parsed = JSON.parse(saved)
-        if (parsed.inspectionName) setInspectionName(parsed.inspectionName)
-        if (parsed.examCenter) setExamCenter(parsed.examCenter)
-        if (parsed.directorName && !schoolInfo?.director_name) {
-          setDirectorName(parsed.directorName)
-        }
+        if (parsed.ministryAcronym !== undefined) setMinistryAcronym(parsed.ministryAcronym)
+        if (parsed.republicTitle !== undefined) setRepublicTitle(parsed.republicTitle)
+        if (parsed.republicMotto !== undefined) setRepublicMotto(parsed.republicMotto)
+        if (parsed.inspectionName !== undefined) setInspectionName(parsed.inspectionName)
+        if (parsed.examCenter !== undefined) setExamCenter(parsed.examCenter)
+        if (parsed.cardBannerTitle !== undefined) setCardBannerTitle(parsed.cardBannerTitle)
       }
     } catch {
       // Ignore
     }
-  }, [schoolInfo?.director_name])
+  }, [])
 
-  const persistHeaderConfig = (next: {
-    inspectionName: string
-    examCenter: string
-    directorName: string
-  }) => {
+  const persistHeaderConfig = () => {
     if (typeof window === 'undefined') return
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          ministryAcronym,
+          republicTitle,
+          republicMotto,
+          inspectionName,
+          examCenter,
+          cardBannerTitle,
+        })
+      )
     } catch {
       // Ignore
     }
   }
 
-  const previewStudent = useMemo(() => {
+  // Upload direct du Logo, du Cachet ou de la Signature depuis un document + sauvegarde dans `schools` (Paramètres)
+  const handleSchoolAssetUpload = async (
+    type: 'logo' | 'stamp' | 'signature',
+    file?: File | null
+  ) => {
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("L'image est trop volumineuse (max 5 Mo).")
+      return
+    }
+
+    try {
+      setUploadingAssetType(type)
+      const supabase = createClient()
+      const ext = file.name.split('.').pop() || 'png'
+      const folder = schoolId ? `school_${schoolId}/${type}` : `school_assets/${type}`
+      const fileName = `${folder}/${type}_${Date.now()}.${ext}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: publicUrlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName)
+
+      const url = publicUrlData.publicUrl
+
+      if (type === 'logo') setLogoUrl(url)
+      if (type === 'stamp') setStampUrl(url)
+      if (type === 'signature') setSignatureUrl(url)
+
+      // Sauvegarder automatiquement dans la table `schools` pour que ce soit lié à Paramètres
+      if (schoolId) {
+        const updatePayload =
+          type === 'logo'
+            ? { logo_url: url }
+            : type === 'stamp'
+              ? { stamp_url: url }
+              : { signature_url: url }
+
+        await supabase.from('schools').update(updatePayload).eq('id', schoolId)
+      }
+
+      const labelFr =
+        type === 'logo'
+          ? "Logo de l'école"
+          : type === 'stamp'
+            ? 'Cachet officiel'
+            : 'Signature du Directeur'
+      toast.success(`${labelFr} importé et synchronisé avec Paramètres !`)
+      onStudentsUpdated?.()
+    } catch (err) {
+      console.error(err)
+      toast.error("Erreur lors de l'import du fichier.")
+    } finally {
+      setUploadingAssetType(null)
+    }
+  }
+
+  const activeIndex = useMemo(() => {
+    const idx = localStudents.findIndex((s) => s.id === activeStudentId)
+    return idx >= 0 ? idx : 0
+  }, [localStudents, activeStudentId])
+
+  const activeStudent = useMemo(() => {
     return (
-      localStudents.find((s) => s.id === previewStudentId) ||
+      localStudents[activeIndex] ||
       localStudents[0] || {
         id: 'demo',
         matricule: '25-001',
@@ -163,7 +440,7 @@ export function SchoolIdCardStudioModal({
         avatar_url: null,
       }
     )
-  }, [localStudents, previewStudentId, schoolInfo?.city])
+  }, [localStudents, activeIndex, schoolInfo?.city])
 
   const filteredStudents = useMemo(() => {
     return localStudents.filter((s) => {
@@ -188,9 +465,34 @@ export function SchoolIdCardStudioModal({
     [localStudents]
   )
 
+  // Liste des élèves cochés dans l'ordre alphabétique et découpage en lots de 10 (sans compléter la dernière page !)
+  const selectedStudentsOrdered = useMemo(
+    () => localStudents.filter((s) => selectedIds.has(s.id)),
+    [localStudents, selectedIds]
+  )
+
+  const batchesOfTen = useMemo(() => {
+    const batches: {
+      pageNumber: number
+      startIndex: number
+      endIndex: number
+      students: StudioStudentItem[]
+    }[] = []
+    for (let i = 0; i < selectedStudentsOrdered.length; i += 10) {
+      const slice = selectedStudentsOrdered.slice(i, i + 10)
+      batches.push({
+        pageNumber: Math.floor(i / 10) + 1,
+        startIndex: i + 1,
+        endIndex: i + slice.length,
+        students: slice,
+      })
+    }
+    return batches
+  }, [selectedStudentsOrdered])
+
   const handleFieldChange = (
     studentId: string,
-    field: 'first_name' | 'last_name' | 'date_of_birth' | 'birth_place' | 'gender',
+    field: 'first_name' | 'last_name' | 'date_of_birth' | 'birth_place' | 'gender' | 'matricule',
     value: string
   ) => {
     setLocalStudents((prev) =>
@@ -201,7 +503,6 @@ export function SchoolIdCardStudioModal({
       next.add(studentId)
       return next
     })
-    setPreviewStudentId(studentId)
   }
 
   const handlePhotoUpload = async (studentId: string, file?: File | null) => {
@@ -213,7 +514,7 @@ export function SchoolIdCardStudioModal({
 
     try {
       setUploadingId(studentId)
-      setPreviewStudentId(studentId)
+      setActiveStudentId(studentId)
       const supabase = createClient()
 
       const ext = file.name.split('.').pop() || 'jpg'
@@ -240,7 +541,7 @@ export function SchoolIdCardStudioModal({
       setLocalStudents((prev) =>
         prev.map((s) => (s.id === studentId ? { ...s, avatar_url: newAvatarUrl } : s))
       )
-      toast.success('Photo de carte scolaire enregistrée !')
+      toast.success('Photo de l’élève enregistrée !')
       onStudentsUpdated?.()
     } catch (err) {
       console.error(err)
@@ -250,10 +551,47 @@ export function SchoolIdCardStudioModal({
     }
   }
 
-  const saveModifiedStudentsToDb = async () => {
+  // Enregistre l'élève actif (et/ou tous les élèves modifiés) dans Supabase
+  const saveStudentToDb = async (studentId: string) => {
+    const st = localStudents.find((s) => s.id === studentId)
+    if (!st) return false
+    try {
+      setIsSavingCurrent(true)
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('students')
+        .update({
+          first_name: st.first_name.trim(),
+          last_name: st.last_name.trim(),
+          date_of_birth: st.date_of_birth || null,
+          birth_place: st.birth_place?.trim() || null,
+          gender: st.gender || null,
+          matricule: st.matricule?.trim() || st.matricule,
+        })
+        .eq('id', studentId)
+
+      if (error) throw error
+
+      setDirtyStudentIds((prev) => {
+        const next = new Set(prev)
+        next.delete(studentId)
+        return next
+      })
+      onStudentsUpdated?.()
+      return true
+    } catch (err) {
+      console.error(err)
+      toast.error("Erreur lors de l'enregistrement de l'élève.")
+      return false
+    } finally {
+      setIsSavingCurrent(false)
+    }
+  }
+
+  const saveAllModifiedStudentsToDb = async () => {
     if (dirtyStudentIds.size === 0) return true
     try {
-      setIsSavingAll(true)
+      setIsSavingCurrent(true)
       const supabase = createClient()
       const idsToSave = Array.from(dirtyStudentIds)
 
@@ -269,6 +607,7 @@ export function SchoolIdCardStudioModal({
               date_of_birth: st.date_of_birth || null,
               birth_place: st.birth_place?.trim() || null,
               gender: st.gender || null,
+              matricule: st.matricule?.trim() || st.matricule,
             })
             .eq('id', id)
         })
@@ -282,7 +621,25 @@ export function SchoolIdCardStudioModal({
       toast.error('Erreur lors de la sauvegarde des informations élèves.')
       return false
     } finally {
-      setIsSavingAll(false)
+      setIsSavingCurrent(false)
+    }
+  }
+
+  // Enregistrer la carte actuelle et passer automatiquement à l'élève suivant (ordre alphabétique)
+  const handleSaveAndNextStudent = async () => {
+    if (!activeStudent) return
+    persistHeaderConfig()
+    const ok = await saveStudentToDb(activeStudent.id)
+    if (!ok) return
+
+    if (activeIndex < localStudents.length - 1) {
+      const nextStudent = localStudents[activeIndex + 1]
+      setActiveStudentId(nextStudent.id)
+      toast.success(
+        `Carte enregistrée ! Passage à ${nextStudent.last_name.toUpperCase()} ${nextStudent.first_name} (${activeIndex + 2}/${localStudents.length})`
+      )
+    } else {
+      toast.success('Dernière carte de la classe enregistrée avec succès !')
     }
   }
 
@@ -292,64 +649,61 @@ export function SchoolIdCardStudioModal({
     firstName: s.first_name,
     lastName: s.last_name,
     dateOfBirth: s.date_of_birth,
-    birthPlace: s.birth_place || schoolInfo?.city || 'Lomé',
+    birthPlace: s.birth_place || '',
     gender: s.gender,
     bloodGroup: s.blood_group || null,
-    className,
+    className: classNameOverride.trim() || className,
     classLevel,
     parentPhone: s.parent_phone || null,
     address: s.address || null,
     avatarUrl: s.avatar_url || null,
-    schoolName: schoolNameOverride.trim() || schoolInfo?.name || 'Établissement Scolaire',
+    schoolName: schoolNameOverride.trim(),
     schoolCity: schoolInfo?.city || null,
     schoolPhone: schoolInfo?.phone || null,
     schoolEmail: schoolInfo?.email || null,
-    academicYear: cardAcademicYear.trim() || '2025-2026',
-    directorName: directorName.trim() || schoolInfo?.director_name || 'Le Directeur',
-    schoolLogoUrl: schoolInfo?.logo_url || null,
-    schoolStampUrl: schoolInfo?.stamp_url || null,
-    schoolSignatureUrl: schoolInfo?.signature_url || null,
-    inspectionName: inspectionName.trim() || 'IEPP / DRE',
-    examCenter: examCenter.trim() || schoolInfo?.city || 'Lomé',
+    academicYear: cardAcademicYear.trim(),
+    directorName: directorName.trim(),
+    schoolLogoUrl: logoUrl || null,
+    schoolStampUrl: stampUrl || null,
+    schoolSignatureUrl: signatureUrl || null,
+    inspectionName: inspectionName.trim(),
+    examCenter: examCenter.trim(),
+    ministryAcronym: ministryAcronym.trim(),
+    republicTitle: republicTitle.trim(),
+    republicMotto: republicMotto.trim(),
+    cardBannerTitle: cardBannerTitle.trim(),
+    hideFallbackEmblem: !showVectorEmblemIfNoLogo,
+    hideFallbackStamp: !showVectorStampIfNoStamp,
   })
 
-  const handleGeneratePdf = async (mode: 'class_sheet' | 'single_card' | 'single_10up') => {
-    const selectedList = localStudents.filter((s) => selectedIds.has(s.id))
-    if (selectedList.length === 0) {
+  // Génère soit tous les lots de 10 (ex: 47 élèves -> 10, 10, 10, 10, 7), soit un lot spécifique de 10 (ou le reste)
+  const handleGenerateSheets = async (targetStudents: StudioStudentItem[], batchLabel?: string) => {
+    if (targetStudents.length === 0) {
       toast.error('Veuillez sélectionner au moins un élève.')
       return
     }
 
     try {
       setIsGenerating(true)
-      persistHeaderConfig({
-        inspectionName,
-        examCenter,
-        directorName,
-      })
+      persistHeaderConfig()
 
       if (dirtyStudentIds.size > 0) {
-        await saveModifiedStudentsToDb()
+        await saveAllModifiedStudentsToDb()
       }
 
-      if (mode === 'single_card') {
-        await generateStudentIdCardPDF(buildDocDataForStudent(selectedList[0]), {
-          tenUpSheet: false,
-        })
-        toast.success('Carte scolaire générée avec succès !')
-      } else if (mode === 'single_10up') {
-        await generateStudentIdCardPDF(buildDocDataForStudent(selectedList[0]), {
-          tenUpSheet: true,
-        })
-        toast.success('Planche de 10 cartes générée avec succès !')
-      } else {
-        const docs = selectedList.map(buildDocDataForStudent)
-        await generateClassStudentIdCardsPDF(className, docs)
-        const pagesCount = Math.ceil(docs.length / 10)
-        toast.success(
-          `Planche PDF générée : ${docs.length} carte(s) sur ${pagesCount} page(s) A4 (10 cartes/page) !`
-        )
-      }
+      const docs = targetStudents.map(buildDocDataForStudent)
+      const label = batchLabel
+        ? `${classNameOverride || className}_${batchLabel}`
+        : classNameOverride || className
+      await generateClassStudentIdCardsPDF(label, docs)
+
+      const pagesCount = Math.ceil(docs.length / 10)
+      const lastPageCount = docs.length % 10 === 0 ? 10 : docs.length % 10
+      toast.success(
+        pagesCount > 1
+          ? `PDF généré : ${docs.length} cartes sur ${pagesCount} pages (dont ${lastPageCount} carte(s) sur la dernière page) !`
+          : `Planche PDF générée : ${docs.length} carte(s) sur la page A4 !`
+      )
     } catch (err) {
       console.error(err)
       toast.error('Erreur lors de la génération du PDF.')
@@ -377,18 +731,19 @@ export function SchoolIdCardStudioModal({
 
   if (!isOpen) return null
 
-  const selectedCount = selectedIds.size
+  const selectedCount = selectedStudentsOrdered.length
   const pagesCount = Math.max(1, Math.ceil(selectedCount / 10))
-  const isSingleStudentMode = localStudents.length === 1
+  const remainderOnLastPage =
+    selectedCount === 0 ? 0 : selectedCount % 10 === 0 ? 10 : selectedCount % 10
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto">
-      <div className="relative w-full max-w-6xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[94vh] animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-6xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[95vh] animate-in fade-in zoom-in-95 duration-200">
         {/* Bandeau Supérieur — Stripe Royal Indigo & Sapphire */}
-        <div className="relative flex items-center justify-between gap-4 bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-5 py-4 text-white shrink-0">
+        <div className="relative flex items-center justify-between gap-4 bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-5 py-3.5 text-white shrink-0">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25 backdrop-blur-md">
-              <IdCard className="h-6 w-6 text-amber-300" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25 backdrop-blur-md">
+              <IdCard className="h-5 w-5 text-amber-300" />
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
@@ -397,11 +752,11 @@ export function SchoolIdCardStudioModal({
                 </h2>
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/20 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-200 ring-1 ring-emerald-300/30">
                   <Sparkles className="h-3 w-3" />
-                  10 Cartes / Page A4 • Sans Verso
+                  10 Cartes / Page A4 • Recto Seul • Ordre Alphabétique
                 </span>
               </div>
               <p className="text-xs text-indigo-100/90 mt-0.5">
-                Classe : <strong className="text-white">{className}</strong> • Ajoutez les photos & informations manquantes puis générez la planche prête à imprimer.
+                Classe : <strong className="text-white">{className}</strong> • Tout est modifiable sur la carte (Logo, Sigle Ministère, Cachet & Signature synchronisés avec Paramètres).
               </p>
             </div>
           </div>
@@ -416,179 +771,451 @@ export function SchoolIdCardStudioModal({
         </div>
 
         {/* Contenu Principal Défilant */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-slate-50/70">
-          {/* SECTION 1 : Paramètres de la Carte + Aperçu Visuel Temps Réel */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-            {/* Formulaire des mentions officielles de la carte */}
-            <div className="lg:col-span-6 bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs flex flex-col justify-between space-y-4">
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
-                    <Building2 className="h-4 w-4 text-indigo-600" />
-                    1. Mentions Officielles de l&apos;En-tête (Modèle Togolais)
-                  </h3>
-                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                    Mémorisé auto.
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 bg-slate-50/70">
+          {/* SECTION 1 : Personnalisation Intégrale de la Carte + Aperçu en Direct + Édition Élève par Élève */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            {/* COLONNE GAUCHE (5 cols) : Paramètres Globaux de la Carte + Cachet / Signature / Logo */}
+            <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
+                  <Building2 className="h-4 w-4 text-indigo-600" />
+                  1. Textes, Logo, Cachet & Signature de la Carte
+                </h3>
+                <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                  Champ vidé = Reste blanc
+                </span>
+              </div>
+
+              {/* Grille des textes modifiables de la carte */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Sigle Ministère (Haut Gauche)
+                  </label>
+                  <input
+                    type="text"
+                    value={ministryAcronym}
+                    onChange={(e) => setMinistryAcronym(e.target.value)}
+                    placeholder="Ex: MEPST (ou laisser vide)"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-extrabold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Inspection / DRE / IEPP
+                  </label>
+                  <input
+                    type="text"
+                    value={inspectionName}
+                    onChange={(e) => setInspectionName(e.target.value)}
+                    placeholder="Ex: IEPP LACS-OUEST (ou vide)"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-indigo-950 focus:border-indigo-600 focus:bg-white outline-none"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Nom de l&apos;Établissement (en rouge au centre)
+                  </label>
+                  <input
+                    type="text"
+                    value={schoolNameOverride}
+                    onChange={(e) => setSchoolNameOverride(e.target.value)}
+                    placeholder="Ex: EPP AGBODANKOPE / EPL LE ROI"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-extrabold uppercase text-red-700 focus:border-indigo-600 focus:bg-white outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Centre d&apos;Écrit (ou vide)
+                  </label>
+                  <input
+                    type="text"
+                    value={examCenter}
+                    onChange={(e) => setExamCenter(e.target.value)}
+                    placeholder="Ex: Agbodankopé (ou laisser vide)"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-blue-900 focus:border-indigo-600 focus:bg-white outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Année Scolaire
+                  </label>
+                  <input
+                    type="text"
+                    value={cardAcademicYear}
+                    onChange={(e) => setCardAcademicYear(e.target.value)}
+                    placeholder="Ex: 2025-2026"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-red-800 focus:border-indigo-600 focus:bg-white outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Nom du Directeur (Bas Droite)
+                  </label>
+                  <input
+                    type="text"
+                    value={directorName}
+                    onChange={(e) => setDirectorName(e.target.value)}
+                    placeholder="Ex: GNAMAVO Kodjo (ou vide)"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Titre de la Carte (Bandeau)
+                  </label>
+                  <input
+                    type="text"
+                    value={cardBannerTitle}
+                    onChange={(e) => setCardBannerTitle(e.target.value)}
+                    placeholder="CARTE D'IDENTITE SCOLAIRE"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-blue-900 focus:border-indigo-600 focus:bg-white outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Mention République (Haut Droite)
+                  </label>
+                  <input
+                    type="text"
+                    value={republicTitle}
+                    onChange={(e) => setRepublicTitle(e.target.value)}
+                    placeholder="REPUBLIQUE TOGOLAISE"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Devise Nationale (Haut Droite)
+                  </label>
+                  <input
+                    type="text"
+                    value={republicMotto}
+                    onChange={(e) => setRepublicMotto(e.target.value)}
+                    placeholder="Travail-Liberté-Patrie"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Bloc Logo, Cachet du Directeur & Signature (Synchronisés avec Paramètres + Import direct) */}
+              <div className="pt-2 border-t border-slate-100 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-950">
+                    Logo, Cachet & Signature (Synchronisés avec Paramètres)
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      Inspection / DRE / IEPP *
-                    </label>
-                    <input
-                      type="text"
-                      value={inspectionName}
-                      onChange={(e) => setInspectionName(e.target.value)}
-                      placeholder="Ex: IEPP LACS-OUEST ou DRE LOMÉ"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      Centre d&apos;Écrit (Examen / Ville) *
-                    </label>
-                    <div className="relative">
-                      <MapPin className="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="text"
-                        value={examCenter}
-                        onChange={(e) => setExamCenter(e.target.value)}
-                        placeholder="Ex: Agbodankopé / Lomé"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-8 pr-3 py-2 text-xs font-bold text-indigo-950 focus:border-indigo-600 focus:bg-white outline-none transition-all"
-                      />
+                <div className="grid grid-cols-3 gap-2">
+                  {/* 1. LOGO ÉCOLE */}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2 flex flex-col items-center text-center justify-between">
+                    <span className="text-[10px] font-extrabold text-slate-700 mb-1">
+                      Logo École
+                    </span>
+                    <div className="h-11 w-11 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden mb-1.5">
+                      {logoUrl ? (
+                        <img src={logoUrl} alt="Logo" className="h-full w-full object-contain" />
+                      ) : (
+                        <ImageIcon className="h-4 w-4 text-slate-400" />
+                      )}
                     </div>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      Nom Officiel de l&apos;École sur la carte (en rouge) *
-                    </label>
-                    <input
-                      type="text"
-                      value={schoolNameOverride}
-                      onChange={(e) => setSchoolNameOverride(e.target.value)}
-                      placeholder="Ex: EPP AGBODANKOPE / CPL LE ROI"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-extrabold uppercase text-red-700 focus:border-indigo-600 focus:bg-white outline-none transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      Nom du Directeur / Chef d&apos;Établissement *
-                    </label>
-                    <div className="relative">
-                      <UserCheck className="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="text"
-                        value={directorName}
-                        onChange={(e) => setDirectorName(e.target.value)}
-                        placeholder="Ex: GNAMAVO Kodjo"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-8 pr-3 py-2 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none transition-all"
-                      />
+                    <div className="flex items-center gap-1 w-full">
+                      <label className="flex-1 cursor-pointer rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-1.5 py-1 text-[10px] font-bold text-indigo-800 flex items-center justify-center gap-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingAssetType === 'logo'}
+                          onChange={(e) =>
+                            handleSchoolAssetUpload('logo', e.target.files?.[0])
+                          }
+                        />
+                        {uploadingAssetType === 'logo' ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Upload className="h-3 w-3" />
+                        )}
+                        {logoUrl ? 'Changer' : 'Importer'}
+                      </label>
+                      {logoUrl && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLogoUrl('')
+                            setShowVectorEmblemIfNoLogo(false)
+                          }}
+                          className="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+                          title="Retirer le logo (laisser blanc)"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
                     </div>
+                    {!logoUrl && (
+                      <label className="mt-1 flex items-center gap-1 text-[9.5px] text-slate-600 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={showVectorEmblemIfNoLogo}
+                          onChange={(e) => setShowVectorEmblemIfNoLogo(e.target.checked)}
+                        />
+                        Emblème RT
+                      </label>
+                    )}
                   </div>
 
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      Année Scolaire *
-                    </label>
-                    <div className="relative">
-                      <Calendar className="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="text"
-                        value={cardAcademicYear}
-                        onChange={(e) => setCardAcademicYear(e.target.value)}
-                        placeholder="Ex: 2025-2026"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-8 pr-3 py-2 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none transition-all"
-                      />
+                  {/* 2. CACHET DU DIRECTEUR */}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2 flex flex-col items-center text-center justify-between">
+                    <span className="text-[10px] font-extrabold text-slate-700 mb-1">
+                      Cachet École
+                    </span>
+                    <div className="h-11 w-11 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden mb-1.5">
+                      {stampUrl ? (
+                        <img
+                          src={stampUrl}
+                          alt="Cachet"
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <Stamp className="h-4 w-4 text-slate-400" />
+                      )}
                     </div>
+                    <div className="flex items-center gap-1 w-full">
+                      <label className="flex-1 cursor-pointer rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-1.5 py-1 text-[10px] font-bold text-indigo-800 flex items-center justify-center gap-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingAssetType === 'stamp'}
+                          onChange={(e) =>
+                            handleSchoolAssetUpload('stamp', e.target.files?.[0])
+                          }
+                        />
+                        {uploadingAssetType === 'stamp' ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Upload className="h-3 w-3" />
+                        )}
+                        {stampUrl ? 'Changer' : 'Importer'}
+                      </label>
+                      {stampUrl && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStampUrl('')
+                            setShowVectorStampIfNoStamp(false)
+                          }}
+                          className="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+                          title="Retirer le cachet (laisser blanc)"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                    {!stampUrl && (
+                      <label className="mt-1 flex items-center gap-1 text-[9.5px] text-slate-600 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={showVectorStampIfNoStamp}
+                          onChange={(e) => setShowVectorStampIfNoStamp(e.target.checked)}
+                        />
+                        Cachet auto
+                      </label>
+                    )}
+                  </div>
+
+                  {/* 3. SIGNATURE DU DIRECTEUR */}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2 flex flex-col items-center text-center justify-between">
+                    <span className="text-[10px] font-extrabold text-slate-700 mb-1">
+                      Signature
+                    </span>
+                    <div className="h-11 w-11 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden mb-1.5">
+                      {signatureUrl ? (
+                        <img
+                          src={signatureUrl}
+                          alt="Signature"
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <PenTool className="h-4 w-4 text-slate-400" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 w-full">
+                      <label className="flex-1 cursor-pointer rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-1.5 py-1 text-[10px] font-bold text-indigo-800 flex items-center justify-center gap-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingAssetType === 'signature'}
+                          onChange={(e) =>
+                            handleSchoolAssetUpload('signature', e.target.files?.[0])
+                          }
+                        />
+                        {uploadingAssetType === 'signature' ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Upload className="h-3 w-3" />
+                        )}
+                        {signatureUrl ? 'Changer' : 'Importer'}
+                      </label>
+                      {signatureUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setSignatureUrl('')}
+                          className="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+                          title="Retirer la signature (laisser blanc)"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                    {!signatureUrl && (
+                      <span className="mt-1 text-[9.5px] text-slate-400">
+                        Vide = Blanc
+                      </span>
+                    )}
                   </div>
                 </div>
-              </div>
-
-              <div className="rounded-xl bg-indigo-50/70 border border-indigo-200/70 px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs">
-                <div className="text-indigo-950 font-medium">
-                  Disposition d&apos;impression :{' '}
-                  <strong className="font-extrabold">2 colonnes × 5 lignes = 10 élèves différents / page A4</strong>
-                </div>
-                <span className="shrink-0 font-extrabold text-indigo-700 bg-white px-2.5 py-1 rounded-lg border border-indigo-200 shadow-2xs">
-                  Recto seul
-                </span>
               </div>
             </div>
 
-            {/* APERÇU VISUEL TEMPS RÉEL DE LA CARTE OFFICIELLE TOGOLAISE */}
-            <div className="lg:col-span-6 bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs flex flex-col justify-between">
-              <div className="flex items-center justify-between gap-2 mb-2.5">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
+            {/* COLONNE DROITE (7 cols) : Aperçu Temps Réel + Saisie Élève par Élève (Enregistrer -> Suivant) */}
+            <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-4">
+              {/* Barre de navigation Alphabétique Élève par Élève */}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div className="flex items-center gap-2">
                   <Eye className="h-4 w-4 text-indigo-600" />
-                  Aperçu en direct de la Carte Scolaire
-                </span>
-                <span className="text-[11px] text-slate-500 font-medium">
-                  Élève affiché : <strong className="text-slate-800">{previewStudent.last_name} {previewStudent.first_name}</strong>
-                </span>
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-indigo-950">
+                    2. Aperçu & Saisie Carte par Carte ({activeIndex + 1} / {localStudents.length})
+                  </span>
+                </div>
+
+                {localStudents.length > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={activeIndex === 0}
+                      onClick={() =>
+                        setActiveStudentId(localStudents[Math.max(0, activeIndex - 1)].id)
+                      }
+                      className="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                      Précédent
+                    </button>
+
+                    <select
+                      value={activeStudent.id}
+                      onChange={(e) => setActiveStudentId(e.target.value)}
+                      className="rounded-lg border border-indigo-200 bg-indigo-50/60 px-2.5 py-1 text-xs font-extrabold text-indigo-950 outline-none max-w-[210px]"
+                    >
+                      {localStudents.map((s, idx) => (
+                        <option key={s.id} value={s.id}>
+                          {idx + 1}. {s.last_name.toUpperCase()} {s.first_name}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      type="button"
+                      disabled={activeIndex >= localStudents.length - 1}
+                      onClick={() =>
+                        setActiveStudentId(
+                          localStudents[Math.min(localStudents.length - 1, activeIndex + 1)].id
+                        )
+                      }
+                      className="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1"
+                    >
+                      Suivant
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Rendu HTML/CSS reproduisant exactement la carte officielle Togolaise */}
-              <div className="mx-auto w-full max-w-[460px] rounded-md p-[5px] bg-[#007A33] shadow-lg select-none">
+              {/* APERÇU VISUEL TEMPS RÉEL DE LA CARTE OFFICIELLE */}
+              <div className="mx-auto w-full max-w-[465px] rounded-md p-[5px] bg-[#007A33] shadow-md select-none">
                 <div className="rounded-[2px] p-[4px] bg-[#FFCE00]">
                   <div className="bg-[#EEF4FA] text-slate-900 overflow-hidden">
                     {/* En-tête de la carte */}
-                    <div className="px-2.5 pt-1.5 pb-1.5 relative">
+                    <div className="px-2.5 pt-1.5 pb-1.5 relative min-h-[62px]">
                       <div className="flex items-start justify-between gap-2">
-                        {/* Gauche : MEPST + Emblème RT */}
-                        <div className="flex flex-col items-center shrink-0">
-                          <div className="font-serif font-black text-[13px] leading-none tracking-tight">
-                            <span className="text-slate-950">ME</span>
-                            <span className="text-red-600">P</span>
-                            <span className="text-amber-500">S</span>
-                            <span className="text-blue-700">T</span>
+                        {/* Gauche : Sigle Ministère (MEPST ou personnalisé ou blanc) + Logo École (ou Emblème RT ou blanc) */}
+                        <div className="flex flex-col items-center shrink-0 min-w-[44px]">
+                          <div className="font-serif font-black text-[13px] leading-none tracking-tight h-[14px]">
+                            {ministryAcronym.trim().toUpperCase() === 'MEPST' ? (
+                              <>
+                                <span className="text-slate-950">ME</span>
+                                <span className="text-red-600">P</span>
+                                <span className="text-amber-500">S</span>
+                                <span className="text-blue-700">T</span>
+                              </>
+                            ) : ministryAcronym.trim().length > 0 ? (
+                              <span className="text-slate-950">
+                                {ministryAcronym.trim().slice(0, 10)}
+                              </span>
+                            ) : null}
                           </div>
-                          <div className="mt-1 h-11 w-10 rounded-full border border-emerald-600 bg-white flex flex-col items-center justify-center shadow-2xs overflow-hidden">
-                            {schoolInfo?.logo_url ? (
+
+                          {logoUrl ? (
+                            <div className="mt-1 h-11 w-10 rounded-full border border-emerald-600 bg-white flex items-center justify-center shadow-2xs overflow-hidden">
                               <img
-                                src={schoolInfo.logo_url}
-                                alt="Logo"
+                                src={logoUrl}
+                                alt="Logo école"
                                 className="h-9 w-9 object-contain"
                               />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center text-center leading-none">
-                                <span className="text-[6px] font-bold text-emerald-800">🇹🇬</span>
-                                <span className="px-1 py-0.5 rounded-full bg-amber-300 text-[8px] font-serif font-black text-slate-950 border border-amber-500">
-                                  RT
-                                </span>
-                              </div>
-                            )}
-                          </div>
+                            </div>
+                          ) : showVectorEmblemIfNoLogo ? (
+                            <div className="mt-1 h-11 w-10 rounded-full border border-emerald-600 bg-white flex flex-col items-center justify-center shadow-2xs">
+                              <span className="text-[6px] font-bold text-emerald-800">🇹🇬</span>
+                              <span className="px-1 py-0.5 rounded-full bg-amber-300 text-[8px] font-serif font-black text-slate-950 border border-amber-500">
+                                RT
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="mt-1 h-11 w-10" />
+                          )}
                         </div>
 
                         {/* Centre + Droite */}
                         <div className="flex-1 flex flex-col">
-                          <div className="text-right font-serif leading-tight">
-                            <div className="text-[10.5px] font-black tracking-tight text-slate-950 uppercase">
-                              REPUBLIQUE TOGOLAISE
-                            </div>
-                            <div className="text-[9.5px] font-bold text-slate-900 pr-2">
-                              Travail-Liberté-Patrie
-                            </div>
+                          <div className="text-right font-serif leading-tight min-h-[22px]">
+                            {republicTitle.trim() && (
+                              <div className="text-[10.5px] font-black tracking-tight text-slate-950 uppercase">
+                                {republicTitle}
+                              </div>
+                            )}
+                            {republicMotto.trim() && (
+                              <div className="text-[9.5px] font-bold text-slate-900 pr-2">
+                                {republicMotto}
+                              </div>
+                            )}
                           </div>
 
                           <div className="text-center mt-0.5 space-y-0.5">
-                            <div className="font-serif font-black text-[10.5px] text-[#0F1D5F] uppercase tracking-wide truncate">
-                              {inspectionName || 'IEPP LACS-OUEST'}
-                            </div>
-                            <div className="font-serif font-black text-[15px] leading-none text-[#B41218] uppercase tracking-tight truncate">
-                              {schoolNameOverride || schoolInfo?.name || 'EPP AGBODANKOPE'}
-                            </div>
-                            <div className="font-serif font-extrabold text-[11px] leading-tight">
-                              <span className="text-slate-950">Centre d&apos;Ecrit: </span>
-                              <span className="text-[#192AB9] underline decoration-red-400 decoration-wavy">
-                                {examCenter || schoolInfo?.city || 'Lomé'}
-                              </span>
-                            </div>
+                            {inspectionName.trim() && (
+                              <div className="font-serif font-black text-[10.5px] text-[#0F1D5F] uppercase tracking-wide truncate">
+                                {inspectionName}
+                              </div>
+                            )}
+                            {schoolNameOverride.trim() && (
+                              <div className="font-serif font-black text-[15px] leading-none text-[#B41218] uppercase tracking-tight truncate">
+                                {schoolNameOverride}
+                              </div>
+                            )}
+                            {examCenter.trim() && (
+                              <div className="font-serif font-extrabold text-[11px] leading-tight">
+                                <span className="text-slate-950">Centre d&apos;Ecrit: </span>
+                                <span className="text-[#192AB9]">{examCenter}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -601,59 +1228,81 @@ export function SchoolIdCardStudioModal({
 
                     {/* Corps de la carte : Photo à gauche + Infos à droite */}
                     <div className="grid grid-cols-12 bg-[#F8FAFC]">
-                      {/* Photo Passeport (Gauche) */}
+                      {/* Photo Passeport (Gauche — cliquable pour changer la photo) */}
                       <div className="col-span-4 p-1">
-                        <div className="w-full h-[142px] border-2 border-[#C2410C] bg-sky-100 overflow-hidden flex flex-col items-center justify-center relative">
-                          {previewStudent.avatar_url ? (
+                        <label
+                          className="w-full h-[142px] border-2 border-[#C2410C] bg-sky-100 overflow-hidden flex flex-col items-center justify-center relative cursor-pointer group"
+                          title="Cliquez pour importer la photo de cet élève"
+                        >
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={uploadingId === activeStudent.id}
+                            onChange={(e) =>
+                              handlePhotoUpload(activeStudent.id, e.target.files?.[0])
+                            }
+                          />
+                          {activeStudent.avatar_url ? (
                             <img
-                              src={previewStudent.avatar_url}
-                              alt={previewStudent.first_name}
+                              src={activeStudent.avatar_url}
+                              alt={activeStudent.first_name}
                               className="w-full h-full object-cover"
                             />
                           ) : (
                             <div className="flex flex-col items-center justify-center text-center p-2">
-                              <div className="h-11 w-11 rounded-full bg-sky-200/90 text-blue-900 font-serif font-black text-base flex items-center justify-center mb-1">
-                                {(previewStudent.last_name[0] || 'A').toUpperCase()}
-                                {(previewStudent.first_name[0] || 'R').toUpperCase()}
-                              </div>
-                              <span className="text-[9px] font-bold text-blue-900 uppercase">
-                                Photo Élève
+                              <Camera className="h-6 w-6 text-blue-800 mb-1" />
+                              <span className="text-[9px] font-extrabold text-blue-900 uppercase">
+                                + Cliquer pour Photo
                               </span>
                             </div>
                           )}
-                        </div>
+                          <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
+                            {uploadingId === activeStudent.id ? (
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                              'Changer Photo'
+                            )}
+                          </div>
+                        </label>
                       </div>
 
                       {/* Informations d'état civil (Droite) */}
                       <div className="col-span-8 flex flex-col justify-between pb-1.5 pr-1.5">
                         <div>
                           {/* Bandeau pêche CARTE D'IDENTITE SCOLAIRE */}
-                          <div className="bg-[#FDE0C6] py-0.5 px-2 text-center border-b border-amber-200/80">
-                            <span className="font-serif font-black italic text-[11.5px] text-[#122AB9] underline decoration-[#122AB9] tracking-tight">
-                              CARTE D&apos;IDENTITE SCOLAIRE
-                            </span>
+                          <div className="bg-[#FDE0C6] py-0.5 px-2 text-center border-b border-amber-200/80 min-h-[20px]">
+                            {cardBannerTitle.trim() && (
+                              <span className="font-serif font-black italic text-[11.5px] text-[#122AB9] underline decoration-[#122AB9] tracking-tight">
+                                {cardBannerTitle}
+                              </span>
+                            )}
                           </div>
 
                           <div className="px-2 pt-1.5 space-y-0.5 font-serif text-[12px] leading-snug">
                             <div className="truncate">
                               <span className="font-black text-slate-950">Nom: </span>
                               <span className="font-black text-[#99121C] uppercase">
-                                {previewStudent.last_name}
+                                {activeStudent.last_name}
                               </span>
                             </div>
                             <div className="truncate">
                               <span className="font-black text-slate-950">Prénoms: </span>
                               <span className="font-black text-[#99121C]">
-                                {previewStudent.first_name}
+                                {activeStudent.first_name}
                               </span>
                             </div>
                             <div className="truncate text-[11.5px]">
                               <span className="font-black text-slate-950">
                                 Né (e) le{' '}
-                                {previewStudent.date_of_birth
-                                  ? new Date(previewStudent.date_of_birth).toLocaleDateString('fr-FR')
+                                {activeStudent.date_of_birth
+                                  ? new Date(activeStudent.date_of_birth).toLocaleDateString(
+                                      'fr-FR'
+                                    )
                                   : '—'}{' '}
-                                à {previewStudent.birth_place || schoolInfo?.city || 'Lomé'}
+                                {activeStudent.birth_place
+                                  ? `à ${activeStudent.birth_place}`
+                                  : ''}
                               </span>
                             </div>
                             <div className="flex items-center justify-between">
@@ -661,46 +1310,69 @@ export function SchoolIdCardStudioModal({
                                 <span className="font-black text-[#D94619]">Sexe </span>
                                 <span className="font-black text-slate-950">: </span>
                                 <span className="font-black text-[#122AB9]">
-                                  {previewStudent.gender || '—'}
+                                  {activeStudent.gender || '—'}
                                 </span>
                               </div>
                               <span className="text-[9px] font-sans font-bold text-slate-400">
-                                Mle: {previewStudent.matricule}
+                                Mle: {activeStudent.matricule}
                               </span>
                             </div>
                           </div>
                         </div>
 
-                        {/* Bas de la carte : Année scolaire + Classe + Cachet rond bleu + Directeur */}
+                        {/* Bas de la carte : Année scolaire + Classe + Vrai Cachet/Signature (ou blanc) + Directeur */}
                         <div className="px-2 pt-1 flex items-end justify-between relative">
                           <div className="font-serif leading-tight">
                             <div className="italic font-black text-[11px] underline decoration-[#122AB9]">
                               <span className="text-slate-950">Année </span>
                               <span className="text-[#122AB9]">Scolaire</span>
                             </div>
-                            <div className="italic font-black text-[13px] text-[#A5181C] pl-1">
+                            <div className="italic font-black text-[13px] text-[#A5181C] pl-1 min-h-[16px]">
                               {cardAcademicYear}
                             </div>
                             <div className="italic text-[12px] mt-0.5">
                               <span className="text-slate-950 font-semibold">Classe : </span>
-                              <span className="font-black text-[#192AB9]">{className}</span>
+                              <span className="font-black text-[#192AB9]">
+                                {classNameOverride || className}
+                              </span>
                             </div>
                           </div>
 
-                          {/* Cachet circulaire bleu + Nom du Directeur */}
-                          <div className="flex flex-col items-end">
-                            <div className="h-12 w-12 rounded-full border-2 border-[#122ABE] flex flex-col items-center justify-center text-[#122ABE] text-center p-0.5 shadow-2xs bg-white/60">
-                              <span className="text-[4.5px] font-black uppercase leading-none">
-                                REPUBLIQUE TOGOLAISE
-                              </span>
-                              <span className="text-[7px] font-black my-0.5">★ RT ★</span>
-                              <span className="text-[4.2px] font-extrabold uppercase leading-none truncate max-w-[38px]">
-                                {(schoolNameOverride || 'ÉCOLE').slice(0, 14)}
-                              </span>
+                          {/* Zone Cachet + Signature + Nom du Directeur (si rien n'est saisi, reste blanc !) */}
+                          <div className="flex flex-col items-end min-w-[90px] min-h-[54px] justify-end">
+                            <div className="relative flex items-center justify-center h-12 w-24">
+                              {stampUrl ? (
+                                <img
+                                  src={stampUrl}
+                                  alt="Cachet officiel"
+                                  className="h-12 w-12 object-contain"
+                                />
+                              ) : showVectorStampIfNoStamp ? (
+                                <div className="h-12 w-12 rounded-full border-2 border-[#122ABE] flex flex-col items-center justify-center text-[#122ABE] text-center p-0.5 bg-white/60">
+                                  <span className="text-[4.2px] font-black uppercase leading-none">
+                                    REPUBLIQUE TOGOLAISE
+                                  </span>
+                                  <span className="text-[6.5px] font-black my-0.5">★ RT ★</span>
+                                  <span className="text-[4px] font-extrabold uppercase leading-none truncate max-w-[36px]">
+                                    {(schoolNameOverride || 'ÉCOLE').slice(0, 14)}
+                                  </span>
+                                </div>
+                              ) : null}
+
+                              {signatureUrl && (
+                                <img
+                                  src={signatureUrl}
+                                  alt="Signature Directeur"
+                                  className="h-9 w-16 object-contain absolute right-0 bottom-0"
+                                />
+                              )}
                             </div>
-                            <div className="font-serif italic font-black text-[11px] text-[#A5181C] leading-none mt-0.5">
-                              {directorName || 'Le Directeur'}
-                            </div>
+
+                            {directorName.trim() && (
+                              <div className="font-serif italic font-black text-[11px] text-[#A5181C] leading-none mt-0.5">
+                                {directorName}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -708,15 +1380,226 @@ export function SchoolIdCardStudioModal({
                   </div>
                 </div>
               </div>
+
+              {/* FORMULAIRE DE SAISIE RAPIDE DE L'ÉLÈVE ACTIF + BOUTONS « ENREGISTRER » & « SUIVANT » */}
+              <div className="rounded-xl border border-indigo-200/80 bg-indigo-50/40 p-3.5 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-white text-xs font-extrabold">
+                      {activeIndex + 1}
+                    </span>
+                    <span className="text-xs font-extrabold text-indigo-950">
+                      Élève actif : {activeStudent.last_name.toUpperCase()}{' '}
+                      {activeStudent.first_name}
+                    </span>
+                  </div>
+
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl bg-white border border-indigo-200 px-3 py-1.5 text-xs font-extrabold text-indigo-800 hover:bg-indigo-50 shadow-2xs transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingId === activeStudent.id}
+                      onChange={(e) =>
+                        handlePhotoUpload(activeStudent.id, e.target.files?.[0])
+                      }
+                    />
+                    {uploadingId === activeStudent.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Camera className="h-3.5 w-3.5 text-indigo-600" />
+                    )}
+                    {activeStudent.avatar_url
+                      ? 'Remplacer la photo de cet élève'
+                      : 'Uploader la photo de cet élève'}
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                  <div className="sm:col-span-4">
+                    <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                      Nom de l&apos;élève (MAJUSCULE)
+                    </label>
+                    <input
+                      type="text"
+                      value={activeStudent.last_name}
+                      onChange={(e) =>
+                        handleFieldChange(activeStudent.id, 'last_name', e.target.value)
+                      }
+                      className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-extrabold uppercase text-red-800 focus:border-indigo-600 outline-none"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-4">
+                    <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                      Prénoms de l&apos;élève
+                    </label>
+                    <input
+                      type="text"
+                      value={activeStudent.first_name}
+                      onChange={(e) =>
+                        handleFieldChange(activeStudent.id, 'first_name', e.target.value)
+                      }
+                      className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-600 outline-none"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                      Sexe
+                    </label>
+                    <select
+                      value={activeStudent.gender?.toUpperCase() || ''}
+                      onChange={(e) =>
+                        handleFieldChange(activeStudent.id, 'gender', e.target.value)
+                      }
+                      className="w-full rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-xs font-extrabold text-indigo-950 focus:border-indigo-600 outline-none"
+                    >
+                      <option value="">—</option>
+                      <option value="F">F (Fille)</option>
+                      <option value="M">M (Garçon)</option>
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                      Classe
+                    </label>
+                    <input
+                      type="text"
+                      value={classNameOverride}
+                      onChange={(e) => setClassNameOverride(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-extrabold text-indigo-950 focus:border-indigo-600 outline-none"
+                    />
+                  </div>
+
+                  {/* Sélecteur Jour / Mois / Année */}
+                  <div className="sm:col-span-7">
+                    <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                      Date de naissance (Jour / Mois / Année)
+                    </label>
+                    <BirthDateSelect
+                      value={activeStudent.date_of_birth}
+                      onChange={(iso) =>
+                        handleFieldChange(activeStudent.id, 'date_of_birth', iso)
+                      }
+                    />
+                  </div>
+
+                  <div className="sm:col-span-5">
+                    <label className="block text-[10.5px] font-bold text-slate-700 mb-1">
+                      Lieu de naissance (à ...)
+                    </label>
+                    <input
+                      type="text"
+                      value={activeStudent.birth_place || ''}
+                      onChange={(e) =>
+                        handleFieldChange(activeStudent.id, 'birth_place', e.target.value)
+                      }
+                      placeholder={schoolInfo?.city || 'Ex: Lomé'}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-indigo-600 outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Boutons d'action : Enregistrer cette carte / Enregistrer & Passer à l'Élève Suivant (Ordre Alphabétique) */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-indigo-200/60">
+                  <span className="text-[11px] font-medium text-slate-600">
+                    Ordre alphabétique :{' '}
+                    <strong>
+                      {activeIndex + 1} sur {localStudents.length}
+                    </strong>
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={isSavingCurrent}
+                      onClick={async () => {
+                        persistHeaderConfig()
+                        const ok = await saveStudentToDb(activeStudent.id)
+                        if (ok) toast.success('Carte de l’élève enregistrée !')
+                      }}
+                      className="px-3.5 py-2 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-extrabold transition-colors flex items-center gap-1.5"
+                    >
+                      {isSavingCurrent ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Save className="h-3.5 w-3.5 text-emerald-700" />
+                      )}
+                      Enregistrer
+                    </button>
+
+                    {localStudents.length > 1 && (
+                      <button
+                        type="button"
+                        disabled={isSavingCurrent}
+                        onClick={handleSaveAndNextStudent}
+                        className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-xs transition-all flex items-center gap-1.5"
+                      >
+                        {isSavingCurrent ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <>
+                            <Save className="h-3.5 w-3.5" />
+                            <span>Enregistrer & Élève Suivant</span>
+                            <ChevronRight className="h-4 w-4" />
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* SECTION 2 : Table Interactive des Élèves (Upload Photo 1-clic + Lieu/Date de naissance) */}
+          {/* SECTION 2 : Génération par Lots de 10 Cartes (Ex: 47 élèves -> 10, 10, 10, 10 et 7 sur la dernière page) */}
+          {batchesOfTen.length > 1 && (
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
+                  <Layers className="h-4 w-4 text-indigo-600" />
+                  Impression par Lots de 10 Élèves (Sans remplissage forcé sur la dernière page)
+                </h3>
+                <span className="text-xs font-semibold text-slate-600">
+                  Total : <strong>{selectedCount} élèves</strong> répartis en{' '}
+                  <strong>{batchesOfTen.length} listes</strong> (dernière liste :{' '}
+                  <strong>{remainderOnLastPage} carte{remainderOnLastPage > 1 ? 's' : ''}</strong>)
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {batchesOfTen.map((batch) => (
+                  <button
+                    key={batch.pageNumber}
+                    type="button"
+                    disabled={isGenerating}
+                    onClick={() =>
+                      handleGenerateSheets(
+                        batch.students,
+                        `Lot_${batch.pageNumber}_Eleves_${batch.startIndex}_a_${batch.endIndex}`
+                      )
+                    }
+                    className="px-3 py-2 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-950 text-xs font-extrabold transition-all flex items-center gap-1.5"
+                  >
+                    <Printer className="h-3.5 w-3.5 text-indigo-600" />
+                    <span>
+                      Lot {batch.pageNumber} : Élèves {batch.startIndex} à {batch.endIndex} (
+                      {batch.students.length} carte{batch.students.length > 1 ? 's' : ''})
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 3 : Liste Complète des Élèves par Ordre Alphabétique */}
           <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/60">
+            <div className="p-3.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/60">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h3 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-indigo-950">
-                  2. Photos & Informations des Élèves ({selectedCount} sélectionné{selectedCount > 1 ? 's' : ''})
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-indigo-950">
+                  3. Liste Alphabétique de la Classe ({selectedCount} sélectionné{selectedCount > 1 ? 's' : ''})
                 </h3>
                 <span
                   className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
@@ -735,7 +1618,7 @@ export function SchoolIdCardStudioModal({
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
-                <div className="relative w-full sm:w-56">
+                <div className="relative w-full sm:w-52">
                   <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
@@ -782,11 +1665,11 @@ export function SchoolIdCardStudioModal({
               </div>
             </div>
 
-            <div className="overflow-x-auto max-h-[340px] overflow-y-auto">
+            <div className="overflow-x-auto max-h-[260px] overflow-y-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead className="sticky top-0 z-10 bg-slate-100 border-b border-slate-200 text-[11px] font-extrabold text-slate-600 uppercase">
                   <tr>
-                    <th className="py-2.5 px-3 w-10 text-center">
+                    <th className="py-2 px-3 w-10 text-center">
                       <button
                         type="button"
                         onClick={toggleSelectAll}
@@ -801,28 +1684,28 @@ export function SchoolIdCardStudioModal({
                         )}
                       </button>
                     </th>
-                    <th className="py-2.5 px-3">Photo Passeport</th>
-                    <th className="py-2.5 px-3">Nom (MAJUSCULE)</th>
-                    <th className="py-2.5 px-3">Prénoms</th>
-                    <th className="py-2.5 px-3">Né(e) le</th>
-                    <th className="py-2.5 px-3">Lieu de naissance (à ...)</th>
-                    <th className="py-2.5 px-3 text-center">Sexe</th>
-                    <th className="py-2.5 px-3 text-right">Aperçu</th>
+                    <th className="py-2 px-2 w-10">N°</th>
+                    <th className="py-2 px-3">Photo</th>
+                    <th className="py-2 px-3">Nom (Ordre A-Z)</th>
+                    <th className="py-2 px-3">Prénoms</th>
+                    <th className="py-2 px-3">Date de Naissance (J/M/A)</th>
+                    <th className="py-2 px-3">Lieu de naissance</th>
+                    <th className="py-2 px-3 text-center">Sexe</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200/70">
-                  {filteredStudents.map((st) => {
+                  {filteredStudents.map((st, idx) => {
                     const isSelected = selectedIds.has(st.id)
-                    const isPreviewed = previewStudent.id === st.id
+                    const isActive = activeStudent.id === st.id
                     const isUploadingThis = uploadingId === st.id
 
                     return (
                       <tr
                         key={st.id}
-                        onClick={() => setPreviewStudentId(st.id)}
+                        onClick={() => setActiveStudentId(st.id)}
                         className={`transition-colors cursor-pointer ${
-                          isPreviewed
-                            ? 'bg-indigo-50/70'
+                          isActive
+                            ? 'bg-indigo-50/80 ring-1 ring-inset ring-indigo-300'
                             : isSelected
                               ? 'hover:bg-slate-50'
                               : 'opacity-60 bg-slate-50/40'
@@ -842,9 +1725,11 @@ export function SchoolIdCardStudioModal({
                           )}
                         </td>
 
+                        <td className="py-2 px-2 font-bold text-slate-500">{idx + 1}</td>
+
                         {/* Upload Photo en 1 clic */}
                         <td className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
-                          <label className="inline-flex items-center gap-2.5 cursor-pointer group">
+                          <label className="inline-flex items-center gap-2 cursor-pointer group">
                             <input
                               type="file"
                               accept="image/*"
@@ -852,7 +1737,7 @@ export function SchoolIdCardStudioModal({
                               disabled={isUploadingThis}
                               onChange={(e) => handlePhotoUpload(st.id, e.target.files?.[0])}
                             />
-                            <div className="h-11 w-9 rounded-lg border border-slate-300 bg-slate-100 overflow-hidden flex items-center justify-center relative shadow-2xs group-hover:border-indigo-600">
+                            <div className="h-9 w-8 rounded-md border border-slate-300 bg-slate-100 overflow-hidden flex items-center justify-center relative">
                               {st.avatar_url ? (
                                 <img
                                   src={st.avatar_url}
@@ -860,63 +1745,44 @@ export function SchoolIdCardStudioModal({
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
-                                <Camera className="h-4 w-4 text-slate-400 group-hover:text-indigo-600" />
+                                <Camera className="h-3.5 w-3.5 text-slate-400" />
                               )}
                               {isUploadingThis && (
                                 <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
-                                  <Loader2 className="h-4 w-4 text-white animate-spin" />
+                                  <Loader2 className="h-3.5 w-3.5 text-white animate-spin" />
                                 </div>
                               )}
                             </div>
                             <span
-                              className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors ${
+                              className={`px-2 py-0.5 rounded-md font-bold text-[10.5px] ${
                                 st.avatar_url
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 group-hover:bg-emerald-100'
-                                  : 'bg-indigo-50 text-indigo-700 border border-indigo-200 group-hover:bg-indigo-100'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                               }`}
                             >
-                              {st.avatar_url ? 'Changer photo' : '+ Ajouter photo'}
+                              {st.avatar_url ? 'Photo OK' : '+ Photo'}
                             </span>
                           </label>
                         </td>
 
-                        {/* Nom */}
+                        <td className="py-2 px-3 font-extrabold uppercase text-red-800">
+                          {st.last_name}
+                        </td>
+
+                        <td className="py-2 px-3 font-bold text-slate-900">
+                          {st.first_name}
+                        </td>
+
                         <td className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="text"
-                            value={st.last_name}
-                            onChange={(e) =>
-                              handleFieldChange(st.id, 'last_name', e.target.value)
+                          <BirthDateSelect
+                            compact
+                            value={st.date_of_birth}
+                            onChange={(iso) =>
+                              handleFieldChange(st.id, 'date_of_birth', iso)
                             }
-                            className="w-full min-w-[110px] rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-extrabold uppercase text-red-800 focus:border-indigo-600 outline-none"
                           />
                         </td>
 
-                        {/* Prénoms */}
-                        <td className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="text"
-                            value={st.first_name}
-                            onChange={(e) =>
-                              handleFieldChange(st.id, 'first_name', e.target.value)
-                            }
-                            className="w-full min-w-[120px] rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-600 outline-none"
-                          />
-                        </td>
-
-                        {/* Date de naissance */}
-                        <td className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="date"
-                            value={st.date_of_birth ? st.date_of_birth.slice(0, 10) : ''}
-                            onChange={(e) =>
-                              handleFieldChange(st.id, 'date_of_birth', e.target.value)
-                            }
-                            className="w-full min-w-[125px] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold text-slate-800 focus:border-indigo-600 outline-none"
-                          />
-                        </td>
-
-                        {/* Lieu de naissance */}
                         <td className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="text"
@@ -925,38 +1791,22 @@ export function SchoolIdCardStudioModal({
                               handleFieldChange(st.id, 'birth_place', e.target.value)
                             }
                             placeholder={schoolInfo?.city || 'Ex: Lomé'}
-                            className="w-full min-w-[115px] rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:border-indigo-600 outline-none"
+                            className="w-full max-w-[120px] rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-800 focus:border-indigo-600 outline-none"
                           />
                         </td>
 
-                        {/* Sexe */}
                         <td className="py-2 px-3 text-center" onClick={(e) => e.stopPropagation()}>
                           <select
                             value={st.gender?.toUpperCase() || ''}
                             onChange={(e) =>
                               handleFieldChange(st.id, 'gender', e.target.value)
                             }
-                            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-extrabold text-indigo-950 focus:border-indigo-600 outline-none"
+                            className="rounded-lg border border-slate-200 bg-white px-1.5 py-1 text-xs font-extrabold text-indigo-950 focus:border-indigo-600 outline-none"
                           >
                             <option value="">—</option>
                             <option value="F">F</option>
                             <option value="M">M</option>
                           </select>
-                        </td>
-
-                        {/* Bouton Aperçu */}
-                        <td className="py-2 px-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() => setPreviewStudentId(st.id)}
-                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${
-                              isPreviewed
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                            }`}
-                          >
-                            {isPreviewed ? 'Affiché' : 'Voir carte'}
-                          </button>
                         </td>
                       </tr>
                     )
@@ -968,90 +1818,56 @@ export function SchoolIdCardStudioModal({
         </div>
 
         {/* Barre d'Action Inférieure */}
-        <div className="border-t border-slate-200 bg-white px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-3 text-xs text-slate-600">
+        <div className="border-t border-slate-200 bg-white px-5 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2.5 text-xs text-slate-600">
             <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
             <span>
-              <strong>{selectedCount} élève{selectedCount > 1 ? 's' : ''}</strong> prêt{selectedCount > 1 ? 's' : ''} •{' '}
-              Impression automatique :{' '}
-              <strong className="text-indigo-950">
-                10 cartes par page A4 ({pagesCount} page{pagesCount > 1 ? 's' : ''})
-              </strong>
+              <strong>{selectedCount} carte{selectedCount > 1 ? 's' : ''}</strong> à générer •{' '}
+              {pagesCount > 1 ? (
+                <>
+                  <strong>{pagesCount} pages A4</strong> (10 par page, et{' '}
+                  <strong className="text-indigo-950">
+                    {remainderOnLastPage} carte{remainderOnLastPage > 1 ? 's' : ''} sur la dernière page
+                  </strong>
+                  )
+                </>
+              ) : (
+                <strong className="text-indigo-950">
+                  {selectedCount} carte{selectedCount > 1 ? 's' : ''} sur 1 page A4
+                </strong>
+              )}
             </span>
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap w-full sm:w-auto justify-end">
-            {dirtyStudentIds.size > 0 && (
-              <button
-                type="button"
-                disabled={isSavingAll}
-                onClick={async () => {
-                  const ok = await saveModifiedStudentsToDb()
-                  if (ok) toast.success('Modifications enregistrées !')
-                }}
-                className="px-3.5 py-2.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-extrabold hover:bg-emerald-100 transition-colors flex items-center gap-1.5"
-              >
-                {isSavingAll ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                Enregistrer les infos ({dirtyStudentIds.size})
-              </button>
-            )}
-
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors"
+              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors"
             >
               Fermer
             </button>
 
-            {isSingleStudentMode ? (
-              <>
-                <button
-                  type="button"
-                  disabled={isGenerating || selectedCount === 0}
-                  onClick={() => handleGeneratePdf('single_card')}
-                  className="px-4 py-2.5 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-900 text-xs font-extrabold hover:bg-indigo-100 transition-all flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  <Printer className="h-4 w-4 text-indigo-700" />
-                  Imprimer 1 Carte (Recto)
-                </button>
-                <button
-                  type="button"
-                  disabled={isGenerating || selectedCount === 0}
-                  onClick={() => handleGeneratePdf('single_10up')}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] text-white text-xs sm:text-sm font-extrabold shadow-md hover:opacity-95 transition-all flex items-center gap-2 disabled:opacity-50"
-                >
-                  {isGenerating ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
-                  ) : (
-                    <IdCard className="h-4 w-4 text-amber-300" />
-                  )}
-                  Générer Planche 10 Cartes / Page A4
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                disabled={isGenerating || selectedCount === 0}
-                onClick={() => handleGeneratePdf('class_sheet')}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] text-white text-xs sm:text-sm font-extrabold shadow-md hover:opacity-95 transition-all flex items-center gap-2 disabled:opacity-50"
-              >
-                {isGenerating ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
-                ) : (
-                  <Printer className="h-4 w-4 text-amber-300" />
-                )}
-                Générer la Planche PDF ({selectedCount} élèves • 10 cartes / page A4)
-              </button>
-            )}
+            <button
+              type="button"
+              disabled={isGenerating || selectedCount === 0}
+              onClick={() => handleGenerateSheets(selectedStudentsOrdered)}
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] text-white text-xs sm:text-sm font-extrabold shadow-md hover:opacity-95 transition-all flex items-center gap-2 disabled:opacity-50"
+            >
+              {isGenerating ? (
+                <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
+              ) : (
+                <Printer className="h-4 w-4 text-amber-300" />
+              )}
+              Générer le PDF ({selectedCount} carte{selectedCount > 1 ? 's' : ''} •{' '}
+              {pagesCount > 1
+                ? `10/page + ${remainderOnLastPage} sur la dernière`
+                : `${selectedCount} sur la page A4`}
+              )
+            </button>
           </div>
         </div>
       </div>
     </div>
   )
 }
-
