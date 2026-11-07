@@ -518,12 +518,25 @@ export function SchoolIdCardStudioModal({
   const [isGenerating, setIsGenerating] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterMode, setFilterMode] = useState<'all' | 'missing_photo' | 'missing_info'>('all')
+  const [showStudentList, setShowStudentList] = useState(false)
 
   // Personnalisation complète des Polices, Styles (Gras, Italique, Souligné, Majuscules), Tailles et Couleurs
   const [typographyConfig, setTypographyConfig] = useState<CardTypographyConfig>(
     () => DEFAULT_CARD_TYPOGRAPHY
   )
   const [activeTypoZone, setActiveTypoZone] = useState<TypographyZoneKey>('schoolName')
+
+  // Personnalisation de couleur Lettre par Lettre (ex: M-E-P-S-T, Nom de l'École, Inspection, Bandeau...)
+  type LetterColorFieldKey =
+    | 'ministryAcronym'
+    | 'schoolName'
+    | 'inspectionName'
+    | 'bannerTitle'
+    | 'examCenter'
+    | 'republicTitle'
+  const [letterColorField, setLetterColorField] =
+    useState<LetterColorFieldKey>('ministryAcronym')
+  const [selectedLetterIndex, setSelectedLetterIndex] = useState<number>(0)
 
   const updateZoneTypography = (
     zoneKey: TypographyZoneKey,
@@ -578,6 +591,134 @@ export function SchoolIdCardStudioModal({
   )
   const [classNameOverride, setClassNameOverride] = useState(className)
 
+  const getFieldRawText = (fieldKey: LetterColorFieldKey): string => {
+    switch (fieldKey) {
+      case 'ministryAcronym':
+        return (
+          typographyConfig.headerOfficial.uppercase
+            ? ministryAcronym.trim().toUpperCase()
+            : ministryAcronym.trim()
+        ).slice(0, 12)
+      case 'schoolName':
+        return (
+          typographyConfig.schoolName.uppercase
+            ? schoolNameOverride.trim().toUpperCase()
+            : schoolNameOverride.trim()
+        ).slice(0, 34)
+      case 'inspectionName':
+        return (
+          typographyConfig.headerOfficial.uppercase
+            ? inspectionName.trim().toUpperCase()
+            : inspectionName.trim()
+        ).slice(0, 38)
+      case 'bannerTitle':
+        return (
+          typographyConfig.bannerTitle.uppercase
+            ? cardBannerTitle.trim().toUpperCase()
+            : cardBannerTitle.trim()
+        ).slice(0, 34)
+      case 'examCenter':
+        return examCenter.trim().slice(0, 26)
+      case 'republicTitle':
+        return (
+          typographyConfig.headerOfficial.uppercase
+            ? republicTitle.trim().toUpperCase()
+            : republicTitle.trim()
+        ).slice(0, 28)
+    }
+  }
+
+  const getFieldDefaultColor = (fieldKey: LetterColorFieldKey): string => {
+    if (fieldKey === 'schoolName') return typographyConfig.schoolName.color
+    if (fieldKey === 'bannerTitle') return typographyConfig.bannerTitle.color
+    if (fieldKey === 'republicTitle') return '#0F172A'
+    return typographyConfig.headerOfficial.color
+  }
+
+  const getFieldLetterColors = (fieldKey: LetterColorFieldKey, text: string): string[] => {
+    const saved = typographyConfig.letterColors?.[fieldKey]
+    const fallback = getFieldDefaultColor(fieldKey)
+    const defaultMepst =
+      fieldKey === 'ministryAcronym' && text.toUpperCase() === 'MEPST'
+        ? ['#0F172A', '#0F172A', '#DC2626', '#F59E0B', '#1D4ED8']
+        : undefined
+    const chars = Array.from(text)
+    return chars.map((_, idx) => {
+      if (Array.isArray(saved) && saved[idx]) return saved[idx]
+      if (defaultMepst && defaultMepst[idx]) return defaultMepst[idx]
+      return fallback
+    })
+  }
+
+  const handleSetLetterColor = (colorHex: string) => {
+    const currentText = getFieldRawText(letterColorField)
+    if (!currentText) return
+    const currentColors = getFieldLetterColors(letterColorField, currentText)
+    const safeIdx = Math.min(Math.max(0, selectedLetterIndex), currentColors.length - 1)
+    const nextColors = [...currentColors]
+    nextColors[safeIdx] = colorHex
+
+    setTypographyConfig((prev) => ({
+      ...prev,
+      letterColors: {
+        ...(prev.letterColors || {}),
+        [letterColorField]: nextColors,
+      },
+    }))
+
+    // Avancer automatiquement le curseur sur la lettre suivante (sans boucler au début !)
+    if (safeIdx < currentColors.length - 1) {
+      let nextIdx = safeIdx + 1
+      while (nextIdx < currentColors.length - 1 && currentText[nextIdx] === ' ') {
+        nextIdx++
+      }
+      setSelectedLetterIndex(nextIdx)
+    }
+  }
+
+  const handleResetFieldLetterColors = (fieldKey: LetterColorFieldKey) => {
+    setTypographyConfig((prev) => {
+      const nextMap = { ...(prev.letterColors || {}) }
+      if (fieldKey === 'ministryAcronym' && ministryAcronym.trim().toUpperCase() === 'MEPST') {
+        nextMap.ministryAcronym = ['#0F172A', '#0F172A', '#DC2626', '#F59E0B', '#1D4ED8']
+      } else {
+        delete nextMap[fieldKey]
+      }
+      return {
+        ...prev,
+        letterColors: nextMap,
+      }
+    })
+    setSelectedLetterIndex(0)
+  }
+
+  const renderMulticolorPreview = (
+    text: string,
+    fieldKey: LetterColorFieldKey,
+    fallbackColor: string
+  ) => {
+    const saved = typographyConfig.letterColors?.[fieldKey]
+    const defaultMepst =
+      fieldKey === 'ministryAcronym' && text.trim().toUpperCase() === 'MEPST'
+        ? ['#0F172A', '#0F172A', '#DC2626', '#F59E0B', '#1D4ED8']
+        : undefined
+    const colors =
+      Array.isArray(saved) && saved.some(Boolean) ? saved : defaultMepst
+
+    if (!colors || colors.length === 0) {
+      return <>{text}</>
+    }
+    return (
+      <>
+        {Array.from(text).map((ch, idx) => (
+          <span key={idx} style={{ color: colors[idx] || fallbackColor }}>
+            {ch}
+          </span>
+        ))}
+      </>
+    )
+  }
+
   // Assets officiels (chargés automatiquement depuis Paramètres `schools`, ou importables ici)
   const [schoolId, setSchoolId] = useState<string | null>(schoolInfo?.id || null)
   const [logoUrl, setLogoUrl] = useState<string>(schoolInfo?.logo_url || '')
@@ -588,7 +729,7 @@ export function SchoolIdCardStudioModal({
   const [showVectorEmblemIfNoLogo, setShowVectorEmblemIfNoLogo] = useState<boolean>(true)
   const [showVectorStampIfNoStamp, setShowVectorStampIfNoStamp] = useState<boolean>(false)
 
-  // Gestion des Thèmes d'arrière-plan de la carte (navigation Précédent / Suivant)
+  // Gestion des Thèmes d'arrière-plan de la carte (navigation Précédent / Suivant SANS boucler au début)
   const [customThemes, setCustomThemes] = useState<CardThemeOption[]>([])
   const allThemes = useMemo(
     () => [...DEFAULT_CARD_THEMES, ...customThemes],
@@ -598,11 +739,11 @@ export function SchoolIdCardStudioModal({
   const activeTheme = allThemes[activeThemeIndex] || DEFAULT_CARD_THEMES[0]
 
   const handlePrevTheme = () => {
-    setActiveThemeIndex((prev) => (prev - 1 + allThemes.length) % allThemes.length)
+    setActiveThemeIndex((prev) => Math.max(0, prev - 1))
   }
 
   const handleNextTheme = () => {
-    setActiveThemeIndex((prev) => (prev + 1) % allThemes.length)
+    setActiveThemeIndex((prev) => Math.min(allThemes.length - 1, prev + 1))
   }
 
   const handleUploadCustomTheme = async (file?: File | null) => {
@@ -1091,13 +1232,8 @@ export function SchoolIdCardStudioModal({
   }
 
   const handlePrevStudent = () => {
-    if (localStudents.length <= 1) {
-      toast(
-        `Cette classe (${className}) ne contient qu'un seul élève inscrit.`
-      )
-      return
-    }
-    const prevIdx = (activeIndex - 1 + localStudents.length) % localStudents.length
+    if (activeIndex <= 0) return
+    const prevIdx = activeIndex - 1
     const prevStudent = localStudents[prevIdx]
     selectStudentById(prevStudent.id)
     toast.success(
@@ -1106,13 +1242,8 @@ export function SchoolIdCardStudioModal({
   }
 
   const handleNextStudent = () => {
-    if (localStudents.length <= 1) {
-      toast(
-        `Cette classe (${className}) ne contient qu'un seul élève inscrit. Sélectionnez une autre classe dans le menu déroulant en haut si besoin.`
-      )
-      return
-    }
-    const nextIdx = (activeIndex + 1) % localStudents.length
+    if (activeIndex >= localStudents.length - 1) return
+    const nextIdx = activeIndex + 1
     const nextStudent = localStudents[nextIdx]
     selectStudentById(nextStudent.id)
     toast.success(
@@ -1120,19 +1251,12 @@ export function SchoolIdCardStudioModal({
     )
   }
 
-  // Enregistrer la carte actuelle et passer automatiquement à l'élève suivant (ordre alphabétique)
+  // Enregistrer la carte actuelle et passer automatiquement à l'élève suivant (sans recommencer au début sur le dernier élève)
   const handleSaveAndNextStudent = async () => {
     if (!activeStudent) return
     persistHeaderConfig()
     const ok = await saveStudentToDb(activeStudent.id)
     if (!ok) return
-
-    if (localStudents.length <= 1) {
-      toast.success(
-        `Carte de ${activeStudent.last_name.toUpperCase()} ${activeStudent.first_name} enregistrée ! (1 seul élève dans la classe ${className})`
-      )
-      return
-    }
 
     if (activeIndex < localStudents.length - 1) {
       const nextStudent = localStudents[activeIndex + 1]
@@ -1141,10 +1265,8 @@ export function SchoolIdCardStudioModal({
         `Carte enregistrée ! Passage à l'élève ${activeIndex + 2}/${localStudents.length} : ${nextStudent.last_name.toUpperCase()} ${nextStudent.first_name}`
       )
     } else {
-      const firstStudent = localStudents[0]
-      selectStudentById(firstStudent.id)
       toast.success(
-        `Dernière carte (${localStudents.length}/${localStudents.length}) enregistrée ! Retour au 1er élève de la classe.`
+        `Dernière carte de la classe (${localStudents.length}/${localStudents.length}) enregistrée avec succès !`
       )
     }
   }
@@ -1911,13 +2033,162 @@ export function SchoolIdCardStudioModal({
                       ))}
                     </div>
                   )}
+
+                  {/* PERSONNALISATION COULEUR LETTRE PAR LETTRE (EX: M-E-P-S-T, NOM ÉCOLE, BANDEAU...) */}
+                  {(() => {
+                    const activeLetterText = getFieldRawText(letterColorField)
+                    const activeLetterColors = getFieldLetterColors(
+                      letterColorField,
+                      activeLetterText
+                    )
+                    const safeSelectedIdx = Math.min(
+                      Math.max(0, selectedLetterIndex),
+                      Math.max(0, activeLetterText.length - 1)
+                    )
+                    const selectedChar = activeLetterText[safeSelectedIdx] || ''
+                    const selectedCharColor =
+                      activeLetterColors[safeSelectedIdx] || getFieldDefaultColor(letterColorField)
+
+                    return (
+                      <div className="pt-2.5 mt-1 border-t border-slate-200/90 space-y-2">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-indigo-950 flex items-center gap-1">
+                            <Palette className="h-3.5 w-3.5 text-indigo-600" />
+                            Couleur Lettre par Lettre (Ex: M-E-P-S-T)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleResetFieldLetterColors(letterColorField)}
+                            className="text-[10px] font-bold text-slate-500 hover:text-indigo-700 px-1.5 py-0.5 rounded bg-white border border-slate-200"
+                            title="Réinitialiser les couleurs des lettres de ce texte"
+                          >
+                            Réinitialiser lettres
+                          </button>
+                        </div>
+
+                        {/* Choix du texte à colorer lettre par lettre */}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-semibold text-slate-600 shrink-0">
+                            Texte :
+                          </span>
+                          <select
+                            value={letterColorField}
+                            onChange={(e) => {
+                              setLetterColorField(e.target.value as typeof letterColorField)
+                              setSelectedLetterIndex(0)
+                            }}
+                            className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-900 outline-none focus:border-indigo-600"
+                          >
+                            <option value="ministryAcronym">
+                              Sigle Ministère ({ministryAcronym || 'MEPST'})
+                            </option>
+                            <option value="schoolName">
+                              Nom de l&apos;École ({schoolNameOverride.slice(0, 18)})
+                            </option>
+                            <option value="inspectionName">
+                              Inspection / IEPP ({inspectionName.slice(0, 18)})
+                            </option>
+                            <option value="bannerTitle">
+                              Titre Bandeau ({cardBannerTitle.slice(0, 18)})
+                            </option>
+                            <option value="examCenter">
+                              Centre d&apos;Écrit ({examCenter.slice(0, 18)})
+                            </option>
+                            <option value="republicTitle">
+                              Mention République ({republicTitle.slice(0, 18)})
+                            </option>
+                          </select>
+                        </div>
+
+                        {/* Cases cliquables pour chaque lettre du mot (ex: M | E | P | S | T) */}
+                        {activeLetterText.length > 0 ? (
+                          <>
+                            <div className="flex items-center gap-1 flex-wrap bg-white p-2 rounded-xl border border-slate-200/90">
+                              {Array.from(activeLetterText).map((ch, idx) => {
+                                const isSel = idx === safeSelectedIdx
+                                const charColor = activeLetterColors[idx] || '#0F172A'
+                                return (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => setSelectedLetterIndex(idx)}
+                                    className={`min-w-[26px] h-7 px-1.5 rounded-lg border text-xs font-black transition-all flex items-center justify-center ${
+                                      isSel
+                                        ? 'ring-2 ring-indigo-600 border-indigo-600 bg-indigo-50/70 scale-110 shadow-2xs'
+                                        : 'border-slate-200 bg-slate-50/60 hover:bg-slate-100'
+                                    }`}
+                                    style={{ color: charColor }}
+                                    title={`Cliquez pour sélectionner la lettre "${ch}" (position ${idx + 1})`}
+                                  >
+                                    {ch === ' ' ? '␣' : ch}
+                                  </button>
+                                )
+                              })}
+                            </div>
+
+                            {/* Palette de couleur dédiée à la lettre sélectionnée */}
+                            <div className="flex items-center justify-between gap-2 flex-wrap bg-indigo-50/50 px-2.5 py-1.5 rounded-xl border border-indigo-100">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[10px] font-extrabold text-indigo-950">
+                                  Lettre « {selectedChar === ' ' ? 'Espace' : selectedChar} » :
+                                </span>
+                                {[
+                                  { hex: '#0F172A', name: 'Noir' },
+                                  { hex: '#DC2626', name: 'Rouge' },
+                                  { hex: '#F59E0B', name: 'Jaune / Or' },
+                                  { hex: '#1D4ED8', name: 'Bleu Royal' },
+                                  { hex: '#007A33', name: 'Vert Togo' },
+                                  { hex: '#99121C', name: 'Bordeaux' },
+                                  { hex: '#7C3AED', name: 'Violet' },
+                                  { hex: '#EA580C', name: 'Orange' },
+                                  { hex: '#0284C7', name: 'Bleu Ciel' },
+                                ].map((c) => (
+                                  <button
+                                    key={c.hex}
+                                    type="button"
+                                    onClick={() => handleSetLetterColor(c.hex)}
+                                    className={`h-4 w-4 rounded-full border transition-transform ${
+                                      selectedCharColor.toUpperCase() === c.hex.toUpperCase()
+                                        ? 'scale-125 ring-2 ring-indigo-600 border-white'
+                                        : 'border-slate-300 hover:scale-110'
+                                    }`}
+                                    style={{ backgroundColor: c.hex }}
+                                    title={`Mettre la lettre "${selectedChar}" en ${c.name}`}
+                                  />
+                                ))}
+                              </div>
+
+                              <label
+                                className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 cursor-pointer"
+                                title="Autre couleur au choix pour cette lettre"
+                              >
+                                <input
+                                  type="color"
+                                  value={selectedCharColor}
+                                  onChange={(e) => handleSetLetterColor(e.target.value)}
+                                  className="h-4 w-4 rounded border-0 cursor-pointer bg-transparent"
+                                />
+                                <span className="text-[9.5px] font-mono font-bold text-slate-700">
+                                  Autre
+                                </span>
+                              </label>
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-[10.5px] text-slate-400 italic">
+                            Saisissez d&apos;abord un texte dans ce champ pour colorer ses lettres.
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
             </div>
 
             {/* COLONNE DROITE (7 cols) : Aperçu Temps Réel + Saisie Élève par Élève (Enregistrer -> Suivant) */}
             <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] space-y-5">
-              {/* Barre de navigation Alphabétique Élève par Élève (Toujours visible) */}
+              {/* Barre de navigation Alphabétique Élève par Élève (Toujours visible — Sans retour au début sur Suivant) */}
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
                   <Eye className="h-4 w-4 text-indigo-600" />
@@ -1929,9 +2200,10 @@ export function SchoolIdCardStudioModal({
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <button
                     type="button"
+                    disabled={activeIndex <= 0}
                     onClick={handlePrevStudent}
-                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-2xs transition-all flex items-center gap-1"
-                    title="Passer à l'élève précédent"
+                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-2xs transition-all flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none"
+                    title="Revenir à l'élève précédent"
                   >
                     <ChevronLeft className="h-3.5 w-3.5 text-slate-600" />
                     Précédent
@@ -1951,9 +2223,10 @@ export function SchoolIdCardStudioModal({
 
                   <button
                     type="button"
+                    disabled={activeIndex >= localStudents.length - 1}
                     onClick={handleNextStudent}
-                    className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-bold text-white shadow-2xs transition-all flex items-center gap-1"
-                    title="Passer à l'élève suivant (ses informations sont pré-remplies sur la carte)"
+                    className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-bold text-white shadow-2xs transition-all flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none"
+                    title="Passer à l'élève suivant"
                   >
                     Suivant
                     <ChevronRight className="h-3.5 w-3.5" />
@@ -1961,7 +2234,7 @@ export function SchoolIdCardStudioModal({
                 </div>
               </div>
 
-              {/* NAVIGATION DU THÈME (UNIQUEMENT PAR FLÈCHES PRÉCÉDENT / SUIVANT — APERÇU DIRECT SUR LA CARTE) */}
+              {/* NAVIGATION DU THÈME (UNIQUEMENT PAR FLÈCHES PRÉCÉDENT / SUIVANT — SANS BOUCLER AU DÉBUT) */}
               <div className="rounded-xl border border-slate-200/90 bg-slate-50/70 px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Palette className="h-4 w-4 text-indigo-600" />
@@ -1976,8 +2249,9 @@ export function SchoolIdCardStudioModal({
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
+                    disabled={activeThemeIndex <= 0}
                     onClick={handlePrevTheme}
-                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-800 shadow-2xs transition-all flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-800 shadow-2xs transition-all flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none"
                     title="Thème précédent (aperçu direct sur la carte)"
                   >
                     <ChevronLeft className="h-3.5 w-3.5 text-indigo-600" />
@@ -1986,8 +2260,9 @@ export function SchoolIdCardStudioModal({
 
                   <button
                     type="button"
+                    disabled={activeThemeIndex >= allThemes.length - 1}
                     onClick={handleNextTheme}
-                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-800 shadow-2xs transition-all flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-800 shadow-2xs transition-all flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none"
                     title="Thème suivant (aperçu direct sur la carte)"
                   >
                     Suivant
@@ -2037,22 +2312,22 @@ export function SchoolIdCardStudioModal({
                     {/* En-tête de la carte */}
                     <div className="px-2.5 pt-1.5 pb-1.5 relative z-10 min-h-[62px]">
                       <div className="flex items-start justify-between gap-2">
-                        {/* Gauche : Sigle Ministère (MEPST ou personnalisé ou blanc) + Logo École (ou Emblème RT ou blanc) */}
+                        {/* Gauche : Sigle Ministère (MEPST ou personnalisé avec couleur lettre par lettre !) + Logo École */}
                         <div className="flex flex-col items-center shrink-0 min-w-[44px]">
                           <div
                             className="leading-none tracking-tight h-[14px]"
                             style={getZoneCssStyle(typographyConfig.headerOfficial, 13, '#0F172A')}
                           >
-                            {ministryAcronym.trim().toUpperCase() === 'MEPST' ? (
-                              <>
-                                <span className="text-slate-950">ME</span>
-                                <span className="text-red-600">P</span>
-                                <span className="text-amber-500">S</span>
-                                <span className="text-blue-700">T</span>
-                              </>
-                            ) : ministryAcronym.trim().length > 0 ? (
+                            {ministryAcronym.trim().length > 0 ? (
                               <span style={getZoneCssStyle(typographyConfig.headerOfficial, 12.5)}>
-                                {ministryAcronym.trim().slice(0, 10)}
+                                {renderMulticolorPreview(
+                                  (typographyConfig.headerOfficial.uppercase
+                                    ? ministryAcronym.trim().toUpperCase()
+                                    : ministryAcronym.trim()
+                                  ).slice(0, 12),
+                                  'ministryAcronym',
+                                  typographyConfig.headerOfficial.color
+                                )}
                               </span>
                             ) : null}
                           </div>
@@ -2089,7 +2364,14 @@ export function SchoolIdCardStudioModal({
                                   '#0F172A'
                                 )}
                               >
-                                {republicTitle}
+                                {renderMulticolorPreview(
+                                  (typographyConfig.headerOfficial.uppercase
+                                    ? republicTitle.trim().toUpperCase()
+                                    : republicTitle.trim()
+                                  ).slice(0, 28),
+                                  'republicTitle',
+                                  '#0F172A'
+                                )}
                               </div>
                             )}
                             {republicMotto.trim() && (
@@ -2112,7 +2394,14 @@ export function SchoolIdCardStudioModal({
                                 className="tracking-wide truncate"
                                 style={getZoneCssStyle(typographyConfig.headerOfficial, 10.5)}
                               >
-                                {inspectionName}
+                                {renderMulticolorPreview(
+                                  (typographyConfig.headerOfficial.uppercase
+                                    ? inspectionName.trim().toUpperCase()
+                                    : inspectionName.trim()
+                                  ).slice(0, 38),
+                                  'inspectionName',
+                                  typographyConfig.headerOfficial.color
+                                )}
                               </div>
                             )}
                             {schoolNameOverride.trim() && (
@@ -2120,7 +2409,14 @@ export function SchoolIdCardStudioModal({
                                 className="leading-none tracking-tight truncate"
                                 style={getZoneCssStyle(typographyConfig.schoolName, 15)}
                               >
-                                {schoolNameOverride}
+                                {renderMulticolorPreview(
+                                  (typographyConfig.schoolName.uppercase
+                                    ? schoolNameOverride.trim().toUpperCase()
+                                    : schoolNameOverride.trim()
+                                  ).slice(0, 34),
+                                  'schoolName',
+                                  typographyConfig.schoolName.color
+                                )}
                               </div>
                             )}
                             {examCenter.trim() && (
@@ -2130,7 +2426,11 @@ export function SchoolIdCardStudioModal({
                               >
                                 <span className="text-slate-950">Centre d&apos;Ecrit: </span>
                                 <span style={{ color: typographyConfig.headerOfficial.color }}>
-                                  {examCenter}
+                                  {renderMulticolorPreview(
+                                    examCenter.trim().slice(0, 26),
+                                    'examCenter',
+                                    typographyConfig.headerOfficial.color
+                                  )}
                                 </span>
                               </div>
                             )}
@@ -2202,7 +2502,14 @@ export function SchoolIdCardStudioModal({
                                 className="tracking-tight"
                                 style={getZoneCssStyle(typographyConfig.bannerTitle, 11.5)}
                               >
-                                {cardBannerTitle}
+                                {renderMulticolorPreview(
+                                  (typographyConfig.bannerTitle.uppercase
+                                    ? cardBannerTitle.trim().toUpperCase()
+                                    : cardBannerTitle.trim()
+                                  ).slice(0, 34),
+                                  'bannerTitle',
+                                  typographyConfig.bannerTitle.color
+                                )}
                               </span>
                             )}
                           </div>
@@ -2471,13 +2778,14 @@ export function SchoolIdCardStudioModal({
                   </div>
                 </div>
 
-                {/* Boutons d'action : Précédent / Enregistrer / Suivant / Enregistrer & Élève Suivant (Toujours visibles) */}
+                {/* Boutons d'action : Précédent / Enregistrer / Suivant / Enregistrer & Élève Suivant (Sans retour au début sur le dernier) */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-indigo-200/60">
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
+                      disabled={activeIndex <= 0}
                       onClick={handlePrevStudent}
-                      className="px-2.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1"
+                      className="px-2.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none"
                       title="Revenir à la carte de l'élève précédent"
                     >
                       <ChevronLeft className="h-3.5 w-3.5" />
@@ -2490,9 +2798,10 @@ export function SchoolIdCardStudioModal({
 
                     <button
                       type="button"
+                      disabled={activeIndex >= localStudents.length - 1}
                       onClick={handleNextStudent}
-                      className="px-2.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold transition-all flex items-center gap-1"
-                      title="Passer à la carte de l'élève suivant (ses informations pré-enregistrées seront affichées)"
+                      className="px-2.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold transition-all flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none"
+                      title="Passer à la carte de l'élève suivant"
                     >
                       Suivant
                       <ChevronRight className="h-3.5 w-3.5" />
@@ -2539,15 +2848,25 @@ export function SchoolIdCardStudioModal({
                       disabled={isSavingCurrent}
                       onClick={handleSaveAndNextStudent}
                       className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-xs transition-all flex items-center gap-1.5"
-                      title="Enregistrer cette carte et passer immédiatement à l'élève suivant de la classe"
+                      title={
+                        activeIndex < localStudents.length - 1
+                          ? "Enregistrer cette carte et passer immédiatement à l'élève suivant"
+                          : 'Enregistrer la dernière carte de la classe'
+                      }
                     >
                       {isSavingCurrent ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
                         <>
                           <Save className="h-3.5 w-3.5" />
-                          <span>Enregistrer &amp; Élève Suivant</span>
-                          <ChevronRight className="h-4 w-4" />
+                          <span>
+                            {activeIndex < localStudents.length - 1
+                              ? 'Enregistrer & Élève Suivant'
+                              : 'Enregistrer (Dernier élève)'}
+                          </span>
+                          {activeIndex < localStudents.length - 1 && (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
                         </>
                       )}
                     </button>
@@ -2557,55 +2876,25 @@ export function SchoolIdCardStudioModal({
             </div>
           </div>
 
-          {/* SECTION 2 : Génération par Lots de 10 Cartes (Ex: 47 élèves -> 10, 10, 10, 10 et 7 sur la dernière page) */}
-          {batchesOfTen.length > 1 && (
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-2.5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
-                  <Layers className="h-4 w-4 text-indigo-600" />
-                  Impression par Lots de 10 Élèves (Sans remplissage forcé sur la dernière page)
-                </h3>
-                <span className="text-xs font-semibold text-slate-600">
-                  Total : <strong>{selectedCount} élèves</strong> répartis en{' '}
-                  <strong>{batchesOfTen.length} listes</strong> (dernière liste :{' '}
-                  <strong>{remainderOnLastPage} carte{remainderOnLastPage > 1 ? 's' : ''}</strong>)
-                </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {batchesOfTen.map((batch) => (
-                  <button
-                    key={batch.pageNumber}
-                    type="button"
-                    disabled={isGenerating}
-                    onClick={() =>
-                      handleGenerateSheets(
-                        batch.students,
-                        `Lot_${batch.pageNumber}_Eleves_${batch.startIndex}_a_${batch.endIndex}`
-                      )
-                    }
-                    className="px-3 py-2 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-950 text-xs font-extrabold transition-all flex items-center gap-1.5"
-                  >
-                    <Printer className="h-3.5 w-3.5 text-indigo-600" />
-                    <span>
-                      Lot {batch.pageNumber} : Élèves {batch.startIndex} à {batch.endIndex} (
-                      {batch.students.length} carte{batch.students.length > 1 ? 's' : ''})
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* SECTION 3 : Liste Complète des Élèves par Ordre Alphabétique */}
+          {/* SECTION 3 : Liste Complète des Élèves de la Classe (Masquée par défaut, affichable en 1 clic) */}
           <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
-            <div className="p-3.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/60">
+            <div className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-indigo-950">
-                  3. Liste Alphabétique de la Classe ({selectedCount} sélectionné{selectedCount > 1 ? 's' : ''})
-                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowStudentList((prev) => !prev)}
+                  className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold shadow-2xs transition-all flex items-center gap-2"
+                >
+                  <Layers className="h-3.5 w-3.5 text-amber-300" />
+                  <span>
+                    {showStudentList
+                      ? `Masquer la liste complète des élèves (${localStudents.length}) ▴`
+                      : `Afficher la liste complète des élèves de la classe (${localStudents.length} élèves) ▾`}
+                  </span>
+                </button>
+
                 <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
                     photosReadyCount === localStudents.length
                       ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                       : 'bg-amber-50 text-amber-800 border border-amber-200'
@@ -2620,203 +2909,207 @@ export function SchoolIdCardStudioModal({
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="relative w-full sm:w-52">
-                  <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Rechercher un élève..."
-                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl outline-none focus:border-indigo-600"
-                  />
-                </div>
+              {showStudentList && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="relative w-full sm:w-52">
+                    <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Rechercher un élève..."
+                      className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl outline-none focus:border-indigo-600"
+                    />
+                  </div>
 
-                <div className="flex items-center rounded-xl bg-slate-100 p-0.5 text-xs font-bold">
-                  <button
-                    type="button"
-                    onClick={() => setFilterMode('all')}
-                    className={`px-2.5 py-1 rounded-lg transition-all ${
-                      filterMode === 'all' ? 'bg-white text-indigo-950 shadow-2xs' : 'text-slate-600'
-                    }`}
-                  >
-                    Tous ({localStudents.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFilterMode('missing_photo')}
-                    className={`px-2.5 py-1 rounded-lg transition-all ${
-                      filterMode === 'missing_photo'
-                        ? 'bg-white text-amber-800 shadow-2xs'
-                        : 'text-slate-600'
-                    }`}
-                  >
-                    Sans photo ({localStudents.length - photosReadyCount})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFilterMode('missing_info')}
-                    className={`px-2.5 py-1 rounded-lg transition-all ${
-                      filterMode === 'missing_info'
-                        ? 'bg-white text-indigo-950 shadow-2xs'
-                        : 'text-slate-600'
-                    }`}
-                  >
-                    Infos à compléter
-                  </button>
+                  <div className="flex items-center rounded-xl bg-slate-100 p-0.5 text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setFilterMode('all')}
+                      className={`px-2.5 py-1 rounded-lg transition-all ${
+                        filterMode === 'all' ? 'bg-white text-indigo-950 shadow-2xs' : 'text-slate-600'
+                      }`}
+                    >
+                      Tous ({localStudents.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFilterMode('missing_photo')}
+                      className={`px-2.5 py-1 rounded-lg transition-all ${
+                        filterMode === 'missing_photo'
+                          ? 'bg-white text-amber-800 shadow-2xs'
+                          : 'text-slate-600'
+                      }`}
+                    >
+                      Sans photo ({localStudents.length - photosReadyCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFilterMode('missing_info')}
+                      className={`px-2.5 py-1 rounded-lg transition-all ${
+                        filterMode === 'missing_info'
+                          ? 'bg-white text-indigo-950 shadow-2xs'
+                          : 'text-slate-600'
+                      }`}
+                    >
+                      Infos à compléter
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
-            <div className="overflow-x-auto max-h-[260px] overflow-y-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead className="sticky top-0 z-10 bg-slate-100 border-b border-slate-200 text-[11px] font-extrabold text-slate-600 uppercase">
-                  <tr>
-                    <th className="py-2 px-3 w-10 text-center">
-                      <button
-                        type="button"
-                        onClick={toggleSelectAll}
-                        className="inline-flex items-center justify-center text-indigo-700"
-                        title="Tout sélectionner / désélectionner"
-                      >
-                        {selectedIds.size === filteredStudents.length &&
-                        filteredStudents.length > 0 ? (
-                          <CheckSquare className="h-4 w-4" />
-                        ) : (
-                          <Square className="h-4 w-4 text-slate-400" />
-                        )}
-                      </button>
-                    </th>
-                    <th className="py-2 px-2 w-10">N°</th>
-                    <th className="py-2 px-3">Photo</th>
-                    <th className="py-2 px-3">Nom (Ordre A-Z)</th>
-                    <th className="py-2 px-3">Prénoms</th>
-                    <th className="py-2 px-3">Date de Naissance (J/M/A)</th>
-                    <th className="py-2 px-3">Lieu de naissance</th>
-                    <th className="py-2 px-3 text-center">Sexe</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200/70">
-                  {filteredStudents.map((st, idx) => {
-                    const isSelected = selectedIds.has(st.id)
-                    const isActive = activeStudent.id === st.id
-                    const isUploadingThis = uploadingId === st.id
-
-                    return (
-                      <tr
-                        key={st.id}
-                        onClick={() => selectStudentById(st.id)}
-                        className={`transition-colors cursor-pointer ${
-                          isActive
-                            ? 'bg-indigo-50/80 ring-1 ring-inset ring-indigo-300'
-                            : isSelected
-                              ? 'hover:bg-slate-50'
-                              : 'opacity-60 bg-slate-50/40'
-                        }`}
-                      >
-                        <td
-                          className="py-2 px-3 text-center"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            toggleStudentSelection(st.id)
-                          }}
+            {showStudentList && (
+              <div className="overflow-x-auto max-h-[260px] overflow-y-auto border-t border-slate-200">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="sticky top-0 z-10 bg-slate-100 border-b border-slate-200 text-[11px] font-extrabold text-slate-600 uppercase">
+                    <tr>
+                      <th className="py-2 px-3 w-10 text-center">
+                        <button
+                          type="button"
+                          onClick={toggleSelectAll}
+                          className="inline-flex items-center justify-center text-indigo-700"
+                          title="Tout sélectionner / désélectionner"
                         >
-                          {isSelected ? (
-                            <CheckSquare className="h-4 w-4 text-indigo-600 inline" />
+                          {selectedIds.size === filteredStudents.length &&
+                          filteredStudents.length > 0 ? (
+                            <CheckSquare className="h-4 w-4" />
                           ) : (
-                            <Square className="h-4 w-4 text-slate-400 inline" />
+                            <Square className="h-4 w-4 text-slate-400" />
                           )}
-                        </td>
+                        </button>
+                      </th>
+                      <th className="py-2 px-2 w-10">N°</th>
+                      <th className="py-2 px-3">Photo</th>
+                      <th className="py-2 px-3">Nom (Ordre A-Z)</th>
+                      <th className="py-2 px-3">Prénoms</th>
+                      <th className="py-2 px-3">Date de Naissance (J/M/A)</th>
+                      <th className="py-2 px-3">Lieu de naissance</th>
+                      <th className="py-2 px-3 text-center">Sexe</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200/70">
+                    {filteredStudents.map((st, idx) => {
+                      const isSelected = selectedIds.has(st.id)
+                      const isActive = activeStudent.id === st.id
+                      const isUploadingThis = uploadingId === st.id
 
-                        <td className="py-2 px-2 font-bold text-slate-500">{idx + 1}</td>
-
-                        {/* Upload Photo en 1 clic */}
-                        <td className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
-                          <label className="inline-flex items-center gap-2 cursor-pointer group">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              disabled={isUploadingThis}
-                              onChange={(e) => handlePhotoUpload(st.id, e.target.files?.[0])}
-                            />
-                            <div className="h-9 w-8 rounded-md border border-slate-300 bg-slate-100 overflow-hidden flex items-center justify-center relative">
-                              {st.avatar_url ? (
-                                <img
-                                  src={st.avatar_url}
-                                  alt={st.first_name}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <Camera className="h-3.5 w-3.5 text-slate-400" />
-                              )}
-                              {isUploadingThis && (
-                                <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
-                                  <Loader2 className="h-3.5 w-3.5 text-white animate-spin" />
-                                </div>
-                              )}
-                            </div>
-                            <span
-                              className={`px-2 py-0.5 rounded-md font-bold text-[10.5px] ${
-                                st.avatar_url
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                  : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                              }`}
-                            >
-                              {st.avatar_url ? 'Photo OK' : '+ Photo'}
-                            </span>
-                          </label>
-                        </td>
-
-                        <td className="py-2 px-3 font-extrabold uppercase text-red-800">
-                          {st.last_name}
-                        </td>
-
-                        <td className="py-2 px-3 font-bold text-slate-900">
-                          {st.first_name}
-                        </td>
-
-                        <td className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
-                          <BirthDateSelect
-                            compact
-                            value={st.date_of_birth}
-                            onChange={(iso) =>
-                              handleFieldChange(st.id, 'date_of_birth', iso)
-                            }
-                          />
-                        </td>
-
-                        <td className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="text"
-                            value={st.birth_place || ''}
-                            onChange={(e) =>
-                              handleFieldChange(st.id, 'birth_place', e.target.value)
-                            }
-                            placeholder={schoolInfo?.city || 'Ex: Lomé'}
-                            className="w-full max-w-[120px] rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-800 focus:border-indigo-600 outline-none"
-                          />
-                        </td>
-
-                        <td className="py-2 px-3 text-center" onClick={(e) => e.stopPropagation()}>
-                          <select
-                            value={st.gender?.toUpperCase() || ''}
-                            onChange={(e) =>
-                              handleFieldChange(st.id, 'gender', e.target.value)
-                            }
-                            className="rounded-lg border border-slate-200 bg-white px-1.5 py-1 text-xs font-extrabold text-indigo-950 focus:border-indigo-600 outline-none"
+                      return (
+                        <tr
+                          key={st.id}
+                          onClick={() => selectStudentById(st.id)}
+                          className={`transition-colors cursor-pointer ${
+                            isActive
+                              ? 'bg-indigo-50/80 ring-1 ring-inset ring-indigo-300'
+                              : isSelected
+                                ? 'hover:bg-slate-50'
+                                : 'opacity-60 bg-slate-50/40'
+                          }`}
+                        >
+                          <td
+                            className="py-2 px-3 text-center"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleStudentSelection(st.id)
+                            }}
                           >
-                            <option value="">—</option>
-                            <option value="F">F</option>
-                            <option value="M">M</option>
-                          </select>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                            {isSelected ? (
+                              <CheckSquare className="h-4 w-4 text-indigo-600 inline" />
+                            ) : (
+                              <Square className="h-4 w-4 text-slate-400 inline" />
+                            )}
+                          </td>
+
+                          <td className="py-2 px-2 font-bold text-slate-500">{idx + 1}</td>
+
+                          {/* Upload Photo en 1 clic */}
+                          <td className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
+                            <label className="inline-flex items-center gap-2 cursor-pointer group">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                disabled={isUploadingThis}
+                                onChange={(e) => handlePhotoUpload(st.id, e.target.files?.[0])}
+                              />
+                              <div className="h-9 w-8 rounded-md border border-slate-300 bg-slate-100 overflow-hidden flex items-center justify-center relative">
+                                {st.avatar_url ? (
+                                  <img
+                                    src={st.avatar_url}
+                                    alt={st.first_name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <Camera className="h-3.5 w-3.5 text-slate-400" />
+                                )}
+                                {isUploadingThis && (
+                                  <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
+                                    <Loader2 className="h-3.5 w-3.5 text-white animate-spin" />
+                                  </div>
+                                )}
+                              </div>
+                              <span
+                                className={`px-2 py-0.5 rounded-md font-bold text-[10.5px] ${
+                                  st.avatar_url
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                }`}
+                              >
+                                {st.avatar_url ? 'Photo OK' : '+ Photo'}
+                              </span>
+                            </label>
+                          </td>
+
+                          <td className="py-2 px-3 font-extrabold uppercase text-red-800">
+                            {st.last_name}
+                          </td>
+
+                          <td className="py-2 px-3 font-bold text-slate-900">
+                            {st.first_name}
+                          </td>
+
+                          <td className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
+                            <BirthDateSelect
+                              compact
+                              value={st.date_of_birth}
+                              onChange={(iso) =>
+                                handleFieldChange(st.id, 'date_of_birth', iso)
+                              }
+                            />
+                          </td>
+
+                          <td className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="text"
+                              value={st.birth_place || ''}
+                              onChange={(e) =>
+                                handleFieldChange(st.id, 'birth_place', e.target.value)
+                              }
+                              placeholder={schoolInfo?.city || 'Ex: Lomé'}
+                              className="w-full max-w-[120px] rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-800 focus:border-indigo-600 outline-none"
+                            />
+                          </td>
+
+                          <td className="py-2 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                            <select
+                              value={st.gender?.toUpperCase() || ''}
+                              onChange={(e) =>
+                                handleFieldChange(st.id, 'gender', e.target.value)
+                              }
+                              className="rounded-lg border border-slate-200 bg-white px-1.5 py-1 text-xs font-extrabold text-indigo-950 focus:border-indigo-600 outline-none"
+                            >
+                              <option value="">—</option>
+                              <option value="F">F</option>
+                              <option value="M">M</option>
+                            </select>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
 

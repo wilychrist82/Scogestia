@@ -26,6 +26,7 @@ export interface CardTypographyConfig {
   studentName: CardZoneTextStyle
   studentDetails: CardZoneTextStyle
   footerInfo: CardZoneTextStyle
+  letterColors?: Record<string, string[]>
 }
 
 export const DEFAULT_CARD_TYPOGRAPHY: CardTypographyConfig = {
@@ -83,6 +84,9 @@ export const DEFAULT_CARD_TYPOGRAPHY: CardTypographyConfig = {
     underline: false,
     uppercase: false,
     color: '#A5181C',
+  },
+  letterColors: {
+    ministryAcronym: ['#0F172A', '#0F172A', '#DC2626', '#F59E0B', '#1D4ED8'],
   },
 }
 
@@ -729,6 +733,45 @@ function drawUnderlineForText(
 }
 
 /**
+ * Dessine un texte lettre par lettre avec couleurs personnalisées par caractère si définies
+ */
+function drawMulticolorTextPdf(
+  doc: jsPDF,
+  text: string,
+  x: number,
+  y: number,
+  defaultColorHex: string,
+  letterColors?: string[],
+  align: 'left' | 'center' | 'right' = 'left'
+) {
+  if (!text) return
+  const hasCustomColors =
+    Array.isArray(letterColors) &&
+    letterColors.some((c) => Boolean(c && c.trim()))
+  if (!hasCustomColors) {
+    const [r, g, b] = hexToRgbTuple(defaultColorHex, [15, 23, 42])
+    doc.setTextColor(r, g, b)
+    doc.text(text, x, y, { align })
+    return
+  }
+
+  const chars = Array.from(text)
+  const charWidths = chars.map((ch) => doc.getTextWidth(ch))
+  const totalW = charWidths.reduce((acc, w) => acc + w, 0)
+  let curX = x
+  if (align === 'center') curX = x - totalW / 2
+  else if (align === 'right') curX = x - totalW
+
+  chars.forEach((ch, idx) => {
+    const colHex = letterColors?.[idx] || defaultColorHex
+    const [r, g, b] = hexToRgbTuple(colHex, [15, 23, 42])
+    doc.setTextColor(r, g, b)
+    doc.text(ch, curX, y)
+    curX += charWidths[idx]
+  })
+}
+
+/**
  * Dessine une Carte d'Identité Scolaire Officielle Togolaise (RECTO UNIQUEMENT)
  * Format optimisé pour planche de 10 cartes par page A4 (2 colonnes x 5 lignes)
  */
@@ -793,26 +836,36 @@ function drawStudentIdCardRecto(
     doc.rect(innerX, innerY + headerH, innerW, innerH - headerH, 'F')
   }
 
-  // 2. EN-TÊTE GAUCHE : Sigle du Ministère (ex: "MEPST" ou personnalisé, ou vide si effacé) + Logo école (ou Emblème RT)
+  // 2. EN-TÊTE GAUCHE : Sigle du Ministère (ex: "MEPST" ou personnalisé, avec couleur lettre par lettre !) + Logo école
   const mepstY = innerY + 3.2
   const ministryStr =
     data.ministryAcronym !== undefined ? (data.ministryAcronym || '').trim() : 'MEPST'
 
-  if (ministryStr.toUpperCase() === 'MEPST') {
-    applyPdfZoneStyle(doc, typo.headerOfficial, 7.6, '#0F172A')
-    doc.text('ME', innerX + 1.4, mepstY)
-    doc.setTextColor(210, 16, 52) // P en Rouge
-    doc.text('P', innerX + 6.3, mepstY)
-    doc.setTextColor(234, 138, 0) // S en Jaune/Or
-    doc.text('S', innerX + 8.2, mepstY)
-    doc.setTextColor(29, 78, 216) // T en Bleu
-    doc.text('T', innerX + 9.9, mepstY)
-  } else if (ministryStr.length > 0) {
-    applyPdfZoneStyle(doc, typo.headerOfficial, 7.2)
+  if (ministryStr.length > 0) {
+    const customMinistryColors = typo.letterColors?.ministryAcronym
+    const defaultMepstColors =
+      ministryStr.toUpperCase() === 'MEPST'
+        ? ['#0F172A', '#0F172A', '#D21034', '#EA8A00', '#1D4ED8']
+        : undefined
+    const effectiveMinistryColors =
+      Array.isArray(customMinistryColors) && customMinistryColors.length > 0
+        ? customMinistryColors
+        : defaultMepstColors
+
+    applyPdfZoneStyle(doc, typo.headerOfficial, 7.6, typo.headerOfficial.color)
     const minFormatted = typo.headerOfficial.uppercase
       ? ministryStr.toUpperCase().slice(0, 12)
       : ministryStr.slice(0, 12)
-    doc.text(minFormatted, innerX + 1.4, mepstY)
+
+    drawMulticolorTextPdf(
+      doc,
+      minFormatted,
+      innerX + 1.4,
+      mepstY,
+      typo.headerOfficial.color || '#0F172A',
+      effectiveMinistryColors,
+      'left'
+    )
     if (typo.headerOfficial.underline) {
       drawUnderlineForText(doc, minFormatted, innerX + 1.4, mepstY, typo.headerOfficial.color, 'left')
     }
@@ -851,12 +904,28 @@ function drawStudentIdCardRecto(
   if (republicStr) {
     applyPdfZoneStyle(doc, typo.headerOfficial, 6.6, '#0F172A')
     const repOut = (typo.headerOfficial.uppercase ? republicStr.toUpperCase() : republicStr).slice(0, 28)
-    doc.text(repOut, rightHeaderCenterX, innerY + 3.1, { align: 'center' })
+    drawMulticolorTextPdf(
+      doc,
+      repOut,
+      rightHeaderCenterX,
+      innerY + 3.1,
+      '#0F172A',
+      typo.letterColors?.republicTitle,
+      'center'
+    )
   }
 
   if (mottoStr) {
     applyPdfZoneStyle(doc, typo.headerOfficial, 5.7, '#0F172A')
-    doc.text(mottoStr.slice(0, 32), rightHeaderCenterX, innerY + 5.6, { align: 'center' })
+    drawMulticolorTextPdf(
+      doc,
+      mottoStr.slice(0, 32),
+      rightHeaderCenterX,
+      innerY + 5.6,
+      '#0F172A',
+      typo.letterColors?.republicMotto,
+      'center'
+    )
   }
 
   // 4. EN-TÊTE CENTRAL : IEPP / Inspection + NOM DE L'ÉCOLE + Centre d'Écrit
@@ -875,7 +944,15 @@ function drawStudentIdCardRecto(
     const inspOut = (
       typo.headerOfficial.uppercase ? inspectionText.toUpperCase() : inspectionText
     ).slice(0, 38)
-    doc.text(inspOut, titleCenterX, innerY + 8.7, { align: 'center' })
+    drawMulticolorTextPdf(
+      doc,
+      inspOut,
+      titleCenterX,
+      innerY + 8.7,
+      typo.headerOfficial.color,
+      typo.letterColors?.inspectionName,
+      'center'
+    )
     if (typo.headerOfficial.underline) {
       drawUnderlineForText(doc, inspOut, titleCenterX, innerY + 8.7, typo.headerOfficial.color, 'center')
     }
@@ -887,7 +964,15 @@ function drawStudentIdCardRecto(
     const schoolOut = (typo.schoolName.uppercase ? schoolRaw.toUpperCase() : schoolRaw).slice(0, 34)
     const baseSchoolSize = schoolOut.length > 28 ? 7.4 : schoolOut.length > 22 ? 8.4 : 9.5
     applyPdfZoneStyle(doc, typo.schoolName, baseSchoolSize)
-    doc.text(schoolOut, titleCenterX, innerY + 12.4, { align: 'center' })
+    drawMulticolorTextPdf(
+      doc,
+      schoolOut,
+      titleCenterX,
+      innerY + 12.4,
+      typo.schoolName.color,
+      typo.letterColors?.schoolName,
+      'center'
+    )
     if (typo.schoolName.underline) {
       drawUnderlineForText(doc, schoolOut, titleCenterX, innerY + 12.4, typo.schoolName.color, 'center')
     }
@@ -910,7 +995,15 @@ function drawStudentIdCardRecto(
 
     doc.text(centerLabel, startCenterX, innerY + 15.5)
     applyPdfZoneStyle(doc, typo.headerOfficial, 6.8)
-    doc.text(centerValue, startCenterX + labelW, innerY + 15.5)
+    drawMulticolorTextPdf(
+      doc,
+      centerValue,
+      startCenterX + labelW,
+      innerY + 15.5,
+      typo.headerOfficial.color,
+      typo.letterColors?.examCenter,
+      'left'
+    )
     if (typo.headerOfficial.underline) {
       drawUnderlineForText(
         doc,
@@ -992,7 +1085,15 @@ function drawStudentIdCardRecto(
   if (bannerTitle) {
     const bannerOut = (typo.bannerTitle.uppercase ? bannerTitle.toUpperCase() : bannerTitle).slice(0, 34)
     applyPdfZoneStyle(doc, typo.bannerTitle, 7.1)
-    doc.text(bannerOut, bannerCenterX, bodyTopY + 3.0, { align: 'center' })
+    drawMulticolorTextPdf(
+      doc,
+      bannerOut,
+      bannerCenterX,
+      bodyTopY + 3.0,
+      typo.bannerTitle.color,
+      typo.letterColors?.bannerTitle,
+      'center'
+    )
 
     if (typo.bannerTitle.underline) {
       drawUnderlineForText(doc, bannerOut, bannerCenterX, bodyTopY + 3.0, typo.bannerTitle.color, 'center')
