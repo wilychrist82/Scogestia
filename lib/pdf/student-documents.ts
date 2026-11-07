@@ -32,6 +32,7 @@ export interface StudentDocumentData {
   examCenterLabel?: string | null
   hideFallbackEmblem?: boolean
   hideFallbackStamp?: boolean
+  themeBackgroundUrl?: string | null
 }
 
 /**
@@ -71,6 +72,71 @@ async function loadImageAsPngDataUrl(url?: string | null): Promise<string | null
   })
 }
 
+/**
+ * Charge une image de thème (arrière-plan de carte) et l'adapte au format horizontal de la carte (94x53.5mm)
+ * avec un voile de lisibilité calibré au centre pour que les textes (Nom, Prénoms, École...) ressortent parfaitement.
+ */
+async function loadCardThemeAsPngDataUrl(url?: string | null): Promise<string | null> {
+  if (!url || typeof window === 'undefined') return null
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    const timeout = setTimeout(() => resolve(null), 4500)
+
+    img.onload = () => {
+      clearTimeout(timeout)
+      try {
+        const targetW = 940
+        const targetH = 535
+        const canvas = document.createElement('canvas')
+        canvas.width = targetW
+        canvas.height = targetH
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(null)
+          return
+        }
+
+        // Fond blanc de base
+        ctx.fillStyle = '#FFFFFF'
+        ctx.fillRect(0, 0, targetW, targetH)
+
+        // Dessiner l'image du thème sur toute la surface intérieure de la carte
+        ctx.drawImage(img, 0, 0, targetW, targetH)
+
+        // Voile léger global (28%) pour adoucir les contrastes forts du thème
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.28)'
+        ctx.fillRect(0, 0, targetW, targetH)
+
+        // Halo central doux derrière les écritures d'en-tête et d'état civil pour une lisibilité parfaite à l'impression
+        const grad = ctx.createRadialGradient(
+          targetW * 0.58,
+          targetH * 0.52,
+          targetH * 0.08,
+          targetW * 0.58,
+          targetH * 0.52,
+          targetW * 0.52
+        )
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0.62)')
+        grad.addColorStop(0.65, 'rgba(255, 255, 255, 0.38)')
+        grad.addColorStop(1, 'rgba(255, 255, 255, 0.08)')
+        ctx.fillStyle = grad
+        ctx.fillRect(0, 0, targetW, targetH)
+
+        resolve(canvas.toDataURL('image/png'))
+      } catch {
+        resolve(null)
+      }
+    }
+
+    img.onerror = () => {
+      clearTimeout(timeout)
+      resolve(null)
+    }
+
+    img.src = url
+  })
+}
 /**
  * Détecte si la classe est une classe d'examen officiel (CEPD, BEPC, BAC 1, BAC 2)
  */
@@ -474,6 +540,7 @@ function drawStudentIdCardRecto(
     logoDataUrl: string | null
     stampDataUrl: string | null
     signatureDataUrl: string | null
+    themeDataUrl?: string | null
   }
 ) {
   // Repères de découpe très fins aux 4 coins
@@ -489,20 +556,33 @@ function drawStudentIdCardRecto(
   doc.setFillColor(255, 206, 0)
   doc.rect(cardX + 0.9, cardY + 0.9, cardW - 1.8, cardH - 1.8, 'F')
 
-  // Fond principal intérieur (Bleu glacier très doux en haut, Blanc cassé en bas)
+  // Fond principal intérieur : soit Thème personnalisé, soit Bleu glacier / Blanc cassé classique
   const innerX = cardX + 2.1
   const innerY = cardY + 1.0
   const innerW = cardW - 4.2
   const innerH = cardH - 2.0
   const headerH = 16.8
 
-  // Fond en-tête (bleu glacier très clair #EEF4FA)
-  doc.setFillColor(238, 244, 250)
-  doc.rect(innerX, innerY, innerW, headerH, 'F')
+  if (assets.themeDataUrl) {
+    try {
+      doc.setFillColor(255, 255, 255)
+      doc.rect(innerX, innerY, innerW, innerH, 'F')
+      doc.addImage(assets.themeDataUrl, 'PNG', innerX, innerY, innerW, innerH)
+    } catch {
+      doc.setFillColor(238, 244, 250)
+      doc.rect(innerX, innerY, innerW, headerH, 'F')
+      doc.setFillColor(248, 250, 252)
+      doc.rect(innerX, innerY + headerH, innerW, innerH - headerH, 'F')
+    }
+  } else {
+    // Fond en-tête (bleu glacier très clair #EEF4FA)
+    doc.setFillColor(238, 244, 250)
+    doc.rect(innerX, innerY, innerW, headerH, 'F')
 
-  // Fond corps de carte (#F8FAFC)
-  doc.setFillColor(248, 250, 252)
-  doc.rect(innerX, innerY + headerH, innerW, innerH - headerH, 'F')
+    // Fond corps de carte (#F8FAFC)
+    doc.setFillColor(248, 250, 252)
+    doc.rect(innerX, innerY + headerH, innerW, innerH - headerH, 'F')
+  }
 
   // 2. EN-TÊTE GAUCHE : Sigle du Ministère (ex: "MEPST" ou personnalisé, ou vide si effacé) + Logo école (ou Emblème RT)
   const mepstY = innerY + 3.2
@@ -855,12 +935,14 @@ export async function generateStudentIdCardPDF(
   data: StudentDocumentData,
   options?: { tenUpSheet?: boolean }
 ) {
-  const [photoDataUrl, logoDataUrl, stampDataUrl, signatureDataUrl] = await Promise.all([
-    loadImageAsPngDataUrl(data.avatarUrl),
-    loadImageAsPngDataUrl(data.schoolLogoUrl),
-    loadImageAsPngDataUrl(data.schoolStampUrl),
-    loadImageAsPngDataUrl(data.schoolSignatureUrl),
-  ])
+  const [photoDataUrl, logoDataUrl, stampDataUrl, signatureDataUrl, themeDataUrl] =
+    await Promise.all([
+      loadImageAsPngDataUrl(data.avatarUrl),
+      loadImageAsPngDataUrl(data.schoolLogoUrl),
+      loadImageAsPngDataUrl(data.schoolStampUrl),
+      loadImageAsPngDataUrl(data.schoolSignatureUrl),
+      loadCardThemeAsPngDataUrl(data.themeBackgroundUrl),
+    ])
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const cardW = 94
@@ -876,6 +958,7 @@ export async function generateStudentIdCardPDF(
           logoDataUrl,
           stampDataUrl,
           signatureDataUrl,
+          themeDataUrl,
         })
       }
     }
@@ -886,6 +969,7 @@ export async function generateStudentIdCardPDF(
       logoDataUrl,
       stampDataUrl,
       signatureDataUrl,
+      themeDataUrl,
     })
   }
 
@@ -904,12 +988,14 @@ export async function generateClassStudentIdCardsPDF(
   if (!studentsData.length) return
 
   const first = studentsData[0]
-  const [logoDataUrl, stampDataUrl, signatureDataUrl, ...photoDataUrls] = await Promise.all([
-    loadImageAsPngDataUrl(first.schoolLogoUrl),
-    loadImageAsPngDataUrl(first.schoolStampUrl),
-    loadImageAsPngDataUrl(first.schoolSignatureUrl),
-    ...studentsData.map((s) => loadImageAsPngDataUrl(s.avatarUrl)),
-  ])
+  const [logoDataUrl, stampDataUrl, signatureDataUrl, themeDataUrl, ...photoDataUrls] =
+    await Promise.all([
+      loadImageAsPngDataUrl(first.schoolLogoUrl),
+      loadImageAsPngDataUrl(first.schoolStampUrl),
+      loadImageAsPngDataUrl(first.schoolSignatureUrl),
+      loadCardThemeAsPngDataUrl(first.themeBackgroundUrl),
+      ...studentsData.map((s) => loadImageAsPngDataUrl(s.avatarUrl)),
+    ])
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const cardsPerPage = 10
@@ -933,6 +1019,7 @@ export async function generateClassStudentIdCardsPDF(
       logoDataUrl,
       stampDataUrl,
       signatureDataUrl,
+      themeDataUrl,
     })
   }
 

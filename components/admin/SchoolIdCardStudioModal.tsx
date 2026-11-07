@@ -24,6 +24,7 @@ import {
   PenTool,
   Image as ImageIcon,
   Layers,
+  Palette,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
@@ -71,6 +72,45 @@ type Props = {
 }
 
 const STORAGE_KEY = 'scogestia_idcard_studio_config_v2'
+
+export type CardThemeOption = {
+  id: string
+  name: string
+  url: string | null
+}
+
+const DEFAULT_CARD_THEMES: CardThemeOption[] = [
+  {
+    id: 'classic',
+    name: 'Classique Officiel (Sans image de fond)',
+    url: null,
+  },
+  {
+    id: 'theme-1',
+    name: 'Thème 1 — Horizon Bleu Urbain',
+    url: '/card-themes/theme-1-horizon-bleu.jpg',
+  },
+  {
+    id: 'theme-2',
+    name: 'Thème 2 — Prestige Rouge & Or',
+    url: '/card-themes/theme-2-prestige-rouge-or.jpg',
+  },
+  {
+    id: 'theme-3',
+    name: 'Thème 3 — Royal Bleu & Or',
+    url: '/card-themes/theme-3-royal-bleu-or.jpg',
+  },
+  {
+    id: 'theme-4',
+    name: 'Thème 4 — Institutionnel Marine & Or',
+    url: '/card-themes/theme-4-marine-or.jpg',
+  },
+  {
+    id: 'theme-5',
+    name: 'Thème 5 — Azur Cristallin',
+    url: '/card-themes/theme-5-azur-cristal.jpg',
+  },
+]
 
 const MONTHS_FR = [
   { value: '01', label: '01 - Janvier' },
@@ -250,6 +290,47 @@ export function SchoolIdCardStudioModal({
   const [showVectorEmblemIfNoLogo, setShowVectorEmblemIfNoLogo] = useState<boolean>(true)
   const [showVectorStampIfNoStamp, setShowVectorStampIfNoStamp] = useState<boolean>(false)
 
+  // Gestion des Thèmes d'arrière-plan de la carte (navigation Précédent / Suivant)
+  const [customThemes, setCustomThemes] = useState<CardThemeOption[]>([])
+  const allThemes = useMemo(
+    () => [...DEFAULT_CARD_THEMES, ...customThemes],
+    [customThemes]
+  )
+  const [activeThemeIndex, setActiveThemeIndex] = useState<number>(0)
+  const activeTheme = allThemes[activeThemeIndex] || DEFAULT_CARD_THEMES[0]
+
+  const handlePrevTheme = () => {
+    setActiveThemeIndex((prev) => (prev - 1 + allThemes.length) % allThemes.length)
+  }
+
+  const handleNextTheme = () => {
+    setActiveThemeIndex((prev) => (prev + 1) % allThemes.length)
+  }
+
+  const handleUploadCustomTheme = async (file?: File | null) => {
+    if (!file) return
+    try {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const dataUrl = reader.result as string
+        const newTheme: CardThemeOption = {
+          id: `custom-${Date.now()}`,
+          name: `Thème Perso (${file.name.replace(/\.[^.]+$/, '').slice(0, 18)})`,
+          url: dataUrl,
+        }
+        setCustomThemes((prev) => {
+          const next = [...prev, newTheme]
+          setActiveThemeIndex(DEFAULT_CARD_THEMES.length + next.length - 1)
+          return next
+        })
+        toast.success('Nouveau thème ajouté et appliqué sur la carte !')
+      }
+      reader.readAsDataURL(file)
+    } catch {
+      toast.error("Impossible de charger l'image de thème.")
+    }
+  }
+
   // Initialisation et tri alphabétique des élèves
   useEffect(() => {
     const sorted = sortStudentsAlphabetically(initialStudents)
@@ -334,6 +415,12 @@ export function SchoolIdCardStudioModal({
         if (parsed.inspectionName !== undefined) setInspectionName(parsed.inspectionName)
         if (parsed.examCenter !== undefined) setExamCenter(parsed.examCenter)
         if (parsed.cardBannerTitle !== undefined) setCardBannerTitle(parsed.cardBannerTitle)
+        if (typeof parsed.activeThemeIndex === 'number') {
+          setActiveThemeIndex(parsed.activeThemeIndex)
+        }
+        if (Array.isArray(parsed.customThemes)) {
+          setCustomThemes(parsed.customThemes)
+        }
       }
     } catch {
       // Ignore
@@ -352,6 +439,8 @@ export function SchoolIdCardStudioModal({
           inspectionName,
           examCenter,
           cardBannerTitle,
+          activeThemeIndex,
+          customThemes,
         })
       )
     } catch {
@@ -674,6 +763,7 @@ export function SchoolIdCardStudioModal({
     cardBannerTitle: cardBannerTitle.trim(),
     hideFallbackEmblem: !showVectorEmblemIfNoLogo,
     hideFallbackStamp: !showVectorStampIfNoStamp,
+    themeBackgroundUrl: activeTheme?.url || null,
   })
 
   // Génère soit tous les lots de 10 (ex: 47 élèves -> 10, 10, 10, 10, 7), soit un lot spécifique de 10 (ou le reste)
@@ -1140,12 +1230,119 @@ export function SchoolIdCardStudioModal({
                 )}
               </div>
 
-              {/* APERÇU VISUEL TEMPS RÉEL DE LA CARTE OFFICIELLE */}
+              {/* SÉLECTEUR DE THÈME (ARRIÈRE-PLAN DE LA CARTE) AVEC FLÈCHES PRÉCÉDENT / SUIVANT */}
+              <div className="rounded-xl border border-indigo-200/80 bg-gradient-to-r from-indigo-50/70 via-white to-indigo-50/70 p-3 space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Palette className="h-4 w-4 text-indigo-600" />
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-indigo-950">
+                      Thème / Fond de la Carte ({activeThemeIndex + 1} / {allThemes.length})
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handlePrevTheme}
+                      className="px-2.5 py-1 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 text-xs font-extrabold text-indigo-900 shadow-2xs transition-all flex items-center gap-1"
+                      title="Revenir au thème précédent"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5 text-indigo-600" />
+                      Précédent
+                    </button>
+
+                    <span className="px-2.5 py-1 rounded-lg bg-indigo-950 text-white text-[11px] font-extrabold max-w-[200px] truncate">
+                      {activeTheme.name}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={handleNextTheme}
+                      className="px-2.5 py-1 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 text-xs font-extrabold text-indigo-900 shadow-2xs transition-all flex items-center gap-1"
+                      title="Passer au thème suivant"
+                    >
+                      Suivant
+                      <ChevronRight className="h-3.5 w-3.5 text-indigo-600" />
+                    </button>
+
+                    <label
+                      className="cursor-pointer px-2.5 py-1 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-[11px] font-extrabold text-emerald-800 transition-colors flex items-center gap-1"
+                      title="Ajouter une nouvelle image de thème"
+                    >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleUploadCustomTheme(e.target.files?.[0])}
+                      />
+                      <Upload className="h-3 w-3" />
+                      + Thème
+                    </label>
+                  </div>
+                </div>
+
+                {/* Miniatures rapides des thèmes */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  {allThemes.map((th, idx) => {
+                    const isCurrent = idx === activeThemeIndex
+                    return (
+                      <button
+                        key={th.id}
+                        type="button"
+                        onClick={() => setActiveThemeIndex(idx)}
+                        className={`group relative h-10 w-16 shrink-0 rounded-lg border overflow-hidden transition-all ${
+                          isCurrent
+                            ? 'border-indigo-600 ring-2 ring-indigo-500/40 scale-105 shadow-xs'
+                            : 'border-slate-200 opacity-75 hover:opacity-100'
+                        }`}
+                        title={th.name}
+                      >
+                        {th.url ? (
+                          <img
+                            src={th.url}
+                            alt={th.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full bg-gradient-to-b from-[#EEF4FA] to-[#F8FAFC] flex items-center justify-center text-[9px] font-extrabold text-slate-700">
+                            Classique
+                          </div>
+                        )}
+                        <span className="absolute bottom-0 right-0 bg-slate-900/75 text-white text-[8px] font-bold px-1 rounded-tl">
+                          {idx + 1}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* APERÇU VISUEL TEMPS RÉEL DE LA CARTE OFFICIELLE (AVEC THÈME EN ARRIÈRE-PLAN) */}
               <div className="mx-auto w-full max-w-[465px] rounded-md p-[5px] bg-[#007A33] shadow-md select-none">
                 <div className="rounded-[2px] p-[4px] bg-[#FFCE00]">
-                  <div className="bg-[#EEF4FA] text-slate-900 overflow-hidden">
+                  <div className="relative bg-[#EEF4FA] text-slate-900 overflow-hidden">
+                    {/* Image du Thème en arrière-plan sous tous les éléments de la carte */}
+                    {activeTheme.url && (
+                      <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
+                        <img
+                          src={activeTheme.url}
+                          alt=""
+                          className="h-full w-full object-fill"
+                        />
+                        {/* Voile de lisibilité calibré pour que toutes les écritures ressortent parfaitement */}
+                        <div className="absolute inset-0 bg-white/30" />
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            background:
+                              'radial-gradient(circle at 58% 52%, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.36) 65%, rgba(255,255,255,0.08) 100%)',
+                          }}
+                        />
+                      </div>
+                    )}
+
                     {/* En-tête de la carte */}
-                    <div className="px-2.5 pt-1.5 pb-1.5 relative min-h-[62px]">
+                    <div className="px-2.5 pt-1.5 pb-1.5 relative z-10 min-h-[62px]">
                       <div className="flex items-start justify-between gap-2">
                         {/* Gauche : Sigle Ministère (MEPST ou personnalisé ou blanc) + Logo École (ou Emblème RT ou blanc) */}
                         <div className="flex flex-col items-center shrink-0 min-w-[44px]">
@@ -1222,12 +1419,16 @@ export function SchoolIdCardStudioModal({
                     </div>
 
                     {/* Double trait tricolore de séparation */}
-                    <div className="h-[2px] w-full bg-red-700" />
-                    <div className="h-[2px] w-full bg-[#007A33]" />
-                    <div className="h-[1.5px] w-full bg-[#FFCE00]" />
+                    <div className="relative z-10 h-[2px] w-full bg-red-700" />
+                    <div className="relative z-10 h-[2px] w-full bg-[#007A33]" />
+                    <div className="relative z-10 h-[1.5px] w-full bg-[#FFCE00]" />
 
                     {/* Corps de la carte : Photo à gauche + Infos à droite */}
-                    <div className="grid grid-cols-12 bg-[#F8FAFC]">
+                    <div
+                      className={`relative z-10 grid grid-cols-12 ${
+                        activeTheme.url ? 'bg-transparent' : 'bg-[#F8FAFC]'
+                      }`}
+                    >
                       {/* Photo Passeport (Gauche — cliquable pour changer la photo) */}
                       <div className="col-span-4 p-1">
                         <label
