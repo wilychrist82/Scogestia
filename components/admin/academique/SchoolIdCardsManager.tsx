@@ -6,12 +6,11 @@ import {
   IdCard,
   GraduationCap,
   Users,
-  User,
-  Search,
+  Camera,
+  ChevronDown,
   Sparkles,
   CheckCircle2,
-  Camera,
-  Layers,
+  BookOpen,
 } from 'lucide-react'
 import {
   SchoolIdCardStudioModal,
@@ -66,12 +65,12 @@ function detectClassCycle(cls: ClassItem): CycleKey {
   return 'primaire'
 }
 
-const CYCLE_TABS: { key: CycleKey; label: string }[] = [
-  { key: 'all', label: 'Tous les niveaux' },
+const CYCLE_OPTIONS: { key: CycleKey; label: string }[] = [
+  { key: 'all', label: 'Tous les niveaux scolaires' },
   { key: 'maternelle', label: 'Maternelle' },
   { key: 'primaire', label: 'Primaire' },
-  { key: 'college', label: 'Collège' },
-  { key: 'lycee', label: 'Lycée' },
+  { key: 'college', label: 'Collège (Secondaire 1)' },
+  { key: 'lycee', label: 'Lycée (Secondaire 2)' },
 ]
 
 export function SchoolIdCardsManager({ classes, students, schoolInfo }: Props) {
@@ -85,20 +84,21 @@ export function SchoolIdCardsManager({ classes, students, schoolInfo }: Props) {
     if (initialClassIdFromUrl && classes.some((c) => c.id === initialClassIdFromUrl)) {
       return initialClassIdFromUrl
     }
-    // Choisir par défaut la première classe qui contient des élèves, sinon la première classe
+    // Privilégier par défaut la première classe ayant plusieurs élèves (pour le défilement 1 -> 2 -> 3), sinon la première classe habitée
+    const firstMultiStudentClass = classes.find(
+      (c) => students.filter((s) => s.class_id === c.id).length > 1
+    )
+    if (firstMultiStudentClass) return firstMultiStudentClass.id
+
     const firstPopulated = classes.find((c) =>
       students.some((s) => s.class_id === c.id)
     )
     return firstPopulated?.id || classes[0]?.id || ''
   })
 
-  const [targetMode, setTargetMode] = useState<'class' | 'single_student'>(() =>
-    initialStudentIdFromUrl ? 'single_student' : 'class'
-  )
-  const [singleStudentId, setSingleStudentId] = useState<string>(
+  const [initialActiveStudentId, setInitialActiveStudentId] = useState<string>(
     initialStudentIdFromUrl || ''
   )
-  const [studentSearch, setStudentSearch] = useState('')
 
   // Filtrer les classes selon le niveau (cycle) choisi
   const filteredClasses = useMemo(() => {
@@ -112,10 +112,13 @@ export function SchoolIdCardsManager({ classes, students, schoolInfo }: Props) {
       filteredClasses.length > 0 &&
       !filteredClasses.some((c) => c.id === selectedClassId)
     ) {
+      const multi = filteredClasses.find(
+        (c) => students.filter((s) => s.class_id === c.id).length > 1
+      )
       const populated = filteredClasses.find((c) =>
         students.some((s) => s.class_id === c.id)
       )
-      setSelectedClassId(populated?.id || filteredClasses[0].id)
+      setSelectedClassId(multi?.id || populated?.id || filteredClasses[0].id)
     }
   }, [filteredClasses, selectedClassId, students])
 
@@ -139,281 +142,154 @@ export function SchoolIdCardsManager({ classes, students, schoolInfo }: Props) {
       })
   }, [students, activeClass])
 
-  useEffect(() => {
-    if (targetMode === 'single_student' && classStudents.length > 0) {
-      if (!classStudents.some((s) => s.id === singleStudentId)) {
-        setSingleStudentId(classStudents[0].id)
-      }
-    }
-  }, [targetMode, classStudents, singleStudentId])
-
-  const studioStudents = useMemo(() => {
-    if (targetMode === 'single_student') {
-      const found = classStudents.find((s) => s.id === singleStudentId)
-      return found ? [found] : classStudents.slice(0, 1)
-    }
-    return classStudents
-  }, [targetMode, classStudents, singleStudentId])
-
-  const searchedSingleStudents = useMemo(() => {
-    const q = studentSearch.trim().toLowerCase()
-    if (!q) return classStudents
-    return classStudents.filter(
-      (s) =>
-        s.last_name.toLowerCase().includes(q) ||
-        s.first_name.toLowerCase().includes(q) ||
-        (s.matricule || '').toLowerCase().includes(q)
-    )
-  }, [classStudents, studentSearch])
-
   const totalPhotosInClass = useMemo(
     () => classStudents.filter((s) => Boolean(s.avatar_url)).length,
     [classStudents]
   )
 
   return (
-    <div className="space-y-6 pb-10">
-      {/* EN-TÊTE DU MODULE ACADÉMIQUE > CARTE SCOLAIRE */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] p-6 text-white shadow-lg">
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-amber-300 ring-1 ring-white/20">
-              <IdCard className="h-3.5 w-3.5" />
-              Module Académique • Cartes d&apos;Identité Scolaires
+    <div className="space-y-5 pb-10">
+      {/* EN-TÊTE ÉDITORIAL & SÉLECTEUR PAR LISTES DÉROULANTES (STYLE CLAUDE) */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        {/* Bandeau de titre épuré */}
+        <div className="px-6 py-4 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-gradient-to-r from-slate-50/80 via-white to-slate-50/80">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="h-11 w-11 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <IdCard className="h-5 w-5 text-amber-300" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Générateur Officiel de Cartes Scolaires
-            </h1>
-            <p className="text-xs sm:text-sm text-indigo-100/90 max-w-3xl">
-              Choisissez le <strong>niveau</strong> et la <strong>classe</strong> (ou un élève), uploadez la photo de chaque élève en cliquant sur <strong>« Enregistrer &amp; Élève Suivant → »</strong>, personnalisez les <strong>polices, tailles, gras, italique, souligné, couleurs et thèmes</strong>, puis générez vos planches de <strong>10 cartes par page A4</strong>.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="rounded-xl bg-white/10 border border-white/15 px-4 py-2.5 backdrop-blur-md">
-              <span className="block text-[10px] font-bold uppercase tracking-wider text-indigo-200">
-                Classe sélectionnée
-              </span>
-              <span className="text-lg font-black text-white">
-                {activeClass?.name || 'Aucune'} ({classStudents.length} élève
-                {classStudents.length > 1 ? 's' : ''})
-              </span>
-            </div>
-
-            <div className="rounded-xl bg-emerald-500/20 border border-emerald-400/30 px-4 py-2.5 backdrop-blur-md">
-              <span className="block text-[10px] font-bold uppercase tracking-wider text-emerald-200">
-                Photos prêtes
-              </span>
-              <span className="text-lg font-black text-white flex items-center gap-1.5">
-                <Camera className="h-4 w-4 text-emerald-300" />
-                {totalPhotosInClass} / {classStudents.length}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* BARRE DE SÉLECTION : 1. NIVEAU -> 2. CLASSE -> 3. MODE (TOUTE LA CLASSE OU UN ÉLÈVE) */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-          {/* 1. Choix du Niveau (Cycle) */}
-          <div className="lg:col-span-5 space-y-2">
-            <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-              <GraduationCap className="h-4 w-4 text-indigo-600" />
-              1. Choisir le Niveau Scolaire
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {CYCLE_TABS.map((tab) => {
-                const count =
-                  tab.key === 'all'
-                    ? classes.length
-                    : classes.filter((c) => detectClassCycle(c) === tab.key).length
-                const isActive = selectedCycle === tab.key
-                return (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() => setSelectedCycle(tab.key)}
-                    className={`px-3 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 border ${
-                      isActive
-                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span>{tab.label}</span>
-                    <span
-                      className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        isActive
-                          ? 'bg-white/20 text-white'
-                          : 'bg-slate-200/80 text-slate-600'
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* 2. Choix du Mode : Toute la classe vs Un seul élève */}
-          <div className="lg:col-span-7 space-y-2">
-            <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-              <Layers className="h-4 w-4 text-indigo-600" />
-              2. Mode de Production des Cartes
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => setTargetMode('class')}
-                className={`p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${
-                  targetMode === 'class'
-                    ? 'border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-500/20'
-                    : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100'
-                }`}
-              >
-                <div
-                  className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    targetMode === 'class'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-200 text-slate-600'
-                  }`}
-                >
-                  <Users className="h-4 w-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-extrabold text-slate-900">
-                    Toute la Classe ({classStudents.length} élèves)
-                  </div>
-                  <div className="text-[11px] text-slate-500">
-                    Défilement élève par élève (Suivant →) &amp; 10 cartes/page
-                  </div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTargetMode('single_student')}
-                className={`p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${
-                  targetMode === 'single_student'
-                    ? 'border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-500/20'
-                    : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100'
-                }`}
-              >
-                <div
-                  className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    targetMode === 'single_student'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-200 text-slate-600'
-                  }`}
-                >
-                  <User className="h-4 w-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-extrabold text-slate-900">
-                    Un Élève Spécifique
-                  </div>
-                  <div className="text-[11px] text-slate-500">
-                    Choisir un seul élève de la classe pour sa carte
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* 3. Sélection rapide de la Classe */}
-        <div className="pt-3 border-t border-slate-100 space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700">
-              3. Choisir la Classe ({filteredClasses.length} classe
-              {filteredClasses.length > 1 ? 's' : ''})
-            </label>
-            <select
-              value={selectedClassId}
-              onChange={(e) => setSelectedClassId(e.target.value)}
-              className="rounded-xl border border-indigo-200 bg-indigo-50/60 px-3 py-1.5 text-xs font-extrabold text-indigo-950 outline-none focus:border-indigo-600"
-            >
-              {filteredClasses.map((cls) => {
-                const count = students.filter((s) => s.class_id === cls.id).length
-                return (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name} ({count} élève{count > 1 ? 's' : ''})
-                  </option>
-                )
-              })}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            {filteredClasses.map((cls) => {
-              const count = students.filter((s) => s.class_id === cls.id).length
-              const isSelected = cls.id === selectedClassId
-              return (
-                <button
-                  key={cls.id}
-                  type="button"
-                  onClick={() => setSelectedClassId(cls.id)}
-                  className={`px-3.5 py-2 rounded-xl border text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-2 ${
-                    isSelected
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  <span>{cls.name}</span>
-                  <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      isSelected
-                        ? 'bg-emerald-400/20 text-emerald-300'
-                        : count > 0
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-slate-100 text-slate-500'
-                    }`}
-                  >
-                    {count} élève{count > 1 ? 's' : ''}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Si Mode "Un Élève Spécifique", afficher le sélecteur d'élève */}
-        {targetMode === 'single_student' && classStudents.length > 0 && (
-          <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-indigo-600" />
-              <span className="text-xs font-extrabold text-indigo-950">
-                Sélectionner l&apos;élève de {activeClass?.name} :
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap flex-1 max-w-xl justify-end">
-              <div className="relative flex-1 min-w-[180px]">
-                <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={studentSearch}
-                  onChange={(e) => setStudentSearch(e.target.value)}
-                  placeholder="Filtrer par nom ou matricule..."
-                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl outline-none focus:border-indigo-600"
-                />
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
+                  Cartes d&apos;Identité Scolaires
+                </h1>
+                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-700 border border-indigo-200/60">
+                  <Sparkles className="h-3 w-3" />
+                  10 cartes / page A4 • Ordre A–Z
+                </span>
               </div>
-
-              <select
-                value={singleStudentId}
-                onChange={(e) => setSingleStudentId(e.target.value)}
-                className="rounded-xl border border-indigo-300 bg-white px-3 py-1.5 text-xs font-extrabold text-indigo-950 outline-none focus:border-indigo-600 min-w-[220px]"
-              >
-                {searchedSingleStudents.map((s, idx) => (
-                  <option key={s.id} value={s.id}>
-                    {idx + 1}. {s.last_name.toUpperCase()} {s.first_name} (#{s.matricule})
-                  </option>
-                ))}
-              </select>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Sélectionnez la classe via le menu déroulant, importez la photo de chaque élève puis cliquez sur <strong className="text-slate-700">« Suivant → »</strong> pour passer automatiquement à l&apos;élève suivant avec ses informations pré-remplies.
+              </p>
             </div>
           </div>
-        )}
+
+          {/* Indicateurs synthétiques de la classe active */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5">
+              <Users className="h-4 w-4 text-slate-600" />
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Effectif {activeClass?.name || ''}
+                </div>
+                <div className="text-xs font-bold text-slate-900">
+                  {classStudents.length} élève{classStudents.length > 1 ? 's' : ''}
+                </div>
+              </div>
+            </div>
+
+            <div className="px-3.5 py-2 rounded-xl bg-emerald-50/70 border border-emerald-200/70 flex items-center gap-2.5">
+              {totalPhotosInClass === classStudents.length && classStudents.length > 0 ? (
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              ) : (
+                <Camera className="h-4 w-4 text-emerald-600" />
+              )}
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700/80">
+                  Photos prêtes
+                </div>
+                <div className="text-xs font-bold text-emerald-950">
+                  {totalPhotosInClass} / {classStudents.length}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Barre de Sélection par Menus Déroulants (Flèches descendantes uniquement — sans liste horizontale encombrante) */}
+        <div className="px-6 py-4 bg-white grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+          {/* 1. Niveau Scolaire (Menu déroulant avec flèche descendante) */}
+          <div className="md:col-span-4 space-y-1.5">
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <GraduationCap className="h-3.5 w-3.5 text-slate-700" />
+              1. Niveau Scolaire
+            </label>
+            <div className="relative">
+              <select
+                value={selectedCycle}
+                onChange={(e) => setSelectedCycle(e.target.value as CycleKey)}
+                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 pl-3.5 pr-9 py-2.5 text-xs font-semibold text-slate-900 outline-none focus:border-slate-900 focus:bg-white focus:ring-2 focus:ring-slate-900/10 transition-all cursor-pointer"
+              >
+                {CYCLE_OPTIONS.map((opt) => {
+                  const count =
+                    opt.key === 'all'
+                      ? classes.length
+                      : classes.filter((c) => detectClassCycle(c) === opt.key).length
+                  return (
+                    <option key={opt.key} value={opt.key}>
+                      {opt.label} ({count} classe{count > 1 ? 's' : ''})
+                    </option>
+                  )
+                })}
+              </select>
+              <ChevronDown className="h-4 w-4 text-slate-500 pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
+            </div>
+          </div>
+
+          {/* 2. Sélection de la Classe (Menu déroulant avec flèche descendante) */}
+          <div className="md:col-span-4 space-y-1.5">
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <BookOpen className="h-3.5 w-3.5 text-indigo-600" />
+              2. Sélectionner la Classe
+            </label>
+            <div className="relative">
+              <select
+                value={selectedClassId}
+                onChange={(e) => {
+                  setSelectedClassId(e.target.value)
+                  setInitialActiveStudentId('')
+                }}
+                className="w-full appearance-none rounded-xl border border-indigo-200 bg-indigo-50/40 hover:bg-indigo-50/70 pl-3.5 pr-9 py-2.5 text-xs font-bold text-indigo-950 outline-none focus:border-indigo-600 focus:bg-white focus:ring-2 focus:ring-indigo-500/15 transition-all cursor-pointer"
+              >
+                {filteredClasses.map((cls) => {
+                  const count = students.filter((s) => s.class_id === cls.id).length
+                  return (
+                    <option key={cls.id} value={cls.id}>
+                      Classe de {cls.name} — {count} élève{count > 1 ? 's' : ''} inscrit{count > 1 ? 's' : ''}
+                    </option>
+                  )
+                })}
+              </select>
+              <ChevronDown className="h-4 w-4 text-indigo-700 pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
+            </div>
+          </div>
+
+          {/* 3. Accès direct à un élève de la classe (Menu déroulant avec flèche descendante) */}
+          <div className="md:col-span-4 space-y-1.5">
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5 text-slate-700" />
+              3. Élève en cours (Ordre Alphabétique A–Z)
+            </label>
+            <div className="relative">
+              <select
+                value={initialActiveStudentId || classStudents[0]?.id || ''}
+                onChange={(e) => setInitialActiveStudentId(e.target.value)}
+                disabled={classStudents.length === 0}
+                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 pl-3.5 pr-9 py-2.5 text-xs font-semibold text-slate-900 outline-none focus:border-slate-900 focus:bg-white focus:ring-2 focus:ring-slate-900/10 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {classStudents.length === 0 ? (
+                  <option value="">Aucun élève dans cette classe</option>
+                ) : (
+                  classStudents.map((s, idx) => (
+                    <option key={s.id} value={s.id}>
+                      Élève {idx + 1}/{classStudents.length} — {s.last_name.toUpperCase()} {s.first_name} {s.avatar_url ? '✓ Photo' : ''}
+                    </option>
+                  ))
+                )}
+              </select>
+              <ChevronDown className="h-4 w-4 text-slate-500 pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* STUDIO COMPLET INTÉGRÉ SUR LA PAGE */}
@@ -428,24 +304,25 @@ export function SchoolIdCardsManager({ classes, students, schoolInfo }: Props) {
             schoolInfo?.current_academic_year ||
             '2025-2026'
           }
-          students={studioStudents}
+          students={classStudents}
+          initialActiveStudentId={initialActiveStudentId}
+          onActiveStudentChange={(id) => setInitialActiveStudentId(id)}
           schoolInfo={schoolInfo}
           onStudentsUpdated={() => router.refresh()}
         />
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center space-y-3">
-          <div className="mx-auto h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+          <div className="mx-auto h-12 w-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center">
             <Users className="h-6 w-6" />
           </div>
-          <h3 className="text-base font-extrabold text-slate-900">
+          <h3 className="text-base font-bold text-slate-900">
             Aucun élève inscrit dans la classe {activeClass?.name || 'sélectionnée'}
           </h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
-            Sélectionnez une autre classe ci-dessus (par exemple une classe ayant des élèves inscrits) pour préparer et générer ses cartes d&apos;identité scolaires.
+            Utilisez le menu déroulant <strong>« 2. Sélectionner la Classe »</strong> ci-dessus pour choisir une classe ayant des élèves inscrits.
           </p>
         </div>
       )}
     </div>
   )
 }
-

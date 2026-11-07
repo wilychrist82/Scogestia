@@ -199,6 +199,8 @@ type Props = {
   classLevel?: string | null
   academicYear?: string | null
   students: StudioStudentItem[]
+  initialActiveStudentId?: string | null
+  onActiveStudentChange?: (studentId: string) => void
   schoolInfo?: SchoolMeta | null
   onStudentsUpdated?: () => void
   mode?: 'modal' | 'embedded'
@@ -487,17 +489,26 @@ export function SchoolIdCardStudioModal({
   classLevel = null,
   academicYear = null,
   students: initialStudents,
+  initialActiveStudentId = null,
+  onActiveStudentChange,
   schoolInfo = null,
   onStudentsUpdated,
   mode = 'modal',
 }: Props) {
   const [localStudents, setLocalStudents] = useState<StudioStudentItem[]>(() =>
-    sortStudentsAlphabetically(initialStudents)
+    sortStudentsAlphabetically(
+      initialStudents.map((s) => ({
+        ...s,
+        birth_place: s.birth_place || schoolInfo?.city || '',
+      }))
+    )
   )
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set(initialStudents.map((s) => s.id))
   )
-  const [activeStudentId, setActiveStudentId] = useState<string>('')
+  const [activeStudentId, setActiveStudentId] = useState<string>(
+    initialActiveStudentId || ''
+  )
   const [uploadingId, setUploadingId] = useState<string | null>(null)
   const [uploadingAssetType, setUploadingAssetType] = useState<
     'logo' | 'stamp' | 'signature' | null
@@ -618,17 +629,40 @@ export function SchoolIdCardStudioModal({
     }
   }
 
-  // Initialisation et tri alphabétique des élèves
+  // Initialisation et tri alphabétique des élèves (avec pré-remplissage intelligent des informations de chaque élève)
   useEffect(() => {
-    const sorted = sortStudentsAlphabetically(initialStudents)
+    const sorted = sortStudentsAlphabetically(
+      initialStudents.map((s) => ({
+        ...s,
+        birth_place: s.birth_place || schoolInfo?.city || '',
+      }))
+    )
     setLocalStudents(sorted)
     setSelectedIds(new Set(sorted.map((s) => s.id)))
     if (sorted.length > 0) {
-      setActiveStudentId((prev) =>
-        sorted.some((s) => s.id === prev) ? prev : sorted[0].id
-      )
+      setActiveStudentId((prev) => {
+        if (initialActiveStudentId && sorted.some((s) => s.id === initialActiveStudentId)) {
+          return initialActiveStudentId
+        }
+        return sorted.some((s) => s.id === prev) ? prev : sorted[0].id
+      })
     }
-  }, [initialStudents])
+  }, [initialStudents, schoolInfo?.city])
+
+  useEffect(() => {
+    if (
+      initialActiveStudentId &&
+      localStudents.some((s) => s.id === initialActiveStudentId) &&
+      initialActiveStudentId !== activeStudentId
+    ) {
+      setActiveStudentId(initialActiveStudentId)
+    }
+  }, [initialActiveStudentId, localStudents])
+
+  const selectStudentById = (id: string) => {
+    setActiveStudentId(id)
+    onActiveStudentChange?.(id)
+  }
 
   useEffect(() => {
     setClassNameOverride(className)
@@ -1056,6 +1090,36 @@ export function SchoolIdCardStudioModal({
     }
   }
 
+  const handlePrevStudent = () => {
+    if (localStudents.length <= 1) {
+      toast(
+        `Cette classe (${className}) ne contient qu'un seul élève inscrit.`
+      )
+      return
+    }
+    const prevIdx = (activeIndex - 1 + localStudents.length) % localStudents.length
+    const prevStudent = localStudents[prevIdx]
+    selectStudentById(prevStudent.id)
+    toast.success(
+      `Élève ${prevIdx + 1}/${localStudents.length} : ${prevStudent.last_name.toUpperCase()} ${prevStudent.first_name}`
+    )
+  }
+
+  const handleNextStudent = () => {
+    if (localStudents.length <= 1) {
+      toast(
+        `Cette classe (${className}) ne contient qu'un seul élève inscrit. Sélectionnez une autre classe dans le menu déroulant en haut si besoin.`
+      )
+      return
+    }
+    const nextIdx = (activeIndex + 1) % localStudents.length
+    const nextStudent = localStudents[nextIdx]
+    selectStudentById(nextStudent.id)
+    toast.success(
+      `Élève ${nextIdx + 1}/${localStudents.length} : ${nextStudent.last_name.toUpperCase()} ${nextStudent.first_name} (Infos pré-remplies)`
+    )
+  }
+
   // Enregistrer la carte actuelle et passer automatiquement à l'élève suivant (ordre alphabétique)
   const handleSaveAndNextStudent = async () => {
     if (!activeStudent) return
@@ -1063,14 +1127,25 @@ export function SchoolIdCardStudioModal({
     const ok = await saveStudentToDb(activeStudent.id)
     if (!ok) return
 
+    if (localStudents.length <= 1) {
+      toast.success(
+        `Carte de ${activeStudent.last_name.toUpperCase()} ${activeStudent.first_name} enregistrée ! (1 seul élève dans la classe ${className})`
+      )
+      return
+    }
+
     if (activeIndex < localStudents.length - 1) {
       const nextStudent = localStudents[activeIndex + 1]
-      setActiveStudentId(nextStudent.id)
+      selectStudentById(nextStudent.id)
       toast.success(
-        `Carte enregistrée ! Passage à ${nextStudent.last_name.toUpperCase()} ${nextStudent.first_name} (${activeIndex + 2}/${localStudents.length})`
+        `Carte enregistrée ! Passage à l'élève ${activeIndex + 2}/${localStudents.length} : ${nextStudent.last_name.toUpperCase()} ${nextStudent.first_name}`
       )
     } else {
-      toast.success('Dernière carte de la classe enregistrée avec succès !')
+      const firstStudent = localStudents[0]
+      selectStudentById(firstStudent.id)
+      toast.success(
+        `Dernière carte (${localStudents.length}/${localStudents.length}) enregistrée ! Retour au 1er élève de la classe.`
+      )
     }
   }
 
@@ -1186,38 +1261,40 @@ export function SchoolIdCardStudioModal({
   return (
     <div className={wrapperClass}>
       <div className={cardContainerClass}>
-        {/* Bandeau Supérieur — Stripe Royal Indigo & Sapphire */}
-        <div className="relative flex items-center justify-between gap-4 bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-5 py-3.5 text-white shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25 backdrop-blur-md">
-              <IdCard className="h-5 w-5 text-amber-300" />
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base sm:text-lg font-extrabold tracking-tight text-white">
-                  Studio Officiel — Cartes d&apos;Identité Scolaires
-                </h2>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/20 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-200 ring-1 ring-emerald-300/30">
-                  <Sparkles className="h-3 w-3" />
-                  10 Cartes / Page A4 • Recto Seul • Ordre Alphabétique
-                </span>
+        {/* Bandeau Supérieur (uniquement en mode modal) */}
+        {mode === 'modal' && (
+          <div className="relative flex items-center justify-between gap-4 bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-5 py-3.5 text-white shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25 backdrop-blur-md">
+                <IdCard className="h-5 w-5 text-amber-300" />
               </div>
-              <p className="text-xs text-indigo-100/90 mt-0.5">
-                Classe : <strong className="text-white">{className}</strong> • Polices, tailles, gras, italique, souligné, couleurs, thèmes, logo, cachet & signature 100% personnalisables.
-              </p>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-extrabold tracking-tight text-white">
+                    Studio Officiel — Cartes d&apos;Identité Scolaires
+                  </h2>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/20 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-200 ring-1 ring-emerald-300/30">
+                    <Sparkles className="h-3 w-3" />
+                    10 Cartes / Page A4 • Recto Seul • Ordre Alphabétique
+                  </span>
+                </div>
+                <p className="text-xs text-indigo-100/90 mt-0.5">
+                  Classe : <strong className="text-white">{className}</strong> • Polices, tailles, gras, italique, souligné, couleurs, thèmes, logo, cachet & signature 100% personnalisables.
+                </p>
+              </div>
             </div>
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-xl bg-white/10 p-2 text-white/80 hover:bg-white/20 hover:text-white transition-colors"
+                title="Fermer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
           </div>
-          {mode === 'modal' && onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl bg-white/10 p-2 text-white/80 hover:bg-white/20 hover:text-white transition-colors"
-              title="Fermer"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          )}
-        </div>
+        )}
 
         {/* Contenu Principal Défilant */}
         <div className={mode === 'embedded' ? 'p-4 sm:p-5 space-y-5 bg-slate-50/70' : 'flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 bg-slate-50/70'}>
@@ -1840,142 +1917,96 @@ export function SchoolIdCardStudioModal({
 
             {/* COLONNE DROITE (7 cols) : Aperçu Temps Réel + Saisie Élève par Élève (Enregistrer -> Suivant) */}
             <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-4">
-              {/* Barre de navigation Alphabétique Élève par Élève */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+              {/* Barre de navigation Alphabétique Élève par Élève (Toujours visible) */}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
                   <Eye className="h-4 w-4 text-indigo-600" />
                   <span className="text-xs font-extrabold uppercase tracking-wider text-indigo-950">
-                    2. Aperçu & Saisie Carte par Carte ({activeIndex + 1} / {localStudents.length})
+                    2. Aperçu &amp; Saisie Carte par Carte ({activeIndex + 1} / {localStudents.length})
                   </span>
                 </div>
 
-                {localStudents.length > 1 && (
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      disabled={activeIndex === 0}
-                      onClick={() =>
-                        setActiveStudentId(localStudents[Math.max(0, activeIndex - 1)].id)
-                      }
-                      className="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1"
-                    >
-                      <ChevronLeft className="h-3.5 w-3.5" />
-                      Précédent
-                    </button>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handlePrevStudent}
+                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-2xs transition-all flex items-center gap-1"
+                    title="Passer à l'élève précédent"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5 text-slate-600" />
+                    Précédent
+                  </button>
 
-                    <select
-                      value={activeStudent.id}
-                      onChange={(e) => setActiveStudentId(e.target.value)}
-                      className="rounded-lg border border-indigo-200 bg-indigo-50/60 px-2.5 py-1 text-xs font-extrabold text-indigo-950 outline-none max-w-[210px]"
-                    >
-                      {localStudents.map((s, idx) => (
-                        <option key={s.id} value={s.id}>
-                          {idx + 1}. {s.last_name.toUpperCase()} {s.first_name}
-                        </option>
-                      ))}
-                    </select>
+                  <select
+                    value={activeStudent.id}
+                    onChange={(e) => selectStudentById(e.target.value)}
+                    className="rounded-lg border border-indigo-200 bg-indigo-50/60 px-2.5 py-1.5 text-xs font-extrabold text-indigo-950 outline-none max-w-[220px] cursor-pointer"
+                  >
+                    {localStudents.map((s, idx) => (
+                      <option key={s.id} value={s.id}>
+                        Élève {idx + 1}/{localStudents.length} — {s.last_name.toUpperCase()} {s.first_name}
+                      </option>
+                    ))}
+                  </select>
 
-                    <button
-                      type="button"
-                      disabled={activeIndex >= localStudents.length - 1}
-                      onClick={() =>
-                        setActiveStudentId(
-                          localStudents[Math.min(localStudents.length - 1, activeIndex + 1)].id
-                        )
-                      }
-                      className="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 disabled:opacity-40 flex items-center gap-1"
-                    >
-                      Suivant
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                )}
+                  <button
+                    type="button"
+                    onClick={handleNextStudent}
+                    className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-bold text-white shadow-2xs transition-all flex items-center gap-1"
+                    title="Passer à l'élève suivant (ses informations sont pré-remplies sur la carte)"
+                  >
+                    Suivant
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
 
-              {/* SÉLECTEUR DE THÈME (ARRIÈRE-PLAN DE LA CARTE) AVEC FLÈCHES PRÉCÉDENT / SUIVANT */}
-              <div className="rounded-xl border border-indigo-200/80 bg-gradient-to-r from-indigo-50/70 via-white to-indigo-50/70 p-3 space-y-2.5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <Palette className="h-4 w-4 text-indigo-600" />
-                    <span className="text-xs font-extrabold uppercase tracking-wider text-indigo-950">
-                      Thème / Fond de la Carte ({activeThemeIndex + 1} / {allThemes.length})
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={handlePrevTheme}
-                      className="px-2.5 py-1 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 text-xs font-extrabold text-indigo-900 shadow-2xs transition-all flex items-center gap-1"
-                      title="Revenir au thème précédent"
-                    >
-                      <ChevronLeft className="h-3.5 w-3.5 text-indigo-600" />
-                      Précédent
-                    </button>
-
-                    <span className="px-2.5 py-1 rounded-lg bg-indigo-950 text-white text-[11px] font-extrabold max-w-[200px] truncate">
-                      {activeTheme.name}
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={handleNextTheme}
-                      className="px-2.5 py-1 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 text-xs font-extrabold text-indigo-900 shadow-2xs transition-all flex items-center gap-1"
-                      title="Passer au thème suivant"
-                    >
-                      Suivant
-                      <ChevronRight className="h-3.5 w-3.5 text-indigo-600" />
-                    </button>
-
-                    <label
-                      className="cursor-pointer px-2.5 py-1 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-[11px] font-extrabold text-emerald-800 transition-colors flex items-center gap-1"
-                      title="Ajouter une nouvelle image de thème"
-                    >
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleUploadCustomTheme(e.target.files?.[0])}
-                      />
-                      <Upload className="h-3 w-3" />
-                      + Thème
-                    </label>
-                  </div>
+              {/* NAVIGATION DU THÈME (UNIQUEMENT PAR FLÈCHES PRÉCÉDENT / SUIVANT — APERÇU DIRECT SUR LA CARTE) */}
+              <div className="rounded-xl border border-slate-200/90 bg-slate-50/70 px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Palette className="h-4 w-4 text-indigo-600" />
+                  <span className="text-xs font-bold text-slate-800">
+                    Thème d&apos;arrière-plan de la carte
+                  </span>
+                  <span className="text-[11px] font-semibold text-slate-400">
+                    ({activeThemeIndex + 1} / {allThemes.length})
+                  </span>
                 </div>
 
-                {/* Miniatures rapides des thèmes */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                  {allThemes.map((th, idx) => {
-                    const isCurrent = idx === activeThemeIndex
-                    return (
-                      <button
-                        key={th.id}
-                        type="button"
-                        onClick={() => setActiveThemeIndex(idx)}
-                        className={`group relative h-10 w-16 shrink-0 rounded-lg border overflow-hidden transition-all ${
-                          isCurrent
-                            ? 'border-indigo-600 ring-2 ring-indigo-500/40 scale-105 shadow-xs'
-                            : 'border-slate-200 opacity-75 hover:opacity-100'
-                        }`}
-                        title={th.name}
-                      >
-                        {th.url ? (
-                          <img
-                            src={th.url}
-                            alt={th.name}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-full w-full bg-gradient-to-b from-[#EEF4FA] to-[#F8FAFC] flex items-center justify-center text-[9px] font-extrabold text-slate-700">
-                            Classique
-                          </div>
-                        )}
-                        <span className="absolute bottom-0 right-0 bg-slate-900/75 text-white text-[8px] font-bold px-1 rounded-tl">
-                          {idx + 1}
-                        </span>
-                      </button>
-                    )
-                  })}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handlePrevTheme}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-800 shadow-2xs transition-all flex items-center gap-1"
+                    title="Thème précédent (aperçu direct sur la carte)"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5 text-indigo-600" />
+                    Précédent
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleNextTheme}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-800 shadow-2xs transition-all flex items-center gap-1"
+                    title="Thème suivant (aperçu direct sur la carte)"
+                  >
+                    Suivant
+                    <ChevronRight className="h-3.5 w-3.5 text-indigo-600" />
+                  </button>
+
+                  <label
+                    className="cursor-pointer px-2.5 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 text-[11px] font-bold text-emerald-800 transition-colors flex items-center gap-1"
+                    title="Importer un fond personnalisé"
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleUploadCustomTheme(e.target.files?.[0])}
+                    />
+                    <Upload className="h-3 w-3" />
+                    + Fond
+                  </label>
                 </div>
               </div>
 
@@ -2440,14 +2471,33 @@ export function SchoolIdCardStudioModal({
                   </div>
                 </div>
 
-                {/* Boutons d'action : Enregistrer cette carte / Enregistrer & Passer à l'Élève Suivant (Ordre Alphabétique) */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-indigo-200/60">
-                  <span className="text-[11px] font-medium text-slate-600">
-                    Ordre alphabétique :{' '}
-                    <strong>
-                      {activeIndex + 1} sur {localStudents.length}
-                    </strong>
-                  </span>
+                {/* Boutons d'action : Précédent / Enregistrer / Suivant / Enregistrer & Élève Suivant (Toujours visibles) */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-indigo-200/60">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handlePrevStudent}
+                      className="px-2.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1"
+                      title="Revenir à la carte de l'élève précédent"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                      Précédent
+                    </button>
+
+                    <span className="text-[11px] font-semibold text-slate-600 px-1.5">
+                      Élève <strong>{activeIndex + 1} / {localStudents.length}</strong>
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={handleNextStudent}
+                      className="px-2.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold transition-all flex items-center gap-1"
+                      title="Passer à la carte de l'élève suivant (ses informations pré-enregistrées seront affichées)"
+                    >
+                      Suivant
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
 
                   <div className="flex items-center gap-2 flex-wrap">
                     <button
@@ -2463,7 +2513,7 @@ export function SchoolIdCardStudioModal({
                       title="Générer uniquement la carte de cet élève en PDF"
                     >
                       <Printer className="h-3.5 w-3.5 text-indigo-600" />
-                      Carte de cet élève (PDF)
+                      Carte PDF
                     </button>
 
                     <button
@@ -2484,24 +2534,23 @@ export function SchoolIdCardStudioModal({
                       Enregistrer
                     </button>
 
-                    {localStudents.length > 1 && (
-                      <button
-                        type="button"
-                        disabled={isSavingCurrent}
-                        onClick={handleSaveAndNextStudent}
-                        className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-xs transition-all flex items-center gap-1.5"
-                      >
-                        {isSavingCurrent ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <>
-                            <Save className="h-3.5 w-3.5" />
-                            <span>Enregistrer & Élève Suivant</span>
-                            <ChevronRight className="h-4 w-4" />
-                          </>
-                        )}
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      disabled={isSavingCurrent}
+                      onClick={handleSaveAndNextStudent}
+                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-xs transition-all flex items-center gap-1.5"
+                      title="Enregistrer cette carte et passer immédiatement à l'élève suivant de la classe"
+                    >
+                      {isSavingCurrent ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <>
+                          <Save className="h-3.5 w-3.5" />
+                          <span>Enregistrer &amp; Élève Suivant</span>
+                          <ChevronRight className="h-4 w-4" />
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -2656,7 +2705,7 @@ export function SchoolIdCardStudioModal({
                     return (
                       <tr
                         key={st.id}
-                        onClick={() => setActiveStudentId(st.id)}
+                        onClick={() => selectStudentById(st.id)}
                         className={`transition-colors cursor-pointer ${
                           isActive
                             ? 'bg-indigo-50/80 ring-1 ring-inset ring-indigo-300'
