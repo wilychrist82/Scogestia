@@ -8,14 +8,13 @@ import { Users, GraduationCap, ArrowLeft, Download, Search, UserCheck, UserPlus,
 import toast from 'react-hot-toast'
 import { deleteStudent, removeStudentFromClass } from '@/app/actions/students'
 import {
-  generateClassStudentIdCardsPDF,
-  generateStudentIdCardPDF,
   generateClassHonorRollPDF,
   generateHonorRollPDF,
   generateOfficialExamCandidatesPDF,
   detectOfficialExamLabel,
   StudentDocumentData,
 } from '@/lib/pdf/student-documents'
+import { SchoolIdCardStudioModal } from '@/components/admin/SchoolIdCardStudioModal'
 
 export type ClassStudentItem = {
   id: string
@@ -90,7 +89,8 @@ export function ClassDetailsView({
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'eleves' | 'emploi_du_temps' | 'suivi'>('eleves')
   const [isPending, startTransition] = useTransition()
-  const [isPrintingCards, setIsPrintingCards] = useState(false)
+  const [isCardStudioOpen, setIsCardStudioOpen] = useState(false)
+  const [studioTargetStudents, setStudioTargetStudents] = useState<ClassStudentItem[] | null>(null)
   const [isPrintingHonorRolls, setIsPrintingHonorRolls] = useState(false)
   const [isPrintingExamList, setIsPrintingExamList] = useState(false)
   const [studentToDelete, setStudentToDelete] = useState<ClassStudentItem | null>(null)
@@ -123,18 +123,10 @@ export function ClassDetailsView({
     schoolSignatureUrl: schoolInfo?.signature_url || null,
   })
 
-  const handlePrintClassIdCards = async () => {
+  const handleOpenClassIdCardStudio = () => {
     if (students.length === 0) return
-    try {
-      setIsPrintingCards(true)
-      const list = students.map(buildStudentDocData)
-      await generateClassStudentIdCardsPDF(classInfo.name, list)
-      toast.success(`Cartes scolaires de la classe ${classInfo.name} générées !`)
-    } catch {
-      toast.error('Erreur lors de la génération des cartes scolaires.')
-    } finally {
-      setIsPrintingCards(false)
-    }
+    setStudioTargetStudents(null)
+    setIsCardStudioOpen(true)
   }
 
   const handlePrintClassHonorRolls = async () => {
@@ -317,13 +309,12 @@ export function ClassDetailsView({
               </button>
               <button
                 type="button"
-                disabled={isPrintingCards}
-                onClick={handlePrintClassIdCards}
-                className="px-3.5 py-2 bg-white/15 hover:bg-white/25 ring-1 ring-white/25 backdrop-blur-md text-white text-xs font-extrabold rounded-xl transition-all flex items-center gap-1.5 disabled:opacity-50"
-                title="Générer en 1 clic toutes les cartes scolaires de cette classe (avec photos, cachet et signature)"
+                onClick={handleOpenClassIdCardStudio}
+                className="px-3.5 py-2 bg-emerald-400/20 hover:bg-emerald-400/30 ring-1 ring-emerald-300/40 backdrop-blur-md text-white text-xs font-extrabold rounded-xl transition-all flex items-center gap-1.5"
+                title="Ouvrir le Studio de Génération des Cartes Scolaires (10 cartes par page A4, upload photos & infos)"
               >
-                {isPrintingCards ? <Loader2 size={15} className="animate-spin text-emerald-300" /> : <IdCard size={15} className="text-emerald-300" />}
-                {isPrintingCards ? 'Génération...' : 'Cartes Scolaires (PDF)'}
+                <IdCard size={15} className="text-emerald-300" />
+                Cartes Scolaires (10/page)
               </button>
               <button
                 onClick={handleExportCSV}
@@ -584,10 +575,10 @@ export function ClassDetailsView({
                             </Link>
                             <button
                               type="button"
-                              onClick={async () => {
+                              onClick={() => {
                                 setOpenActionId(null)
-                                await generateStudentIdCardPDF(buildStudentDocData(student))
-                                toast.success(`Carte scolaire de ${student.first_name} générée !`)
+                                setStudioTargetStudents([student])
+                                setIsCardStudioOpen(true)
                               }}
                               className="px-4 py-2 text-xs font-medium text-emerald-800 hover:bg-emerald-50 flex items-center gap-2.5 transition-colors w-full text-left"
                             >
@@ -859,6 +850,18 @@ export function ClassDetailsView({
           </div>
         </div>
       )}
+
+      {/* Studio de Génération des Cartes Scolaires Officielles (10 élèves / page A4) */}
+      <SchoolIdCardStudioModal
+        isOpen={isCardStudioOpen}
+        onClose={() => setIsCardStudioOpen(false)}
+        className={classInfo.name}
+        classLevel={classInfo.level}
+        academicYear={classInfo.academic_year}
+        students={studioTargetStudents || students}
+        schoolInfo={schoolInfo}
+        onStudentsUpdated={() => router.refresh()}
+      />
     </div>
   )
 }

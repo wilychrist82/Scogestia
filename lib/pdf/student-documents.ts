@@ -23,6 +23,8 @@ export interface StudentDocumentData {
   schoolLogoUrl?: string | null
   schoolStampUrl?: string | null
   schoolSignatureUrl?: string | null
+  inspectionName?: string | null
+  examCenter?: string | null
 }
 
 /**
@@ -359,12 +361,107 @@ export async function generateSchoolCertificatePDF(data: StudentDocumentData) {
 }
 
 /**
- * Dessine une Carte d'Identité Scolaire complète (Recto + Verso côte à côte) à la position verticale cardY
+ * Dessine l'emblème officiel de la République Togolaise (RT) vectoriel en haut à gauche de la carte
  */
-function drawStudentIdCardPairOnPage(
+function drawTogoleseEmblemVector(doc: jsPDF, cx: number, cy: number, rx: number, ry: number) {
+  // Couronne ovale verte extérieure
+  doc.setDrawColor(22, 163, 74)
+  doc.setFillColor(255, 255, 255)
+  doc.setLineWidth(0.35)
+  doc.ellipse(cx, cy, rx, ry, 'FD')
+
+  // Petits drapeaux croisés (Vert / Jaune / Rouge)
+  doc.setFillColor(0, 122, 51)
+  doc.rect(cx - rx * 0.62, cy - ry * 0.42, rx * 0.45, ry * 0.32, 'F')
+  doc.rect(cx + rx * 0.17, cy - ry * 0.42, rx * 0.45, ry * 0.32, 'F')
+
+  doc.setFillColor(255, 206, 0)
+  doc.rect(cx - rx * 0.62, cy - ry * 0.31, rx * 0.45, ry * 0.11, 'F')
+  doc.rect(cx + rx * 0.17, cy - ry * 0.31, rx * 0.45, ry * 0.11, 'F')
+
+  doc.setFillColor(210, 16, 52)
+  doc.rect(cx - rx * 0.62, cy - ry * 0.42, rx * 0.18, ry * 0.18, 'F')
+  doc.rect(cx + rx * 0.17, cy - ry * 0.42, rx * 0.18, ry * 0.18, 'F')
+
+  // Bandeau supérieur "TRAVAIL - LIBERTÉ - PATRIE"
+  doc.setDrawColor(15, 23, 42)
+  doc.setLineWidth(0.18)
+  doc.line(cx - rx * 0.55, cy - ry * 0.62, cx + rx * 0.55, cy - ry * 0.62)
+
+  // Écu central doré "RT"
+  doc.setFillColor(255, 206, 0)
+  doc.setDrawColor(217, 119, 6)
+  doc.setLineWidth(0.25)
+  doc.circle(cx, cy + ry * 0.08, rx * 0.36, 'FD')
+
+  doc.setTextColor(15, 23, 42)
+  doc.setFont('times', 'bold')
+  doc.setFontSize(5.2)
+  doc.text('RT', cx, cy + ry * 0.16, { align: 'center' })
+
+  // Deux lions stylisés (gauche et droite en bas de l'écu)
+  doc.setFillColor(217, 119, 6)
+  doc.circle(cx - rx * 0.48, cy + ry * 0.42, rx * 0.16, 'F')
+  doc.circle(cx + rx * 0.48, cy + ry * 0.42, rx * 0.16, 'F')
+}
+
+/**
+ * Dessine le cachet circulaire bleu officiel "REPUBLIQUE TOGOLAISE + NOM ÉCOLE" fidèle au modèle officiel
+ */
+function drawTogoleseCardOfficialStamp(
+  doc: jsPDF,
+  centerX: number,
+  centerY: number,
+  radius: number,
+  schoolName: string
+) {
+  const blueR = 18
+  const blueG = 42
+  const blueB = 190
+
+  // Double cercle extérieur et intérieur
+  doc.setDrawColor(blueR, blueG, blueB)
+  doc.setLineWidth(0.42)
+  doc.circle(centerX, centerY, radius, 'S')
+  doc.setLineWidth(0.2)
+  doc.circle(centerX, centerY, radius - 0.7, 'S')
+  doc.setLineWidth(0.25)
+  doc.circle(centerX, centerY, radius * 0.56, 'S')
+
+  doc.setTextColor(blueR, blueG, blueB)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(3.7)
+  doc.text('REPUBLIQUE TOGOLAISE', centerX, centerY - radius * 0.68, { align: 'center' })
+
+  // Étoiles latérales dans la couronne du cachet
+  doc.setFontSize(4.2)
+  doc.text('*', centerX - radius * 0.76, centerY + 0.6, { align: 'center' })
+  doc.text('*', centerX + radius * 0.76, centerY + 0.6, { align: 'center' })
+
+  // Centre "RT" + emblème
+  doc.setFontSize(4.3)
+  doc.text('RT', centerX, centerY + 0.6, { align: 'center' })
+  doc.setLineWidth(0.18)
+  doc.line(centerX - radius * 0.28, centerY - radius * 0.22, centerX + radius * 0.28, centerY - radius * 0.22)
+  doc.line(centerX - radius * 0.25, centerY + radius * 0.26, centerX + radius * 0.25, centerY + radius * 0.26)
+
+  // Nom de l'école en bas de la couronne
+  doc.setFontSize(3.5)
+  const shortSchool = schoolName.toUpperCase().slice(0, 21)
+  doc.text(shortSchool, centerX, centerY + radius * 0.81, { align: 'center' })
+}
+
+/**
+ * Dessine une Carte d'Identité Scolaire Officielle Togolaise (RECTO UNIQUEMENT)
+ * Format optimisé pour planche de 10 cartes par page A4 (2 colonnes x 5 lignes)
+ */
+function drawStudentIdCardRecto(
   doc: jsPDF,
   data: StudentDocumentData,
+  cardX: number,
   cardY: number,
+  cardW: number,
+  cardH: number,
   assets: {
     photoDataUrl: string | null
     logoDataUrl: string | null
@@ -372,225 +469,334 @@ function drawStudentIdCardPairOnPage(
     signatureDataUrl: string | null
   }
 ) {
-  const cardW = 88
-  const cardH = 56
-  const rectoX = 15
-  const versoX = 107
-  const examLabel = detectOfficialExamLabel(data.className, data.classLevel)
+  // Repères de découpe très fins aux 4 coins
+  doc.setDrawColor(203, 213, 225)
+  doc.setLineWidth(0.15)
+  doc.rect(cardX, cardY, cardW, cardH, 'S')
 
-  // ── RECTO (MODÈLE OFFICIEL EXAMENS CEPD / BEPC / BAC 1 / BAC 2) ──
-  doc.setDrawColor(6, 95, 70)
-  doc.setLineWidth(0.6)
-  doc.setFillColor(255, 255, 255)
-  doc.roundedRect(rectoX, cardY, cardW, cardH, 2.5, 2.5, 'FD')
+  // 1. Cadre extérieur Vert Togolais (#007A33) + Bordure Jaune Or (#FFCE00)
+  doc.setFillColor(0, 122, 51)
+  doc.rect(cardX, cardY, cardW, cardH, 'F')
 
-  // Bordure intérieure fine officielle
-  doc.setDrawColor(167, 243, 208)
-  doc.setLineWidth(0.2)
-  doc.roundedRect(rectoX + 1.2, cardY + 1.2, cardW - 2.4, cardH - 2.4, 2, 2, 'S')
+  // Bandes verticales Jaune Or sur les côtés gauche et droit (style officiel)
+  doc.setFillColor(255, 206, 0)
+  doc.rect(cardX + 0.9, cardY + 0.9, cardW - 1.8, cardH - 1.8, 'F')
 
-  // Bandeau supérieur institutionnel
-  doc.setFillColor(6, 95, 70)
-  doc.roundedRect(rectoX, cardY, cardW, 14.5, 2.5, 2.5, 'F')
-  doc.rect(rectoX, cardY + 10, cardW, 4.5, 'F')
+  // Fond principal intérieur (Bleu glacier très doux en haut, Blanc cassé en bas)
+  const innerX = cardX + 2.1
+  const innerY = cardY + 1.0
+  const innerW = cardW - 4.2
+  const innerH = cardH - 2.0
+  const headerH = 16.8
 
-  // Logo école en haut à gauche du bandeau
+  // Fond en-tête (bleu glacier très clair #EEF4FA)
+  doc.setFillColor(238, 244, 250)
+  doc.rect(innerX, innerY, innerW, headerH, 'F')
+
+  // Fond corps de carte (#F8FAFC)
+  doc.setFillColor(248, 250, 252)
+  doc.rect(innerX, innerY + headerH, innerW, innerH - headerH, 'F')
+
+  // 2. EN-TÊTE GAUCHE : "MEPST" multicolore + Emblème RT (ou Logo école)
+  const mepstY = innerY + 3.2
+  doc.setFont('times', 'bold')
+  doc.setFontSize(7.6)
+
+  doc.setTextColor(15, 23, 42)
+  doc.text('ME', innerX + 1.4, mepstY)
+  doc.setTextColor(210, 16, 52) // P en Rouge
+  doc.text('P', innerX + 6.3, mepstY)
+  doc.setTextColor(234, 138, 0) // S en Jaune/Or
+  doc.text('S', innerX + 8.2, mepstY)
+  doc.setTextColor(29, 78, 216) // T en Bleu
+  doc.text('T', innerX + 9.9, mepstY)
+
+  // Emblème RT ou Logo de l'établissement sous MEPST
+  const emblemCenterX = innerX + 7.2
+  const emblemCenterY = innerY + 10.1
   if (assets.logoDataUrl) {
     try {
       doc.setFillColor(255, 255, 255)
-      doc.roundedRect(rectoX + 2.2, cardY + 1.8, 10.5, 10.5, 1.5, 1.5, 'F')
-      doc.addImage(assets.logoDataUrl, 'PNG', rectoX + 2.7, cardY + 2.3, 9.5, 9.5)
+      doc.setDrawColor(22, 163, 74)
+      doc.setLineWidth(0.3)
+      doc.circle(emblemCenterX, emblemCenterY, 5.6, 'FD')
+      doc.addImage(assets.logoDataUrl, 'PNG', emblemCenterX - 4.8, emblemCenterY - 4.8, 9.6, 9.6)
     } catch {
-      // Ignore
+      drawTogoleseEmblemVector(doc, emblemCenterX, emblemCenterY, 5.4, 6.0)
     }
+  } else {
+    drawTogoleseEmblemVector(doc, emblemCenterX, emblemCenterY, 5.4, 6.0)
   }
 
-  // Devise + Nom de l'établissement en MAJUSCULE centré en haut
-  const headerCenterX = assets.logoDataUrl ? rectoX + cardW / 2 + 3 : rectoX + cardW / 2
-  doc.setTextColor(209, 250, 229)
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(5.2)
-  doc.text('RÉPUBLIQUE TOGOLAISE — Travail • Liberté • Patrie', headerCenterX, cardY + 3.8, { align: 'center' })
+  // 3. EN-TÊTE DROITE : REPUBLIQUE TOGOLAISE / Travail-Liberté-Patrie
+  const rightHeaderCenterX = innerX + innerW - 22.5
+  doc.setTextColor(15, 23, 42)
+  doc.setFont('times', 'bold')
+  doc.setFontSize(6.6)
+  doc.text('REPUBLIQUE TOGOLAISE', rightHeaderCenterX, innerY + 3.1, { align: 'center' })
 
-  doc.setTextColor(255, 255, 255)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8.2)
-  doc.text(data.schoolName.toUpperCase().slice(0, 34), headerCenterX, cardY + 8.3, { align: 'center' })
+  doc.setFont('times', 'bold')
+  doc.setFontSize(5.7)
+  doc.text('Travail-Liberté-Patrie', rightHeaderCenterX, innerY + 5.6, { align: 'center' })
 
-  // Sous-bandeau titre Carte d'Identité Scolaire + Badge Examen (CEPD / BEPC / BAC1 / BAC2)
-  doc.setFontSize(6.3)
-  doc.setTextColor(254, 240, 138) // Or clair
-  const cardTitle = examLabel
-    ? `CARTE SCOLAIRE (${examLabel}) • ${data.academicYear}`
-    : `CARTE D'IDENTITÉ SCOLAIRE • ANNÉE ${data.academicYear}`
-  doc.text(cardTitle, headerCenterX, cardY + 12.6, { align: 'center' })
+  // 4. EN-TÊTE CENTRAL : IEPP / Inspection + NOM DE L'ÉCOLE (Rouge) + Centre d'Écrit
+  const titleCenterX = innerX + innerW * 0.54
 
-  // Cadre Rectangulaire Officiel Photo Passeport (Gauche : 22mm x 28mm)
-  const photoX = rectoX + 3.2
-  const photoY = cardY + 16.5
-  const photoW = 22
-  const photoH = 28
+  // Ligne Inspection / DRE / IEPP
+  const inspectionText = (
+    data.inspectionName?.trim() ||
+    (data.schoolCity ? `DRE / INSPECTION — ${data.schoolCity.toUpperCase()}` : 'MINISTÈRE DES ENSEIGNEMENTS (MEPST)')
+  ).toUpperCase()
+  doc.setFont('times', 'bold')
+  doc.setFontSize(6.4)
+  doc.setTextColor(15, 29, 95) // Bleu marine profond
+  doc.text(inspectionText.slice(0, 38), titleCenterX, innerY + 8.7, { align: 'center' })
 
-  doc.setFillColor(248, 250, 252)
-  doc.setDrawColor(6, 95, 70)
+  // Nom de l'Établissement en Grand Rouge Cramoisi
+  const schoolUpper = (data.schoolName || 'ÉTABLISSEMENT SCOLAIRE').toUpperCase()
+  const schoolFontSize = schoolUpper.length > 28 ? 7.4 : schoolUpper.length > 22 ? 8.4 : 9.5
+  doc.setFont('times', 'bold')
+  doc.setFontSize(schoolFontSize)
+  doc.setTextColor(180, 18, 24) // Rouge officiel
+  doc.text(schoolUpper.slice(0, 34), titleCenterX, innerY + 12.4, { align: 'center' })
+
+  // Ligne Centre d'Écrit : [Ville / Centre]
+  const centerLabel = "Centre d'Ecrit: "
+  const centerValue = (data.examCenter?.trim() || data.schoolCity?.trim() || data.schoolName || 'Lomé').slice(0, 24)
+  doc.setFont('times', 'bold')
+  doc.setFontSize(6.8)
+  const labelW = doc.getTextWidth(centerLabel)
+  doc.setTextColor(29, 48, 185)
+  const valW = doc.getTextWidth(centerValue)
+  const totalCenterW = labelW + valW
+  const startCenterX = titleCenterX - totalCenterW / 2
+
+  doc.setTextColor(15, 23, 42)
+  doc.text(centerLabel, startCenterX, innerY + 15.5)
+  doc.setTextColor(25, 42, 185) // Bleu royal
+  doc.text(centerValue, startCenterX + labelW, innerY + 15.5)
+
+  // 5. SÉPARATEUR HORIZONTAL TRICOLORE (Rouge / Vert / Jaune)
+  const sepY = innerY + headerH
+  doc.setDrawColor(185, 28, 28)
+  doc.setLineWidth(0.35)
+  doc.line(innerX, sepY - 0.35, innerX + innerW, sepY - 0.35)
+  doc.setDrawColor(0, 122, 51)
+  doc.setLineWidth(0.45)
+  doc.line(innerX, sepY + 0.1, innerX + innerW, sepY + 0.1)
+  doc.setDrawColor(255, 206, 0)
+  doc.setLineWidth(0.3)
+  doc.line(innerX, sepY + 0.45, innerX + innerW, sepY + 0.45)
+
+  // 6. ZONE PHOTO PASSEPORT (GAUCHE — Pleine hauteur du corps de la carte)
+  const bodyTopY = sepY + 0.7
+  const bodyH = innerY + innerH - bodyTopY - 0.4
+  const photoX = innerX + 0.4
+  const photoY = bodyTopY
+  const photoW = 28.5
+  const photoH = bodyH
+
+  // Cadre photo terracotta/rouge & blanc comme sur le modèle officiel
+  doc.setFillColor(235, 242, 250)
+  doc.setDrawColor(194, 65, 12)
   doc.setLineWidth(0.45)
   doc.rect(photoX, photoY, photoW, photoH, 'FD')
 
   if (assets.photoDataUrl) {
     try {
-      doc.addImage(assets.photoDataUrl, 'PNG', photoX + 0.4, photoY + 0.4, photoW - 0.8, photoH - 0.8)
+      doc.addImage(assets.photoDataUrl, 'PNG', photoX + 0.35, photoY + 0.35, photoW - 0.7, photoH - 0.7)
     } catch {
-      // Fallback initiales
+      // Fallback initiales si l'image échoue
     }
   } else {
-    doc.setDrawColor(203, 213, 225)
-    doc.setLineWidth(0.2)
-    doc.rect(photoX + 1.2, photoY + 1.2, photoW - 2.4, photoH - 2.4, 'S')
-    doc.setTextColor(6, 95, 70)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(10)
+    // Silhouette / Placeholder propre si aucune photo n'est encore chargée
+    doc.setFillColor(219, 234, 254)
+    doc.rect(photoX + 0.5, photoY + 0.5, photoW - 1, photoH - 1, 'F')
+    doc.setFillColor(147, 197, 253)
+    doc.circle(photoX + photoW / 2, photoY + photoH * 0.36, 5.2, 'F')
+    doc.ellipse(photoX + photoW / 2, photoY + photoH * 0.78, 8.5, 6.2, 'F')
+
+    doc.setTextColor(30, 58, 138)
+    doc.setFont('times', 'bold')
+    doc.setFontSize(9.5)
     const initials = `${(data.lastName[0] || '').toUpperCase()}${(data.firstName[0] || '').toUpperCase()}`
-    doc.text(initials, photoX + photoW / 2, photoY + 13, { align: 'center' })
+    doc.text(initials, photoX + photoW / 2, photoY + photoH * 0.4, { align: 'center' })
+
     doc.setFontSize(4.8)
-    doc.setTextColor(100, 116, 139)
-    doc.text('PHOTO', photoX + photoW / 2, photoY + 19, { align: 'center' })
-    doc.text('PASSEPORT', photoX + photoW / 2, photoY + 22, { align: 'center' })
+    doc.setTextColor(30, 64, 175)
+    doc.text('PHOTO ÉLÈVE', photoX + photoW / 2, photoY + photoH - 2.2, { align: 'center' })
   }
 
-  // Informations Officielles de l'élève (Droite)
-  const infoX = rectoX + 27.5
-  let lineY = cardY + 19.5
+  // 7. COLONNE DROITE : Bandeau "CARTE D'IDENTITE SCOLAIRE" + Informations de l'élève
+  const rightX = photoX + photoW + 0.5
+  const rightW = innerX + innerW - rightX - 0.2
 
-  const drawField = (label: string, value: string, highlight = false) => {
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(6.2)
+  // Bandeau saumon/pêche sous le séparateur
+  const bannerH = 4.3
+  doc.setFillColor(253, 224, 198) // #FDE0C6
+  doc.rect(rightX, bodyTopY, rightW, bannerH, 'F')
+
+  const bannerTitle = "CARTE D'IDENTITE SCOLAIRE"
+  const bannerCenterX = rightX + rightW / 2
+  doc.setFont('times', 'bolditalic')
+  doc.setFontSize(7.1)
+  doc.setTextColor(18, 42, 185) // Bleu royal
+  doc.text(bannerTitle, bannerCenterX, bodyTopY + 3.0, { align: 'center' })
+
+  // Soulignement bleu sous "CARTE D'IDENTITE SCOLAIRE"
+  const bannerTitleW = doc.getTextWidth(bannerTitle)
+  doc.setDrawColor(18, 42, 185)
+  doc.setLineWidth(0.28)
+  doc.line(
+    bannerCenterX - bannerTitleW / 2,
+    bodyTopY + 3.45,
+    bannerCenterX + bannerTitleW / 2,
+    bodyTopY + 3.45
+  )
+
+  // Champs d'état civil de l'élève
+  const fieldsX = rightX + 1.2
+  let lineY = bodyTopY + bannerH + 3.8
+  const lineStep = 4.15
+
+  // Nom: ADAM
+  doc.setFont('times', 'bold')
+  doc.setFontSize(7.8)
+  doc.setTextColor(15, 23, 42)
+  const nomLabel = 'Nom: '
+  doc.text(nomLabel, fieldsX, lineY)
+  const nomLabelW = doc.getTextWidth(nomLabel)
+  doc.setTextColor(153, 18, 28) // Rouge bordeaux foncé
+  doc.text((data.lastName || '').toUpperCase().slice(0, 22), fieldsX + nomLabelW, lineY)
+
+  // Prénoms: Rachida
+  lineY += lineStep
+  doc.setFont('times', 'bold')
+  doc.setFontSize(7.6)
+  doc.setTextColor(15, 23, 42)
+  const prenomLabel = 'Prénoms: '
+  doc.text(prenomLabel, fieldsX, lineY)
+  const prenomLabelW = doc.getTextWidth(prenomLabel)
+  doc.setTextColor(153, 18, 28)
+  doc.text((data.firstName || '').slice(0, 25), fieldsX + prenomLabelW, lineY)
+
+  // Né (e) le 19/6/2014 à Lomé
+  lineY += lineStep
+  doc.setFont('times', 'bold')
+  doc.setFontSize(7.2)
+  doc.setTextColor(15, 23, 42)
+  const dobFormatted = data.dateOfBirth
+    ? new Date(data.dateOfBirth).toLocaleDateString('fr-FR')
+    : 'Non renseigné'
+  const birthPlaceStr = data.birthPlace?.trim() || data.schoolCity?.trim() || 'Lomé'
+  const birthLine = `Né (e) le ${dobFormatted} à ${birthPlaceStr}`
+  doc.text(birthLine.slice(0, 36), fieldsX, lineY)
+
+  // Sexe : F   (+ Matricule discret à droite)
+  lineY += lineStep
+  doc.setFont('times', 'bold')
+  doc.setFontSize(7.5)
+  doc.setTextColor(217, 70, 25) // Orange-rouge comme sur le modèle
+  const sexeLabel = 'Sexe '
+  doc.text(sexeLabel, fieldsX, lineY)
+  const sexeW = doc.getTextWidth(sexeLabel)
+  doc.setTextColor(15, 23, 42)
+  doc.text(': ', fieldsX + sexeW, lineY)
+  const colonW = doc.getTextWidth(': ')
+  doc.setTextColor(18, 42, 185) // Bleu royal
+  const genderChar = data.gender?.toUpperCase() === 'F' ? 'F' : data.gender?.toUpperCase() === 'M' ? 'M' : '—'
+  doc.text(genderChar, fieldsX + sexeW + colonW, lineY)
+
+  if (data.matricule && data.matricule !== 'N/A') {
+    doc.setFont('times', 'bold')
+    doc.setFontSize(5.5)
     doc.setTextColor(100, 116, 139)
-    doc.text(label, infoX, lineY)
-
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(highlight ? 7.4 : 6.7)
-    doc.setTextColor(highlight ? 6 : 15, highlight ? 95 : 23, highlight ? 70 : 42)
-    doc.text(value, infoX + 16.5, lineY)
-    lineY += 4.3
+    doc.text(`Mle: ${data.matricule}`, rightX + rightW - 1.5, lineY, { align: 'right' })
   }
 
-  drawField('Nom :', data.lastName.toUpperCase().slice(0, 22), true)
-  drawField('Prénoms :', data.firstName.slice(0, 24))
-  drawField('Matricule :', data.matricule, true)
-  const birthStr = `${data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString('fr-FR') : 'N/R'}${
-    data.birthPlace ? ` à ${data.birthPlace.slice(0, 12)}` : ''
-  }`
-  drawField('Né(e) le :', birthStr)
-  drawField('Sexe :', `${data.gender === 'F' ? 'Féminin (F)' : data.gender === 'M' ? 'Masculin (M)' : 'N/R'}   •   Classe : ${data.className}`)
+  // 8. BAS GAUCHE DE LA COLONNE DROITE : Année Scolaire + 2025-2026 + Classe
+  const yearLabelY = bodyTopY + bodyH - 8.8
+  doc.setFont('times', 'bolditalic')
+  doc.setFontSize(6.8)
+  doc.setTextColor(15, 23, 42)
+  const anneePart1 = 'Année '
+  const anneePart2 = 'Scolaire'
+  doc.text(anneePart1, fieldsX, yearLabelY)
+  const anneePart1W = doc.getTextWidth(anneePart1)
+  doc.setTextColor(18, 42, 185)
+  doc.text(anneePart2, fieldsX + anneePart1W, yearLabelY)
+  const anneeTotalW = anneePart1W + doc.getTextWidth(anneePart2)
 
-  // Zone Cachet de l'école & Signature du Directeur (en bas à droite du Recto)
-  const sigCenterX = rectoX + cardW - 19
-  const stampCenterX = rectoX + cardW - 35
-  const stampCenterY = cardY + 46.5
+  // Soulignement sous Année Scolaire
+  doc.setDrawColor(18, 42, 185)
+  doc.setLineWidth(0.25)
+  doc.line(fieldsX, yearLabelY + 0.5, fieldsX + anneeTotalW, yearLabelY + 0.5)
+
+  // Valeur Année Scolaire (ex: 2025-2026)
+  const yearValY = yearLabelY + 3.8
+  doc.setFont('times', 'bolditalic')
+  doc.setFontSize(8.2)
+  doc.setTextColor(165, 24, 28) // Rouge bordeaux
+  doc.text(data.academicYear || '2025-2026', fieldsX + 1.2, yearValY)
+
+  // Classe : CM2
+  const classY = bodyTopY + bodyH - 1.1
+  doc.setFont('times', 'italic')
+  doc.setFontSize(7.6)
+  doc.setTextColor(15, 23, 42)
+  const classeLabel = 'Classe : '
+  doc.text(classeLabel, fieldsX, classY)
+  const classeLabelW = doc.getTextWidth(classeLabel)
+  doc.setFont('times', 'bolditalic')
+  doc.setTextColor(25, 42, 185)
+  doc.text((data.className || '').slice(0, 12), fieldsX + classeLabelW, classY)
+
+  // 9. BAS DROITE DE LA COLONNE DROITE : Cachet Rond Bleu Officiel + Signature + Nom du Directeur
+  const stampCenterX = rightX + rightW - 18.5
+  const stampCenterY = bodyTopY + bodyH - 7.8
+  const stampRadius = 6.6
 
   if (assets.stampDataUrl) {
     try {
-      doc.addImage(assets.stampDataUrl, 'PNG', stampCenterX - 7.5, stampCenterY - 7.5, 15, 15)
+      doc.addImage(
+        assets.stampDataUrl,
+        'PNG',
+        stampCenterX - stampRadius,
+        stampCenterY - stampRadius,
+        stampRadius * 2,
+        stampRadius * 2
+      )
     } catch {
-      drawOfficialVectorStamp(doc, stampCenterX, stampCenterY, 7, data.schoolName, data.schoolCity)
+      drawTogoleseCardOfficialStamp(doc, stampCenterX, stampCenterY, stampRadius, data.schoolName)
     }
   } else {
-    drawOfficialVectorStamp(doc, stampCenterX, stampCenterY, 7, data.schoolName, data.schoolCity)
+    drawTogoleseCardOfficialStamp(doc, stampCenterX, stampCenterY, stampRadius, data.schoolName)
   }
-
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(5.4)
-  doc.setTextColor(15, 23, 42)
-  doc.text('Le Directeur', sigCenterX, cardY + 42, { align: 'center' })
 
   if (assets.signatureDataUrl) {
     try {
-      doc.addImage(assets.signatureDataUrl, 'PNG', sigCenterX - 9, cardY + 42.8, 18, 7.5)
+      doc.addImage(assets.signatureDataUrl, 'PNG', rightX + rightW - 16, stampCenterY - 3.5, 14, 6.2)
     } catch {
       // Ignore
     }
   }
 
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(5.2)
-  doc.setTextColor(30, 41, 59)
-  doc.text(
-    (data.directorName || 'Cachet & Signature').slice(0, 22),
-    sigCenterX,
-    cardY + 52.5,
-    { align: 'center' }
-  )
-
-  // Matricule en bas sous la photo
-  doc.setFillColor(240, 253, 244)
-  doc.setDrawColor(167, 243, 208)
-  doc.roundedRect(photoX, cardY + 46, photoW, 7, 1.2, 1.2, 'FD')
-  doc.setTextColor(6, 95, 70)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(5.8)
-  doc.text(`ID: ${data.matricule}`, photoX + photoW / 2, cardY + 50.5, { align: 'center' })
-
-  // ── VERSO (URGENCE, GROUPE SANGUIN, QR DE CONTRÔLE & CACHET) ──
-  doc.setDrawColor(6, 95, 70)
-  doc.setLineWidth(0.6)
-  doc.setFillColor(255, 255, 255)
-  doc.roundedRect(versoX, cardY, cardW, cardH, 2.5, 2.5, 'FD')
-
-  doc.setFillColor(240, 253, 244)
-  doc.roundedRect(versoX + 0.5, cardY + 0.5, cardW - 1, 9, 2, 2, 'F')
-  doc.setTextColor(6, 95, 70)
-  doc.setFont('helvetica', 'bold')
+  // Nom du Directeur en bas à droite en italique gras rouge
+  const directorText = (data.directorName?.trim() || 'Le Directeur').slice(0, 22)
+  doc.setFont('times', 'bolditalic')
   doc.setFontSize(6.8)
-  doc.text("INFORMATIONS D'URGENCE & CONTRÔLE OFFICIEL", versoX + cardW / 2, cardY + 6, { align: 'center' })
-
-  doc.setTextColor(30, 41, 59)
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(6.4)
-  doc.text(`Parent / Tuteur (Urgence) : ${data.parentPhone || 'Non renseigné'}`, versoX + 4.5, cardY + 15)
-  doc.text(`Groupe Sanguin : ${data.bloodGroup || 'Non renseigné'}`, versoX + 4.5, cardY + 20)
-  doc.text(`Adresse : ${(data.address || data.schoolCity || 'Non renseignée').slice(0, 34)}`, versoX + 4.5, cardY + 25)
-  doc.text(`Tél. Établissement : ${data.schoolPhone || 'Direction'}`, versoX + 4.5, cardY + 30)
-
-  // QR Code / Matrice de sécurité à droite du Verso
-  drawSecurityMatrixCode(
-    doc,
-    versoX + cardW - 21,
-    cardY + 13,
-    16,
-    `${data.schoolName}|${data.matricule}|${data.lastName}|${data.academicYear}`
-  )
-  doc.setFontSize(4.8)
-  doc.setTextColor(100, 116, 139)
-  doc.text('VÉRIFICATION', versoX + cardW - 13, cardY + 32, { align: 'center' })
-
-  // Mention officielle au verso
-  doc.setFont('helvetica', 'italic')
-  doc.setFontSize(5.6)
-  doc.setTextColor(71, 85, 105)
-  const rulesText = doc.splitTextToSize(
-    "Cette carte d'identité scolaire est strictement personnelle et exigée lors des contrôles et examens officiels (CEPD, BEPC, BAC 1, BAC 2). Toute personne trouvant cette carte est priée de la remettre à la direction de l'établissement.",
-    cardW - 9
-  )
-  doc.text(rulesText, versoX + 4.5, cardY + 37.5)
-
-  // Bandeau pied Verso
-  doc.setFillColor(6, 95, 70)
-  doc.rect(versoX, cardY + cardH - 6, cardW, 6, 'F')
-  doc.setTextColor(255, 255, 255)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(5.8)
-  doc.text(
-    `${data.schoolName.toUpperCase().slice(0, 32)} • ANNÉE SCOLAIRE ${data.academicYear}`,
-    versoX + cardW / 2,
-    cardY + cardH - 2.2,
-    { align: 'center' }
-  )
+  doc.setTextColor(165, 24, 28)
+  doc.text(directorText, rightX + rightW - 1.0, classY, { align: 'right' })
 }
 
 /**
- * Génère la Carte d'Identité Scolaire individuelle d'un élève (Recto / Verso avec Photo Passeport, Cachet et Signature)
+ * Génère la Carte d'Identité Scolaire individuelle d'un élève (Recto uniquement — Modèle Officiel Togolais)
+ * Option `tenUpSheet`: si true, génère 10 exemplaires sur la même page A4 pour impression groupée.
  */
-export async function generateStudentIdCardPDF(data: StudentDocumentData) {
+export async function generateStudentIdCardPDF(
+  data: StudentDocumentData,
+  options?: { tenUpSheet?: boolean }
+) {
   const [photoDataUrl, logoDataUrl, stampDataUrl, signatureDataUrl] = await Promise.all([
     loadImageAsPngDataUrl(data.avatarUrl),
     loadImageAsPngDataUrl(data.schoolLogoUrl),
@@ -599,34 +805,39 @@ export async function generateStudentIdCardPDF(data: StudentDocumentData) {
   ])
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  const cardW = 94
+  const cardH = 53.5
 
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(13)
-  doc.setTextColor(15, 23, 42)
-  doc.text(`CARTE D'IDENTITÉ SCOLAIRE OFFICIELLE — ${data.schoolName.toUpperCase()}`, 105, 20, { align: 'center' })
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8.8)
-  doc.setTextColor(100, 116, 139)
-  doc.text(
-    'Planche Recto / Verso prête à découper, plier au centre et plastifier (Format officiel CR80)',
-    105,
-    26,
-    { align: 'center' }
-  )
-
-  drawStudentIdCardPairOnPage(doc, data, 36, {
-    photoDataUrl,
-    logoDataUrl,
-    stampDataUrl,
-    signatureDataUrl,
-  })
+  if (options?.tenUpSheet) {
+    const colX = [8.5, 107.5]
+    const rowY = [10, 66, 122, 178, 234]
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 2; c++) {
+        drawStudentIdCardRecto(doc, data, colX[c], rowY[r], cardW, cardH, {
+          photoDataUrl,
+          logoDataUrl,
+          stampDataUrl,
+          signatureDataUrl,
+        })
+      }
+    }
+  } else {
+    // 1 Carte Recto centrée en haut de la feuille A4 prête à découper
+    drawStudentIdCardRecto(doc, data, (210 - cardW) / 2, 22, cardW, cardH, {
+      photoDataUrl,
+      logoDataUrl,
+      stampDataUrl,
+      signatureDataUrl,
+    })
+  }
 
   const filename = `Carte_Scolaire_${data.lastName}_${data.firstName}_${data.matricule}.pdf`
   saveOrSharePdf(doc, filename, `Carte scolaire — ${data.firstName} ${data.lastName}`)
 }
 
 /**
- * Génère en 1 seul clic un PDF multi-pages contenant les Cartes Scolaires de TOUTE UNE CLASSE (4 élèves par page A4)
+ * Génère en 1 seul clic un PDF multi-pages contenant 10 CARTES SCOLAIRES DE 10 ÉLÈVES DIFFÉRENTS PAR PAGE A4
+ * Disposition : 2 colonnes × 5 lignes = 10 cartes Recto par page A4 (Modèle Officiel Togolais, sans verso)
  */
 export async function generateClassStudentIdCardsPDF(
   className: string,
@@ -635,15 +846,19 @@ export async function generateClassStudentIdCardsPDF(
   if (!studentsData.length) return
 
   const first = studentsData[0]
-  const [logoDataUrl, stampDataUrl, signatureDataUrl] = await Promise.all([
+  const [logoDataUrl, stampDataUrl, signatureDataUrl, ...photoDataUrls] = await Promise.all([
     loadImageAsPngDataUrl(first.schoolLogoUrl),
     loadImageAsPngDataUrl(first.schoolStampUrl),
     loadImageAsPngDataUrl(first.schoolSignatureUrl),
+    ...studentsData.map((s) => loadImageAsPngDataUrl(s.avatarUrl)),
   ])
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-  const cardsPerPage = 4
-  const yPositions = [24, 88, 152, 216]
+  const cardsPerPage = 10
+  const cardW = 94
+  const cardH = 53.5
+  const colX = [8.5, 107.5]
+  const rowY = [10, 66, 122, 178, 234]
 
   for (let i = 0; i < studentsData.length; i++) {
     const slotIndex = i % cardsPerPage
@@ -651,32 +866,12 @@ export async function generateClassStudentIdCardsPDF(
       doc.addPage()
     }
 
-    if (slotIndex === 0) {
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(11)
-      doc.setTextColor(15, 23, 42)
-      doc.text(
-        `PLANCHE DE CARTES SCOLAIRES — CLASSE : ${className.toUpperCase()} (${first.academicYear})`,
-        105,
-        13,
-        { align: 'center' }
-      )
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(7.5)
-      doc.setTextColor(100, 116, 139)
-      doc.text(
-        `Page ${Math.floor(i / cardsPerPage) + 1} / ${Math.ceil(studentsData.length / cardsPerPage)} • Découpez chaque bande Recto/Verso et pliez au centre pour plastification`,
-        105,
-        18,
-        { align: 'center' }
-      )
-    }
-
+    const col = slotIndex % 2
+    const row = Math.floor(slotIndex / 2)
     const student = studentsData[i]
-    const photoDataUrl = await loadImageAsPngDataUrl(student.avatarUrl)
 
-    drawStudentIdCardPairOnPage(doc, student, yPositions[slotIndex], {
-      photoDataUrl,
+    drawStudentIdCardRecto(doc, student, colX[col], rowY[row], cardW, cardH, {
+      photoDataUrl: photoDataUrls[i] || null,
       logoDataUrl,
       stampDataUrl,
       signatureDataUrl,
@@ -684,8 +879,8 @@ export async function generateClassStudentIdCardsPDF(
   }
 
   const cleanClass = className.replace(/\s+/g, '_')
-  const filename = `Cartes_Scolaires_Classe_${cleanClass}_${first.academicYear.replace(/\//g, '-')}.pdf`
-  saveOrSharePdf(doc, filename, `Cartes scolaires — Classe ${className}`)
+  const filename = `Planche_10_Cartes_Scolaires_${cleanClass}_${first.academicYear.replace(/\//g, '-')}.pdf`
+  saveOrSharePdf(doc, filename, `Planche 10 Cartes scolaires — Classe ${className}`)
 }
 
 /**

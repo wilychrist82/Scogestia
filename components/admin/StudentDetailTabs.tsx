@@ -15,7 +15,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { AudioRecorder } from '@/components/ui/AudioRecorder'
-import { generateSchoolCertificatePDF, generateStudentIdCardPDF, generateHonorRollPDF } from '@/lib/pdf/student-documents'
+import { generateSchoolCertificatePDF, generateHonorRollPDF } from '@/lib/pdf/student-documents'
+import { SchoolIdCardStudioModal } from '@/components/admin/SchoolIdCardStudioModal'
 
 type Student = {
   id: string
@@ -124,6 +125,7 @@ export function StudentDetailTabs({
   
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isCardStudioOpen, setIsCardStudioOpen] = useState(false)
   
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -424,14 +426,11 @@ export function StudentDetailTabs({
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  generateStudentIdCardPDF(buildDocumentData())
-                  toast.success('Carte scolaire générée !')
-                }}
-                className="h-11 px-3.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 font-semibold text-xs sm:text-sm hover:bg-slate-200/80 transition-colors flex items-center gap-2"
-                title="Télécharger la carte scolaire (Recto/Verso) en PDF"
+                onClick={() => setIsCardStudioOpen(true)}
+                className="h-11 px-3.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 font-semibold text-xs sm:text-sm hover:bg-indigo-100 transition-colors flex items-center gap-2"
+                title="Ouvrir le générateur de Carte d'Identité Scolaire Officielle (Recto / Planche de 10 cartes)"
               >
-                <IdCard className="w-4 h-4 text-slate-600" />
+                <IdCard className="w-4 h-4 text-indigo-600" />
                 Carte scolaire
               </button>
               <button
@@ -753,22 +752,19 @@ export function StudentDetailTabs({
 
                 <button
                   type="button"
-                  onClick={() => {
-                    generateStudentIdCardPDF(buildDocumentData())
-                    toast.success('Carte scolaire téléchargée !')
-                  }}
-                  className="w-full p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-100 transition-colors flex items-center justify-between text-left group"
+                  onClick={() => setIsCardStudioOpen(true)}
+                  className="w-full p-3.5 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/70 transition-colors flex items-center justify-between text-left group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-slate-800 text-white flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-lg bg-indigo-700 text-white flex items-center justify-center shrink-0">
                       <IdCard className="w-4 h-4" />
                     </div>
                     <div>
                       <p className="text-sm font-bold text-slate-900">Carte d&apos;Identité Scolaire</p>
-                      <p className="text-xs text-slate-500">Planche Recto/Verso prête à plastifier</p>
+                      <p className="text-xs text-slate-500">Modèle officiel (Recto • 1 ou 10 cartes / page A4)</p>
                     </div>
                   </div>
-                  <Download className="w-4 h-4 text-slate-700 group-hover:translate-y-0.5 transition-transform" />
+                  <Download className="w-4 h-4 text-indigo-700 group-hover:translate-y-0.5 transition-transform" />
                 </button>
               </div>
             </div>
@@ -1763,6 +1759,32 @@ export function StudentDetailTabs({
           </div>
         </div>
       )}
+
+      {/* Studio de Génération de la Carte Scolaire Officielle */}
+      <SchoolIdCardStudioModal
+        isOpen={isCardStudioOpen}
+        onClose={() => setIsCardStudioOpen(false)}
+        className={student.classes?.name || 'Non assignée'}
+        classLevel={(student.classes as any)?.level || null}
+        academicYear={schoolInfo?.current_academic_year || '2025-2026'}
+        students={[
+          {
+            id: student.id,
+            matricule: student.matricule || 'N/A',
+            first_name: student.first_name,
+            last_name: student.last_name,
+            gender: student.gender || null,
+            date_of_birth: student.date_of_birth,
+            birth_place: student.birth_place || null,
+            blood_group: student.blood_group || null,
+            address: student.address || null,
+            parent_phone: student.parent_phone || null,
+            avatar_url: student.avatar_url || null,
+          },
+        ]}
+        schoolInfo={schoolInfo}
+        onStudentsUpdated={() => router.refresh()}
+      />
     </div>
   )
 }
