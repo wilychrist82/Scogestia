@@ -8,6 +8,26 @@ import { UnauthorizedAccess } from '@/components/shared/UnauthorizedAccess'
 import { getSchoolSubscriptionStatus } from '@/lib/subscription'
 import { isOwnerEmail } from '@/lib/owner'
 
+const ADMIN_SPACE_ROLES = [
+  'admin',
+  'comptable',
+  'secretaire',
+  'directeur',
+  'censeur',
+  'surveillant',
+  'conseiller',
+]
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Administrateur',
+  comptable: 'Comptable',
+  secretaire: 'Secrétariat',
+  directeur: 'Directeur',
+  censeur: 'Censeur',
+  surveillant: 'Surveillant Général',
+  conseiller: "Conseiller d'Éducation",
+}
+
 export default async function AdminLayout({
   children,
 }: {
@@ -33,8 +53,9 @@ export default async function AdminLayout({
       )
     `)
     .eq('user_id', user.id)
-    .in('role', ['admin', 'comptable'])
-    .limit(1).maybeSingle()
+    .in('role', ADMIN_SPACE_ROLES)
+    .limit(1)
+    .maybeSingle()
 
   if (!roleData) {
     return <UnauthorizedAccess role="admin" />
@@ -52,7 +73,7 @@ export default async function AdminLayout({
   const userFullName = roleData?.full_name || 'Admin User'
   const userRoleLabel = isPrivileged
     ? 'Super Admin (Propriétaire)'
-    : roleData?.role === 'comptable' ? 'Comptable' : 'Administrateur'
+    : ROLE_LABELS[roleData?.role] || 'Administrateur'
   const userAvatar = user?.user_metadata?.avatar_url || null
 
   // Vérification de l'abonnement via l'utilitaire centralisé
@@ -81,8 +102,8 @@ export default async function AdminLayout({
 
   return (
     <div className="h-screen w-full">
-      <AdminLayoutWrapper 
-        userFullName={userFullName} 
+      <AdminLayoutWrapper
+        userFullName={userFullName}
         userRoleLabel={userRoleLabel}
         userAvatar={userAvatar}
         navVariant={roleData?.role === 'comptable' && !isPrivileged ? 'comptable' : 'admin'}
@@ -91,17 +112,26 @@ export default async function AdminLayout({
         isExpired={isExpired}
         daysRemaining={daysRemaining}
         isSuperAdmin={isPrivileged}
-        banner={showBanner ? (
-          <div className={`px-4 py-3 flex items-center justify-between shadow-sm z-50 ${isExpired ? 'bg-[#d93025] text-white' : 'bg-[#f57f17] text-white'}`}>
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-              <span>{bannerMessage}</span>
+        banner={
+          showBanner ? (
+            <div
+              className={`px-4 py-3 flex items-center justify-between shadow-sm z-50 ${
+                isExpired ? 'bg-[#d93025] text-white' : 'bg-[#f57f17] text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                <span>{bannerMessage}</span>
+              </div>
+              <Link
+                href="/admin/abonnement"
+                className="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded transition-colors whitespace-nowrap ml-4"
+              >
+                {isExpired ? "S'abonner" : 'Renouveler'}
+              </Link>
             </div>
-            <Link href="/admin/abonnement" className="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded transition-colors whitespace-nowrap ml-4">
-              {isExpired ? "S'abonner" : "Renouveler"}
-            </Link>
-          </div>
-        ) : null}
+          ) : null
+        }
       >
         {children}
       </AdminLayoutWrapper>

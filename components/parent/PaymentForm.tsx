@@ -1,243 +1,113 @@
 'use client'
 
-import { useState } from 'react'
-import { CheckCircle2, Lock, Loader2, ShieldCheck } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowLeft, Building2, FileText, ShieldCheck, Wallet } from 'lucide-react'
 
 type Props = {
-  dueId: string
-  label: string
-  amount: number
+  dueId?: string
+  label?: string
+  amount?: number
 }
 
-export function PaymentForm({ dueId, label, amount }: Props) {
-  const [selectedMethod, setSelectedMethod] = useState<string | null>('tmoney')
-  const [isPending, setIsPending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [phoneLocal, setPhoneLocal] = useState('')
-  const [phoneCountry, setPhoneCountry] = useState('TG')
-
-  const handlePayment = async () => {
-    if (!selectedMethod) {
-      setError('Veuillez sélectionner un moyen de paiement.')
-      return
-    }
-    
-    if (!phoneLocal || phoneLocal.trim() === '') {
-      setError('Veuillez saisir votre numéro de téléphone.')
-      return
-    }
-
-    setIsPending(true)
-    setError(null)
-
-    try {
-      const res = await fetch('/api/payments/initiate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          due_id: dueId,
-          payment_method: selectedMethod,
-          phoneLocal: phoneLocal.trim(),
-          phoneCountry
-        })
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Une erreur est survenue lors de l\'initialisation du paiement.')
-      }
-
-      if (data.payment_url) {
-        // Rediriger vers CinetPay
-        window.location.href = data.payment_url
-      }
-    } catch (err: any) {
-      setError(err.message)
-      setIsPending(false)
-    }
-  }
-
+export function PaymentForm({ label = 'Tranche de scolarité', amount = 0 }: Props) {
   return (
     <div className="flex-1 flex flex-col gap-6 md:p-8">
-      {/* Summary Card */}
-      <section className="bg-white border border-[var(--color-outline-variant)] rounded-xl p-4 md:p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider mb-2">Récapitulatif</h2>
-        <div className="flex justify-between items-end">
-          <div>
-            <p className="text-2xl text-[var(--color-on-surface)] font-semibold">{label}</p>
-          </div>
-          <div className="text-right flex items-baseline gap-1">
-            <p className="text-3xl text-[var(--color-primary)] font-bold">{amount.toLocaleString('fr-FR')}</p>
-            <p className="text-sm text-[var(--color-on-surface-variant)] font-medium">FCFA</p>
+      {/* Récapitulatif de la tranche */}
+      <section className="bg-white border border-slate-200/80 rounded-2xl p-5 md:p-6 shadow-sm">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            Récapitulatif de l&apos;échéance
+          </h2>
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+            Règlement au guichet
+          </span>
+        </div>
+        <div className="flex justify-between items-baseline gap-4 mt-1">
+          <p className="text-lg md:text-xl text-slate-900 font-bold">{label}</p>
+          <div className="text-right flex items-baseline gap-1.5 shrink-0">
+            <p className="text-2xl md:text-3xl text-slate-900 font-extrabold tabular-nums">
+              {Number(amount).toLocaleString('fr-FR')}
+            </p>
+            <p className="text-xs text-slate-500 font-semibold">FCFA</p>
           </div>
         </div>
       </section>
 
-      {error && (
-        <div className="bg-[var(--color-status-retard-bg)] text-[var(--color-status-retard-text)] p-4 rounded-lg text-sm border border-[var(--color-status-retard-text)]/20">
-          {error}
-        </div>
-      )}
-
-      {/* Payment Methods */}
-      <section className="flex-1 flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider mb-2">Informations de facturation</h2>
-        <div className="flex gap-2 mb-4">
-          <select 
-            className="p-3 border border-[var(--color-outline-variant)] rounded-lg bg-white"
-            value={phoneCountry}
-            onChange={(e) => setPhoneCountry(e.target.value)}
-          >
-            <option value="TG">🇹🇬 +228</option>
-            <option value="CI">🇨🇮 +225</option>
-            <option value="SN">🇸🇳 +221</option>
-            <option value="BJ">🇧🇯 +229</option>
-          </select>
-          <input 
-            type="tel" 
-            placeholder="Numéro sans l'indicatif (ex: 90000000)"
-            className="flex-1 p-3 border border-[var(--color-outline-variant)] rounded-lg"
-            value={phoneLocal}
-            onChange={(e) => setPhoneLocal(e.target.value)}
-          />
+      {/* Carte d'information Paiement Main à Main */}
+      <section className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <div className="bg-[#0B0F19] text-white p-5 md:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 block">
+                  Modalité de paiement actuelle
+                </span>
+                <h3 className="font-bold text-base md:text-lg text-white">
+                  Paiement à la caisse de l&apos;école (Main à main)
+                </h3>
+              </div>
+            </div>
+          </div>
+          <p className="text-slate-300 text-xs md:text-sm mt-3 leading-relaxed">
+            Les règlements de frais de scolarité s&apos;effectuent directement auprès du secrétariat ou de la comptabilité de l&apos;établissement.
+          </p>
         </div>
 
-        <h2 className="text-sm font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider mb-2 mt-4">Moyen de paiement</h2>
-        <div className="grid grid-cols-1 gap-3">
-          
-          {/* T-Money */}
-          <label className="relative cursor-pointer">
-            <input 
-              type="radio" 
-              name="payment_method" 
-              value="tmoney" 
-              checked={selectedMethod === 'tmoney'}
-              onChange={() => setSelectedMethod('tmoney')}
-              className="peer sr-only" 
-            />
-            <div className={`flex items-center justify-between p-4 bg-white border rounded-xl transition-all duration-200 ${selectedMethod === 'tmoney' ? 'border-[var(--color-primary)] bg-[#eff4ff]' : 'border-[var(--color-outline-variant)]'}`}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[#FFD700] rounded-lg flex items-center justify-center font-bold text-black border border-[var(--color-outline-variant)]/30">
-                  T
-                </div>
-                <span className="text-xl text-[var(--color-on-surface)] font-medium">T-Money</span>
+        <div className="p-5 md:p-6 space-y-4">
+          <div className="space-y-3 text-xs md:text-sm text-slate-600">
+            <div className="flex items-start gap-3">
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                <Wallet className="w-4 h-4" />
               </div>
-              {selectedMethod === 'tmoney' && (
-                <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)] fill-[var(--color-primary)] text-white" />
-              )}
+              <div>
+                <p className="font-semibold text-slate-900">1. Règlement au guichet</p>
+                <p className="text-slate-600 mt-0.5">
+                  Effectuez votre versement (espèces, chèque ou reçu de dépôt) directement à la caisse de l&apos;école.
+                </p>
+              </div>
             </div>
-          </label>
 
-          {/* Flooz */}
-          <label className="relative cursor-pointer">
-            <input 
-              type="radio" 
-              name="payment_method" 
-              value="flooz" 
-              checked={selectedMethod === 'flooz'}
-              onChange={() => setSelectedMethod('flooz')}
-              className="peer sr-only" 
-            />
-            <div className={`flex items-center justify-between p-4 bg-white border rounded-xl transition-all duration-200 ${selectedMethod === 'flooz' ? 'border-[var(--color-primary)] bg-[#eff4ff]' : 'border-[var(--color-outline-variant)]'}`}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[#0089C4] rounded-lg flex items-center justify-center font-bold text-white border border-[var(--color-outline-variant)]/30">
-                  F
-                </div>
-                <span className="text-xl text-[var(--color-on-surface)] font-medium">Flooz</span>
+            <div className="flex items-start gap-3">
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                <FileText className="w-4 h-4" />
               </div>
-              {selectedMethod === 'flooz' && (
-                <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)] fill-[var(--color-primary)] text-white" />
-              )}
+              <div>
+                <p className="font-semibold text-slate-900">2. Reçu officiel numérique instantané</p>
+                <p className="text-slate-600 mt-0.5">
+                  Dès l&apos;enregistrement par le comptable, votre reçu officiel PDF est disponible et téléchargeable dans votre espace Parent.
+                </p>
+              </div>
             </div>
-          </label>
 
-          {/* Wave */}
-          <label className="relative cursor-pointer">
-            <input 
-              type="radio" 
-              name="payment_method" 
-              value="wave" 
-              checked={selectedMethod === 'wave'}
-              onChange={() => setSelectedMethod('wave')}
-              className="peer sr-only" 
-            />
-            <div className={`flex items-center justify-between p-4 bg-white border rounded-xl transition-all duration-200 ${selectedMethod === 'wave' ? 'border-[var(--color-primary)] bg-[#eff4ff]' : 'border-[var(--color-outline-variant)]'}`}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[#1C82FF] rounded-lg flex items-center justify-center font-bold text-white border border-[var(--color-outline-variant)]/30">
-                  W
-                </div>
-                <span className="text-xl text-[var(--color-on-surface)] font-medium">Wave</span>
+            <div className="flex items-start gap-3">
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                <ShieldCheck className="w-4 h-4" />
               </div>
-              {selectedMethod === 'wave' && (
-                <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)] fill-[var(--color-primary)] text-white" />
-              )}
+              <div>
+                <p className="font-semibold text-slate-900">3. Suivi en temps réel</p>
+                <p className="text-slate-600 mt-0.5">
+                  Votre solde restant et l&apos;historique des paiements sont automatiquement mis à jour avec notification.
+                </p>
+              </div>
             </div>
-          </label>
+          </div>
 
-          {/* Orange Money */}
-          <label className="relative cursor-pointer">
-            <input 
-              type="radio" 
-              name="payment_method" 
-              value="orange" 
-              checked={selectedMethod === 'orange'}
-              onChange={() => setSelectedMethod('orange')}
-              className="peer sr-only" 
-            />
-            <div className={`flex items-center justify-between p-4 bg-white border rounded-xl transition-all duration-200 ${selectedMethod === 'orange' ? 'border-[var(--color-primary)] bg-[#eff4ff]' : 'border-[var(--color-outline-variant)]'}`}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[#FF7900] rounded-lg flex items-center justify-center font-bold text-white border border-[var(--color-outline-variant)]/30">
-                  O
-                </div>
-                <span className="text-xl text-[var(--color-on-surface)] font-medium">Orange Money</span>
-              </div>
-              {selectedMethod === 'orange' && (
-                <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)] fill-[var(--color-primary)] text-white" />
-              )}
-            </div>
-          </label>
-
-          {/* MTN MoMo */}
-          <label className="relative cursor-pointer">
-            <input 
-              type="radio" 
-              name="payment_method" 
-              value="momo" 
-              checked={selectedMethod === 'momo'}
-              onChange={() => setSelectedMethod('momo')}
-              className="peer sr-only" 
-            />
-            <div className={`flex items-center justify-between p-4 bg-white border rounded-xl transition-all duration-200 ${selectedMethod === 'momo' ? 'border-[var(--color-primary)] bg-[#eff4ff]' : 'border-[var(--color-outline-variant)]'}`}>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-[#FFCC00] rounded-lg flex items-center justify-center font-bold text-black border border-[var(--color-outline-variant)]/30">
-                  M
-                </div>
-                <span className="text-xl text-[var(--color-on-surface)] font-medium">MTN MoMo</span>
-              </div>
-              {selectedMethod === 'momo' && (
-                <CheckCircle2 className="w-5 h-5 text-[var(--color-primary)] fill-[var(--color-primary)] text-white" />
-              )}
-            </div>
-          </label>
+          <div className="pt-3 border-t border-slate-100 flex justify-end">
+            <Link
+              href="/parent/paiements"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Retour à l&apos;échéancier & aux reçus
+            </Link>
+          </div>
         </div>
       </section>
-
-      {/* Action Button */}
-      <div className="mt-8">
-        <button 
-          onClick={handlePayment}
-          disabled={isPending || !selectedMethod}
-          className="w-full h-12 min-h-[48px] bg-[var(--color-primary)] text-white text-xl font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-[var(--color-primary-container)] transition-colors active:scale-95 disabled:opacity-50"
-        >
-          {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
-          {isPending ? 'Redirection...' : 'Confirmer le paiement'}
-        </button>
-        <p className="text-center text-xs text-[var(--color-on-surface-variant)] mt-3 flex items-center justify-center gap-1.5">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          Paiement sécurisé et crypté
-        </p>
-      </div>
     </div>
   )
 }
+
+export default PaymentForm

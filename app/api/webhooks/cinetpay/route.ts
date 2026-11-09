@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendSms } from '@/lib/sms'
-import crypto from 'crypto'
 import { webhookRateLimit, checkRateLimit } from '@/lib/ratelimit'
 import * as Sentry from '@sentry/nextjs'
 
@@ -9,7 +8,7 @@ export async function POST(req: Request) {
   // Rate Limiting by IP
   const ip = req.headers.get('x-forwarded-for') || '127.0.0.1'
   const rateLimit = await checkRateLimit(webhookRateLimit, ip)
-  
+
   if (!rateLimit.success) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
@@ -20,12 +19,10 @@ export async function POST(req: Request) {
   )
 
   try {
-    // 1. Lire le payload
-    // Les webhooks CinetPay sont souvent envoyés en form-urlencoded (x-www-form-urlencoded)
+    // 1. Lire le payload (form-urlencoded envoyé par CinetPay)
     const formData = await req.formData()
     const cpm_trans_id = formData.get('cpm_trans_id') as string | null
     const cpm_site_id = formData.get('cpm_site_id') as string | null
-    const signature = req.headers.get('x-token') // Dépend de la version de l'API CinetPay
 
     const payloadObj = Object.fromEntries(formData.entries())
 
@@ -36,7 +33,7 @@ export async function POST(req: Request) {
       .insert({
         transaction_id: cpm_trans_id,
         payload: payloadObj,
-        status: 'received'
+        status: 'received',
       })
       .select('id')
       .single()
@@ -46,13 +43,16 @@ export async function POST(req: Request) {
     } else {
       console.error('Erreur lors du logging du webhook:', logError)
       Sentry.captureException(new Error(`Webhook Logging Error: ${logError?.message}`), {
-        tags: { feature: 'cinetpay_webhook' }
+        tags: { feature: 'cinetpay_webhook' },
       })
     }
 
     if (!cpm_trans_id || !cpm_site_id) {
       if (logId) {
-        await supabaseAdmin.from('payment_webhook_logs').update({ status: 'error', error_details: 'Paramètres manquants' }).eq('id', logId)
+        await supabaseAdmin
+          .from('payment_webhook_logs')
+          .update({ status: 'error', error_details: 'Paramètres manquants' })
+          .eq('id', logId)
       }
       return NextResponse.json({ error: 'Paramètres manquants.' }, { status: 400 })
     }
@@ -60,7 +60,10 @@ export async function POST(req: Request) {
     const CINETPAY_API_KEY = process.env.CINETPAY_API_KEY
     if (!CINETPAY_API_KEY) {
       if (logId) {
-        await supabaseAdmin.from('payment_webhook_logs').update({ status: 'error', error_details: 'Configuration manquante' }).eq('id', logId)
+        await supabaseAdmin
+          .from('payment_webhook_logs')
+          .update({ status: 'error', error_details: 'Configuration manquante' })
+          .eq('id', logId)
       }
       const err = new Error('CINETPAY_API_KEY manquante')
       Sentry.captureException(err, { tags: { feature: 'cinetpay_webhook', severity: 'critical' } })
@@ -71,31 +74,27 @@ export async function POST(req: Request) {
     const checkPayload = {
       apikey: CINETPAY_API_KEY,
       site_id: cpm_site_id,
-      transaction_id: cpm_trans_id
+      transaction_id: cpm_trans_id,
     }
 
     const checkRes = await fetch('https://api-checkout.cinetpay.com/v2/payment/check', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(checkPayload)
+      body: JSON.stringify(checkPayload),
     })
 
     const checkData = await checkRes.json()
 
     if (checkData.code !== '00') {
-      // Transaction non validée par CinetPay
       if (logId) {
-        await supabaseAdmin.from('payment_webhook_logs').update({ status: 'failed_check', error_details: `Code d'erreur CinetPay: ${checkData.code}` }).eq('id', logId)
+        await supabaseAdmin
+          .from('payment_webhook_logs')
+          .update({ status: 'failed_check', error_details: `Code d'erreur CinetPay: ${checkData.code}` })
+          .eq('id', logId)
       }
-      
-      // On met à jour le statut du paiement en échec si la vérification confirme un échec
-      await supabaseAdmin
-        .from('payments')
-        .update({ status: 'failed', updated_at: new Date().toISOString() })
-        .eq('transaction_id', cpm_trans_id)
 
       Sentry.captureException(new Error(`CinetPay Check Failed. Code: ${checkData.code}`), {
-        tags: { feature: 'cinetpay_webhook', transaction_id: cpm_trans_id }
+        tags: { feature: 'cinetpay_webhook', transaction_id: cpm_trans_id },
       })
 
       return NextResponse.json({ status: 'failed', message: 'Transaction check failed' }, { status: 200 })
@@ -104,48 +103,58 @@ export async function POST(req: Request) {
     // 4. Traitement Atomique (si succès)
     const amount = checkData.data.amount
 
-    // Appel de la procédure stockée pour mettre à jour dues et payments de façon atomique
     const { error: rpcError } = await supabaseAdmin.rpc('process_cinetpay_success', {
       p_transaction_id: cpm_trans_id,
-      p_amount: amount
+      p_amount: amount,
     })
 
     if (rpcError) {
       if (logId) {
-        await supabaseAdmin.from('payment_webhook_logs').update({ status: 'error', error_details: `Erreur RPC: ${rpcError.message}` }).eq('id', logId)
+        await supabaseAdmin
+          .from('payment_webhook_logs')
+          .update({ status: 'error', error_details: `Erreur RPC: ${rpcError.message}` })
+          .eq('id', logId)
       }
       Sentry.captureException(new Error(`CinetPay RPC Error: ${rpcError.message}`), {
-        tags: { feature: 'cinetpay_webhook', transaction_id: cpm_trans_id, severity: 'critical' }
+        tags: { feature: 'cinetpay_webhook', transaction_id: cpm_trans_id, severity: 'critical' },
       })
       return NextResponse.json({ error: 'Erreur lors du traitement en base de données' }, { status: 500 })
     }
 
-    // 5. Envoi du SMS de confirmation
+    // 5. Envoi du SMS de confirmation (schéma actuel : transaction_reference, schedule_id, recorded_by)
     const { data: paymentInfo } = await supabaseAdmin
       .from('payments')
       .select(`
-        due_id,
-        dues (
+        schedule_id,
+        recorded_by,
+        payment_schedules!payments_schedule_id_fkey (
           label,
           student_id
-        ),
-        created_by (
-          phone
         )
       `)
-      .eq('transaction_id', cpm_trans_id)
-      .single()
+      .eq('transaction_reference', cpm_trans_id)
+      .maybeSingle()
 
-    const createdBy: any = paymentInfo?.created_by;
-    const phone = createdBy?.phone || (Array.isArray(createdBy) && createdBy[0]?.phone);
-    if (paymentInfo && phone) {
-      const dueLabel = (paymentInfo.dues as any)?.label || 'Scolarité'
-      const message = `Paiement Scogestia confirmé. Reçu de ${amount} FCFA pour "${dueLabel}". Merci.`
-      
-      sendSms(phone, message).catch(err => {
-        console.error("Erreur d'envoi SMS:", err)
-        Sentry.captureException(err, { tags: { feature: 'sms', type: 'payment_confirmation' } })
-      })
+    if (paymentInfo?.recorded_by) {
+      const { data: roleRow } = await supabaseAdmin
+        .from('user_school_roles')
+        .select('phone')
+        .eq('user_id', paymentInfo.recorded_by)
+        .limit(1)
+        .maybeSingle()
+
+      const phone = roleRow?.phone
+      if (phone) {
+        const schedJoin = paymentInfo.payment_schedules as any
+        const schedObj = Array.isArray(schedJoin) ? schedJoin[0] : schedJoin
+        const dueLabel = schedObj?.label || 'Scolarité'
+        const message = `Paiement Scogestia confirmé. Reçu de ${amount} FCFA pour "${dueLabel}". Merci.`
+
+        sendSms(phone, message).catch(err => {
+          console.error("Erreur d'envoi SMS:", err)
+          Sentry.captureException(err, { tags: { feature: 'sms', type: 'payment_confirmation' } })
+        })
+      }
     }
 
     // 6. Mise à jour finale du log
@@ -154,7 +163,6 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ status: 'success' }, { status: 200 })
-
   } catch (error: any) {
     console.error('Erreur webhook CinetPay:', error)
     Sentry.captureException(error, { tags: { feature: 'cinetpay_webhook', severity: 'fatal' } })

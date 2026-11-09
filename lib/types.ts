@@ -26,11 +26,23 @@ export type School = {
   updated_at: string
 }
 
+export type StaffAndUserRole =
+  | 'super_admin'
+  | 'admin'
+  | 'comptable'
+  | 'enseignant'
+  | 'secretaire'
+  | 'directeur'
+  | 'censeur'
+  | 'surveillant'
+  | 'conseiller'
+  | 'parent'
+
 export type UserSchoolRole = {
   id: string
   user_id: string
   school_id: string
-  role: 'super_admin' | 'admin' | 'comptable' | 'enseignant' | 'parent'
+  role: StaffAndUserRole
   full_name: string
   phone: string | null
   is_active: boolean

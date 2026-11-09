@@ -1,6 +1,16 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const ADMIN_SPACE_ROLES = [
+  'admin',
+  'comptable',
+  'secretaire',
+  'directeur',
+  'censeur',
+  'surveillant',
+  'conseiller',
+]
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -34,27 +44,32 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Allow auth routes and public landing page to be accessed by non-authenticated users
-  const isAuthRoute = pathname === '/' || 
-                      pathname === '/sitemap.xml' ||
-                      pathname === '/robots.txt' ||
-                      pathname.startsWith('/connexion') || 
-                      pathname.startsWith('/inscription-ecole') || 
-                      pathname.startsWith('/activer-parent') ||
-                      pathname.startsWith('/activer-personnel') ||
-                      pathname.startsWith('/mot-de-passe-oublie') ||
-                      pathname.startsWith('/nouveau-mot-de-passe') ||
-                      pathname.startsWith('/confidentialite') ||
-                      pathname.startsWith('/conditions-utilisation') ||
-                      pathname.startsWith('/mentions-legales') ||
-                      pathname.startsWith('/api/auth') ||
-                      pathname === '/api/health' ||
-                      pathname.startsWith('/api/health') ||
-                      // Endpoints machine-à-machine : authentifiés par leur propre mécanisme (signature / secret)
-                      pathname.startsWith('/api/webhooks') ||
-                      pathname.startsWith('/api/cron');
+  const isAuthRoute =
+    pathname === '/' ||
+    pathname === '/sitemap.xml' ||
+    pathname === '/robots.txt' ||
+    pathname.startsWith('/connexion') ||
+    pathname.startsWith('/inscription-ecole') ||
+    pathname.startsWith('/activer-parent') ||
+    pathname.startsWith('/activer-personnel') ||
+    pathname.startsWith('/mot-de-passe-oublie') ||
+    pathname.startsWith('/nouveau-mot-de-passe') ||
+    pathname.startsWith('/confidentialite') ||
+    pathname.startsWith('/conditions-utilisation') ||
+    pathname.startsWith('/mentions-legales') ||
+    pathname.startsWith('/api/auth') ||
+    pathname === '/api/health' ||
+    pathname.startsWith('/api/health') ||
+    // Endpoints machine-à-machine : authentifiés par leur propre mécanisme (signature / secret)
+    pathname.startsWith('/api/webhooks') ||
+    pathname.startsWith('/api/cron')
 
   // Les webhooks, le cron et le health check ne doivent JAMAIS être redirigés, même si une session existe
-  if (pathname.startsWith('/api/webhooks') || pathname.startsWith('/api/cron') || pathname.startsWith('/api/health')) {
+  if (
+    pathname.startsWith('/api/webhooks') ||
+    pathname.startsWith('/api/cron') ||
+    pathname.startsWith('/api/health')
+  ) {
     return supabaseResponse
   }
 
@@ -92,7 +107,7 @@ export async function proxy(request: NextRequest) {
     if (pathname === '/onboarding' || pathname.startsWith('/api/')) {
       return supabaseResponse
     }
-    
+
     // Redirect to onboarding so they can finish setting up their school
     const url = request.nextUrl.clone()
     url.pathname = '/onboarding'
@@ -100,15 +115,16 @@ export async function proxy(request: NextRequest) {
   }
 
   // Define route mapping
-  const routePrefix = userRole === 'comptable' ? '/admin' : `/${userRole}` // e.g. /admin, /enseignant, /parent
-  
+  const routePrefix = ADMIN_SPACE_ROLES.includes(userRole) ? '/admin' : `/${userRole}` // e.g. /admin, /enseignant, /parent
+
   // If user is going to the root or an auth page, redirect them to their dashboard
-  const isAuthRouteForRedirect = pathname === '/' || 
-                                 pathname.startsWith('/connexion') || 
-                                 pathname.startsWith('/inscription-ecole') || 
-                                 pathname.startsWith('/activer-parent') ||
-                                 pathname.startsWith('/mot-de-passe-oublie');
-                                 // Note: /nouveau-mot-de-passe est volontairement exclu car l'utilisateur y est redirigé APRÈS connexion automatique par Supabase
+  const isAuthRouteForRedirect =
+    pathname === '/' ||
+    pathname.startsWith('/connexion') ||
+    pathname.startsWith('/inscription-ecole') ||
+    pathname.startsWith('/activer-parent') ||
+    pathname.startsWith('/mot-de-passe-oublie')
+  // Note: /nouveau-mot-de-passe est volontairement exclu car l'utilisateur y est redirigé APRÈS connexion automatique par Supabase
 
   if (isAuthRouteForRedirect) {
     const url = request.nextUrl.clone()
@@ -122,9 +138,12 @@ export async function proxy(request: NextRequest) {
 
   if (attemptingToAccess) {
     if (!isSuperAdmin) {
-      const canAccessAdmin = (userRole === 'admin' || userRole === 'comptable') && attemptingToAccess === '/admin'
-      const canAccessEnseignant = userRole === 'enseignant' && attemptingToAccess === '/enseignant'
-      const canAccessParent = userRole === 'parent' && attemptingToAccess === '/parent'
+      const canAccessAdmin =
+        ADMIN_SPACE_ROLES.includes(userRole) && attemptingToAccess === '/admin'
+      const canAccessEnseignant =
+        userRole === 'enseignant' && attemptingToAccess === '/enseignant'
+      const canAccessParent =
+        userRole === 'parent' && attemptingToAccess === '/parent'
 
       if (!canAccessAdmin && !canAccessEnseignant && !canAccessParent) {
         const url = request.nextUrl.clone()
@@ -140,7 +159,7 @@ export async function proxy(request: NextRequest) {
         .select('subscription_status')
         .eq('id', schoolId)
         .single()
-        
+
       if (school && school.subscription_status === 'suspended') {
         const url = request.nextUrl.clone()
         url.pathname = '/suspended'

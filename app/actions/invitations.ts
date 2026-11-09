@@ -529,8 +529,18 @@ export async function createDirectParentAccess(studentId: string, identifier: st
 
       if (foundUser) {
         parentUserId = foundUser.id
-        // Mettre à jour son mot de passe avec le nouveau demandé par l'admin
-        await adminClient.auth.admin.updateUserById(parentUserId, { password })
+        // Sécurité : vérifier que ce compte existant ne détient pas un rôle personnel/admin
+        // avant d'écraser son mot de passe
+        const { data: existingStaffRoles } = await adminClient
+          .from('user_school_roles')
+          .select('role')
+          .eq('user_id', parentUserId)
+          .neq('role', 'parent')
+          .limit(1)
+
+        if (!existingStaffRoles || existingStaffRoles.length === 0) {
+          await adminClient.auth.admin.updateUserById(parentUserId, { password })
+        }
       } else {
         console.error('Erreur compte existant non trouvé:', createError)
         return { error: 'Un compte existe déjà avec ce contact mais n\'a pas pu être associé.' }

@@ -1,10 +1,20 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { PersonnelManager } from '@/components/admin/PersonnelManager'
-
 import { DataErrorCard } from '@/components/shared/DataErrorCard'
 
 export const dynamic = 'force-dynamic'
+
+const STAFF_ROLES = [
+  'admin',
+  'comptable',
+  'enseignant',
+  'secretaire',
+  'directeur',
+  'censeur',
+  'surveillant',
+  'conseiller',
+]
 
 export default async function PersonnelPage() {
   const supabase = await createClient()
@@ -16,31 +26,45 @@ export default async function PersonnelPage() {
     .from('user_school_roles')
     .select('school_id, role')
     .eq('user_id', user.id)
-    .limit(1).maybeSingle()
+    .limit(1)
+    .maybeSingle()
 
   if (!roleData?.school_id) {
-    return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
+    return (
+      <DataErrorCard
+        title="Établissement introuvable"
+        message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance."
+      />
+    )
   }
 
   if (roleData.role === 'comptable') {
-    return <DataErrorCard title="Accès restreint" message="La gestion du personnel est exclusivement réservée à la direction de l'établissement." />
+    return (
+      <DataErrorCard
+        title="Accès restreint"
+        message="La gestion du personnel est exclusivement réservée à la direction de l'établissement."
+      />
+    )
   }
 
   const schoolId = roleData.school_id
 
-  // Fetch staff list for this school
+  // Fetch all staff members for this school (excluding parents)
   const { data: staffList, error } = await supabase
     .from('user_school_roles')
     .select('id, full_name, role, phone, is_active, user_id')
     .eq('school_id', schoolId)
-    .in('role', ['admin', 'comptable', 'enseignant']) // Only staff roles
+    .in('role', STAFF_ROLES)
     .order('created_at', { ascending: false })
 
   if (error) {
-    return <DataErrorCard title="Erreur de chargement" message="Impossible de récupérer la liste du personnel pour le moment. Veuillez rafraîchir la page." />
+    return (
+      <DataErrorCard
+        title="Erreur de chargement"
+        message="Impossible de récupérer la liste du personnel pour le moment. Veuillez rafraîchir la page."
+      />
+    )
   }
 
-  return (
-    <PersonnelManager staffList={staffList || []} />
-  )
+  return <PersonnelManager staffList={staffList || []} />
 }

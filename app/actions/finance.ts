@@ -40,10 +40,10 @@ function getDynamicAcademicYear() {
   
   // Si on est avant août, l'année a commencé l'année précédente
   if (month < 7) {
-    return `${year - 1}/${year}`;
+    return `${year - 1}-${year}`;
   } else {
     // Si on est en août ou après, c'est la nouvelle rentrée
-    return `${year}/${year + 1}`;
+    return `${year}-${year + 1}`;
   }
 }
 

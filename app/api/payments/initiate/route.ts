@@ -4,10 +4,14 @@ import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(req: Request) {
   try {
-    const { due_id, payment_method, phoneLocal, phoneCountry } = await req.json()
-    
-    if (!due_id || !payment_method || !phoneLocal || !phoneCountry) {
-      return NextResponse.json({ error: 'due_id, payment_method, phoneLocal et phoneCountry sont requis.' }, { status: 400 })
+    const body = await req.json()
+    const due_id = body.due_id || body.schedule_id
+    const payment_method = body.payment_method || body.method
+    const phoneLocal = body.phoneLocal || body.phone_number
+    const phoneCountry = body.phoneCountry || 'TG'
+
+    if (!due_id) {
+      return NextResponse.json({ error: 'Identifiant de tranche (due_id) requis.' }, { status: 400 })
     }
 
     const supabase = await createClient()
@@ -28,7 +32,7 @@ export async function POST(req: Request) {
     if (scheduleError || !schedule) {
       return NextResponse.json({ error: 'Échéance introuvable.' }, { status: 404 })
     }
-    
+
     if (schedule.status === 'paye') {
       return NextResponse.json({ error: 'Cette échéance est déjà payée.' }, { status: 400 })
     }
@@ -44,36 +48,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Non autorisé à payer pour cet élève.' }, { status: 403 })
     }
 
-    // 3. Préparer la transaction
-    const transactionId = uuidv4()
-    
-    // Insérer dans notre base de données
-    const { error: insertError } = await supabase
-      .from('payments')
-      .insert({
-        school_id: schedule.school_id,
-        student_id: schedule.student_id,
-        schedule_id: schedule.id,
-        amount: Number(schedule.amount_due),
-        payment_method: payment_method,
-        transaction_reference: transactionId,
-        recorded_by: user.id
-      })
-
-    if (insertError) {
-      console.error("Erreur d'insertion:", insertError)
-      return NextResponse.json({ error: 'Erreur lors de la création de la transaction locale.' }, { status: 500 })
-    }
-
-    // 4. Appeler Chariow
+    // 3. Vérifier la disponibilité de la passerelle Mobile Money
+    // Tant que l'API CinetPay / Chariow n'est pas configurée, les paiements se font main à main à la caisse.
+    // IMPORTANT : On n'insère JAMAIS de ligne dans `payments` avant la confirmation effective du paiement.
     const CHARIOW_API_KEY = process.env.CHARIOW_API_KEY
     const CHARIOW_PRODUCT_ID = process.env.CHARIOW_PRODUCT_ID
     const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
     if (!CHARIOW_API_KEY || !CHARIOW_PRODUCT_ID) {
-      console.error("Clés Chariow manquantes dans les variables d'environnement.")
-      return NextResponse.json({ error: 'Configuration de paiement invalide.' }, { status: 500 })
+      return NextResponse.json(
+        {
+          error:
+            "Le paiement Mobile Money en ligne n'est pas encore activé. Les règlements de scolarité s'effectuent directement à la caisse de l'établissement (main à main). Votre reçu officiel apparaîtra automatiquement dans votre espace dès l'encaissement.",
+        },
+        { status: 400 }
+      )
     }
+
+    const transactionId = uuidv4()
 
     const payload = {
       product_id: CHARIOW_PRODUCT_ID,
@@ -82,44 +74,36 @@ export async function POST(req: Request) {
       last_name: user.user_metadata?.last_name || 'Élève',
       phone: {
         number: phoneLocal,
-        country_code: phoneCountry
+        country_code: phoneCountry,
       },
-      // Optionally pass amount if Chariow supports overriding it, 
-      // but according to some docs, it relies on product_id. We pass it just in case.
-      amount: Number(schedule.amount_due), 
+      amount: Number(schedule.amount_due),
       redirect_url: `${BASE_URL}/parent/paiements?schedule_id=${schedule.id}`,
-      custom_metadata: { 
+      custom_metadata: {
         schedule_id: schedule.id,
         transaction_id: transactionId,
         student_id: schedule.student_id,
-        school_id: schedule.school_id
-      }
+        school_id: schedule.school_id,
+        payment_method: payment_method || 'mobile_money',
+      },
     }
 
     const chariowRes = await fetch('https://api.chariow.com/v1/checkout', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${CHARIOW_API_KEY}`
+        Authorization: `Bearer ${CHARIOW_API_KEY}`,
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     })
 
     const chariowData = await chariowRes.json()
 
     if (chariowRes.ok && chariowData?.data?.payment?.checkout_url) {
-      // Update our payment record with the provider's sale ID
-      if (chariowData.data?.purchase?.id) {
-         await supabase.from('payments').update({ 
-           transaction_reference: `${transactionId}_${chariowData.data.purchase.id}`
-         }).eq('transaction_reference', transactionId)
-      }
       return NextResponse.json({ payment_url: chariowData.data.payment.checkout_url }, { status: 200 })
     } else {
-      console.error("Erreur Chariow:", chariowData)
-      return NextResponse.json({ error: 'Erreur lors de l\'initialisation du paiement.' }, { status: 500 })
+      console.error('Erreur passerelle de paiement:', chariowData)
+      return NextResponse.json({ error: "Erreur lors de l'initialisation du paiement." }, { status: 500 })
     }
-
   } catch (error) {
     console.error('Erreur API initiate:', error)
     return NextResponse.json({ error: 'Erreur interne du serveur.' }, { status: 500 })
