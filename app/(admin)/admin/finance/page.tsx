@@ -30,40 +30,87 @@ export default async function FinancePage() {
     .eq('id', schoolId)
     .maybeSingle()
 
-  // Échéances (attendu) avec les paiements rattachés pour calculer le reste dû réel
-  const { data: schedules } = await supabase
-    .from('payment_schedules')
-    .select('id, amount_due, status, due_date, label, payments(amount)')
-    .eq('school_id', schoolId)
+  // Récupération à plat (sans jointure ambiguë PostgREST entre payments et payment_schedules)
+  const [
+    { data: rawSchedules },
+    { data: rawPayments },
+    { data: rawStudents },
+    { data: feeTypes },
+  ] = await Promise.all([
+    supabase
+      .from('payment_schedules')
+      .select('id, amount_due, status, due_date, label, student_id')
+      .eq('school_id', schoolId),
+    supabase
+      .from('payments')
+      .select('id, amount, paid_at, payment_method, transaction_reference, receipt_number, schedule_id, due_id, student_id')
+      .eq('school_id', schoolId)
+      .order('paid_at', { ascending: false }),
+    supabase
+      .from('students')
+      .select('id, first_name, last_name, matricule, classes(name)')
+      .eq('school_id', schoolId),
+    supabase
+      .from('fee_types')
+      .select('id, label, amount, periodicity, target')
+      .eq('school_id', schoolId)
+      .order('created_at', { ascending: false }),
+  ])
 
-  // Paiements reçus (encaissé) avec détails pour le flux en direct
-  const { data: payments } = await supabase
-    .from('payments')
-    .select(`
-      id,
-      amount,
-      paid_at,
-      payment_method,
-      transaction_reference,
-      receipt_number,
-      schedule:payment_schedules(label),
-      student:students(
-        id,
-        first_name,
-        last_name,
-        matricule,
-        classes(name)
-      )
-    `)
-    .eq('school_id', schoolId)
-    .order('paid_at', { ascending: false })
+  const studentsMap = new Map<string, any>()
+  for (const s of rawStudents || []) {
+    const cls = Array.isArray((s as any).classes) ? (s as any).classes[0] : (s as any).classes
+    studentsMap.set(s.id, {
+      id: s.id,
+      first_name: s.first_name || '',
+      last_name: s.last_name || '',
+      matricule: s.matricule || '',
+      classes: cls ? { name: cls.name } : null,
+    })
+  }
 
-  // Types de frais configurés
-  const { data: feeTypes } = await supabase
-    .from('fee_types')
-    .select('id, label, amount, periodicity, target')
-    .eq('school_id', schoolId)
-    .order('created_at', { ascending: false })
+  const paymentsBySchedule = new Map<string, { amount: number }[]>()
+  for (const p of rawPayments || []) {
+    const schedId = (p as any).schedule_id || (p as any).due_id
+    if (!schedId) continue
+    const list = paymentsBySchedule.get(schedId) || []
+    list.push({ amount: Number(p.amount || 0) })
+    paymentsBySchedule.set(schedId, list)
+  }
+
+  const schedulesMap = new Map<string, { label: string; student_id?: string }>()
+  const schedules = (rawSchedules || []).map((s: any) => {
+    schedulesMap.set(s.id, { label: s.label, student_id: s.student_id })
+    return {
+      id: s.id,
+      amount_due: Number(s.amount_due || 0),
+      status: s.status,
+      due_date: s.due_date,
+      label: s.label,
+      payments: paymentsBySchedule.get(s.id) || [],
+    }
+  })
+
+  const payments = (rawPayments || []).map((p: any) => {
+    const schedId = p.schedule_id || p.due_id
+    const sched = schedId ? schedulesMap.get(schedId) : null
+    const stu = p.student_id
+      ? studentsMap.get(p.student_id)
+      : sched?.student_id
+        ? studentsMap.get(sched.student_id)
+        : null
+
+    return {
+      id: p.id,
+      amount: Number(p.amount || 0),
+      paid_at: p.paid_at,
+      payment_method: p.payment_method,
+      transaction_reference: p.transaction_reference,
+      receipt_number: p.receipt_number,
+      schedule: sched ? { label: sched.label } : null,
+      student: stu || null,
+    }
+  })
 
   return (
     <FinanceDashboard

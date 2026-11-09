@@ -182,12 +182,21 @@ export default async function StudentDetailPage({
     .eq('student_id', id)
     .order('due_date', { ascending: true })
 
-  // Fetch payments
-  const { data: payments } = await supabase
+  // Fetch payments (sans jointure ambiguë schedule:payment_schedules)
+  const { data: rawPayments } = await supabase
     .from('payments')
-    .select('*, schedule:payment_schedules(label)')
+    .select('*')
     .eq('student_id', id)
     .order('paid_at', { ascending: false })
+
+  const schedulesById = new Map<string, any>((schedules || []).map((s: any) => [s.id, s]))
+  const payments = (rawPayments || []).map((p: any) => {
+    const sched = schedulesById.get(p.schedule_id || p.due_id)
+    return {
+      ...p,
+      schedule: sched ? { label: sched.label } : null,
+    }
+  })
 
   // Fetch linked parent accounts (with phone/email credentials)
   const adminClient = createAdminClient()

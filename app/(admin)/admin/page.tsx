@@ -59,7 +59,7 @@ export default async function AdminDashboard() {
   // ── Paiements réels groupés par mois ──
   const { data: allPayments } = await supabase
     .from('payments')
-    .select('amount, paid_at, student:students(first_name, last_name)')
+    .select('amount, paid_at, schedule_id, due_id, student:students(first_name, last_name)')
     .eq('school_id', schoolId)
     .order('paid_at', { ascending: true })
 
@@ -178,16 +178,23 @@ export default async function AdminDashboard() {
   // Impayés : échéances dépassées non soldées, nettes des paiements reçus
   const { data: overdueRaw } = await supabase
     .from('payment_schedules')
-    .select('amount_due, due_date, student:students(last_name, first_name, classes(name)), payments(amount)')
+    .select('id, amount_due, due_date, student:students(last_name, first_name, classes(name))')
     .eq('school_id', schoolId)
     .neq('status', 'paye')
     .lt('due_date', today)
     .order('due_date', { ascending: true })
     .limit(20)
 
+  const paidByScheduleMap = new Map<string, number>()
+  allPayments?.forEach((p: any) => {
+    const schedId = p.schedule_id || p.due_id
+    if (!schedId) return
+    paidByScheduleMap.set(schedId, (paidByScheduleMap.get(schedId) || 0) + Number(p.amount || 0))
+  })
+
   const overdueDues = (overdueRaw || [])
     .map(row => {
-      const paid = ((row.payments as any[]) || []).reduce((acc, p) => acc + Number(p.amount || 0), 0)
+      const paid = paidByScheduleMap.get((row as any).id) || 0
       return { ...row, amount: Number(row.amount_due || 0) - paid }
     })
     .filter(row => row.amount > 0)

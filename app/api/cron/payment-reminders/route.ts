@@ -7,30 +7,31 @@ export const dynamic = 'force-dynamic'
 
 const SCHEDULE_SELECT = `
   id,
+  school_id,
+  student_id,
   label,
   amount_due,
-  payments(amount),
   student:students!inner(
+    parent_phone,
     parent_links:parent_student_links(
-      parent_user:user_school_roles(phone)
+      parent_user_id
     )
   )
 `
 
 /** Reste dû d'une échéance (montant − paiements déjà reçus). */
-function remainingOf(row: any): number {
-  const paid = (row.payments ?? []).reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0)
+function remainingOf(row: any, paidBySchedule: Map<string, number>): number {
+  const paid = paidBySchedule.get(row.id) || 0
   return Number(row.amount_due || 0) - paid
 }
 
-/** Premier numéro de téléphone parent disponible (gère objet ou tableau selon la relation). */
-function parentPhoneOf(row: any): string | null {
+/** Premier numéro de téléphone parent disponible. */
+function parentPhoneOf(row: any, phoneByUserId: Map<string, string>): string | null {
   for (const link of row.student?.parent_links ?? []) {
-    const pu = Array.isArray(link.parent_user) ? link.parent_user : [link.parent_user]
-    const phone = pu.find((u: any) => u?.phone)?.phone
+    const phone = phoneByUserId.get(link.parent_user_id)
     if (phone) return phone
   }
-  return null
+  return row.student?.parent_phone || null
 }
 
 const localDate = (d: Date) =>
@@ -56,7 +57,30 @@ export async function GET(request: Request) {
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Relances déjà envoyées (dédoublonnage côté serveur). due_id référence désormais payment_schedules.id
-    const { data: existing } = await supabase.from('payment_reminders').select('due_id, type')
+    const [
+      { data: existing },
+      { data: allPayments },
+      { data: parentRoles },
+    ] = await Promise.all([
+      supabase.from('payment_reminders').select('due_id, type'),
+      supabase.from('payments').select('schedule_id, due_id, amount'),
+      supabase.from('user_school_roles').select('user_id, phone').eq('role', 'parent'),
+    ])
+
+    const paidBySchedule = new Map<string, number>()
+    for (const p of allPayments ?? []) {
+      const schedId = (p as any).schedule_id || (p as any).due_id
+      if (!schedId) continue
+      paidBySchedule.set(schedId, (paidBySchedule.get(schedId) || 0) + Number((p as any).amount || 0))
+    }
+
+    const phoneByUserId = new Map<string, string>()
+    for (const r of parentRoles ?? []) {
+      if ((r as any).user_id && (r as any).phone) {
+        phoneByUserId.set((r as any).user_id, (r as any).phone)
+      }
+    }
+
     const alreadySent = (type: string) =>
       new Set((existing ?? []).filter((r: any) => r.type === type).map((r: any) => r.due_id))
     const sentJ3 = alreadySent('j-3')
@@ -78,8 +102,8 @@ export async function GET(request: Request) {
     const sentApproaching: string[] = []
     for (const row of approaching ?? []) {
       if (sentJ3.has(row.id)) continue
-      const remaining = remainingOf(row)
-      const phone = parentPhoneOf(row)
+      const remaining = remainingOf(row, paidBySchedule)
+      const phone = parentPhoneOf(row, phoneByUserId)
       if (remaining <= 0 || !phone) continue
 
       const message = `Rappel Scogestia: Votre paiement de ${remaining} FCFA pour "${row.label}" arrive à échéance dans 3 jours. Merci d'y penser.`
@@ -104,8 +128,8 @@ export async function GET(request: Request) {
     const sentOverdue: string[] = []
     for (const row of overdue ?? []) {
       if (sentOver.has(row.id)) continue
-      const remaining = remainingOf(row)
-      const phone = parentPhoneOf(row)
+      const remaining = remainingOf(row, paidBySchedule)
+      const phone = parentPhoneOf(row, phoneByUserId)
       if (remaining <= 0 || !phone) continue
 
       const message = `Urgent Scogestia: Votre paiement de ${remaining} FCFA pour "${row.label}" est en retard. Merci de régulariser la situation au plus vite.`
