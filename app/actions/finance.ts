@@ -430,10 +430,12 @@ export async function addSchoolExpense(formData: FormData): Promise<ActionState>
     }
 
     const school_id = await getActiveSchoolId(FINANCE_ROLES)
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+    const adminSupabase = createAdminClient()
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    const { error } = await supabase.from('school_expenses').insert({
+    const { error } = await adminSupabase.from('school_expenses').insert({
       school_id,
       category,
       label,
@@ -458,9 +460,10 @@ export async function addSchoolExpense(formData: FormData): Promise<ActionState>
 export async function deleteSchoolExpense(id: string): Promise<ActionState> {
   try {
     const school_id = await getActiveSchoolId(FINANCE_ROLES)
-    const supabase = await createClient()
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+    const adminSupabase = createAdminClient()
 
-    const { error } = await supabase
+    const { error } = await adminSupabase
       .from('school_expenses')
       .delete()
       .eq('id', id)
