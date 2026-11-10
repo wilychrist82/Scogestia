@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { DataErrorCard } from '@/components/shared/DataErrorCard'
 import { DepensesManager } from '@/components/admin/finance/DepensesManager'
@@ -30,18 +31,20 @@ export default async function FinanceDepensesPage() {
     )
   }
 
+  const adminClient = createAdminClient()
+
   const [{ data: expenses }, { data: payments }, { data: school }] = await Promise.all([
-    supabase
+    adminClient
       .from('school_expenses')
       .select('id, category, label, amount, payment_method, beneficiary, expense_date, notes, created_at')
       .eq('school_id', roleData.school_id)
       .order('expense_date', { ascending: false })
       .order('created_at', { ascending: false }),
-    supabase
+    adminClient
       .from('payments')
       .select('amount')
       .eq('school_id', roleData.school_id),
-    supabase
+    adminClient
       .from('schools')
       .select('name, city, phone, director_name')
       .eq('id', roleData.school_id)
