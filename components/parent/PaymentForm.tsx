@@ -35,14 +35,14 @@ export function PaymentForm({ label = 'Tranche de scolarité', amount = 0 }: Pro
 
       {/* Carte d'information Paiement Main à Main */}
       <section className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
-        <div className="bg-[#0B0F19] text-white p-5 md:p-6">
+        <div className="bg-gradient-to-r from-[#022C22] via-[#064E3B] to-[#047857] text-white p-5 md:p-6 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-emerald-200 shrink-0 backdrop-blur-sm">
                 <Building2 className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 block">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-200 block">
                   Modalité de paiement actuelle
                 </span>
                 <h3 className="font-bold text-base md:text-lg text-white">
@@ -51,7 +51,7 @@ export function PaymentForm({ label = 'Tranche de scolarité', amount = 0 }: Pro
               </div>
             </div>
           </div>
-          <p className="text-slate-300 text-xs md:text-sm mt-3 leading-relaxed">
+          <p className="text-emerald-100/90 text-xs md:text-sm mt-3 leading-relaxed">
             Les règlements de frais de scolarité s&apos;effectuent directement auprès du secrétariat ou de la comptabilité de l&apos;établissement.
           </p>
         </div>

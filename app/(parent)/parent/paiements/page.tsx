@@ -128,32 +128,32 @@ export default async function ParentPaiementsPage({
         />
       )}
 
-      {/* Carte Solde Exécutive */}
-      <div className="bg-[#0B0F19] rounded-2xl p-6 text-white shadow-sm ring-1 ring-white/10 relative overflow-hidden">
-        <div className="absolute -right-4 -top-4 opacity-5">
-          <Wallet className="w-36 h-36" />
+      {/* Carte Solde Exécutive Émeraude Impérial */}
+      <div className="bg-gradient-to-r from-[#022C22] via-[#064E3B] to-[#047857] rounded-2xl p-6 text-white shadow-[0_12px_32px_-10px_rgba(4,120,87,0.35)] ring-1 ring-emerald-400/25 relative overflow-hidden">
+        <div className="absolute -right-4 -top-4 opacity-10">
+          <Wallet className="w-36 h-36 text-emerald-200" />
         </div>
         <div className="relative z-10">
           <div className="flex items-center justify-between gap-2 mb-1">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Reste à payer (Solde)</p>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-100/90">Reste à payer (Solde)</p>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/15 text-white ring-1 ring-white/20 backdrop-blur-sm">
               <Building2 className="w-3 h-3" />
               Paiement à la caisse
             </span>
           </div>
-          <div className="text-3xl sm:text-4xl font-extrabold mb-4 tabular-nums tracking-tight">
+          <div className="text-3xl sm:text-4xl font-extrabold mb-4 tabular-nums tracking-tight text-white">
             {balance > 0 ? balance.toLocaleString('fr-FR') : 0}{' '}
-            <span className="text-lg font-semibold text-slate-400">FCFA</span>
+            <span className="text-lg font-semibold text-emerald-200">FCFA</span>
           </div>
 
-          <div className="flex justify-between items-center pt-4 border-t border-white/10">
+          <div className="flex justify-between items-center pt-4 border-t border-white/15">
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-slate-400">Total annuel</p>
+              <p className="text-[11px] uppercase tracking-wider text-emerald-200/80">Total annuel</p>
               <p className="font-bold tabular-nums text-white mt-0.5">{totalDue.toLocaleString('fr-FR')} FCFA</p>
             </div>
             <div className="text-right">
-              <p className="text-[11px] uppercase tracking-wider text-slate-400">Déjà payé</p>
-              <p className="font-bold tabular-nums text-emerald-400 mt-0.5">{totalPaid.toLocaleString('fr-FR')} FCFA</p>
+              <p className="text-[11px] uppercase tracking-wider text-emerald-200/80">Déjà payé</p>
+              <p className="font-bold tabular-nums text-emerald-300 mt-0.5">{totalPaid.toLocaleString('fr-FR')} FCFA</p>
             </div>
           </div>
         </div>

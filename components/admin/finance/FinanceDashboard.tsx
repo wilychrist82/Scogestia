@@ -282,35 +282,35 @@ export function FinanceDashboard({
       {/* ── BARRE DE NAVIGATION D'ONGLETS FINANCE ── */}
       <FinanceNavTabs basePath={basePath} />
 
-      {/* ── HERO FINANCIER EXÉCUTIF (STYLE STRIPE ROYAL INDIGO) ── */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] p-6 shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 sm:p-8">
+      {/* ── HERO FINANCIER EXÉCUTIF (VERT ÉMERAUDE IMPÉRIAL) ── */}
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#022C22] via-[#064E3B] to-[#047857] p-6 shadow-[0_14px_34px_-12px_rgba(4,120,87,0.4)] ring-1 ring-emerald-400/25 sm:p-8">
         <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -right-12 -top-16 h-60 w-60 rounded-full bg-indigo-400/20 blur-3xl" />
-          <div className="absolute -left-12 -bottom-16 h-52 w-52 rounded-full bg-sky-400/15 blur-3xl" />
+          <div className="absolute -right-12 -top-16 h-60 w-60 rounded-full bg-emerald-400/20 blur-3xl" />
+          <div className="absolute -left-12 -bottom-16 h-52 w-52 rounded-full bg-teal-300/15 blur-3xl" />
         </div>
 
         <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-indigo-100 ring-1 ring-white/20">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-100 ring-1 ring-white/20 backdrop-blur-sm">
               <CalendarDays size={13} />
               Année scolaire {academicYear}
             </span>
             <h1 className="mt-3 text-2xl font-extrabold leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
               Tableau de bord financier
             </h1>
-            <p className="mt-1.5 text-base font-bold text-sky-200">{schoolName}</p>
-            <p className="mt-2 max-w-xl text-xs font-medium leading-relaxed text-indigo-100/90 sm:text-sm">
+            <p className="mt-1.5 text-base font-bold text-emerald-200">{schoolName}</p>
+            <p className="mt-2 max-w-xl text-xs font-medium leading-relaxed text-emerald-100/90 sm:text-sm">
               Pilotez la trésorerie de votre école en toute clarté : encaissements, échéances et relances en temps réel.
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <Link
                 href={`${basePath}/caisse`}
-                className="group inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 text-xs sm:text-sm font-extrabold text-indigo-950 shadow-md transition-all hover:-translate-y-0.5 hover:bg-indigo-50"
+                className="group inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 text-xs sm:text-sm font-extrabold text-emerald-950 shadow-md transition-all hover:-translate-y-0.5 hover:bg-emerald-50"
               >
-                <Banknote size={17} className="text-indigo-700" />
+                <Banknote size={17} className="text-emerald-700" />
                 Ouvrir la Caisse
-                <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5 text-indigo-700" />
+                <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5 text-emerald-700" />
               </Link>
               <Link
                 href={`${basePath}/impayes`}

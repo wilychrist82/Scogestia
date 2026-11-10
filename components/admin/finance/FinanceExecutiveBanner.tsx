@@ -20,13 +20,13 @@ type Props = {
   children?: React.ReactNode
 }
 
-// Teintes lisibles sur le fond exécutif sombre (#0B0F19) style Stripe / Linear
+// Teintes lisibles sur le fond dégradé Émeraude Impérial (#022C22 -> #064E3B -> #047857)
 const statTone = (color?: string) => {
   if (!color) return 'text-white'
-  if (color.includes('emerald') || color.includes('green')) return 'text-emerald-400'
-  if (color.includes('rose') || color.includes('red')) return 'text-rose-400'
-  if (color.includes('amber') || color.includes('orange') || color.includes('yellow')) return 'text-amber-300'
-  if (color.includes('blue') || color.includes('sky') || color.includes('indigo') || color.includes('cyan')) return 'text-sky-300'
+  if (color.includes('emerald') || color.includes('green')) return 'text-emerald-200'
+  if (color.includes('rose') || color.includes('red')) return 'text-rose-200'
+  if (color.includes('amber') || color.includes('orange') || color.includes('yellow')) return 'text-amber-200'
+  if (color.includes('blue') || color.includes('sky') || color.includes('indigo') || color.includes('cyan')) return 'text-sky-200'
   return 'text-white'
 }
 
@@ -42,18 +42,18 @@ export function FinanceExecutiveBanner({
 }: Props) {
   return (
     <div
-      className={`relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-[#0B0F19] px-6 py-5 text-white shadow-sm ring-1 ring-white/10 sm:px-7 sm:py-6 lg:flex-row lg:items-center ${className}`}
+      className={`relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#022C22] via-[#064E3B] to-[#047857] px-6 py-5 text-white shadow-[0_12px_32px_-10px_rgba(4,120,87,0.35)] ring-1 ring-emerald-400/25 sm:px-7 sm:py-6 lg:flex-row lg:items-center ${className}`}
     >
-      {/* Lueur subtile émeraude & ardoise style Stripe */}
+      {/* Reflets subtils émeraude & menthe */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -right-16 -top-20 h-52 w-52 rounded-full bg-emerald-500/10 blur-3xl" />
-        <div className="absolute -left-16 -bottom-20 h-44 w-44 rounded-full bg-slate-400/10 blur-3xl" />
+        <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-emerald-400/20 blur-3xl" />
+        <div className="absolute -left-16 -bottom-20 h-48 w-48 rounded-full bg-teal-300/15 blur-3xl" />
       </div>
 
       {/* Contenu gauche : badge, titre, sous-titre */}
       <div className="relative z-10 max-w-2xl">
         {badge && (
-          <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-emerald-300 ring-1 ring-inset ring-emerald-500/25">
+          <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-emerald-100 ring-1 ring-inset ring-white/20 backdrop-blur-sm">
             <BadgeIcon size={12} />
             <span className="text-[10px] font-bold uppercase tracking-[0.14em]">{badge}</span>
           </div>
@@ -64,7 +64,7 @@ export function FinanceExecutiveBanner({
         </h1>
 
         {subtitle && (
-          <p className="mt-1 max-w-xl text-xs font-medium leading-relaxed text-slate-400 sm:text-sm">
+          <p className="mt-1 max-w-xl text-xs font-medium leading-relaxed text-emerald-100/90 sm:text-sm">
             {subtitle}
           </p>
         )}
@@ -77,9 +77,9 @@ export function FinanceExecutiveBanner({
             {stats.map((stat, i) => (
               <div
                 key={i}
-                className="min-w-[104px] rounded-xl bg-white/[0.04] px-4 py-2.5 ring-1 ring-white/10 backdrop-blur-md transition-colors hover:bg-white/[0.07]"
+                className="min-w-[104px] rounded-xl bg-white/10 px-4 py-2.5 ring-1 ring-white/20 backdrop-blur-md transition-colors hover:bg-white/15"
               >
-                <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-100/80">
                   {stat.label}
                 </p>
                 <p
