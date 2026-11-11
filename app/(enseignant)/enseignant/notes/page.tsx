@@ -14,7 +14,7 @@ export default async function EnseignantNotesPage() {
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('school_id, school:schools(name)')
+    .select('school_id, school:schools(name, current_academic_year)')
     .eq('user_id', user.id)
     .eq('role', 'enseignant')
     .limit(1).maybeSingle()
@@ -116,7 +116,7 @@ export default async function EnseignantNotesPage() {
   // 2. Récupérer les élèves des classes assignées
   const { data: students } = await supabase
     .from('students')
-    .select('id, last_name, first_name, matricule, class_id')
+    .select('id, last_name, first_name, matricule, class_id, gender')
     .eq('school_id', schoolId)
     .in('class_id', classIds)
     .eq('status', 'actif')
@@ -133,6 +133,8 @@ export default async function EnseignantNotesPage() {
     .select('*')
     .eq('school_id', schoolId)
 
+  const schoolObj = (roleData as any)?.school
+
   return (
     <TeacherNotesWrapper 
       classes={classes}
@@ -140,6 +142,8 @@ export default async function EnseignantNotesPage() {
       students={(students as any) || []}
       primaryGrades={primaryGrades || []}
       secondaryGrades={secondaryGrades || []}
+      schoolName={schoolObj?.name || 'Établissement Scolaire'}
+      academicYear={schoolObj?.current_academic_year || undefined}
     />
   )
 }

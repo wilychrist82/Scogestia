@@ -22,8 +22,14 @@ export default async function NotesPage() {
   }
   const schoolId = roleData.school_id
 
+  const { data: schoolInfo } = await supabase
+    .from('schools')
+    .select('name, current_academic_year')
+    .eq('id', schoolId)
+    .maybeSingle()
+
   const { data: classes } = await supabase.from('classes').select('id, name, level').eq('school_id', schoolId).order('name')
-  const { data: students } = await supabase.from('students').select('id, first_name, last_name, matricule, class_id').eq('school_id', schoolId).order('last_name')
+  const { data: students } = await supabase.from('students').select('id, first_name, last_name, matricule, class_id, gender').eq('school_id', schoolId).order('last_name')
   let { data: subjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId).order('name')
   
   if (!subjects || subjects.length === 0) {
@@ -103,6 +109,8 @@ export default async function NotesPage() {
       students={students || []} 
       primaryGrades={primaryGrades || []}
       secondaryGrades={secondaryGrades || []}
+      schoolName={schoolInfo?.name || 'Établissement Scolaire'}
+      academicYear={schoolInfo?.current_academic_year || undefined}
     />
   )
 }

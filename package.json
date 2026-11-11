@@ -22,6 +22,7 @@
     "@upstash/redis": "^1.38.2",
     "date-fns": "^4.4.0",
     "emoji-picker-react": "^4.22.2",
+    "exceljs": "^4.4.0",
     "firebase-admin": "^14.3.0",
     "framer-motion": "^13.1.1",
     "html2canvas": "^1.4.1",

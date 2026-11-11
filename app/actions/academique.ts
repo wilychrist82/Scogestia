@@ -352,6 +352,7 @@ export async function saveSecondaryGrades(
     }
 
     revalidatePath("/admin/academique/notes");
+    revalidatePath("/enseignant/notes");
     return { success: true };
   } catch (err: any) {
     return { error: err.message };

@@ -22,8 +22,14 @@ import {
   FileText,
   Calculator,
   Award,
-  Trash2
+  Trash2,
+  Eye,
+  FileSpreadsheet,
+  Trophy,
+  ArrowUpDown
 } from 'lucide-react'
+import { ClassResultsPreviewModal } from './ClassResultsPreviewModal'
+import { ExportCycle, FilterMode, SortMode } from '@/lib/grades-export'
 import { 
   getCoefficientForSubject, 
   detectClassSeriesKey, 
@@ -38,7 +44,7 @@ import {
 
 type ClassItem = { id: string; name: string; level?: string }
 type SubjectItem = { id: string; name: string; cycle: string; category?: string | null; coefficient?: number }
-type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string }
+type StudentItem = { id: string; last_name: string; first_name: string; matricule: string; class_id: string; gender?: string | null }
 
 type PrimaryGradeItem = { student_id: string; subject_id: string; month_number: number; score: number }
 type SecondaryGradeItem = { student_id: string; subject_id: string; term: string; class_score: number | null; comp_score: number | null }
@@ -50,6 +56,8 @@ type Props = {
   primaryGrades: PrimaryGradeItem[]
   secondaryGrades: SecondaryGradeItem[]
   isTeacher?: boolean
+  schoolName?: string
+  academicYear?: string
 }
 
 const CATEGORY_PRIORITY: Record<string, number> = {
@@ -66,7 +74,9 @@ export function NotesManager({
   students, 
   primaryGrades, 
   secondaryGrades,
-  isTeacher = false
+  isTeacher = false,
+  schoolName,
+  academicYear
 }: Props) {
   const [selectedCycle, setSelectedCycle] = useState<string>(() => {
     if (classes.length > 0) {
@@ -97,6 +107,17 @@ export function NotesManager({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+
+  const [isResultsPreviewOpen, setIsResultsPreviewOpen] = useState<boolean>(false)
+  const [previewInitialSort, setPreviewInitialSort] = useState<SortMode>('alphabetical')
+  const [previewInitialFilter, setPreviewInitialFilter] = useState<FilterMode>('all')
+  const [rosterDisplayMode, setRosterDisplayMode] = useState<'alpha' | 'merit_all' | 'merit_passing'>('alpha')
+
+  const openResultsPreview = (sort: SortMode = 'alphabetical', filter: FilterMode = 'all') => {
+    setPreviewInitialSort(sort)
+    setPreviewInitialFilter(filter)
+    setIsResultsPreviewOpen(true)
+  }
 
   // Keep local copies in sync when props change
   useEffect(() => {
@@ -206,17 +227,6 @@ export function NotesManager({
       .sort((a, b) => a.last_name.localeCompare(b.last_name))
   }, [students, selectedClass])
 
-  // Filtered by search keyword on class roster
-  const searchedStudents = useMemo(() => {
-    if (!searchStudentTerm.trim()) return filteredStudents
-    const q = searchStudentTerm.toLowerCase().trim()
-    return filteredStudents.filter(s => 
-      s.last_name.toLowerCase().includes(q) || 
-      s.first_name.toLowerCase().includes(q) || 
-      (s.matricule && s.matricule.toLowerCase().includes(q))
-    )
-  }, [filteredStudents, searchStudentTerm])
-
   // Current student helpers
   const currentStudentIndex = filteredStudents.findIndex(s => s.id === selectedStudent)
   const currentStudent = currentStudentIndex >= 0 ? filteredStudents[currentStudentIndex] : null
@@ -250,6 +260,71 @@ export function NotesManager({
     })
     return stats
   }, [isPrimaryCycle, filteredStudents, allPrimaryGrades, subjects, selectedClassObj])
+
+  // Filtered by search keyword and sorted/filtered by rosterDisplayMode
+  const searchedStudents = useMemo(() => {
+    let list = filteredStudents
+    if (searchStudentTerm.trim()) {
+      const q = searchStudentTerm.toLowerCase().trim()
+      list = list.filter(s => 
+        s.last_name.toLowerCase().includes(q) || 
+        s.first_name.toLowerCase().includes(q) || 
+        (s.matricule && s.matricule.toLowerCase().includes(q))
+      )
+    }
+
+    if (!isPrimaryCycle || rosterDisplayMode === 'alpha') {
+      return list
+    }
+
+    const withAvg = list.map(s => {
+      const st = studentStatsMap[s.id]
+      const avgNum = st?.avg ? parseFloat(st.avg) : null
+      return { stu: s, avgNum }
+    })
+
+    if (rosterDisplayMode === 'merit_passing') {
+      return withAvg
+        .filter(item => item.avgNum !== null && item.avgNum >= 5)
+        .sort((a, b) => (b.avgNum ?? 0) - (a.avgNum ?? 0))
+        .map(item => item.stu)
+    }
+
+    // merit_all : du plus fort au plus faible, non notés en dernier
+    return withAvg
+      .sort((a, b) => {
+        if (a.avgNum === null && b.avgNum === null) return 0
+        if (a.avgNum === null) return 1
+        if (b.avgNum === null) return -1
+        return b.avgNum - a.avgNum
+      })
+      .map(item => item.stu)
+  }, [filteredStudents, searchStudentTerm, isPrimaryCycle, rosterDisplayMode, studentStatsMap])
+
+  // Fusionne les saisies non encore enregistrées de l'élève actif avec allPrimaryGrades pour l'aperçu instantané
+  const effectivePrimaryGrades = useMemo(() => {
+    if (!isPrimaryCycle || !selectedStudent || Object.keys(studentScores).length === 0) {
+      return allPrimaryGrades
+    }
+    const base = allPrimaryGrades.filter(g => g.student_id !== selectedStudent)
+    for (let m = 1; m <= 9; m++) {
+      filteredPrimarySubjects.forEach(s => {
+        const valStr = studentScores[`${m}_${s.id}`]
+        if (valStr !== undefined && valStr.trim() !== '') {
+          const val = parseFloat(valStr)
+          if (!isNaN(val)) {
+            base.push({
+              student_id: selectedStudent,
+              subject_id: s.id,
+              month_number: m,
+              score: val,
+            })
+          }
+        }
+      })
+    }
+    return base
+  }, [isPrimaryCycle, selectedStudent, studentScores, allPrimaryGrades, filteredPrimarySubjects])
 
   // Synchronize studentScores when selected student changes
   useEffect(() => {
@@ -491,6 +566,28 @@ export function NotesManager({
         if (result?.error) {
           setError(result.error)
         } else if (result?.success) {
+          // Mettre à jour l'état local allSecondaryGrades pour refléter immédiatement les notes en aperçu / export Excel
+          const subId = formData.get('subjectId') as string
+          const trm = formData.get('term') as string
+          setAllSecondaryGrades(prev => {
+            const nextList = prev.filter(g => !(g.subject_id === subId && g.term === trm && filteredStudents.some(s => s.id === g.student_id)))
+            filteredStudents.forEach(stu => {
+              const cStr = formData.get(`class_score_${stu.id}`) as string | null
+              const compStr = formData.get(`comp_score_${stu.id}`) as string | null
+              const cVal = cStr && cStr.trim() !== '' ? parseFloat(cStr) : null
+              const compVal = compStr && compStr.trim() !== '' ? parseFloat(compStr) : null
+              if (cVal !== null || compVal !== null) {
+                nextList.push({
+                  student_id: stu.id,
+                  subject_id: subId,
+                  term: trm,
+                  class_score: !isNaN(cVal as number) ? cVal : null,
+                  comp_score: !isNaN(compVal as number) ? compVal : null,
+                })
+              }
+            })
+            return nextList
+          })
           setSuccess('Notes du secondaire enregistrées avec succès !')
           setTimeout(() => setSuccess(null), 3000)
         }
@@ -527,6 +624,27 @@ export function NotesManager({
               <GraduationCap className="w-4 h-4 text-sky-300" />
               <span>Mode : <strong className="text-white">{isPrimaryCycle ? 'Primaire (par élève)' : 'Secondaire (par matière)'}</strong></span>
             </div>
+
+            {selectedClassObj && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => openResultsPreview('alphabetical', 'all')}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white text-[#1E293B] hover:bg-indigo-50 text-xs font-bold shadow-md transition-all cursor-pointer"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                  <span>Aperçu &amp; Export Excel</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openResultsPreview('merit', 'passing_only')}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold shadow-md transition-all cursor-pointer"
+                >
+                  <Trophy className="w-4 h-4" />
+                  <span>Ordre de mérite (Admis)</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -728,11 +846,19 @@ export function NotesManager({
                   )}
                 </div>
                 {curSubj && coef && (
-                  <div className="flex items-center gap-2 font-medium">
+                  <div className="flex flex-wrap items-center gap-2 font-medium">
                     <span>Matière : <strong className="text-blue-950">{curSubj.name}</strong></span>
                     <span className="font-bold px-2 py-0.5 rounded bg-white border border-blue-200 text-blue-700 shadow-2xs">
                       Coefficient appliqué : {coef}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => openResultsPreview('alphabetical', 'all')}
+                      className="ml-2 px-2.5 py-1 rounded-lg bg-[#1B365D] text-white hover:opacity-90 font-bold text-[11px] inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>Aperçu &amp; Excel classe</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -760,34 +886,96 @@ export function NotesManager({
             ) : !selectedStudent ? (
               /* Étape 3 : Liste / Tableau des élèves de la classe (Roster view avec double-clic ou bouton) */
               <div className="flex flex-col">
-                <div className="p-4 sm:p-6 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-container-low)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-bold text-lg text-[var(--color-on-surface)] flex items-center gap-2">
-                        <span>Liste des élèves de la classe :</span>
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[var(--color-primary)] text-white">
-                          {selectedClassObj?.name}
-                        </span>
-                        <span className="text-sm font-normal text-[var(--color-on-surface-variant)]">
-                          ({filteredStudents.length} élèves)
-                        </span>
-                      </h3>
+                <div className="p-4 sm:p-6 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-container-low)] flex flex-col gap-4">
+                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-bold text-lg text-[var(--color-on-surface)] flex items-center gap-2">
+                          <span>Liste des élèves de la classe :</span>
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[var(--color-primary)] text-white">
+                            {selectedClassObj?.name}
+                          </span>
+                          <span className="text-sm font-normal text-[var(--color-on-surface-variant)]">
+                            ({searchedStudents.length} / {filteredStudents.length} élèves)
+                          </span>
+                        </h3>
+                      </div>
+                      <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">
+                        💡 Cliquez sur un élève pour saisir ses notes, ou visualisez directement la feuille complète de résultats et l&apos;export Excel.
+                      </p>
                     </div>
-                    <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">
-                      💡 Cliquez sur un élève, <strong>double-cliquez</strong> ou cliquez sur <strong>« Saisir les notes »</strong> pour ouvrir sa grille de notes complète.
-                    </p>
+
+                    {/* Recherche rapide d'un élève */}
+                    <div className="relative w-full lg:w-72">
+                      <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)]" />
+                      <input 
+                        type="text"
+                        placeholder="Rechercher un élève..."
+                        value={searchStudentTerm}
+                        onChange={(e) => setSearchStudentTerm(e.target.value)}
+                        className="w-full h-10 pl-9 pr-3 text-xs rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface)] outline-none focus:border-[var(--color-primary)]"
+                      />
+                    </div>
                   </div>
 
-                  {/* Recherche rapide d'un élève */}
-                  <div className="relative w-full sm:w-72">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)]" />
-                    <input 
-                      type="text"
-                      placeholder="Rechercher un élève..."
-                      value={searchStudentTerm}
-                      onChange={(e) => setSearchStudentTerm(e.target.value)}
-                      className="w-full h-10 pl-9 pr-3 text-xs rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface)] outline-none focus:border-[var(--color-primary)]"
-                    />
+                  {/* Barre d'actions : Ordre de mérite & Aperçu / Export Excel complet */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[var(--color-outline-variant)]/70">
+                    <div className="inline-flex flex-wrap items-center rounded-xl border border-[var(--color-outline-variant)] bg-[var(--color-surface)] p-0.5 gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setRosterDisplayMode('alpha')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          rosterDisplayMode === 'alpha'
+                            ? 'bg-[#1B365D] text-white shadow-2xs'
+                            : 'text-[var(--color-on-surface-variant)] hover:bg-slate-100'
+                        }`}
+                      >
+                        Ordre alphabétique (Tous)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRosterDisplayMode('merit_all')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
+                          rosterDisplayMode === 'merit_all'
+                            ? 'bg-[#1B365D] text-white shadow-2xs'
+                            : 'text-[var(--color-on-surface-variant)] hover:bg-slate-100'
+                        }`}
+                      >
+                        <ArrowUpDown className="w-3.5 h-3.5" />
+                        <span>Ordre de mérite (Tous)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRosterDisplayMode('merit_passing')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                          rosterDisplayMode === 'merit_passing'
+                            ? 'bg-emerald-600 text-white shadow-2xs'
+                            : 'text-emerald-800 hover:bg-emerald-50'
+                        }`}
+                      >
+                        <Trophy className="w-3.5 h-3.5" />
+                        <span>Ordre de mérite — Admis (≥ 5/10)</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openResultsPreview('alphabetical', 'all')}
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#1B365D] text-white hover:opacity-95 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-sky-300" />
+                        <span>Aperçu Résultats &amp; Export Excel (.xlsx)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openResultsPreview('merit', 'passing_only')}
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Trophy className="w-3.5 h-3.5" />
+                        <span>Liste de mérite (Admis)</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -805,7 +993,15 @@ export function NotesManager({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--color-outline-variant)] text-sm">
-                      {searchedStudents.map((stu, idx) => {
+                      {searchedStudents.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="py-12 px-4 text-center text-sm text-[var(--color-on-surface-variant)]">
+                            {rosterDisplayMode === 'merit_passing'
+                              ? 'Aucun élève n’a encore atteint la moyenne (≥ 5 / 10). Saisissez des notes ou affichez tous les élèves.'
+                              : 'Aucun élève ne correspond à votre recherche.'}
+                          </td>
+                        </tr>
+                      ) : searchedStudents.map((stu, idx) => {
                         const st = studentStatsMap[stu.id] || { count: 0, total: 0, avg: null }
                         const totalCells = filteredPrimarySubjects.length * 9
                         const progressPct = Math.min(100, Math.round((st.count / (totalCells || 1)) * 100))
@@ -1426,6 +1622,7 @@ export function NotesManager({
                           
                           <td className="py-2 px-2 text-center">
                             <input 
+                              key={`${selectedClass}_${selectedSubject}_${selectedTerm}_${student.id}_class`}
                               type="number" 
                               step="0.25"
                               min="0"
@@ -1437,6 +1634,7 @@ export function NotesManager({
                           </td>
                           <td className="py-2 px-2 text-center">
                             <input 
+                              key={`${selectedClass}_${selectedSubject}_${selectedTerm}_${student.id}_comp`}
                               type="number" 
                               step="0.25"
                               min="0"
@@ -1452,7 +1650,25 @@ export function NotesManager({
                   </table>
                 </div>
                 
-                <div className="p-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end">
+                <div className="p-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openResultsPreview('alphabetical', 'all')}
+                      className="px-4 py-2.5 rounded-lg text-xs font-bold bg-[#1B365D] text-white hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-300" />
+                      <span>Aperçu &amp; Export Excel de la classe</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openResultsPreview('merit', 'passing_only')}
+                      className="px-4 py-2.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Trophy className="w-4 h-4" />
+                      <span>Ordre de mérite (Admis)</span>
+                    </button>
+                  </div>
                   <button type="submit" disabled={isPending} className="px-6 py-3 rounded-lg text-sm font-semibold bg-[var(--color-primary)] text-white hover:opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm cursor-pointer">
                     {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     Enregistrer les notes
@@ -1463,6 +1679,24 @@ export function NotesManager({
           )}
         </div>
       </div>
+
+      {selectedClassObj && (
+        <ClassResultsPreviewModal
+          isOpen={isResultsPreviewOpen}
+          onClose={() => setIsResultsPreviewOpen(false)}
+          classItem={selectedClassObj}
+          students={students}
+          subjects={isPrimaryCycle ? filteredPrimarySubjects : filteredSecondarySubjects}
+          primaryGrades={effectivePrimaryGrades}
+          secondaryGrades={allSecondaryGrades}
+          cycle={(selectedCycle as ExportCycle) || 'primaire'}
+          initialSecondaryTerm={selectedTerm}
+          initialSortMode={previewInitialSort}
+          initialFilterMode={previewInitialFilter}
+          schoolName={schoolName}
+          academicYear={academicYear}
+        />
+      )}
     </div>
   )
 }

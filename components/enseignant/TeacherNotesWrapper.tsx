@@ -13,6 +13,8 @@ export function TeacherNotesWrapper(props: any) {
         primaryGrades={props.primaryGrades}
         secondaryGrades={props.secondaryGrades}
         isTeacher={true}
+        schoolName={props.schoolName}
+        academicYear={props.academicYear}
       />
     </div>
   )
