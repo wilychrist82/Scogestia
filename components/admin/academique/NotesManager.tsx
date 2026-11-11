@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, FormEvent, useEffect, useMemo, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { savePrimaryGrades, saveSecondaryGrades, clearStudentGrades } from '@/app/actions/academique'
 import Link from 'next/link'
 import { sortClasses } from '@/lib/classes'
@@ -26,9 +27,11 @@ import {
   Eye,
   FileSpreadsheet,
   Trophy,
-  ArrowUpDown
+  ArrowUpDown,
+  Upload
 } from 'lucide-react'
 import { ClassResultsPreviewModal } from './ClassResultsPreviewModal'
+import { ImportGradesModal } from './ImportGradesModal'
 import { ExportCycle, FilterMode, SortMode } from '@/lib/grades-export'
 import { 
   getCoefficientForSubject, 
@@ -78,6 +81,7 @@ export function NotesManager({
   schoolName,
   academicYear
 }: Props) {
+  const router = useRouter()
   const [selectedCycle, setSelectedCycle] = useState<string>(() => {
     if (classes.length > 0) {
       const firstClass = classes[0]
@@ -99,6 +103,8 @@ export function NotesManager({
   const [selectedTerm, setSelectedTerm] = useState<string>('1er_trimestre') // Mode secondaire
   const [searchStudentTerm, setSearchStudentTerm] = useState<string>('')
 
+  const [localSubjects, setLocalSubjects] = useState<SubjectItem[]>(subjects)
+  const [localStudents, setLocalStudents] = useState<StudentItem[]>(students)
   const [allPrimaryGrades, setAllPrimaryGrades] = useState<PrimaryGradeItem[]>(primaryGrades)
   const [allSecondaryGrades, setAllSecondaryGrades] = useState<SecondaryGradeItem[]>(secondaryGrades)
   const [studentScores, setStudentScores] = useState<Record<string, string>>({})
@@ -109,6 +115,7 @@ export function NotesManager({
   const [success, setSuccess] = useState<string | null>(null)
 
   const [isResultsPreviewOpen, setIsResultsPreviewOpen] = useState<boolean>(false)
+  const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false)
   const [previewInitialSort, setPreviewInitialSort] = useState<SortMode>('alphabetical')
   const [previewInitialFilter, setPreviewInitialFilter] = useState<FilterMode>('all')
   const [rosterDisplayMode, setRosterDisplayMode] = useState<'alpha' | 'merit_all' | 'merit_passing'>('alpha')
@@ -120,6 +127,14 @@ export function NotesManager({
   }
 
   // Keep local copies in sync when props change
+  useEffect(() => {
+    setLocalSubjects(subjects)
+  }, [subjects])
+
+  useEffect(() => {
+    setLocalStudents(students)
+  }, [students])
+
   useEffect(() => {
     setAllPrimaryGrades(primaryGrades)
   }, [primaryGrades])
@@ -155,7 +170,7 @@ export function NotesManager({
 
   // Primary subjects sorted neatly by official curriculum order (Lecture followed directly by Étude de texte)
   const filteredPrimarySubjects = useMemo(() => {
-    const list = subjects.filter(s => !s.cycle || s.cycle.toLowerCase() === 'primaire' || s.cycle.toLowerCase() === 'maternelle')
+    const list = localSubjects.filter(s => !s.cycle || s.cycle.toLowerCase() === 'primaire' || s.cycle.toLowerCase() === 'maternelle')
     
     // Déduplication stricte par nom normalisé
     const seen = new Set<string>()
@@ -188,12 +203,12 @@ export function NotesManager({
       if (orderA !== orderB) return orderA - orderB
       return a.name.localeCompare(b.name)
     })
-  }, [subjects])
+  }, [localSubjects])
 
   // Secondary subjects
   const filteredSecondarySubjects = useMemo(() => {
-    return subjects.filter(s => s.cycle === 'secondaire')
-  }, [subjects])
+    return localSubjects.filter(s => s.cycle === 'secondaire')
+  }, [localSubjects])
 
   // Auto-select class when filteredClasses changes
   useEffect(() => {
@@ -222,10 +237,10 @@ export function NotesManager({
   // Students in selected class sorted alphabetically
   const filteredStudents = useMemo(() => {
     if (!selectedClass) return []
-    return students
+    return localStudents
       .filter(s => s.class_id === selectedClass)
       .sort((a, b) => a.last_name.localeCompare(b.last_name))
-  }, [students, selectedClass])
+  }, [localStudents, selectedClass])
 
   // Current student helpers
   const currentStudentIndex = filteredStudents.findIndex(s => s.id === selectedStudent)
@@ -244,7 +259,7 @@ export function NotesManager({
       let maxPossible = 0
       allPrimaryGrades.forEach(g => {
         if (g.student_id === stu.id && g.score !== null && g.score !== undefined) {
-          const subj = subjects.find(s => s.id === g.subject_id)
+          const subj = localSubjects.find(s => s.id === g.subject_id)
           const maxS = subj ? getPrimarySubjectMaxScore(subj.name, selectedClassObj?.name, selectedClassObj?.level) : ((g as any).max_score || 10)
           total += g.score
           maxPossible += maxS
@@ -259,7 +274,7 @@ export function NotesManager({
       }
     })
     return stats
-  }, [isPrimaryCycle, filteredStudents, allPrimaryGrades, subjects, selectedClassObj])
+  }, [isPrimaryCycle, filteredStudents, allPrimaryGrades, localSubjects, selectedClassObj])
 
   // Filtered by search keyword and sorted/filtered by rosterDisplayMode
   const searchedStudents = useMemo(() => {
@@ -610,11 +625,11 @@ export function NotesManager({
               <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
               Académique · Saisie des Notes
             </div>
-            <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Grille de Saisie des Notes</h2>
+            <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Grille de Saisie &amp; Import Excel des Notes</h2>
             <p className="mt-1 text-[13px] font-medium text-indigo-100/90 sm:text-sm">
               {isPrimaryCycle 
-                ? 'Saisie des notes élève par élève pour l’ensemble des matières du primaire.' 
-                : 'Saisie des notes de toute la classe comme sur Excel.'}
+                ? 'Importez directement votre fichier Excel complet par disciplines ou saisissez les notes élève par élève.' 
+                : 'Importez votre fichier Excel de classe par matières ou saisissez les notes ci-dessous.'}
             </p>
           </div>
 
@@ -624,6 +639,15 @@ export function NotesManager({
               <GraduationCap className="w-4 h-4 text-sky-300" />
               <span>Mode : <strong className="text-white">{isPrimaryCycle ? 'Primaire (par élève)' : 'Secondaire (par matière)'}</strong></span>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setIsImportModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold shadow-md transition-all cursor-pointer"
+            >
+              <Upload className="w-4 h-4" />
+              <span>Importer Excel (Notes)</span>
+            </button>
 
             {selectedClassObj && (
               <>
@@ -831,7 +855,7 @@ export function NotesManager({
           {(() => {
             if (isPrimaryCycle) return null;
             const curClass = classes.find(c => c.id === selectedClass);
-            const curSubj = subjects.find(s => s.id === selectedSubject);
+            const curSubj = localSubjects.find(s => s.id === selectedSubject);
             if (!curClass || !isSecondaryCycle) return null;
             const seriesKey = detectClassSeriesKey(curClass.name, curClass.level);
             const coef = curSubj ? getCoefficientForSubject(curSubj.name, curClass.name, curClass.level, (curSubj as any).coefficient || 2) : null;
@@ -845,22 +869,32 @@ export function NotesManager({
                     </span>
                   )}
                 </div>
-                {curSubj && coef && (
-                  <div className="flex flex-wrap items-center gap-2 font-medium">
-                    <span>Matière : <strong className="text-blue-950">{curSubj.name}</strong></span>
-                    <span className="font-bold px-2 py-0.5 rounded bg-white border border-blue-200 text-blue-700 shadow-2xs">
-                      Coefficient appliqué : {coef}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => openResultsPreview('alphabetical', 'all')}
-                      className="ml-2 px-2.5 py-1 rounded-lg bg-[#1B365D] text-white hover:opacity-90 font-bold text-[11px] inline-flex items-center gap-1 cursor-pointer"
-                    >
-                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-300" />
-                      <span>Aperçu &amp; Excel classe</span>
-                    </button>
-                  </div>
-                )}
+                <div className="flex flex-wrap items-center gap-2 font-medium">
+                  {curSubj && coef && (
+                    <>
+                      <span>Matière : <strong className="text-blue-950">{curSubj.name}</strong></span>
+                      <span className="font-bold px-2 py-0.5 rounded bg-white border border-blue-200 text-blue-700 shadow-2xs">
+                        Coefficient appliqué : {coef}
+                      </span>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsImportModalOpen(true)}
+                    className="px-2.5 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-[11px] inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Importer Excel</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openResultsPreview('alphabetical', 'all')}
+                    className="px-2.5 py-1 rounded-lg bg-[#1B365D] text-white hover:opacity-90 font-bold text-[11px] inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-300" />
+                    <span>Aperçu &amp; Excel classe</span>
+                  </button>
+                </div>
               </div>
             );
           })()}
@@ -874,14 +908,30 @@ export function NotesManager({
               <div className="p-16 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] flex-1 min-h-[350px]">
                 <Table className="w-12 h-12 mb-3 opacity-40 text-[var(--color-primary)]" />
                 <h4 className="text-lg font-semibold text-[var(--color-on-surface)]">Sélectionnez une classe</h4>
-                <p className="text-sm mt-1 max-w-md">Choisissez une classe primaire (CP1, CP2, CE1, CE2, CM1, CM2) pour accéder à la liste de ses élèves.</p>
+                <p className="text-sm mt-1 max-w-md">Choisissez une classe primaire (CP1, CP2, CE1, CE2, CM1, CM2) pour accéder à la liste de ses élèves ou importez directement un fichier Excel complet.</p>
+                <button
+                  type="button"
+                  onClick={() => setIsImportModalOpen(true)}
+                  className="mt-5 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-sm cursor-pointer"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Importer un fichier Excel rempli</span>
+                </button>
               </div>
             ) : filteredStudents.length === 0 ? (
               /* Étape 2 : Classe vide */
               <div className="p-16 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] flex-1 min-h-[350px]">
                 <User className="w-12 h-12 mb-3 opacity-40 text-[var(--color-primary)]" />
                 <h4 className="text-lg font-semibold text-[var(--color-on-surface)]">Aucun élève dans cette classe</h4>
-                <p className="text-sm mt-1">Ajoutez d'abord des élèves dans la classe {selectedClassObj?.name} pour commencer la saisie.</p>
+                <p className="text-sm mt-1 max-w-md">Ajoutez d&apos;abord des élèves dans la classe {selectedClassObj?.name} ou importez directement un fichier Excel rempli (Scogestia calcule les résultats et peut inscrire les élèves).</p>
+                <button
+                  type="button"
+                  onClick={() => setIsImportModalOpen(true)}
+                  className="mt-5 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-sm cursor-pointer"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Importer un fichier Excel rempli</span>
+                </button>
               </div>
             ) : !selectedStudent ? (
               /* Étape 3 : Liste / Tableau des élèves de la classe (Roster view avec double-clic ou bouton) */
@@ -959,6 +1009,14 @@ export function NotesManager({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Importer Excel (Notes)</span>
+                      </button>
                       <button
                         type="button"
                         onClick={() => openResultsPreview('alphabetical', 'all')}
@@ -1583,7 +1641,15 @@ export function NotesManager({
               <div className="p-16 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] flex-1 min-h-[350px]">
                 <Table className="w-12 h-12 mb-3 opacity-40 text-[var(--color-primary)]" />
                 <h4 className="text-lg font-semibold text-[var(--color-on-surface)]">Sélectionnez une classe et une matière</h4>
-                <p className="text-sm mt-1">Au secondaire, la saisie s'effectue par matière pour l'ensemble des élèves de la classe.</p>
+                <p className="text-sm mt-1 max-w-md">Au secondaire, la saisie manuelle s&apos;effectue par matière, ou importez directement le fichier Excel complet de toute la classe.</p>
+                <button
+                  type="button"
+                  onClick={() => setIsImportModalOpen(true)}
+                  className="mt-5 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-sm cursor-pointer"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Importer un fichier Excel complet</span>
+                </button>
               </div>
             ) : filteredStudents.length === 0 ? (
               <div className="p-16 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] flex-1 min-h-[350px]">
@@ -1654,6 +1720,14 @@ export function NotesManager({
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
+                      onClick={() => setIsImportModalOpen(true)}
+                      className="px-4 py-2.5 rounded-lg text-xs font-extrabold bg-amber-400 text-slate-950 hover:bg-amber-300 transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Upload className="w-4 h-4" />
+                      <span>Importer Excel</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => openResultsPreview('alphabetical', 'all')}
                       className="px-4 py-2.5 rounded-lg text-xs font-bold bg-[#1B365D] text-white hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer"
                     >
@@ -1685,7 +1759,7 @@ export function NotesManager({
           isOpen={isResultsPreviewOpen}
           onClose={() => setIsResultsPreviewOpen(false)}
           classItem={selectedClassObj}
-          students={students}
+          students={localStudents}
           subjects={isPrimaryCycle ? filteredPrimarySubjects : filteredSecondarySubjects}
           primaryGrades={effectivePrimaryGrades}
           secondaryGrades={allSecondaryGrades}
@@ -1697,6 +1771,71 @@ export function NotesManager({
           academicYear={academicYear}
         />
       )}
+
+      <ImportGradesModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        classes={filteredClasses.length > 0 ? filteredClasses : classes}
+        selectedClassId={selectedClass || filteredClasses[0]?.id || classes[0]?.id || ''}
+        students={localStudents}
+        subjects={localSubjects}
+        cycle={(selectedCycle as ExportCycle) || 'primaire'}
+        initialTerm={selectedTerm}
+        schoolName={schoolName}
+        academicYear={academicYear}
+        isTeacher={isTeacher}
+        onImportSaved={({
+          classId: importedClassId,
+          savedPrimaryGrades,
+          savedSecondaryGrades,
+          createdStudents,
+          createdSubjects,
+        }) => {
+          if (createdSubjects && createdSubjects.length > 0) {
+            setLocalSubjects(prev => {
+              const existingIds = new Set(prev.map(s => s.id))
+              const additions = createdSubjects.filter(s => !existingIds.has(s.id))
+              return additions.length > 0 ? [...prev, ...additions] : prev
+            })
+          }
+          if (createdStudents && createdStudents.length > 0) {
+            setLocalStudents(prev => {
+              const existingIds = new Set(prev.map(s => s.id))
+              const additions = createdStudents.filter(s => !existingIds.has(s.id))
+              return additions.length > 0 ? [...prev, ...additions] : prev
+            })
+          }
+          if (savedPrimaryGrades && savedPrimaryGrades.length > 0) {
+            setAllPrimaryGrades(prev => {
+              const incomingKeys = new Set(
+                savedPrimaryGrades.map(g => `${g.student_id}_${g.subject_id}_${g.month_number}`)
+              )
+              const kept = prev.filter(
+                g => !incomingKeys.has(`${g.student_id}_${g.subject_id}_${g.month_number}`)
+              )
+              return [...kept, ...savedPrimaryGrades]
+            })
+          }
+          if (savedSecondaryGrades && savedSecondaryGrades.length > 0) {
+            setAllSecondaryGrades(prev => {
+              const incomingKeys = new Set(
+                savedSecondaryGrades.map(g => `${g.student_id}_${g.subject_id}_${g.term}`)
+              )
+              const kept = prev.filter(
+                g => !incomingKeys.has(`${g.student_id}_${g.subject_id}_${g.term}`)
+              )
+              return [...kept, ...savedSecondaryGrades]
+            })
+          }
+          if (importedClassId) {
+            setSelectedClass(importedClassId)
+          }
+          const savedCount = (savedPrimaryGrades?.length || 0) + (savedSecondaryGrades?.length || 0)
+          setSuccess(`Importation Excel réussie : ${savedCount} note(s) enregistrée(s) et synchronisée(s) dans Scogestia !`)
+          setTimeout(() => setSuccess(null), 5000)
+          router.refresh()
+        }}
+      />
     </div>
   )
 }

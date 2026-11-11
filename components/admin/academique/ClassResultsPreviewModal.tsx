@@ -446,11 +446,11 @@ export function ClassResultsPreviewModal({
 
   if (!isOpen || !report) return null
 
-  const handleExportExcel = async () => {
+  const handleExportExcel = async (mode: 'complete' | 'merit_only' = 'complete') => {
     setExportError(null)
     setIsExporting(true)
     try {
-      await exportClassResultsToExcel(report)
+      await exportClassResultsToExcel(report, { mode })
     } catch (err: any) {
       console.error('Excel export error:', err)
       setExportError(err?.message || "Impossible de générer le fichier Excel. Veuillez réessayer.")
@@ -540,7 +540,17 @@ export function ClassResultsPreviewModal({
 
             <button
               type="button"
-              onClick={handleExportExcel}
+              onClick={() => handleExportExcel('merit_only')}
+              disabled={isExporting || report.meritPassingRows.length === 0}
+              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Trophy className="w-4 h-4" />
+              <span>Télécharger Admis (.xlsx)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleExportExcel('complete')}
               disabled={isExporting}
               className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md transition-all disabled:opacity-60 flex items-center gap-2 cursor-pointer"
             >

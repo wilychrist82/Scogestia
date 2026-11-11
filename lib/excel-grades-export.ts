@@ -493,12 +493,28 @@ function populateRecapitulationSheet(ws: Worksheet, report: ClassResultsReport) 
  * - "Récapitulation" : synthèses par sexe, tranches d'appréciations et statistiques par discipline
  * - "Ordre de mérite (Admis)" : liste des élèves ayant la moyenne triés de la plus forte à la plus faible
  */
-export async function buildClassResultsWorkbook(report: ClassResultsReport): Promise<Workbook> {
+export async function buildClassResultsWorkbook(
+  report: ClassResultsReport,
+  options?: { mode?: 'complete' | 'merit_only' }
+): Promise<Workbook> {
   const ExcelJSModule = await import('exceljs')
   const ExcelJS = (ExcelJSModule as any).default || ExcelJSModule
   const wb: Workbook = new ExcelJS.Workbook()
   wb.creator = 'Scogestia'
   wb.created = new Date()
+
+  const mode = options?.mode || 'complete'
+
+  if (mode === 'merit_only') {
+    const wsMerit = wb.addWorksheet('Ordre de mérite (Admis)')
+    populateResultsSheet(wsMerit, report, report.meritPassingRows, {
+      titleOverride: `${report.title} – LISTE DE MÉRITE (ADMIS)`,
+      subtitleExtra: `Admis (Moy. ≥ ${report.passThreshold}) : ${report.meritPassingRows.length} / ${report.stats.present.total} présents`,
+    })
+    const wsRecap = wb.addWorksheet('Récapitulation')
+    populateRecapitulationSheet(wsRecap, report)
+    return wb
+  }
 
   // Feuille 1 : Résultats (vue sélectionnée par l'utilisateur)
   const wsResults = wb.addWorksheet('Résultats')
@@ -526,29 +542,11 @@ export async function buildClassResultsWorkbook(report: ClassResultsReport): Pro
   return wb
 }
 
-/**
- * Génère et télécharge le classeur Excel (.xlsx) complet et stylisé.
- */
-export async function exportClassResultsToExcel(report: ClassResultsReport): Promise<void> {
-  const wb = await buildClassResultsWorkbook(report)
+async function triggerExcelDownload(wb: Workbook, fileName: string): Promise<void> {
   const buffer = await wb.xlsx.writeBuffer()
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   })
-
-  const safeClass = (report.className || 'classe')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9_-]/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '')
-  const safePeriod = (report.periodLabel || 'periode')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9_-]/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '')
-  const fileName = `resultats_${safeClass}_${safePeriod}_${new Date().toISOString().slice(0, 10)}.xlsx`
 
   const isNativeMobile =
     typeof window !== 'undefined' &&
@@ -570,4 +568,139 @@ export async function exportClassResultsToExcel(report: ClassResultsReport): Pro
   a.click()
   document.body.removeChild(a)
   window.URL.revokeObjectURL(url)
+}
+
+/**
+ * Génère et télécharge le classeur Excel (.xlsx) complet et stylisé.
+ */
+export async function exportClassResultsToExcel(
+  report: ClassResultsReport,
+  options?: { mode?: 'complete' | 'merit_only' }
+): Promise<void> {
+  const mode = options?.mode || 'complete'
+  const wb = await buildClassResultsWorkbook(report, { mode })
+
+  const safeClass = (report.className || 'classe')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9_-]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
+  const safePeriod = (report.periodLabel || 'periode')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9_-]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
+  const prefix = mode === 'merit_only' ? 'ordre_merite_admis' : 'resultats'
+  const fileName = `${prefix}_${safeClass}_${safePeriod}_${new Date().toISOString().slice(0, 10)}.xlsx`
+
+  await triggerExcelDownload(wb, fileName)
+}
+
+/**
+ * Télécharge un modèle Excel (.xlsx) prêt à remplir pour une classe donnée
+ * (avec la liste des élèves déjà pré-remplie et les disciplines en colonnes verticales).
+ */
+export async function exportBlankClassTemplateExcel(params: {
+  className: string
+  periodLabel: string
+  formulaLabel: string
+  title: string
+  students: Array<{ lastName: string; firstName: string; gender?: string | null }>
+  subjectNames: string[]
+}): Promise<void> {
+  const ExcelJSModule = await import('exceljs')
+  const ExcelJS = (ExcelJSModule as any).default || ExcelJSModule
+  const wb: Workbook = new ExcelJS.Workbook()
+  wb.creator = 'Scogestia'
+  wb.created = new Date()
+
+  const ws = wb.addWorksheet('Saisie des notes')
+  const numCols = Math.max(1, params.subjectNames.length)
+  const firstSubjCol = 4
+  const lastSubjCol = 3 + numCols
+  const totalSheetCols = lastSubjCol
+  const lastColLtr = colLetter(totalSheetCols)
+  const firstSubjLtr = colLetter(firstSubjCol)
+  const lastSubjLtr = colLetter(lastSubjCol)
+
+  ws.mergeCells(`A1:${lastColLtr}1`)
+  const titleCell = ws.getCell('A1')
+  titleCell.value = params.title
+  titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FFFFFFFF' } }
+  titleCell.fill = NAVY_FILL
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
+  ws.getRow(1).height = 30
+
+  ws.mergeCells(`A2:${lastColLtr}2`)
+  const metaCell = ws.getCell('A2')
+  metaCell.value = `Classe : ${params.className}      |      Effectif : ${params.students.length} élèves      |      ${params.formulaLabel}      |      ${params.periodLabel}`
+  metaCell.font = { name: 'Calibri', size: 10.5, bold: true, color: { argb: 'FF0F172A' } }
+  metaCell.fill = SUB_HEADER_FILL
+  metaCell.alignment = { horizontal: 'center', vertical: 'middle' }
+  ws.getRow(2).height = 22
+
+  ws.mergeCells('A3:C3')
+  ws.getCell('A3').value = 'ÉLÈVES'
+  if (numCols > 1) {
+    ws.mergeCells(`${firstSubjLtr}3:${lastSubjLtr}3`)
+  }
+  ws.getCell(`${firstSubjLtr}3`).value = 'NOTES PAR DISCIPLINE'
+  for (let c = 1; c <= totalSheetCols; c++) {
+    const cell = ws.getRow(3).getCell(c)
+    cell.font = { name: 'Calibri', size: 10.5, bold: true, color: { argb: 'FFFFFFFF' } }
+    cell.fill = NAVY_FILL
+    cell.alignment = { horizontal: 'center', vertical: 'middle' }
+  }
+  ws.getRow(3).height = 24
+
+  const row4 = ws.getRow(4)
+  row4.getCell(1).value = 'N°'
+  row4.getCell(2).value = 'Nom et Prénom'
+  row4.getCell(3).value = 'Sexe'
+  params.subjectNames.forEach((name, i) => {
+    const cell = row4.getCell(firstSubjCol + i)
+    cell.value = name
+    cell.alignment = { horizontal: 'center', vertical: 'bottom', textRotation: 90, wrapText: true }
+  })
+  for (let c = 1; c <= totalSheetCols; c++) {
+    const cell = row4.getCell(c)
+    cell.font = HEADER_FONT
+    cell.fill = NAVY_FILL
+    if (c < firstSubjCol) {
+      cell.alignment = { horizontal: 'center', vertical: 'middle' }
+    }
+    cell.border = GRID_BORDER
+  }
+  row4.height = 124
+
+  ws.getColumn(1).width = 5
+  ws.getColumn(2).width = 30
+  ws.getColumn(3).width = 6.5
+  for (let i = 0; i < numCols; i++) {
+    ws.getColumn(firstSubjCol + i).width = 7
+  }
+  ws.views = [{ state: 'frozen', xSplit: 3, ySplit: 4 }]
+
+  params.students.forEach((stu, idx) => {
+    const r = ws.getRow(5 + idx)
+    r.height = 20
+    r.getCell(1).value = idx + 1
+    r.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' }
+    r.getCell(2).value = `${(stu.lastName || '').toUpperCase()} ${stu.firstName || ''}`.trim()
+    r.getCell(2).font = { name: 'Calibri', size: 10.5, bold: true }
+    r.getCell(3).value = (stu.gender || '').toUpperCase()
+    r.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' }
+    for (let c = 1; c <= totalSheetCols; c++) {
+      r.getCell(c).border = GRID_BORDER
+    }
+  })
+
+  const safeClass = (params.className || 'classe')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9_-]/g, '_')
+    .replace(/_+/g, '_')
+  await triggerExcelDownload(wb, `modele_notes_${safeClass}.xlsx`)
 }

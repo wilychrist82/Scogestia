@@ -1,9 +1,11 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { ActionState } from "./finance";
 import { getPrimarySubjectMaxScore } from "@/lib/academic-curriculum";
+import { getSchoolSubscriptionStatus } from "@/lib/subscription";
 
 async function getActiveSchoolId() {
   const supabase = await createClient();
@@ -844,5 +846,400 @@ export async function clearStudentGrades(studentId: string): Promise<ActionState
     return { success: true };
   } catch (err: any) {
     return { error: err.message };
+  }
+}
+
+export type ImportClassGradesPayload = {
+  classId: string;
+  cycle: "primaire" | "maternelle" | "college" | "lycee" | "secondaire";
+  monthNumber?: number;
+  term?: string;
+  createMissingSubjects?: boolean;
+  createMissingStudents?: boolean;
+  columns: Array<{
+    colKey: string;
+    name: string;
+    maxScore: number;
+    coefficient: number;
+    subjectId: string | null;
+  }>;
+  rows: Array<{
+    matchedStudentId: string | null;
+    lastName: string;
+    firstName: string;
+    gender?: string | null;
+    matricule?: string | null;
+    scores: Record<string, number | null>;
+  }>;
+};
+
+export async function importClassGrades(payload: ImportClassGradesPayload): Promise<{
+  success?: boolean;
+  error?: string;
+  savedGradesCount?: number;
+  createdStudentsCount?: number;
+  createdSubjectsCount?: number;
+  savedPrimaryGrades?: Array<{ student_id: string; subject_id: string; month_number: number; score: number }>;
+  savedSecondaryGrades?: Array<{ student_id: string; subject_id: string; term: string; class_score: number | null; comp_score: number | null }>;
+  createdStudents?: Array<{ id: string; last_name: string; first_name: string; matricule: string; class_id: string; gender: string | null }>;
+  createdSubjects?: Array<{ id: string; name: string; cycle: string; category: string | null; coefficient: number }>;
+}> {
+  try {
+    if (!payload.classId) {
+      return { error: "Veuillez sélectionner une classe de destination." };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { error: "Session expirée. Veuillez vous reconnecter." };
+
+    const { data: roleData, error: roleErr } = await supabase
+      .from("user_school_roles")
+      .select("school_id, role")
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (roleErr || !roleData?.school_id) {
+      return { error: "Établissement introuvable." };
+    }
+
+    const allowedRoles = ["admin", "super_admin", "directeur", "censeur", "enseignant", "secretaire"];
+    if (!allowedRoles.includes(roleData.role)) {
+      return { error: "Action non autorisée pour votre rôle." };
+    }
+
+    const school_id = roleData.school_id;
+    const admin = createAdminClient();
+
+    // Vérifier que la classe appartient bien à l'établissement
+    const { data: clsData, error: clsErr } = await admin
+      .from("classes")
+      .select("id, name, level")
+      .eq("id", payload.classId)
+      .eq("school_id", school_id)
+      .maybeSingle();
+
+    if (clsErr || !clsData) {
+      return { error: "Classe introuvable dans cet établissement." };
+    }
+
+    const isPrimary = payload.cycle === "primaire" || payload.cycle === "maternelle";
+    const dbCycle = isPrimary ? (payload.cycle === "maternelle" ? "maternelle" : "primaire") : "secondaire";
+    const academicYear = getDynamicAcademicYear();
+    const monthNumber = Math.min(9, Math.max(1, payload.monthNumber || 1));
+    const term = payload.term || "1er_trimestre";
+
+    // 1. Résoudre les matières (colKey -> subject_id)
+    const { data: existingSubjects } = await admin
+      .from("subjects")
+      .select("id, name, cycle, category, coefficient")
+      .eq("school_id", school_id);
+
+    const normText = (s: string) =>
+      (s || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+
+    const colSubjectMap = new Map<string, { subjectId: string; name: string; maxScore: number }>();
+    const createdSubjects: Array<{ id: string; name: string; cycle: string; category: string | null; coefficient: number }> = [];
+
+    for (const col of payload.columns) {
+      let targetSubjectId = col.subjectId;
+      if (targetSubjectId && targetSubjectId !== "virtual-etude-de-texte") {
+        const found = (existingSubjects || []).find(s => s.id === targetSubjectId);
+        if (found) {
+          colSubjectMap.set(col.colKey, {
+            subjectId: found.id,
+            name: found.name,
+            maxScore: col.maxScore || 10,
+          });
+          continue;
+        }
+      }
+
+      // Chercher par nom si virtual ou non mappé
+      const colHasAnyScore = payload.rows.some(
+        r => r.scores[col.colKey] !== null && r.scores[col.colKey] !== undefined
+      );
+      if (!colHasAnyScore && targetSubjectId !== "virtual-etude-de-texte") {
+        continue;
+      }
+
+      const existingByName = (existingSubjects || []).find(
+        s => normText(s.name) === normText(col.name) && (isPrimary ? s.cycle !== "secondaire" : s.cycle === "secondaire")
+      );
+
+      if (existingByName) {
+        colSubjectMap.set(col.colKey, {
+          subjectId: existingByName.id,
+          name: existingByName.name,
+          maxScore: col.maxScore || 10,
+        });
+      } else if (payload.createMissingSubjects) {
+        const { data: insertedSub, error: subErr } = await admin
+          .from("subjects")
+          .insert({
+            school_id,
+            name: col.name,
+            cycle: dbCycle,
+            category: isPrimary ? "Général" : null,
+            coefficient: isPrimary ? 1 : col.coefficient || 2,
+          })
+          .select("id, name, cycle, category, coefficient")
+          .single();
+
+        if (subErr || !insertedSub) {
+          return { error: `Impossible de créer la matière "${col.name}" : ${subErr?.message}` };
+        }
+        existingSubjects?.push(insertedSub);
+        createdSubjects.push(insertedSub);
+        colSubjectMap.set(col.colKey, {
+          subjectId: insertedSub.id,
+          name: insertedSub.name,
+          maxScore: col.maxScore || 10,
+        });
+      }
+    }
+
+    if (colSubjectMap.size === 0) {
+      return {
+        error:
+          "Aucune rubrique n'est associée à une matière Scogestia. Associez au moins une colonne ou activez la création automatique des rubriques manquantes.",
+      };
+    }
+
+    // 2. Résoudre ou créer les élèves manquants si demandé
+    const { data: existingClassStudents } = await admin
+      .from("students")
+      .select("id")
+      .eq("school_id", school_id)
+      .eq("class_id", payload.classId);
+
+    const validStudentIds = new Set((existingClassStudents || []).map(s => s.id));
+    const missingRows = payload.rows.filter(r => !r.matchedStudentId || !validStudentIds.has(r.matchedStudentId));
+    const createdStudents: Array<{ id: string; last_name: string; first_name: string; matricule: string; class_id: string; gender: string | null }> = [];
+    const createdStudentIdByRowIdx = new Map<number, string>();
+
+    if (missingRows.length > 0 && payload.createMissingStudents) {
+      if (!["admin", "super_admin", "directeur", "censeur", "secretaire"].includes(roleData.role)) {
+        return {
+          error:
+            "La création automatique de nouveaux élèves dans l'effectif est réservée à la direction / secrétariat. Décochez cette option pour enregistrer uniquement les élèves déjà inscrits.",
+        };
+      }
+
+      const subStatus = await getSchoolSubscriptionStatus(admin as any, school_id);
+      if (subStatus.isExpired) {
+        return { error: "Votre abonnement a expiré. Impossible de créer de nouveaux élèves." };
+      }
+
+      const { count } = await admin
+        .from("students")
+        .select("*", { count: "exact", head: true })
+        .eq("school_id", school_id);
+
+      const currentCount = count || 0;
+      if (currentCount + missingRows.length > subStatus.maxStudents) {
+        return {
+          error: `Limite de votre formule dépassée (${currentCount} + ${missingRows.length} > ${subStatus.maxStudents} élèves).`,
+        };
+      }
+
+      const { data: allMats } = await admin
+        .from("students")
+        .select("matricule")
+        .eq("school_id", school_id);
+
+      const existingMatSet = new Set((allMats || []).map(m => (m.matricule || "").trim()));
+      const numericMats = (allMats || [])
+        .map(m => parseInt(m.matricule, 10))
+        .filter(n => !isNaN(n));
+      let nextMat = numericMats.length > 0 ? Math.max(...numericMats) + 1 : 1000;
+
+      const toInsertStudents: Array<any> = [];
+      const rowIndexes: number[] = [];
+
+      payload.rows.forEach((row, idx) => {
+        if (row.matchedStudentId && validStudentIds.has(row.matchedStudentId)) return;
+        let mat = (row.matricule || "").trim();
+        if (!mat || existingMatSet.has(mat)) {
+          while (existingMatSet.has(String(nextMat))) nextMat++;
+          mat = String(nextMat++);
+        }
+        existingMatSet.add(mat);
+
+        toInsertStudents.push({
+          school_id,
+          class_id: payload.classId,
+          matricule: mat,
+          last_name: (row.lastName || "ÉLÈVE").trim().toUpperCase(),
+          first_name: (row.firstName || "").trim() || "-",
+          gender: row.gender === "M" || row.gender === "F" ? row.gender : null,
+          status: "actif",
+        });
+        rowIndexes.push(idx);
+      });
+
+      if (toInsertStudents.length > 0) {
+        const { data: insertedStus, error: stuErr } = await admin
+          .from("students")
+          .insert(toInsertStudents)
+          .select("id, last_name, first_name, matricule, class_id, gender");
+
+        if (stuErr || !insertedStus) {
+          return { error: `Erreur lors de la création des élèves manquants : ${stuErr?.message}` };
+        }
+
+        insertedStus.forEach((st, i) => {
+          createdStudents.push(st);
+          createdStudentIdByRowIdx.set(rowIndexes[i], st.id);
+        });
+      }
+    }
+
+    // 3. Préparer les notes à enregistrer
+    if (isPrimary) {
+      const upsertsMap = new Map<string, any>();
+
+      payload.rows.forEach((row, idx) => {
+        const stuId =
+          row.matchedStudentId && validStudentIds.has(row.matchedStudentId)
+            ? row.matchedStudentId
+            : createdStudentIdByRowIdx.get(idx);
+        if (!stuId) return;
+
+        for (const [colKey, mapping] of colSubjectMap.entries()) {
+          const val = row.scores[colKey];
+          if (val === null || val === undefined || isNaN(val)) continue;
+          const safeVal = Math.max(0, Math.min(100, Number(val)));
+          const officialMax = Math.max(
+            mapping.maxScore || 10,
+            getPrimarySubjectMaxScore(mapping.name, clsData.name, clsData.level),
+            safeVal > 10 ? 20 : 10
+          );
+
+          const dedupKey = `${stuId}_${mapping.subjectId}`;
+          upsertsMap.set(dedupKey, {
+            school_id,
+            student_id: stuId,
+            subject_id: mapping.subjectId,
+            month_number: monthNumber,
+            score: safeVal,
+            max_score: officialMax,
+            academic_year: academicYear,
+            entered_by: user.id,
+          });
+        }
+      });
+
+      const records = Array.from(upsertsMap.values());
+      if (records.length === 0) {
+        return {
+          error: "Aucune note à enregistrer pour les élèves reconnus dans cette classe.",
+        };
+      }
+
+      const { error: upErr } = await admin
+        .from("primary_grades")
+        .upsert(records, {
+          onConflict: "student_id, subject_id, month_number, academic_year",
+        });
+
+      if (upErr) {
+        return { error: `Erreur lors de l'enregistrement des notes : ${upErr.message}` };
+      }
+
+      revalidatePath("/admin/academique/notes");
+      revalidatePath("/admin/academique/bulletins");
+      revalidatePath("/enseignant/notes");
+
+      return {
+        success: true,
+        savedGradesCount: records.length,
+        createdStudentsCount: createdStudents.length,
+        createdSubjectsCount: createdSubjects.length,
+        savedPrimaryGrades: records.map(r => ({
+          student_id: r.student_id,
+          subject_id: r.subject_id,
+          month_number: r.month_number,
+          score: r.score,
+        })),
+        createdStudents,
+        createdSubjects,
+      };
+    } else {
+      const upsertsMap = new Map<string, any>();
+
+      payload.rows.forEach((row, idx) => {
+        const stuId =
+          row.matchedStudentId && validStudentIds.has(row.matchedStudentId)
+            ? row.matchedStudentId
+            : createdStudentIdByRowIdx.get(idx);
+        if (!stuId) return;
+
+        for (const [colKey, mapping] of colSubjectMap.entries()) {
+          const val = row.scores[colKey];
+          if (val === null || val === undefined || isNaN(val)) continue;
+          const safeVal = Math.max(0, Math.min(20, Number(val)));
+
+          const dedupKey = `${stuId}_${mapping.subjectId}`;
+          upsertsMap.set(dedupKey, {
+            school_id,
+            student_id: stuId,
+            subject_id: mapping.subjectId,
+            term,
+            class_score: null,
+            comp_score: safeVal,
+            max_score: 20,
+            academic_year: academicYear,
+            entered_by: user.id,
+          });
+        }
+      });
+
+      const records = Array.from(upsertsMap.values());
+      if (records.length === 0) {
+        return {
+          error: "Aucune note à enregistrer pour les élèves reconnus dans cette classe.",
+        };
+      }
+
+      const { error: upErr } = await admin
+        .from("secondary_grades")
+        .upsert(records, {
+          onConflict: "student_id, subject_id, term, academic_year",
+        });
+
+      if (upErr) {
+        return { error: `Erreur lors de l'enregistrement des notes : ${upErr.message}` };
+      }
+
+      revalidatePath("/admin/academique/notes");
+      revalidatePath("/admin/academique/bulletins");
+      revalidatePath("/enseignant/notes");
+
+      return {
+        success: true,
+        savedGradesCount: records.length,
+        createdStudentsCount: createdStudents.length,
+        createdSubjectsCount: createdSubjects.length,
+        savedSecondaryGrades: records.map(r => ({
+          student_id: r.student_id,
+          subject_id: r.subject_id,
+          term: r.term,
+          class_score: r.class_score,
+          comp_score: r.comp_score,
+        })),
+        createdStudents,
+        createdSubjects,
+      };
+    }
+  } catch (err: any) {
+    return { error: err?.message || "Erreur inattendue lors de l'importation." };
   }
 }
