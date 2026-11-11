@@ -212,7 +212,7 @@ export function getAppreciation(
     return { label: 'Absent(e)', bucket: 'absent' }
   }
   const on20 = scale === 10 ? average * 2 : average
-  if (on20 >= 18) return { label: 'Très bon travail ; félicitations', bucket: 'tres_bon' }
+  if (on20 >= 18) return { label: 'Très bon travail', bucket: 'tres_bon' }
   if (on20 >= 16) return { label: 'Bon travail', bucket: 'bon' }
   if (on20 >= 12) return { label: 'Assez bon travail', bucket: 'assez_bon' }
   if (on20 >= 10) return { label: 'Passable', bucket: 'passable' }
@@ -222,9 +222,9 @@ export function getAppreciation(
 
 export function getLegendText(scale: AverageScale = 20): string {
   if (scale === 10) {
-    return 'Appréciations : ≥ 9 Très bon travail ; félicitations | 8 à 8,99 Bon travail | 6 à 7,99 Assez bon travail | 5 à 5,99 Passable | 3 à 4,99 Travail médiocre | < 3 Travail très insuffisant. Moyenne < 5 en rouge.'
+    return 'Appréciations : ≥ 9 Très bon travail | 8 à 8,99 Bon travail | 6 à 7,99 Assez bon travail | 5 à 5,99 Passable | 3 à 4,99 Travail médiocre | < 3 Travail très insuffisant. Moyenne < 5 en rouge.'
   }
-  return 'Appréciations : ≥ 18 Très bon travail ; félicitations | 16 à 17,99 Bon travail | 12 à 15,99 Assez bon travail | 10 à 11,99 Passable | 6 à 9,99 Travail médiocre | < 6 Travail très insuffisant. Moyenne < 10 en rouge.'
+  return 'Appréciations : ≥ 18 Très bon travail | 16 à 17,99 Bon travail | 12 à 15,99 Assez bon travail | 10 à 11,99 Passable | 6 à 9,99 Travail médiocre | < 6 Travail très insuffisant. Moyenne < 10 en rouge.'
 }
 
 export function getDefaultReportTitle(params: {
@@ -679,7 +679,7 @@ export function buildClassResultsReport(params: {
   }> = [
     {
       bucket: 'tres_bon',
-      label: 'Très bon travail ; félicitations',
+      label: 'Très bon travail',
       rangeLabel: scale === 10 ? '≥ 9,00' : '≥ 18,00',
     },
     {
