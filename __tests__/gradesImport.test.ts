@@ -182,7 +182,7 @@ describe('grades-import Excel parsing, auto-computation & merit export', () => {
     expect(report.divisor).toBe(7)
     expect(report.displayRows.map(r => r.fullName)).toEqual(['KODJO Marie', 'DOSSOU Paul'])
     expect(report.displayRows[0].average).toBe(18)
-    expect(report.displayRows[0].appreciation).toBe('Très bon travail')
+    expect(report.displayRows[0].appreciation).toBe('Très bon travail ; félicitations')
     expect(report.displayRows[1].average).toBe(10)
     expect(report.displayRows[1].rankText).toBe('2e')
   })

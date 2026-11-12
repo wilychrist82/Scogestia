@@ -1178,7 +1178,7 @@ export function buildReportFromImportedData(params: {
   }> = [
     {
       bucket: 'tres_bon',
-      label: 'Très bon travail',
+      label: 'Très bon travail ; félicitations',
       rangeLabel: scale === 10 ? '≥ 9,00' : '≥ 18,00',
     },
     {
