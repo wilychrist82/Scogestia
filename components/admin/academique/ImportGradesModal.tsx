@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   X,
-  Upload,
+  ArrowLeft,
   CloudUpload,
   FileSpreadsheet,
   Trophy,
@@ -89,37 +89,66 @@ function escapeHtml(raw: string): string {
 
 function buildPrintableImportedHtml(
   report: ClassResultsReport,
-  mode: 'results' | 'merit_admis' | 'recap'
+  mode: 'results' | 'merit_admis' | 'recap',
+  includeMeritDisciplines: boolean = true
 ): string {
   if (mode === 'merit_admis') {
+    const showDisciplines = includeMeritDisciplines && report.columns.length > 0
+    const rotatedHeaders = showDisciplines
+      ? report.columns
+          .map(
+            col =>
+              `<th class="vth"><div class="vwrap">${escapeHtml(report.isPrimary ? col.name : `${col.name} (c.${col.coefficient})`)}</div></th>`
+          )
+          .join('')
+      : ''
+
     const rowsHtml = report.meritPassingRows
-      .map(
-        (stu, i) => `
+      .map((stu, i) => {
+        const discCells = showDisciplines
+          ? report.columns
+              .map(col => {
+                const v = stu.scores[col.id]
+                const txt =
+                  v !== null && v !== undefined
+                    ? Number.isInteger(v)
+                      ? String(v)
+                      : fmtComma(v, 2).replace(/,00$/, '').replace(/(,\d)0$/, '$1')
+                    : ''
+                return `<td class="c">${txt}</td>`
+              })
+              .join('')
+          : ''
+        return `
         <tr>
           <td class="c">${i + 1}</td>
           <td class="c b">${escapeHtml(stu.rankText)}</td>
           <td class="b">${escapeHtml(stu.fullName)}</td>
           <td class="c">${escapeHtml(stu.gender || '—')}</td>
+          ${discCells}
           <td class="c b">${fmtComma(stu.totalPoints, 1)}</td>
           <td class="c b ok">${fmtComma(stu.average, 2)} / ${report.scale}</td>
           <td>${escapeHtml(stu.appreciation)}</td>
         </tr>`
-      )
+      })
       .join('')
 
+    const totalCols = 4 + (showDisciplines ? report.columns.length : 0) + 3
     return `<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8" />
 <title>Ordre de mérite (Admis) – ${escapeHtml(report.className)}</title>
 <style>
-  @page { size: A4 portrait; margin: 10mm; }
-  body { font-family: Calibri, Arial, sans-serif; color: #0f172a; margin: 0; font-size: 11px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .banner { background: #1B365D; color: #fff; text-align: center; padding: 10px; font-weight: 700; font-size: 14px; }
-  .meta { background: #F1F5F9; text-align: center; padding: 6px; font-weight: 700; font-size: 11px; border: 1px solid #94A3B8; border-top: none; margin-bottom: 12px; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { border: 1px solid #94A3B8; padding: 5px 7px; }
-  th { background: #1B365D; color: #fff; font-weight: 700; text-align: left; }
+  @page { size: ${showDisciplines ? 'A4 landscape' : 'A4 portrait'}; margin: ${showDisciplines ? '8mm' : '10mm'}; }
+  body { font-family: Calibri, Arial, sans-serif; color: #0f172a; margin: 0; font-size: ${showDisciplines ? '9.5px' : '11px'}; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .banner { background: #1B365D; color: #fff; text-align: center; padding: 9px; font-weight: 700; font-size: 13px; }
+  .meta { background: #F1F5F9; text-align: center; padding: 5px; font-weight: 700; font-size: 10.5px; border: 1px solid #94A3B8; border-top: none; margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; ${showDisciplines ? 'table-layout: fixed;' : ''} }
+  th, td { border: 1px solid #94A3B8; padding: ${showDisciplines ? '2px 3px' : '5px 7px'}; }
+  th { background: #1B365D; color: #fff; font-weight: 700; text-align: center; }
+  .vth { height: 95px; vertical-align: bottom; padding: 3px 1px; }
+  .vwrap { writing-mode: vertical-rl; transform: rotate(180deg); margin: 0 auto; white-space: nowrap; max-height: 88px; overflow: hidden; text-overflow: ellipsis; font-size: 8.5px; }
   .c { text-align: center; }
   .b { font-weight: 700; }
   .ok { color: #047857; }
@@ -132,17 +161,18 @@ function buildPrintableImportedHtml(
   <table>
     <thead>
       <tr>
-        <th class="c" style="width:36px;">N°</th>
-        <th class="c" style="width:65px;">Rang</th>
-        <th>Nom et Prénom</th>
-        <th class="c" style="width:45px;">Sexe</th>
-        <th class="c" style="width:85px;">Points obtenus</th>
-        <th class="c" style="width:95px;">Moyenne</th>
-        <th>Appréciation</th>
+        <th class="c" style="width:26px;">N°</th>
+        <th class="c" style="width:52px;">Rang</th>
+        <th style="${showDisciplines ? 'width:160px;' : ''}">Nom et Prénom</th>
+        <th class="c" style="width:32px;">Sexe</th>
+        ${rotatedHeaders}
+        <th class="c" style="width:56px;">Points</th>
+        <th class="c" style="width:68px;">Moyenne</th>
+        <th style="${showDisciplines ? 'width:115px;' : ''}">Appréciation</th>
       </tr>
     </thead>
     <tbody>
-      ${rowsHtml || '<tr><td colspan="7" class="c">Aucun élève admis pour cette période.</td></tr>'}
+      ${rowsHtml || `<tr><td colspan="${totalCols}" class="c">Aucun élève admis pour cette période.</td></tr>`}
     </tbody>
   </table>
 </body>
@@ -310,7 +340,7 @@ export function ImportGradesModal({
   const [sortMode, setSortMode] = useState<SortMode>('alphabetical')
   const [filterMode, setFilterMode] = useState<FilterMode>('all')
   const [activeTab, setActiveTab] = useState<'results' | 'merit_admis' | 'recap' | 'mapping'>('results')
-  const [meritWithDisciplines, setMeritWithDisciplines] = useState<boolean>(false)
+  const [meritWithDisciplines, setMeritWithDisciplines] = useState<boolean>(true)
 
   const [isDragging, setIsDragging] = useState<boolean>(false)
   const [rawBuffer, setRawBuffer] = useState<ArrayBuffer | null>(null)
@@ -375,6 +405,31 @@ export function ImportGradesModal({
     setStudentMatches(matchStudentsToClass(parsed.rows, classStudents))
   }, [parsed, targetClassObj, classStudents, subjects, isPrimary])
 
+  const handleResetToUpload = () => {
+    setParsed(null)
+    setRawBuffer(null)
+    setFileName('')
+    setParseError(null)
+    setSaveMessage(null)
+    setCustomDivisorInput('')
+    setCustomTitle('')
+    setHasEditedTitle(false)
+    setSubjectMappings([])
+    setStudentMatches([])
+    setActiveTab('results')
+    setSortMode('alphabetical')
+    setFilterMode('all')
+    setMeritWithDisciplines(true)
+  }
+
+  const handleBack = () => {
+    if (parsed) {
+      handleResetToUpload()
+    } else {
+      onClose()
+    }
+  }
+
   const loadFileBuffer = (buffer: ArrayBuffer, name: string, sheetOverride?: string) => {
     setParseError(null)
     setSaveMessage(null)
@@ -401,6 +456,7 @@ export function ImportGradesModal({
       setSortMode('alphabetical')
       setFilterMode('all')
       setActiveTab('results')
+      setMeritWithDisciplines(true)
     } catch (err: any) {
       setParseError(err?.message || "Impossible de lire ce fichier Excel.")
     }
@@ -525,7 +581,7 @@ export function ImportGradesModal({
         : activeTab === 'recap'
           ? 'recap'
           : 'results'
-    const html = buildPrintableImportedHtml(report, printMode)
+    const html = buildPrintableImportedHtml(report, printMode, meritWithDisciplines)
     const iframe = document.createElement('iframe')
     iframe.style.position = 'fixed'
     iframe.style.right = '0'
@@ -640,28 +696,48 @@ export function ImportGradesModal({
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 px-4 sm:px-6 py-3.5 bg-gradient-to-r from-[#0F172A] via-[#1B365D] to-[#065F46] text-white shrink-0">
-          <div className="flex items-start sm:items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/15 ring-1 ring-white/25 flex items-center justify-center shrink-0">
-              <Upload className="w-5 h-5 text-emerald-300" />
-            </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-extrabold tracking-tight text-white">
-                Importer les Notes d&apos;une Classe (Excel)
-              </h2>
-              <p className="text-xs text-slate-200 mt-0.5">
-                Importez votre tableau rempli par disciplines : Scogestia calcule automatiquement totaux, moyennes, rangs, appréciations et liste de mérite des admis.
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 px-4 sm:px-6 py-3.5 bg-gradient-to-r from-[#0F172A] via-[#132A3E] to-[#064E3B] border-b border-white/10 text-white shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={handleBack}
+              title={
+                parsed
+                  ? 'Retour en arrière (choisir un autre fichier ou changer de classe)'
+                  : 'Retour à la saisie des notes'
+              }
+              aria-label={parsed ? 'Retour en arrière' : 'Fermer'}
+              className="group h-10 px-3 rounded-xl bg-white/12 hover:bg-white/22 ring-1 ring-white/25 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4 text-emerald-300 group-hover:-translate-x-0.5 transition-transform" />
+              {parsed && <span className="text-xs font-bold text-white">Retour</span>}
+            </button>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-base sm:text-lg font-extrabold tracking-tight text-white truncate">
+                  Importer les Notes d&apos;une Classe (Excel)
+                </h2>
+                {report && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-400/20 text-emerald-200 ring-1 ring-emerald-300/30 whitespace-nowrap">
+                    {report.columns.length} discipline(s) · {report.allRows.length} élève(s)
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5 truncate">
+                {report
+                  ? `Fichier actif : ${fileName} — Totaux, moyennes, rangs (ex-æquo) et appréciations calculés automatiquement.`
+                  : 'Importez votre tableau rempli par disciplines : Scogestia calcule automatiquement totaux, moyennes, rangs, appréciations et liste de mérite.'}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
             {report && (
               <>
                 <button
                   type="button"
                   onClick={handlePrint}
-                  className="px-3 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>Imprimer</span>
@@ -670,19 +746,19 @@ export function ImportGradesModal({
                   type="button"
                   onClick={() => handleDownloadResults('merit_only')}
                   disabled={isExporting || report.meritPassingRows.length === 0}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-sm flex items-center gap-1.5 whitespace-nowrap cursor-pointer disabled:opacity-50 transition-colors"
                 >
                   <Trophy className="w-3.5 h-3.5" />
-                  <span>Télécharger Admis (.xlsx)</span>
+                  <span>Admis (.xlsx)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDownloadResults('complete')}
                   disabled={isExporting}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-400 hover:bg-emerald-300 text-slate-950 shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-400 hover:bg-emerald-300 text-slate-950 shadow-sm flex items-center gap-1.5 whitespace-nowrap cursor-pointer disabled:opacity-60 transition-colors"
                 >
                   {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                  <span>Télécharger Complet (.xlsx)</span>
+                  <span>Complet (.xlsx)</span>
                 </button>
               </>
             )}
@@ -690,7 +766,7 @@ export function ImportGradesModal({
               type="button"
               onClick={onClose}
               aria-label="Fermer"
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 cursor-pointer"
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 cursor-pointer transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -1100,7 +1176,7 @@ export function ImportGradesModal({
                       : 'bg-slate-200/70 text-slate-700 border-transparent hover:bg-white/70'
                   }`}
                 >
-                  <Database className="w-3.5 h-3.5 text-indigo-600" />
+                  <Database className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Enregistrer dans Scogestia</span>
                 </button>
               </div>
@@ -1298,33 +1374,48 @@ export function ImportGradesModal({
               )}
 
               {activeTab === 'merit_admis' && (
-                <div className="max-w-[1160px] mx-auto bg-white rounded-xl border border-emerald-300 shadow-sm overflow-hidden">
-                  <div className="bg-emerald-800 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-3">
+                <div className="max-w-full mx-auto bg-white rounded-xl border border-emerald-200 shadow-sm overflow-hidden">
+                  <div className="bg-gradient-to-r from-[#0F172A] via-[#0B3B2E] to-[#065F46] text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2 font-extrabold text-sm">
-                        <Trophy className="w-5 h-5 text-amber-300" />
+                        <Trophy className="w-4 h-4 text-amber-300" />
                         <span>
-                          Liste de Mérite — Élèves ayant la moyenne uniquement (du 1er au dernier)
+                          Liste de Mérite — Élèves admis (du 1er au dernier)
                         </span>
                       </div>
-                      <p className="text-xs text-emerald-100 mt-0.5">
-                        Seuil de réussite : Moyenne ≥ {report.passThreshold} / {report.scale} •{' '}
-                        <strong>{report.meritPassingRows.length} élève(s) admis</strong> sur{' '}
+                      <p className="text-xs text-emerald-100/90 mt-0.5">
+                        Seuil : Moyenne ≥ {report.passThreshold} / {report.scale} ·{' '}
+                        <strong>{report.meritPassingRows.length} admis</strong> sur{' '}
                         {report.stats.present.total} présents (
                         {report.stats.passRatePct ?? 0} %)
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setMeritWithDisciplines(v => !v)}
-                        className="px-3 py-2 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <FileSpreadsheet className="w-3.5 h-3.5" />
-                        <span>
-                          {meritWithDisciplines ? 'Vue Points & Rang (synthèse)' : 'Afficher détails par discipline'}
-                        </span>
-                      </button>
+                      <div className="inline-flex rounded-lg bg-white/10 p-0.5 border border-white/15">
+                        <button
+                          type="button"
+                          onClick={() => setMeritWithDisciplines(true)}
+                          className={`px-2.5 py-1.5 rounded-md text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                            meritWithDisciplines
+                              ? 'bg-white text-slate-900 shadow-xs'
+                              : 'text-emerald-100 hover:text-white'
+                          }`}
+                        >
+                          <FileSpreadsheet className="w-3.5 h-3.5" />
+                          <span>Avec disciplines</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMeritWithDisciplines(false)}
+                          className={`px-2.5 py-1.5 rounded-md text-xs font-bold transition-colors cursor-pointer ${
+                            !meritWithDisciplines
+                              ? 'bg-white text-slate-900 shadow-xs'
+                              : 'text-emerald-100 hover:text-white'
+                          }`}
+                        >
+                          Points &amp; Rang seuls
+                        </button>
+                      </div>
                       <button
                         type="button"
                         onClick={() => handleDownloadResults('merit_only')}

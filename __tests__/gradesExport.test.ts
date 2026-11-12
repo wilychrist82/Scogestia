@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   buildClassResultsReport,
   getAppreciation,
+  getLegendText,
   ExportClassItem,
   ExportStudentItem,
   ExportSubjectItem,
@@ -134,8 +135,8 @@ describe('grades-export calculations & merit ranking', () => {
     expect(report.stats.passRatePct).toBe(75)
   })
 
-  it('classifies all 6 appreciation thresholds accurately on /20 and /10', () => {
-    expect(getAppreciation(18.5, 20).label).toBe('Très bon travail ; félicitations')
+  it('classifies all 6 appreciation thresholds accurately on /20 and /10 without felicitations', () => {
+    expect(getAppreciation(18.5, 20).label).toBe('Très bon travail')
     expect(getAppreciation(16.0, 20).label).toBe('Bon travail')
     expect(getAppreciation(13.25, 20).label).toBe('Assez bon travail')
     expect(getAppreciation(10.0, 20).label).toBe('Passable')
@@ -143,9 +144,14 @@ describe('grades-export calculations & merit ranking', () => {
     expect(getAppreciation(5.99, 20).label).toBe('Travail très insuffisant')
     expect(getAppreciation(null, 20).label).toBe('Absent(e)')
 
-    expect(getAppreciation(9.2, 10).label).toBe('Très bon travail ; félicitations')
+    expect(getAppreciation(9.2, 10).label).toBe('Très bon travail')
     expect(getAppreciation(5.0, 10).label).toBe('Passable')
     expect(getAppreciation(4.5, 10).label).toBe('Travail médiocre')
+
+    expect(getLegendText(20)).not.toContain('félicitations')
+    expect(getLegendText(10)).not.toContain('félicitations')
+    expect(getLegendText(20)).toContain('≥ 18 Très bon travail')
+    expect(getLegendText(10)).toContain('≥ 9 Très bon travail')
   })
 
   it('computes weighted averages and ranks for secondary (Collège / Lycée)', () => {

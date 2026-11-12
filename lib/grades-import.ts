@@ -89,13 +89,13 @@ export function normalizeImportText(raw?: string | null): string {
 }
 
 export function parseFrenchScore(raw: unknown): number | null {
-  if (raw === null || raw === undefined) return null
+  if (raw === null || raw === undefined || typeof raw === 'boolean') return null
   if (typeof raw === 'number') {
     if (!isFinite(raw) || isNaN(raw)) return null
     return Math.round(raw * 100) / 100
   }
   const str = String(raw).trim()
-  if (!str) return null
+  if (!str || str.startsWith('#')) return null
   const lower = str.toLowerCase()
   if (
     lower === '-' ||
@@ -103,18 +103,21 @@ export function parseFrenchScore(raw: unknown): number | null {
     lower === 'n/a' ||
     lower === 'na' ||
     lower.startsWith('abs') ||
-    lower === 'nc'
+    lower === 'nc' ||
+    lower === 'dispense' ||
+    lower === 'dispensé' ||
+    lower === 'dispensee' ||
+    lower === 'dispensée'
   ) {
     return null
   }
   // Remplacer virgule française et espaces insécables
   const cleaned = str.replace(/\s+/g, '').replace(',', '.')
-  if (!/^-?\d+(?:\.\d+)?$/.test(cleaned)) {
-    const parsed = parseFloat(cleaned)
-    return isNaN(parsed) || !isFinite(parsed) ? null : Math.round(parsed * 100) / 100
+  if (/^-?\d+(?:\.\d+)?$/.test(cleaned)) {
+    const num = parseFloat(cleaned)
+    return isNaN(num) || !isFinite(num) ? null : Math.round(num * 100) / 100
   }
-  const num = parseFloat(cleaned)
-  return isNaN(num) || !isFinite(num) ? null : Math.round(num * 100) / 100
+  return null
 }
 
 function splitFullName(rawFullName: string): { lastName: string; firstName: string; fullName: string } {
@@ -201,26 +204,81 @@ function classifyHeaderColumn(rawHeader: string): ColumnRole {
     return 'class'
   }
 
-  // Colonnes de résultats déjà calculées dans certains classeurs (ignorées à la lecture des notes)
+  // Colonnes de résultats déjà calculées ou colonnes techniques/tri (ignorées à la lecture des notes)
   if (
     norm === 'total' ||
     norm === 'total points' ||
     norm === 'total des points' ||
+    norm === 'total general' ||
+    norm === 'total pts' ||
     norm === 'points' ||
+    norm === 'pts' ||
     norm === 'somme' ||
     norm === 'moyenne' ||
     norm === 'moy' ||
     norm === 'moyenne generale' ||
+    norm === 'moyenne de classe' ||
     norm === 'moyenne 20' ||
     norm === 'moyenne 10' ||
+    norm === 'moy 20' ||
+    norm === 'moy 10' ||
+    norm === 'moyenne brute' ||
     norm === 'rang' ||
+    norm === 'rang final' ||
+    norm === 'rang officiel' ||
+    norm === 'rang num' ||
+    norm === 'rang numerique' ||
     norm === 'classement' ||
+    norm === 'rank' ||
     norm === 'appreciation' ||
     norm === 'appreciations' ||
     norm === 'observation' ||
     norm === 'observations' ||
+    norm === 'remarque' ||
+    norm === 'remarques' ||
+    norm === 'commentaire' ||
+    norm === 'commentaires' ||
     norm === 'decision' ||
-    norm === 'mention'
+    norm === 'mention' ||
+    norm === 'statut' ||
+    norm === 'status' ||
+    norm === 'admis' ||
+    norm === 'resultat' ||
+    norm === 'resultats' ||
+    norm === 'cle tri' ||
+    norm === 'cle de tri' ||
+    norm === 'cletri' ||
+    norm === 'cle' ||
+    norm === 'clef' ||
+    norm === 'clef tri' ||
+    norm === 'clef de tri' ||
+    norm === 'cleftri' ||
+    norm === 'colonne tri' ||
+    norm === 'colonne de tri' ||
+    norm === 'tri' ||
+    norm === 'ordre tri' ||
+    norm === 'ordre de tri' ||
+    norm === 'sort' ||
+    norm === 'sort key' ||
+    norm === 'sortkey' ||
+    norm === 'helper' ||
+    norm === 'code tri' ||
+    norm === 'num tri' ||
+    norm === 'key' ||
+    norm === 'index' ||
+    norm === 'coef' ||
+    norm === 'coefficient' ||
+    norm.includes('cle tri') ||
+    norm.includes('cle de tri') ||
+    norm.includes('clef tri') ||
+    norm.includes('clef de tri') ||
+    norm.includes('sort key') ||
+    norm.startsWith('cle ') ||
+    norm.startsWith('clef ') ||
+    /\btri$/.test(norm) ||
+    norm.startsWith('moyenne ') ||
+    norm.startsWith('total ') ||
+    norm.startsWith('rang ')
   ) {
     return 'computed'
   }
@@ -402,6 +460,17 @@ export function parseExcelWorkbookGrades(
     throw new Error(`La feuille "${targetSheet}" est vide.`)
   }
 
+  // Ignorer les colonnes masquées dans Excel (ex: colonnes techniques/de tri cachées comme "Clé tri")
+  const hiddenColIndexes = new Set<number>()
+  const wsCols = (ws as any)?.['!cols'] as Array<{ hidden?: boolean }> | undefined
+  if (Array.isArray(wsCols)) {
+    wsCols.forEach((colInfo, idx) => {
+      if (colInfo && colInfo.hidden === true) {
+        hiddenColIndexes.add(idx)
+      }
+    })
+  }
+
   // 1. Trouver la ligne d'en-tête réelle (contient "Nom et Prénom", "Nom", "Élève", etc.)
   let headerRowIdx = -1
   let bestScore = -1
@@ -413,7 +482,9 @@ export function parseExcelWorkbookGrades(
     let hasNameCol = false
     let nonEmptyCount = 0
 
-    for (const cell of row) {
+    for (let c = 0; c < row.length; c++) {
+      if (hiddenColIndexes.has(c)) continue
+      const cell = row[c]
       if (cell === null || cell === undefined) continue
       const txt = String(cell).trim()
       if (!txt) continue
@@ -433,7 +504,24 @@ export function parseExcelWorkbookGrades(
 
     // Éviter la ligne de groupe ("ÉLÈVES" | "NOTES PAR DISCIPLINE" | "RÉSULTATS")
     const joinedNorm = normalizeImportText(row.filter(Boolean).join(' '))
-    if (joinedNorm.includes('notes par discipline') && !hasNameCol) {
+    const hasExplicitNameField = row.some((cell, cIdx) => {
+      if (hiddenColIndexes.has(cIdx) || cell === null || cell === undefined) return false
+      const n = normalizeImportText(String(cell))
+      return (
+        n === 'nom et prenom' ||
+        n === 'nom et prenoms' ||
+        n === 'nom prenom' ||
+        n === 'nom prenoms' ||
+        n === 'noms et prenoms' ||
+        n === 'nom' ||
+        n === 'prenom'
+      )
+    })
+    if (
+      (joinedNorm.includes('notes par discipline') ||
+        (joinedNorm.includes('eleves') && joinedNorm.includes('resultats'))) &&
+      !hasExplicitNameField
+    ) {
       continue
     }
 
@@ -477,9 +565,102 @@ export function parseExcelWorkbookGrades(
     options?.fileName
   )
 
-  // 3. Analyser les colonnes à partir de headerRowIdx
-  const headerRow = matrix[headerRowIdx] || []
-  const maxCols = matrix.reduce((m, row) => Math.max(m, (row || []).length), headerRow.length)
+  // 3. Analyser les colonnes à partir de headerRowIdx (gère aussi les en-têtes sur 2 lignes fusionnées)
+  const rawHeaderRow = matrix[headerRowIdx] || []
+  const nextHeaderCandidateRow = matrix[headerRowIdx + 1] || []
+  const maxCols = matrix.reduce((m, row) => Math.max(m, (row || []).length), rawHeaderRow.length)
+
+  const headerJoinedNorm = normalizeImportText(rawHeaderRow.filter(Boolean).join(' '))
+  const nextRowHasName = nextHeaderCandidateRow.some((cell, idx) => {
+    if (hiddenColIndexes.has(idx) || cell === null || cell === undefined) return false
+    const role = classifyHeaderColumn(String(cell))
+    return role === 'fullname' || role === 'lastname' || role === 'firstname'
+  })
+  const nextRowHasScoreOrGenderData = nextHeaderCandidateRow.some((cell, idx) => {
+    if (hiddenColIndexes.has(idx) || cell === null || cell === undefined) return false
+    if (typeof cell === 'number') return true
+    if (parseFrenchScore(cell) !== null) return true
+    const upperCell = rawHeaderRow[idx]
+    const upperRole =
+      upperCell !== null && upperCell !== undefined ? classifyHeaderColumn(String(upperCell)) : null
+    if (upperRole === 'gender') {
+      const g = normalizeImportText(String(cell))
+      if (g === 'm' || g === 'f' || g === 'g' || g === 'h') return true
+    }
+    return false
+  })
+  const subheaderDiscUnderEmptyOrBannerCount = nextHeaderCandidateRow.filter((cell, idx) => {
+    if (hiddenColIndexes.has(idx) || cell === null || cell === undefined) return false
+    if (typeof cell !== 'string') return false
+    const s = cell.trim()
+    if (!s || parseFrenchScore(s) !== null) return false
+    if (classifyHeaderColumn(s) !== 'discipline') return false
+    const upper = rawHeaderRow[idx]
+    const upperNorm =
+      upper !== null && upper !== undefined ? normalizeImportText(String(upper)) : ''
+    return (
+      upperNorm === '' ||
+      upperNorm === 'notes par discipline' ||
+      upperNorm === 'disciplines' ||
+      upperNorm === 'matieres'
+    )
+  }).length
+  const hasMergedGroupInHeader =
+    headerJoinedNorm.includes('notes par discipline') || headerJoinedNorm.includes('resultats')
+
+  let dataStartRowIdx = headerRowIdx + 1
+  const headerRow: any[] = []
+  if (
+    headerRowIdx + 1 < matrix.length &&
+    !nextRowHasName &&
+    !nextRowHasScoreOrGenderData &&
+    (hasMergedGroupInHeader || subheaderDiscUnderEmptyOrBannerCount >= 2)
+  ) {
+    for (let c = 0; c < maxCols; c++) {
+      const lower = nextHeaderCandidateRow[c]
+      const upper = rawHeaderRow[c]
+      const upperNorm = upper !== null && upper !== undefined ? normalizeImportText(String(upper)) : ''
+      const isGroupBanner =
+        upperNorm === 'eleves' ||
+        upperNorm === 'notes par discipline' ||
+        upperNorm === 'resultats'
+      headerRow[c] =
+        lower !== null && lower !== undefined && String(lower).trim() !== ''
+          ? lower
+          : isGroupBanner
+            ? null
+            : upper
+    }
+    dataStartRowIdx = headerRowIdx + 2
+  } else {
+    for (let c = 0; c < maxCols; c++) {
+      headerRow[c] = rawHeaderRow[c]
+    }
+  }
+
+  // Détecter la plage fusionnée "NOTES PAR DISCIPLINE" sur la ligne de groupe (si présente)
+  let disciplineBandRange: { start: number; end: number } | null = null
+  const groupRowIdx = dataStartRowIdx === headerRowIdx + 2 ? headerRowIdx : headerRowIdx - 1
+  const wsMerges = (ws as any)?.['!merges'] as
+    | Array<{ s: { r: number; c: number }; e: { r: number; c: number } }>
+    | undefined
+  if (groupRowIdx >= 0 && Array.isArray(wsMerges)) {
+    const grpRow = matrix[groupRowIdx] || []
+    for (const mg of wsMerges) {
+      if (mg.s.r <= groupRowIdx && mg.e.r >= groupRowIdx) {
+        const val = grpRow[mg.s.c]
+        const normVal = val !== null && val !== undefined ? normalizeImportText(String(val)) : ''
+        if (
+          normVal.includes('notes par discipline') ||
+          normVal === 'disciplines' ||
+          normVal === 'matieres'
+        ) {
+          disciplineBandRange = { start: mg.s.c, end: mg.e.c }
+          break
+        }
+      }
+    }
+  }
 
   let numColIdx = -1
   let fullNameColIdx = -1
@@ -487,9 +668,12 @@ export function parseExcelWorkbookGrades(
   let firstNameColIdx = -1
   let genderColIdx = -1
   let matriculeColIdx = -1
+  let seenSummaryResultCols = 0
+  let seenAppreciationCol = false
   const disciplineCandidates: Array<{ colIndex: number; rawHeader: string; cleanName: string; explicitCoef: number | null }> = []
 
   for (let c = 0; c < maxCols; c++) {
+    if (hiddenColIndexes.has(c)) continue
     const rawCell = headerRow[c]
     if (rawCell === null || rawCell === undefined) continue
     const rawStr = String(rawCell).replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim()
@@ -502,7 +686,22 @@ export function parseExcelWorkbookGrades(
     else if (role === 'firstname' && firstNameColIdx === -1) firstNameColIdx = c
     else if (role === 'gender' && genderColIdx === -1) genderColIdx = c
     else if (role === 'matricule' && matriculeColIdx === -1) matriculeColIdx = c
-    else if (role === 'discipline') {
+    else if (role === 'computed') {
+      if (disciplineCandidates.length > 0) {
+        seenSummaryResultCols++
+        const normComputed = normalizeImportText(rawStr)
+        if (normComputed.includes('appreciation')) {
+          seenAppreciationCol = true
+        }
+      }
+    } else if (role === 'discipline') {
+      // Ignorer toute colonne hors de la bande "NOTES PAR DISCIPLINE" ou située après le bloc résultats ("Total/Moyenne/Rang/Appréciation")
+      if (disciplineBandRange && (c < disciplineBandRange.start || c > disciplineBandRange.end)) {
+        continue
+      }
+      if (seenAppreciationCol || (disciplineCandidates.length > 0 && seenSummaryResultCols >= 2)) {
+        continue
+      }
       const { cleanName, explicitCoef } = extractCoefAndName(rawStr)
       disciplineCandidates.push({ colIndex: c, rawHeader: rawStr, cleanName, explicitCoef })
     }
@@ -518,7 +717,7 @@ export function parseExcelWorkbookGrades(
   const colMaxObserved: Record<number, number> = {}
   const colHasGrade: Record<number, boolean> = {}
 
-  for (let r = headerRowIdx + 1; r < matrix.length; r++) {
+  for (let r = dataStartRowIdx; r < matrix.length; r++) {
     const row = matrix[r] || []
 
     let rawFullName = ''
@@ -1026,12 +1225,12 @@ export function buildReportFromImportedData(params: {
     }
 
     const isAbsent = gradedCount === 0
-    const finalTotal = isAbsent ? null : Number(totalPoints.toFixed(2))
+    const finalTotal = isAbsent ? null : Math.round((totalPoints + 1e-9) * 100) / 100
 
     let average: number | null = null
     if (!isAbsent && finalTotal !== null) {
       if (isPrimary) {
-        average = divisor > 0 ? Number((finalTotal / divisor).toFixed(2)) : null
+        average = divisor > 0 ? Math.round(((finalTotal / divisor) + 1e-9) * 100) / 100 : null
       } else {
         const effDiv =
           params.customDivisor && params.customDivisor > 0
@@ -1039,7 +1238,7 @@ export function buildReportFromImportedData(params: {
             : studentCoefSum > 0
               ? studentCoefSum
               : divisor
-        average = effDiv > 0 ? Number((finalTotal / effDiv).toFixed(2)) : null
+        average = effDiv > 0 ? Math.round(((finalTotal / effDiv) + 1e-9) * 100) / 100 : null
       }
     }
 
@@ -1178,7 +1377,7 @@ export function buildReportFromImportedData(params: {
   }> = [
     {
       bucket: 'tres_bon',
-      label: 'Très bon travail ; félicitations',
+      label: 'Très bon travail',
       rangeLabel: scale === 10 ? '≥ 9,00' : '≥ 18,00',
     },
     {

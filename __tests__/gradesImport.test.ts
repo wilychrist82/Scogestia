@@ -73,7 +73,7 @@ describe('grades-import Excel parsing, auto-computation & merit export', () => {
       // Row 10: TCHOKOU Frederic (M) -> Sum = 117.0 -> 117/7 = 16.71 (Bon travail, 1er ex)
       [6, 'TCHOKOU Frederic', 'M', 4, '8,5', 8, 16, 10, 20, 16, 9, 9, 10, '6,5'],
       // Footer legend row (must be skipped cleanly)
-      ['Appréciations : ≥ 18 Très bon travail ; félicitations | 16 à 17,99 Bon travail | Moyenne < 10 en rouge.'],
+      ['Appréciations : ≥ 18 Très bon travail | 16 à 17,99 Bon travail | Moyenne < 10 en rouge.'],
     ]
 
     const buf = buildXlsxArrayBuffer({ Résultats: aoa, Récapitulation: [['Statistiques']] })
@@ -182,7 +182,7 @@ describe('grades-import Excel parsing, auto-computation & merit export', () => {
     expect(report.divisor).toBe(7)
     expect(report.displayRows.map(r => r.fullName)).toEqual(['KODJO Marie', 'DOSSOU Paul'])
     expect(report.displayRows[0].average).toBe(18)
-    expect(report.displayRows[0].appreciation).toBe('Très bon travail ; félicitations')
+    expect(report.displayRows[0].appreciation).toBe('Très bon travail')
     expect(report.displayRows[1].average).toBe(10)
     expect(report.displayRows[1].rankText).toBe('2e')
   })
@@ -323,5 +323,125 @@ describe('grades-import Excel parsing, auto-computation & merit export', () => {
     const outBuf = await wb.xlsx.writeBuffer()
     expect(outBuf.byteLength).toBeGreaterThan(4000)
   }, 30000)
+
+  it('ignores "Clé tri", hidden Excel columns, and trailing macro columns without altering totals, averages, or absent status', () => {
+    const aoa: any[][] = [
+      ['COMPOSITION MENSUELLE – OCTOBRE 2026'],
+      ['Classe : CM2 | Moyenne = Total ÷ 2'],
+      [
+        'N°',
+        'Nom et Prénom',
+        'Sexe',
+        'Calcul écrit',
+        'Problème',
+        'Clé interne cachée',
+        'Total',
+        'Moyenne',
+        'Rang',
+        'Appréciation',
+        'Clé tri',
+        'Code tri',
+      ],
+      [1, 'HUNLEDE Rachelle', 'F', 20, 20, 999, 40, 20, '1er', 'Très bon travail', 1001, 'A-1'],
+      [2, 'ALOGNON Gloria', 'F', null, null, 888, null, null, null, 'Absent(e)', 9999, 'Z-9'],
+      [3, 'ABOGNON Sandra', 'F', 10, 12, 777, 22, 11, '2e', 'Passable', 2002, 'B-2'],
+    ]
+
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.aoa_to_sheet(aoa)
+    // Mark column index 5 ('Clé interne cachée') and index 10 ('Clé tri') as hidden in Excel metadata
+    ws['!cols'] = []
+    ws['!cols'][5] = { hidden: true }
+    ws['!cols'][10] = { hidden: true }
+    XLSX.utils.book_append_sheet(wb, ws, 'Résultats')
+    const out = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer | Uint8Array
+    const buf = out instanceof ArrayBuffer ? out : toArrayBuffer(out)
+
+    const parsed = parseExcelWorkbookGrades(buf, { className: 'CM2', classLevel: 'CM2' })
+    expect(parsed.columns.map(c => c.cleanName)).toEqual(['Calcul écrit', 'Problème'])
+
+    const report = buildReportFromImportedData({
+      parsed,
+      classItem: cm2Class,
+      cycle: 'primaire',
+      scale: 20,
+      sortMode: 'alphabetical',
+      filterMode: 'all',
+    })
+
+    const byName = Object.fromEntries(report.allRows.map(r => [r.fullName, r]))
+    expect(byName['HUNLEDE Rachelle'].totalPoints).toBe(40)
+    expect(byName['HUNLEDE Rachelle'].average).toBe(20)
+    expect(byName['HUNLEDE Rachelle'].appreciation).toBe('Très bon travail')
+
+    expect(byName['ALOGNON Gloria'].isAbsent).toBe(true)
+    expect(byName['ALOGNON Gloria'].totalPoints).toBeNull()
+    expect(byName['ALOGNON Gloria'].average).toBeNull()
+    expect(byName['ALOGNON Gloria'].appreciation).toBe('Absent(e)')
+
+    expect(byName['ABOGNON Sandra'].totalPoints).toBe(22)
+    expect(byName['ABOGNON Sandra'].average).toBe(11)
+  })
+
+  it('handles 2-row merged Excel headers (N°/Nom et Prénom vertically merged + NOTES PAR DISCIPLINE merged horizontally) alongside trailing Clé tri', () => {
+    const aoa: any[][] = [
+      ['COMPOSITION MENSUELLE – OCTOBRE 2026'],
+      ['Classe : CM2 | Moyenne = Total ÷ 7'],
+      // Row 3 (index 2): N°, Nom et Prénom, Sexe vertically merged with Row 4; NOTES PAR DISCIPLINE across D..N
+      ['N°', 'Nom et Prénom', 'Sexe', 'NOTES PAR DISCIPLINE', '', '', '', '', '', '', '', '', '', '', 'RÉSULTATS', '', '', '', 'Clé tri'],
+      // Row 4 (index 3): A..C empty because vertically merged; D..N disciplines; O..R results; S trailing Clé tri
+      [
+        null,
+        null,
+        null,
+        'Je sais écrire les mots',
+        'Questions',
+        'Je produis un texte',
+        'Etude de texte',
+        'Calcul mental',
+        'Calcul écrit',
+        'Problème',
+        'Science Humaine',
+        'Sciences et Technologie',
+        'Education Sociale',
+        'Education Artistique',
+        'Total',
+        'Moyenne',
+        'Rang',
+        'Appréciation',
+        'Clé tri',
+      ],
+      [1, 'AGBEKO Esther', 'F', 2, 8.5, 7, 15, 6, 20, 16, 9.5, 8, 8, 7, 107, 15.29, '1er', 'Assez bon travail', 1529],
+    ]
+
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.aoa_to_sheet(aoa)
+    ws['!merges'] = [
+      { s: { r: 2, c: 0 }, e: { r: 3, c: 0 } },
+      { s: { r: 2, c: 1 }, e: { r: 3, c: 1 } },
+      { s: { r: 2, c: 2 }, e: { r: 3, c: 2 } },
+      { s: { r: 2, c: 3 }, e: { r: 2, c: 13 } },
+      { s: { r: 2, c: 14 }, e: { r: 2, c: 17 } },
+    ]
+    XLSX.utils.book_append_sheet(wb, ws, 'Résultats')
+    const out = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer | Uint8Array
+    const buf = out instanceof ArrayBuffer ? out : toArrayBuffer(out)
+
+    const parsed = parseExcelWorkbookGrades(buf, { className: 'CM2', classLevel: 'CM2' })
+    expect(parsed.columns).toHaveLength(11)
+    expect(parsed.columns.some(c => c.cleanName.toLowerCase().includes('cle'))).toBe(false)
+    expect(parsed.rows).toHaveLength(1)
+
+    const report = buildReportFromImportedData({
+      parsed,
+      classItem: cm2Class,
+      cycle: 'primaire',
+      scale: 20,
+    })
+    expect(report.meritPassingRows).toHaveLength(1)
+    expect(report.meritPassingRows[0].totalPoints).toBe(107)
+    expect(report.meritPassingRows[0].average).toBe(15.29)
+    expect(report.meritPassingRows[0].appreciation).toBe('Assez bon travail')
+  })
 })
 

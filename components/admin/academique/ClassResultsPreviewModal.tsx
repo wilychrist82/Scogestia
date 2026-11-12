@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import {
   X,
+  ArrowLeft,
   Download,
   Printer,
   Award,
@@ -502,71 +503,78 @@ export function ClassResultsPreviewModal({
         onClick={e => e.stopPropagation()}
       >
         {/* Top Modal Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 px-4 sm:px-6 py-3.5 bg-gradient-to-r from-[#0F172A] via-[#1B365D] to-[#1E3A8A] text-white shrink-0">
-          <div className="flex items-start sm:items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/15 ring-1 ring-white/25 flex items-center justify-center shrink-0">
-              <FileSpreadsheet className="w-5 h-5 text-emerald-300" />
-            </div>
-            <div>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 px-4 sm:px-6 py-3.5 bg-gradient-to-r from-[#0F172A] via-[#132A3E] to-[#064E3B] border-b border-white/10 text-white shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={onClose}
+              title="Retour à la liste des notes"
+              aria-label="Retour"
+              className="group h-10 px-3 rounded-xl bg-white/12 hover:bg-white/22 ring-1 ring-white/25 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4 text-emerald-300 group-hover:-translate-x-0.5 transition-transform" />
+              <span className="text-xs font-bold text-white hidden sm:inline">Retour</span>
+            </button>
+            <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-base sm:text-lg font-extrabold tracking-tight text-white">
                   Aperçu &amp; Export Excel — {classItem.name}
                 </h2>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-400/20 text-emerald-200 ring-1 ring-emerald-300/30">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-400/20 text-emerald-200 ring-1 ring-emerald-300/30 whitespace-nowrap">
                   {report.stats.passing.total} admis / {report.stats.present.total} présents
                   {report.stats.passRatePct !== null ? ` (${report.stats.passRatePct} %)` : ''}
                 </span>
                 {report.stats.classAverage !== null && (
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-400/20 text-sky-100 ring-1 ring-sky-300/30">
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-400/20 text-sky-100 ring-1 ring-sky-300/30 whitespace-nowrap">
                     Moy. classe : {fmtNumComma(report.stats.classAverage, 2)} / {report.scale}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-200 mt-0.5">
+              <p className="text-xs text-slate-300 mt-0.5">
                 Calcul automatique des totaux, moyennes, rangs officiels (ex-æquo) et appréciations.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={handlePrint}
-              className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
             >
-              <Printer className="w-4 h-4" />
-              <span>Imprimer / PDF</span>
+              <Printer className="w-3.5 h-3.5" />
+              <span>Imprimer</span>
             </button>
 
             <button
               type="button"
               onClick={() => handleExportExcel('merit_only')}
               disabled={isExporting || report.meritPassingRows.length === 0}
-              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-sm transition-all disabled:opacity-50 flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
             >
-              <Trophy className="w-4 h-4" />
-              <span>Télécharger Admis (.xlsx)</span>
+              <Trophy className="w-3.5 h-3.5" />
+              <span>Admis (.xlsx)</span>
             </button>
 
             <button
               type="button"
               onClick={() => handleExportExcel('complete')}
               disabled={isExporting}
-              className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md transition-all disabled:opacity-60 flex items-center gap-2 cursor-pointer"
+              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-400 hover:bg-emerald-300 text-slate-950 shadow-sm transition-all disabled:opacity-60 flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
             >
               {isExporting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <Download className="w-4 h-4" />
+                <Download className="w-3.5 h-3.5" />
               )}
-              <span>{isExporting ? 'Génération...' : 'Exporter Excel (.xlsx)'}</span>
+              <span>{isExporting ? 'Génération...' : 'Complet (.xlsx)'}</span>
             </button>
 
             <button
               type="button"
               onClick={onClose}
               aria-label="Fermer l'aperçu"
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all cursor-pointer ml-1"
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 transition-all cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>

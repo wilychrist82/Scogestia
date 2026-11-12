@@ -24,7 +24,6 @@ import {
   Calculator,
   Award,
   Trash2,
-  Eye,
   FileSpreadsheet,
   Trophy,
   ArrowUpDown,
@@ -614,39 +613,41 @@ export function NotesManager({
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)] custom-scrollbar">
       <div className="max-w-[1440px] mx-auto space-y-6">
         
-        {/* En-tête Exécutif — Stripe Royal Indigo & Sapphire */}
-        <div className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 sm:px-7 sm:py-6 lg:flex-row lg:items-center">
+        {/* En-tête Exécutif — Scogestia Slate & Emerald */}
+        <div className="relative flex flex-col justify-between gap-4 overflow-hidden rounded-2xl bg-gradient-to-r from-[#0F172A] via-[#132A3E] to-[#064E3B] px-6 py-5 text-white shadow-[0_14px_34px_-14px_rgba(6,78,59,0.5)] ring-1 ring-emerald-400/20 sm:px-7 sm:py-6 xl:flex-row xl:items-center">
           <div aria-hidden className="pointer-events-none absolute inset-0">
-            <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-indigo-400/25 blur-3xl" />
-            <div className="absolute -bottom-20 left-1/3 h-48 w-72 rounded-full bg-sky-400/15 blur-3xl" />
+            <div className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-emerald-400/15 blur-3xl" />
+            <div className="absolute -bottom-20 left-1/3 h-48 w-72 rounded-full bg-sky-400/10 blur-3xl" />
           </div>
-          <div className="relative z-10">
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-indigo-50 ring-1 ring-inset ring-white/25 backdrop-blur-md">
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
-              Académique · Saisie des Notes
+          <div className="relative z-10 min-w-0">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-100 ring-1 ring-inset ring-white/20 backdrop-blur-md">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Académique · Saisie des Notes
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-slate-200 ring-1 ring-inset ring-white/15">
+                <GraduationCap className="w-3.5 h-3.5 text-emerald-300" />
+                {isPrimaryCycle ? 'Primaire (par élève)' : 'Secondaire (par matière)'}
+              </span>
             </div>
-            <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Grille de Saisie &amp; Import Excel des Notes</h2>
-            <p className="mt-1 text-[13px] font-medium text-indigo-100/90 sm:text-sm">
-              {isPrimaryCycle 
-                ? 'Importez directement votre fichier Excel complet par disciplines ou saisissez les notes élève par élève.' 
+            <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+              Grille de Saisie &amp; Import Excel des Notes
+            </h2>
+            <p className="mt-1 text-[13px] font-medium text-slate-300 sm:text-sm">
+              {isPrimaryCycle
+                ? 'Importez votre fichier Excel complet par disciplines ou saisissez les notes élève par élève.'
                 : 'Importez votre fichier Excel de classe par matières ou saisissez les notes ci-dessous.'}
             </p>
           </div>
 
-          <div className="relative z-10 flex flex-wrap items-center gap-2">
-            {/* Quick cycle mode pill */}
-            <div className="flex items-center gap-2 bg-white/15 px-3.5 py-2 rounded-xl ring-1 ring-white/25 backdrop-blur-md text-xs font-semibold text-indigo-100">
-              <GraduationCap className="w-4 h-4 text-sky-300" />
-              <span>Mode : <strong className="text-white">{isPrimaryCycle ? 'Primaire (par élève)' : 'Secondaire (par matière)'}</strong></span>
-            </div>
-
+          <div className="relative z-10 flex flex-wrap sm:flex-nowrap items-center gap-2.5 shrink-0">
             <button
               type="button"
               onClick={() => setIsImportModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold shadow-md transition-all cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-xs font-extrabold shadow-sm transition-all whitespace-nowrap cursor-pointer"
             >
               <Upload className="w-4 h-4" />
-              <span>Importer Excel (Notes)</span>
+              <span>Importer Excel</span>
             </button>
 
             {selectedClassObj && (
@@ -654,18 +655,18 @@ export function NotesManager({
                 <button
                   type="button"
                   onClick={() => openResultsPreview('alphabetical', 'all')}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white text-[#1E293B] hover:bg-indigo-50 text-xs font-bold shadow-md transition-all cursor-pointer"
+                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold shadow-sm transition-all whitespace-nowrap cursor-pointer"
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                  <span>Aperçu &amp; Export Excel</span>
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
+                  <span>Aperçu &amp; Export (.xlsx)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => openResultsPreview('merit', 'passing_only')}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold shadow-md transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/12 hover:bg-white/20 text-white ring-1 ring-white/25 text-xs font-bold transition-all whitespace-nowrap cursor-pointer"
                 >
-                  <Trophy className="w-4 h-4" />
-                  <span>Ordre de mérite (Admis)</span>
+                  <Trophy className="w-4 h-4 text-amber-300" />
+                  <span>Mérite (Admis)</span>
                 </button>
               </>
             )}
@@ -860,41 +861,23 @@ export function NotesManager({
             const seriesKey = detectClassSeriesKey(curClass.name, curClass.level);
             const coef = curSubj ? getCoefficientForSubject(curSubj.name, curClass.name, curClass.level, (curSubj as any).coefficient || 2) : null;
             return (
-              <div className="px-6 py-2.5 bg-blue-50/60 border-b border-blue-100 flex flex-wrap items-center justify-between gap-2 text-xs text-blue-900">
+              <div className="px-6 py-2.5 bg-slate-50 border-b border-[var(--color-outline-variant)] flex flex-wrap items-center justify-between gap-2 text-xs text-slate-700">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold">Classe : {curClass.name}</span>
+                  <span className="font-bold text-slate-900">Classe : {curClass.name}</span>
                   {seriesKey && (
-                    <span className="font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                    <span className="font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                       {LYCEE_SERIES_CONFIG[seriesKey].label}
                     </span>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-2 font-medium">
-                  {curSubj && coef && (
-                    <>
-                      <span>Matière : <strong className="text-blue-950">{curSubj.name}</strong></span>
-                      <span className="font-bold px-2 py-0.5 rounded bg-white border border-blue-200 text-blue-700 shadow-2xs">
-                        Coefficient appliqué : {coef}
-                      </span>
-                    </>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setIsImportModalOpen(true)}
-                    className="px-2.5 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-[11px] inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Importer Excel</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openResultsPreview('alphabetical', 'all')}
-                    className="px-2.5 py-1 rounded-lg bg-[#1B365D] text-white hover:opacity-90 font-bold text-[11px] inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-300" />
-                    <span>Aperçu &amp; Excel classe</span>
-                  </button>
-                </div>
+                {curSubj && coef && (
+                  <div className="flex flex-wrap items-center gap-2 font-medium">
+                    <span>Matière : <strong className="text-slate-950">{curSubj.name}</strong></span>
+                    <span className="font-bold px-2.5 py-0.5 rounded-md bg-white border border-slate-200 text-slate-800 shadow-2xs">
+                      Coefficient : {coef}
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -912,7 +895,7 @@ export function NotesManager({
                 <button
                   type="button"
                   onClick={() => setIsImportModalOpen(true)}
-                  className="mt-5 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-sm cursor-pointer"
+                  className="mt-5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm cursor-pointer transition-colors"
                 >
                   <Upload className="w-4 h-4" />
                   <span>Importer un fichier Excel rempli</span>
@@ -927,7 +910,7 @@ export function NotesManager({
                 <button
                   type="button"
                   onClick={() => setIsImportModalOpen(true)}
-                  className="mt-5 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-sm cursor-pointer"
+                  className="mt-5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm cursor-pointer transition-colors"
                 >
                   <Upload className="w-4 h-4" />
                   <span>Importer un fichier Excel rempli</span>
@@ -968,16 +951,16 @@ export function NotesManager({
                     </div>
                   </div>
 
-                  {/* Barre d'actions : Ordre de mérite & Aperçu / Export Excel complet */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[var(--color-outline-variant)]/70">
-                    <div className="inline-flex flex-wrap items-center rounded-xl border border-[var(--color-outline-variant)] bg-[var(--color-surface)] p-0.5 gap-0.5">
+                  {/* Barre de filtrage et recherche — épurée sans doublons */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-[var(--color-outline-variant)]/70">
+                    <div className="inline-flex flex-wrap items-center rounded-xl border border-slate-200 bg-white p-1 gap-1 shadow-2xs">
                       <button
                         type="button"
                         onClick={() => setRosterDisplayMode('alpha')}
                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                           rosterDisplayMode === 'alpha'
-                            ? 'bg-[#1B365D] text-white shadow-2xs'
-                            : 'text-[var(--color-on-surface-variant)] hover:bg-slate-100'
+                            ? 'bg-slate-900 text-white shadow-2xs'
+                            : 'text-slate-600 hover:bg-slate-100'
                         }`}
                       >
                         Ordre alphabétique (Tous)
@@ -985,10 +968,10 @@ export function NotesManager({
                       <button
                         type="button"
                         onClick={() => setRosterDisplayMode('merit_all')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                           rosterDisplayMode === 'merit_all'
-                            ? 'bg-[#1B365D] text-white shadow-2xs'
-                            : 'text-[var(--color-on-surface-variant)] hover:bg-slate-100'
+                            ? 'bg-slate-900 text-white shadow-2xs'
+                            : 'text-slate-600 hover:bg-slate-100'
                         }`}
                       >
                         <ArrowUpDown className="w-3.5 h-3.5" />
@@ -997,43 +980,24 @@ export function NotesManager({
                       <button
                         type="button"
                         onClick={() => setRosterDisplayMode('merit_passing')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                           rosterDisplayMode === 'merit_passing'
                             ? 'bg-emerald-600 text-white shadow-2xs'
                             : 'text-emerald-800 hover:bg-emerald-50'
                         }`}
                       >
                         <Trophy className="w-3.5 h-3.5" />
-                        <span>Ordre de mérite — Admis (≥ 5/10)</span>
+                        <span>Admis uniquement (≥ 5/10)</span>
                       </button>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setIsImportModalOpen(true)}
-                        className="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>Importer Excel (Notes)</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => openResultsPreview('alphabetical', 'all')}
-                        className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#1B365D] text-white hover:opacity-95 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5 text-sky-300" />
-                        <span>Aperçu Résultats &amp; Export Excel (.xlsx)</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => openResultsPreview('merit', 'passing_only')}
-                        className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Trophy className="w-3.5 h-3.5" />
-                        <span>Liste de mérite (Admis)</span>
-                      </button>
-                    </div>
+                    <span className="text-xs font-medium text-slate-500">
+                      {rosterDisplayMode === 'merit_passing'
+                        ? `${searchedStudents.length} élève(s) admis affiché(s) du 1er au dernier`
+                        : rosterDisplayMode === 'merit_all'
+                          ? 'Classement du plus fort au plus faible'
+                          : 'Tri alphabétique par nom de famille'}
+                    </span>
                   </div>
                 </div>
 
@@ -1645,7 +1609,7 @@ export function NotesManager({
                 <button
                   type="button"
                   onClick={() => setIsImportModalOpen(true)}
-                  className="mt-5 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold flex items-center gap-2 shadow-sm cursor-pointer"
+                  className="mt-5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm cursor-pointer transition-colors"
                 >
                   <Upload className="w-4 h-4" />
                   <span>Importer un fichier Excel complet</span>
@@ -1717,33 +1681,10 @@ export function NotesManager({
                 </div>
                 
                 <div className="p-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsImportModalOpen(true)}
-                      className="px-4 py-2.5 rounded-lg text-xs font-extrabold bg-amber-400 text-slate-950 hover:bg-amber-300 transition-all flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Upload className="w-4 h-4" />
-                      <span>Importer Excel</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openResultsPreview('alphabetical', 'all')}
-                      className="px-4 py-2.5 rounded-lg text-xs font-bold bg-[#1B365D] text-white hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <FileSpreadsheet className="w-4 h-4 text-emerald-300" />
-                      <span>Aperçu &amp; Export Excel de la classe</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openResultsPreview('merit', 'passing_only')}
-                      className="px-4 py-2.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Trophy className="w-4 h-4" />
-                      <span>Ordre de mérite (Admis)</span>
-                    </button>
-                  </div>
-                  <button type="submit" disabled={isPending} className="px-6 py-3 rounded-lg text-sm font-semibold bg-[var(--color-primary)] text-white hover:opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm cursor-pointer">
+                  <span className="text-xs text-[var(--color-on-surface-variant)]">
+                    Barème sur <strong>20</strong> · Utilisez l&apos;en-tête ci-dessus pour l&apos;import ou l&apos;export Excel complet de la classe.
+                  </span>
+                  <button type="submit" disabled={isPending} className="px-6 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-primary)] text-white hover:opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm cursor-pointer ml-auto">
                     {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     Enregistrer les notes
                   </button>
