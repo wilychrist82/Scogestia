@@ -55,7 +55,7 @@ function populateResultsSheet(
   ws: Worksheet,
   report: ClassResultsReport,
   rows: ComputedStudentRow[],
-  options?: { titleOverride?: string; subtitleExtra?: string }
+  options?: { titleOverride?: string; subtitleExtra?: string; totalHeaderLabel?: string }
 ) {
   const numCols = report.columns.length
   const firstSubjCol = 4
@@ -140,7 +140,8 @@ function populateResultsSheet(
     })
   }
 
-  row4.getCell(totalCol).value = 'Total'
+  const totalHdr = options?.totalHeaderLabel || 'Total'
+  row4.getCell(totalCol).value = totalHdr
   row4.getCell(avgCol).value = 'Moyenne'
   row4.getCell(rankCol).value = 'Rang'
   row4.getCell(apprCol).value = 'Appréciation'
@@ -168,7 +169,7 @@ function populateResultsSheet(
   for (let i = 0; i < Math.max(1, numCols); i++) {
     ws.getColumn(firstSubjCol + i).width = 6.8
   }
-  ws.getColumn(totalCol).width = 9.5
+  ws.getColumn(totalCol).width = totalHdr.length > 8 ? 14 : 9.5
   ws.getColumn(avgCol).width = 10.5
   ws.getColumn(rankCol).width = 8.5
   ws.getColumn(apprCol).width = 27
@@ -510,6 +511,7 @@ export async function buildClassResultsWorkbook(
     populateResultsSheet(wsMerit, report, report.meritPassingRows, {
       titleOverride: `${report.title} – LISTE DE MÉRITE (ADMIS)`,
       subtitleExtra: `Admis (Moy. ≥ ${report.passThreshold}) : ${report.meritPassingRows.length} / ${report.stats.present.total} présents`,
+      totalHeaderLabel: 'Points obtenus',
     })
     const wsRecap = wb.addWorksheet('Récapitulation')
     populateRecapitulationSheet(wsRecap, report)
@@ -526,6 +528,7 @@ export async function buildClassResultsWorkbook(
         : report.periodLabel
   populateResultsSheet(wsResults, report, report.displayRows, {
     subtitleExtra: sheet1Subtitle,
+    totalHeaderLabel: report.filterMode === 'passing_only' ? 'Points obtenus' : 'Total',
   })
 
   // Feuille 2 : Récapitulation (statistiques complètes)
@@ -537,6 +540,7 @@ export async function buildClassResultsWorkbook(
   populateResultsSheet(wsMerit, report, report.meritPassingRows, {
     titleOverride: `${report.title} – LISTE DE MÉRITE (ADMIS)`,
     subtitleExtra: `Admis (Moy. ≥ ${report.passThreshold}) : ${report.meritPassingRows.length} / ${report.stats.present.total} présents`,
+    totalHeaderLabel: 'Points obtenus',
   })
 
   return wb

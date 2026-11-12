@@ -76,11 +76,11 @@ function buildPrintableHtml(report: ClassResultsReport, activeTab: 'results' | '
         (stu, i) => `
         <tr>
           <td class="c">${i + 1}</td>
-          <td class="c b">${escapeHtml(stu.rankText)}</td>
           <td class="b">${escapeHtml(stu.fullName)}</td>
           <td class="c">${escapeHtml(stu.gender || '—')}</td>
-          <td class="c b">${fmtNumComma(stu.totalPoints, 1)}</td>
-          <td class="c b ok">${fmtNumComma(stu.average, 2)}</td>
+          <td class="c b">${fmtNumComma(stu.totalPoints, 1)} pts</td>
+          <td class="c b ok">${fmtNumComma(stu.average, 2)} / ${report.scale}</td>
+          <td class="c b">${escapeHtml(stu.rankText)}</td>
           <td>${escapeHtml(stu.appreciation)}</td>
         </tr>
       `
@@ -164,7 +164,7 @@ function buildPrintableHtml(report: ClassResultsReport, activeTab: 'results' | '
 
   <h3>3. Ordre de mérite — Élèves ayant la moyenne (${report.meritPassingRows.length})</h3>
   <table>
-    <thead><tr><th class="c">N°</th><th class="c">Rang</th><th>Nom et Prénom</th><th class="c">Sexe</th><th class="c">Total</th><th class="c">Moyenne</th><th>Appréciation</th></tr></thead>
+    <thead><tr><th class="c">N°</th><th>Nom et Prénom</th><th class="c">Sexe</th><th class="c">Points obtenus</th><th class="c">Moyenne</th><th class="c">Rang</th><th>Appréciation</th></tr></thead>
     <tbody>${meritRowsHtml || '<tr><td colspan="7" class="c">Aucun élève admis pour le moment.</td></tr>'}</tbody>
   </table>
 
@@ -188,6 +188,8 @@ function buildPrintableHtml(report: ClassResultsReport, activeTab: 'results' | '
           )
           .join('')
 
+  const isPassingView = report.filterMode === 'passing_only'
+
   const bodyRowsHtml = report.displayRows
     .map((stu, idx) => {
       const scoreCells =
@@ -208,17 +210,19 @@ function buildPrintableHtml(report: ClassResultsReport, activeTab: 'results' | '
 
       const avgFailClass = !stu.isAbsent && !stu.isPassing ? 'fail' : ''
       const apprClass = stu.isAbsent ? 'absent' : !stu.isPassing ? 'fail' : ''
+      const summaryCells = `
+        <td class="c b">${stu.isAbsent ? '' : `${fmtNumComma(stu.totalPoints, 1)}${isPassingView ? ' pts' : ''}`}</td>
+        <td class="c b ${avgFailClass}">${stu.isAbsent ? '' : `${fmtNumComma(stu.average, 2)}${isPassingView ? ` / ${report.scale}` : ''}`}</td>
+        <td class="c ${stu.rankNum === 1 ? 'b' : ''}">${stu.isAbsent ? '' : escapeHtml(stu.rankText)}</td>
+        <td class="${apprClass}">${escapeHtml(stu.appreciation)}</td>
+      `
 
       return `
       <tr class="${idx % 2 === 1 ? 'zebra' : ''}">
         <td class="c">${idx + 1}</td>
         <td class="b">${escapeHtml(stu.fullName)}</td>
         <td class="c">${escapeHtml(stu.gender)}</td>
-        ${scoreCells}
-        <td class="c b">${stu.isAbsent ? '' : fmtNumComma(stu.totalPoints, 1)}</td>
-        <td class="c b ${avgFailClass}">${stu.isAbsent ? '' : fmtNumComma(stu.average, 2)}</td>
-        <td class="c ${stu.rankNum === 1 ? 'b' : ''}">${stu.isAbsent ? '' : escapeHtml(stu.rankText)}</td>
-        <td class="${apprClass}">${escapeHtml(stu.appreciation)}</td>
+        ${isPassingView ? `${summaryCells}${scoreCells}` : `${scoreCells}${summaryCells}`}
       </tr>`
     })
     .join('')
@@ -260,18 +264,31 @@ function buildPrintableHtml(report: ClassResultsReport, activeTab: 'results' | '
       <tr><td colspan="${colCount}" class="meta">Classe : ${escapeHtml(report.className)} &nbsp;&nbsp;|&nbsp;&nbsp; Effectif affiché : ${report.displayRows.length} / ${report.allRows.length} élèves &nbsp;&nbsp;|&nbsp;&nbsp; ${escapeHtml(report.formulaLabel)} &nbsp;&nbsp;|&nbsp;&nbsp; ${escapeHtml(filterBadge)}</td></tr>
       <tr>
         <th colspan="3" class="navy">ÉLÈVES</th>
-        <th colspan="${Math.max(1, report.columns.length)}" class="navy">NOTES PAR DISCIPLINE</th>
-        <th colspan="4" class="navy">RÉSULTATS</th>
+        ${
+          isPassingView
+            ? `<th colspan="4" class="navy">RÉSULTATS DES ADMIS</th>
+               <th colspan="${Math.max(1, report.columns.length)}" class="navy">NOTES PAR DISCIPLINE</th>`
+            : `<th colspan="${Math.max(1, report.columns.length)}" class="navy">NOTES PAR DISCIPLINE</th>
+               <th colspan="4" class="navy">RÉSULTATS</th>`
+        }
       </tr>
       <tr>
         <th class="navy" style="width:24px;">N°</th>
         <th class="navy" style="width:165px;">Nom et Prénom</th>
         <th class="navy" style="width:28px;">Sexe</th>
-        ${rotatedHeaders}
-        <th class="navy" style="width:42px;">Total</th>
-        <th class="navy" style="width:48px;">Moyenne</th>
-        <th class="navy" style="width:40px;">Rang</th>
-        <th class="navy" style="width:120px;">Appréciation</th>
+        ${
+          isPassingView
+            ? `<th class="navy" style="width:52px;">Points obtenus</th>
+               <th class="navy" style="width:58px;">Moyenne</th>
+               <th class="navy" style="width:42px;">Rang</th>
+               <th class="navy" style="width:115px;">Appréciation</th>
+               ${rotatedHeaders}`
+            : `${rotatedHeaders}
+               <th class="navy" style="width:42px;">Total</th>
+               <th class="navy" style="width:48px;">Moyenne</th>
+               <th class="navy" style="width:40px;">Rang</th>
+               <th class="navy" style="width:120px;">Appréciation</th>`
+        }
       </tr>
     </thead>
     <tbody>
@@ -893,20 +910,36 @@ export function ClassResultsPreviewModal({
                         </td>
                       </tr>
 
-                      {/* Row 3 : Groupes ÉLÈVES | NOTES PAR DISCIPLINE | RÉSULTATS */}
+                      {/* Row 3 : Groupes ÉLÈVES | NOTES PAR DISCIPLINE | RÉSULTATS (en Passing-only, Résultats Admis avant disciplines pour visibilité immédiate) */}
                       <tr className="bg-[#1B365D] text-white font-bold text-[11px] tracking-wider uppercase">
                         <th colSpan={3} className="py-1.5 px-2 text-center border border-slate-600">
                           ÉLÈVES
                         </th>
-                        <th
-                          colSpan={Math.max(1, report.columns.length)}
-                          className="py-1.5 px-2 text-center border border-slate-600"
-                        >
-                          NOTES PAR DISCIPLINE
-                        </th>
-                        <th colSpan={4} className="py-1.5 px-2 text-center border border-slate-600">
-                          RÉSULTATS
-                        </th>
+                        {filterMode === 'passing_only' ? (
+                          <>
+                            <th colSpan={4} className="py-1.5 px-2 text-center border border-slate-600 bg-emerald-800">
+                              RÉSULTATS DES ADMIS
+                            </th>
+                            <th
+                              colSpan={Math.max(1, report.columns.length)}
+                              className="py-1.5 px-2 text-center border border-slate-600"
+                            >
+                              NOTES PAR DISCIPLINE
+                            </th>
+                          </>
+                        ) : (
+                          <>
+                            <th
+                              colSpan={Math.max(1, report.columns.length)}
+                              className="py-1.5 px-2 text-center border border-slate-600"
+                            >
+                              NOTES PAR DISCIPLINE
+                            </th>
+                            <th colSpan={4} className="py-1.5 px-2 text-center border border-slate-600">
+                              RÉSULTATS
+                            </th>
+                          </>
+                        )}
                       </tr>
 
                       {/* Row 4 : En-têtes détaillés (disciplines verticales 90°) */}
@@ -916,6 +949,23 @@ export function ClassResultsPreviewModal({
                           Nom et Prénom
                         </th>
                         <th className="py-2 px-2 text-center border border-slate-600 w-12">Sexe</th>
+
+                        {filterMode === 'passing_only' && (
+                          <>
+                            <th className="py-2 px-2.5 text-center border border-slate-600 bg-emerald-900 whitespace-nowrap">
+                              Points obtenus
+                            </th>
+                            <th className="py-2 px-2.5 text-center border border-slate-600 bg-emerald-900 whitespace-nowrap">
+                              Moyenne
+                            </th>
+                            <th className="py-2 px-2.5 text-center border border-slate-600 bg-emerald-900 whitespace-nowrap">
+                              Rang
+                            </th>
+                            <th className="py-2 px-3 text-left border border-slate-600 bg-emerald-900 min-w-[165px]">
+                              Appréciation
+                            </th>
+                          </>
+                        )}
 
                         {report.columns.length === 0 ? (
                           <th className="py-2 px-3 text-center border border-slate-600">
@@ -942,20 +992,68 @@ export function ClassResultsPreviewModal({
                           ))
                         )}
 
-                        <th className="py-2 px-2 text-center border border-slate-600 w-16">Total</th>
-                        <th className="py-2 px-2 text-center border border-slate-600 w-20">
-                          Moyenne
-                        </th>
-                        <th className="py-2 px-2 text-center border border-slate-600 w-16">Rang</th>
-                        <th className="py-2 px-3 text-center border border-slate-600 min-w-[180px]">
-                          Appréciation
-                        </th>
+                        {filterMode !== 'passing_only' && (
+                          <>
+                            <th className="py-2 px-2 text-center border border-slate-600 w-16">Total</th>
+                            <th className="py-2 px-2 text-center border border-slate-600 w-20">
+                              Moyenne
+                            </th>
+                            <th className="py-2 px-2 text-center border border-slate-600 w-16">Rang</th>
+                            <th className="py-2 px-3 text-center border border-slate-600 min-w-[180px]">
+                              Appréciation
+                            </th>
+                          </>
+                        )}
                       </tr>
                     </thead>
 
                     <tbody>
                       {report.displayRows.map((stu, idx) => {
                         const isFailing = !stu.isAbsent && !stu.isPassing
+                        const resultSummaryCells = (
+                          <>
+                            <td className="py-1.5 px-2.5 text-center border border-slate-300 font-bold text-slate-900 tabular-nums whitespace-nowrap">
+                              {stu.isAbsent
+                                ? ''
+                                : `${fmtNumComma(stu.totalPoints, 1)}${filterMode === 'passing_only' ? ' pts' : ''}`}
+                            </td>
+
+                            <td
+                              className={`py-1.5 px-2.5 text-center border border-slate-300 font-extrabold tabular-nums whitespace-nowrap ${
+                                isFailing
+                                  ? 'text-red-600'
+                                  : filterMode === 'passing_only'
+                                    ? 'text-emerald-700'
+                                    : 'text-slate-900'
+                              }`}
+                            >
+                              {stu.isAbsent
+                                ? ''
+                                : `${fmtNumComma(stu.average, 2)}${filterMode === 'passing_only' ? ` / ${report.scale}` : ''}`}
+                            </td>
+
+                            <td
+                              className={`py-1.5 px-2.5 text-center border border-slate-300 whitespace-nowrap ${
+                                stu.rankNum === 1 ? 'font-extrabold text-[#1B365D]' : 'text-slate-800 font-medium'
+                              }`}
+                            >
+                              {stu.isAbsent ? '' : stu.rankText}
+                            </td>
+
+                            <td
+                              className={`py-1.5 px-3 text-left border border-slate-300 whitespace-nowrap ${
+                                stu.isAbsent
+                                  ? 'italic text-slate-500'
+                                  : isFailing
+                                    ? 'text-red-600 font-medium'
+                                    : 'text-slate-900 font-medium'
+                              }`}
+                            >
+                              {stu.appreciation}
+                            </td>
+                          </>
+                        )
+
                         return (
                           <tr
                             key={stu.studentId}
@@ -972,6 +1070,8 @@ export function ClassResultsPreviewModal({
                             <td className="py-1.5 px-2 text-center border border-slate-300 text-slate-700 font-semibold">
                               {stu.gender || ''}
                             </td>
+
+                            {filterMode === 'passing_only' && resultSummaryCells}
 
                             {report.columns.length === 0 ? (
                               <td className="py-1.5 px-2 text-center border border-slate-300" />
@@ -995,37 +1095,7 @@ export function ClassResultsPreviewModal({
                               })
                             )}
 
-                            <td className="py-1.5 px-2 text-center border border-slate-300 font-bold text-slate-900 tabular-nums">
-                              {stu.isAbsent ? '' : fmtNumComma(stu.totalPoints, 1)}
-                            </td>
-
-                            <td
-                              className={`py-1.5 px-2 text-center border border-slate-300 font-extrabold tabular-nums ${
-                                isFailing ? 'text-red-600' : 'text-slate-900'
-                              }`}
-                            >
-                              {stu.isAbsent ? '' : fmtNumComma(stu.average, 2)}
-                            </td>
-
-                            <td
-                              className={`py-1.5 px-2 text-center border border-slate-300 whitespace-nowrap ${
-                                stu.rankNum === 1 ? 'font-extrabold text-[#1B365D]' : 'text-slate-800 font-medium'
-                              }`}
-                            >
-                              {stu.isAbsent ? '' : stu.rankText}
-                            </td>
-
-                            <td
-                              className={`py-1.5 px-3 text-left border border-slate-300 whitespace-nowrap ${
-                                stu.isAbsent
-                                  ? 'italic text-slate-500'
-                                  : isFailing
-                                    ? 'text-red-600 font-medium'
-                                    : 'text-slate-900 font-medium'
-                              }`}
-                            >
-                              {stu.appreciation}
-                            </td>
+                            {filterMode !== 'passing_only' && resultSummaryCells}
                           </tr>
                         )
                       })}
@@ -1302,20 +1372,20 @@ export function ClassResultsPreviewModal({
                           <th className="py-2 px-3 text-center border-b border-emerald-200 w-12">
                             N°
                           </th>
-                          <th className="py-2 px-3 text-center border-b border-emerald-200 w-20">
-                            Rang
-                          </th>
                           <th className="py-2 px-3 text-left border-b border-emerald-200">
                             Nom et Prénom
                           </th>
                           <th className="py-2 px-2 text-center border-b border-emerald-200 w-14">
                             Sexe
                           </th>
-                          <th className="py-2 px-3 text-center border-b border-emerald-200 w-24">
-                            Total
+                          <th className="py-2 px-3 text-center border-b border-emerald-200 w-32">
+                            Points obtenus
+                          </th>
+                          <th className="py-2 px-3 text-center border-b border-emerald-200 w-28">
+                            Moyenne
                           </th>
                           <th className="py-2 px-3 text-center border-b border-emerald-200 w-24">
-                            Moyenne
+                            Rang
                           </th>
                           <th className="py-2 px-3 text-left border-b border-emerald-200">
                             Appréciation
@@ -1326,18 +1396,28 @@ export function ClassResultsPreviewModal({
                         {report.meritPassingRows.map((stu, i) => (
                           <tr key={stu.studentId} className={i % 2 === 1 ? 'bg-slate-50' : ''}>
                             <td className="py-1.5 px-3 text-center text-slate-600">{i + 1}</td>
-                            <td className="py-1.5 px-3 text-center font-extrabold text-[#1B365D]">
-                              {stu.rankText}
-                            </td>
                             <td className="py-1.5 px-3 font-bold text-slate-900">{stu.fullName}</td>
                             <td className="py-1.5 px-2 text-center text-slate-700">
                               {stu.gender || '—'}
                             </td>
-                            <td className="py-1.5 px-3 text-center font-semibold tabular-nums">
-                              {fmtNumComma(stu.totalPoints, 1)}
+                            <td className="py-1.5 px-3 text-center font-bold text-slate-900 tabular-nums whitespace-nowrap">
+                              {fmtNumComma(stu.totalPoints, 1)} pts
                             </td>
-                            <td className="py-1.5 px-3 text-center font-extrabold text-emerald-700 tabular-nums">
-                              {fmtNumComma(stu.average, 2)}
+                            <td className="py-1.5 px-3 text-center font-extrabold text-emerald-700 tabular-nums whitespace-nowrap">
+                              {fmtNumComma(stu.average, 2)} / {report.scale}
+                            </td>
+                            <td className="py-1.5 px-3 text-center whitespace-nowrap">
+                              <span
+                                className={`inline-block px-2 py-0.5 rounded-full font-extrabold ${
+                                  stu.rankNum === 1
+                                    ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                    : stu.rankNum && stu.rankNum <= 3
+                                      ? 'bg-emerald-100 text-emerald-900'
+                                      : 'text-[#1B365D]'
+                                }`}
+                              >
+                                {stu.rankText}
+                              </span>
                             </td>
                             <td className="py-1.5 px-3 text-slate-800 font-medium">
                               {stu.appreciation}

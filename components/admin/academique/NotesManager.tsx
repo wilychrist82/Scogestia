@@ -31,7 +31,7 @@ import {
 } from 'lucide-react'
 import { ClassResultsPreviewModal } from './ClassResultsPreviewModal'
 import { ImportGradesModal } from './ImportGradesModal'
-import { ExportCycle, FilterMode, SortMode } from '@/lib/grades-export'
+import { ExportCycle, FilterMode, SortMode, getAppreciation } from '@/lib/grades-export'
 import { 
   getCoefficientForSubject, 
   detectClassSeriesKey, 
@@ -41,7 +41,8 @@ import {
   calculateDisciplineAverage,
   calculatePrimaryGeneralAverage,
   getPrimarySubjectOrder,
-  computePrimaryMonthClassRanks
+  computePrimaryMonthClassRanks,
+  formatRank
 } from '@/lib/academic-curriculum'
 
 type ClassItem = { id: string; name: string; level?: string }
@@ -247,31 +248,104 @@ export function NotesManager({
   const hasPrevStudent = currentStudentIndex > 0
   const hasNextStudent = currentStudentIndex >= 0 && currentStudentIndex < filteredStudents.length - 1
 
-  // Student stats for class roster view
+  // Student stats for class roster view (Points obtenus, Moyenne, Rang officiel ex-æquo & Appréciation)
   const studentStatsMap = useMemo(() => {
-    const stats: Record<string, { count: number; total: number; maxPossible: number; avg: string | null }> = {}
+    const stats: Record<
+      string,
+      {
+        count: number
+        total: number
+        maxPossible: number
+        avg: string | null
+        avgNum: number | null
+        rankNum: number | null
+        rankText: string
+        isExAequo: boolean
+        appreciation: string
+        isPassing: boolean
+      }
+    > = {}
     if (!isPrimaryCycle) return stats
 
-    filteredStudents.forEach(stu => {
+    const rawEntries = filteredStudents.map(stu => {
       let count = 0
       let total = 0
       let maxPossible = 0
       allPrimaryGrades.forEach(g => {
         if (g.student_id === stu.id && g.score !== null && g.score !== undefined) {
           const subj = localSubjects.find(s => s.id === g.subject_id)
-          const maxS = subj ? getPrimarySubjectMaxScore(subj.name, selectedClassObj?.name, selectedClassObj?.level) : ((g as any).max_score || 10)
+          const maxS = subj
+            ? getPrimarySubjectMaxScore(subj.name, selectedClassObj?.name, selectedClassObj?.level)
+            : ((g as any).max_score || 10)
           total += g.score
           maxPossible += maxS
           count++
         }
       })
-      stats[stu.id] = {
+      const avgNum = maxPossible > 0 ? Number(((total / maxPossible) * 10).toFixed(2)) : null
+      return {
+        studentId: stu.id,
         count,
-        total,
+        total: Number(total.toFixed(2)),
         maxPossible,
-        avg: maxPossible > 0 ? ((total / maxPossible) * 10).toFixed(2) : null
+        avgNum,
+        avg: avgNum !== null ? avgNum.toFixed(2) : null,
       }
     })
+
+    // Classement officiel sur toute la classe (du plus fort au plus faible, gestion ex-æquo)
+    const gradedSorted = rawEntries
+      .filter(e => e.avgNum !== null)
+      .sort((a, b) => {
+        if ((b.avgNum ?? 0) !== (a.avgNum ?? 0)) return (b.avgNum ?? 0) - (a.avgNum ?? 0)
+        return b.total - a.total
+      })
+
+    const rankById = new Map<string, { rankNum: number; rankText: string; isExAequo: boolean }>()
+    let currentRank = 1
+    for (let i = 0; i < gradedSorted.length; i++) {
+      const cur = gradedSorted[i]
+      const prev = i > 0 ? gradedSorted[i - 1] : null
+      const next = i < gradedSorted.length - 1 ? gradedSorted[i + 1] : null
+
+      const sameAsPrev =
+        prev !== null &&
+        prev.avgNum === cur.avgNum &&
+        Math.abs(prev.total - cur.total) < 0.001
+      const sameAsNext =
+        next !== null &&
+        next.avgNum === cur.avgNum &&
+        Math.abs(next.total - cur.total) < 0.001
+
+      if (!sameAsPrev) {
+        currentRank = i + 1
+      }
+      const isExAequo = sameAsPrev || sameAsNext
+      rankById.set(cur.studentId, {
+        rankNum: currentRank,
+        rankText: formatRank(currentRank, isExAequo),
+        isExAequo,
+      })
+    }
+
+    rawEntries.forEach(entry => {
+      const r = rankById.get(entry.studentId)
+      const isPassing = entry.avgNum !== null && entry.avgNum >= 5
+      const appr = entry.avgNum !== null ? getAppreciation(entry.avgNum, 10).label : '—'
+      stats[entry.studentId] = {
+        count: entry.count,
+        total: entry.total,
+        maxPossible: entry.maxPossible,
+        avg: entry.avg,
+        avgNum: entry.avgNum,
+        rankNum: r?.rankNum ?? null,
+        rankText: r?.rankText ?? '—',
+        isExAequo: r?.isExAequo ?? false,
+        appreciation: appr,
+        isPassing,
+      }
+    })
+
     return stats
   }, [isPrimaryCycle, filteredStudents, allPrimaryGrades, localSubjects, selectedClassObj])
 
@@ -293,14 +367,16 @@ export function NotesManager({
 
     const withAvg = list.map(s => {
       const st = studentStatsMap[s.id]
-      const avgNum = st?.avg ? parseFloat(st.avg) : null
-      return { stu: s, avgNum }
+      return { stu: s, avgNum: st?.avgNum ?? null, total: st?.total ?? 0 }
     })
 
     if (rosterDisplayMode === 'merit_passing') {
       return withAvg
         .filter(item => item.avgNum !== null && item.avgNum >= 5)
-        .sort((a, b) => (b.avgNum ?? 0) - (a.avgNum ?? 0))
+        .sort((a, b) => {
+          if ((b.avgNum ?? 0) !== (a.avgNum ?? 0)) return (b.avgNum ?? 0) - (a.avgNum ?? 0)
+          return b.total - a.total
+        })
         .map(item => item.stu)
     }
 
@@ -310,7 +386,8 @@ export function NotesManager({
         if (a.avgNum === null && b.avgNum === null) return 0
         if (a.avgNum === null) return 1
         if (b.avgNum === null) return -1
-        return b.avgNum - a.avgNum
+        if (b.avgNum !== a.avgNum) return b.avgNum - a.avgNum
+        return b.total - a.total
       })
       .map(item => item.stu)
   }, [filteredStudents, searchStudentTerm, isPrimaryCycle, rosterDisplayMode, studentStatsMap])
@@ -993,7 +1070,7 @@ export function NotesManager({
 
                     <span className="text-xs font-medium text-slate-500">
                       {rosterDisplayMode === 'merit_passing'
-                        ? `${searchedStudents.length} élève(s) admis affiché(s) du 1er au dernier`
+                        ? `${searchedStudents.length} admis · Points obtenus, Moyenne, Rang & Appréciation`
                         : rosterDisplayMode === 'merit_all'
                           ? 'Classement du plus fort au plus faible'
                           : 'Tri alphabétique par nom de famille'}
@@ -1006,25 +1083,39 @@ export function NotesManager({
                   <table className="w-full text-left border-collapse whitespace-nowrap">
                     <thead>
                       <tr className="bg-[var(--color-surface-container)] border-b border-[var(--color-outline-variant)] text-[var(--color-on-surface-variant)] text-xs font-semibold uppercase tracking-wider">
-                        <th className="py-3 px-4 w-12 text-center">N°</th>
+                        <th className="py-3 px-3 w-12 text-center">N°</th>
                         <th className="py-3 px-4">Nom & Prénoms</th>
-                        <th className="py-3 px-4">Matricule</th>
-                        <th className="py-3 px-4 text-center">Notes saisies</th>
-                        <th className="py-3 px-4 text-center">Moyenne générale</th>
+                        <th className="py-3 px-3">Matricule</th>
+                        <th className="py-3 px-3 text-center">Notes saisies</th>
+                        <th className="py-3 px-3 text-center">Points obtenus</th>
+                        <th className="py-3 px-3 text-center">Moyenne</th>
+                        <th className="py-3 px-3 text-center">Rang</th>
+                        <th className="py-3 px-4 text-left">Appréciation</th>
                         <th className="py-3 px-4 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--color-outline-variant)] text-sm">
                       {searchedStudents.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="py-12 px-4 text-center text-sm text-[var(--color-on-surface-variant)]">
+                          <td colSpan={9} className="py-12 px-4 text-center text-sm text-[var(--color-on-surface-variant)]">
                             {rosterDisplayMode === 'merit_passing'
                               ? 'Aucun élève n’a encore atteint la moyenne (≥ 5 / 10). Saisissez des notes ou affichez tous les élèves.'
                               : 'Aucun élève ne correspond à votre recherche.'}
                           </td>
                         </tr>
                       ) : searchedStudents.map((stu, idx) => {
-                        const st = studentStatsMap[stu.id] || { count: 0, total: 0, avg: null }
+                        const st = studentStatsMap[stu.id] || {
+                          count: 0,
+                          total: 0,
+                          maxPossible: 0,
+                          avg: null,
+                          avgNum: null,
+                          rankNum: null,
+                          rankText: '—',
+                          isExAequo: false,
+                          appreciation: '—',
+                          isPassing: false,
+                        }
                         const totalCells = filteredPrimarySubjects.length * 9
                         const progressPct = Math.min(100, Math.round((st.count / (totalCells || 1)) * 100))
 
@@ -1036,7 +1127,7 @@ export function NotesManager({
                             className="hover:bg-[var(--color-primary)]/5 cursor-pointer transition-colors group"
                             title="Double-cliquez pour ouvrir la grille de notes"
                           >
-                            <td className="py-3 px-4 text-center text-xs font-bold text-[var(--color-on-surface-variant)]">
+                            <td className="py-3 px-3 text-center text-xs font-bold text-[var(--color-on-surface-variant)]">
                               {idx + 1}
                             </td>
                             <td className="py-3 px-4">
@@ -1054,10 +1145,10 @@ export function NotesManager({
                                 </div>
                               </div>
                             </td>
-                            <td className="py-3 px-4 font-mono text-xs text-[var(--color-on-surface-variant)]">
+                            <td className="py-3 px-3 font-mono text-xs text-[var(--color-on-surface-variant)]">
                               {stu.matricule || '—'}
                             </td>
-                            <td className="py-3 px-4 text-center">
+                            <td className="py-3 px-3 text-center">
                               <div className="flex flex-col items-center gap-1">
                                 <span className="text-xs font-semibold text-[var(--color-on-surface)]">
                                   {st.count} / {totalCells} notes
@@ -1070,10 +1161,24 @@ export function NotesManager({
                                 </div>
                               </div>
                             </td>
-                            <td className="py-3 px-4 text-center">
+                            <td className="py-3 px-3 text-center">
+                              {st.count > 0 ? (
+                                <div className="flex flex-col items-center leading-tight">
+                                  <span className="text-xs font-extrabold text-[var(--color-on-surface)] tabular-nums">
+                                    {st.total.toFixed(1).replace('.', ',')} pts
+                                  </span>
+                                  <span className="text-[10px] text-[var(--color-on-surface-variant)] tabular-nums">
+                                    / {st.maxPossible}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-[var(--color-on-surface-variant)] opacity-50">—</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-3 text-center">
                               {st.avg ? (
-                                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                                  parseFloat(st.avg) >= 5 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tabular-nums ${
+                                  st.isPassing ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
                                 }`}>
                                   {st.avg} / 10
                                 </span>
@@ -1083,6 +1188,36 @@ export function NotesManager({
                                 </span>
                               )}
                             </td>
+                            <td className="py-3 px-3 text-center">
+                              {st.rankNum !== null ? (
+                                <span
+                                  className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+                                    st.rankNum === 1
+                                      ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                      : st.rankNum <= 3
+                                        ? 'bg-emerald-100 text-emerald-900'
+                                        : 'bg-slate-100 text-[#1B365D]'
+                                  }`}
+                                >
+                                  {st.rankText}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-[var(--color-on-surface-variant)] opacity-50">—</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4 text-left">
+                              {st.avgNum !== null ? (
+                                <span
+                                  className={`text-xs font-semibold ${
+                                    st.isPassing ? 'text-slate-800' : 'text-red-600'
+                                  }`}
+                                >
+                                  {st.appreciation}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-[var(--color-on-surface-variant)] opacity-50">—</span>
+                              )}
+                            </td>
                             <td className="py-3 px-4 text-right">
                               <button
                                 type="button"
@@ -1090,7 +1225,7 @@ export function NotesManager({
                                   e.stopPropagation()
                                   setSelectedStudent(stu.id)
                                 }}
-                                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--color-primary)] text-white hover:opacity-90 transition-all shadow-2xs flex items-center gap-1.5 ml-auto"
+                                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--color-primary)] text-white hover:opacity-90 transition-all shadow-2xs flex items-center gap-1.5 ml-auto cursor-pointer"
                               >
                                 <span>Saisir les notes</span>
                                 <ChevronRight className="w-3.5 h-3.5" />

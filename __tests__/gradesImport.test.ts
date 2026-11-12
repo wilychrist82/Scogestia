@@ -316,12 +316,23 @@ describe('grades-import Excel parsing, auto-computation & merit export', () => {
     ])
 
     const wsMerit = wb.getWorksheet('Ordre de mérite (Admis)')!
+    expect(wsMerit.getRow(4).getCell(6).value).toBe('Points obtenus')
+    expect(wsMerit.getRow(4).getCell(7).value).toBe('Moyenne')
+    expect(wsMerit.getRow(4).getCell(8).value).toBe('Rang')
+    expect(wsMerit.getRow(4).getCell(9).value).toBe('Appréciation')
     expect(wsMerit.getRow(5).getCell(2).value).toBe('ELEVE PREMIER')
     expect(wsMerit.getRow(6).getCell(2).value).toBe('ELEVE SECOND')
     expect(wsMerit.getRow(7).getCell(2).value).toBeNull() // Failing student excluded!
 
     const outBuf = await wb.xlsx.writeBuffer()
     expect(outBuf.byteLength).toBeGreaterThan(4000)
+
+    // Re-importing the exported merit workbook ignores "Points obtenus" as computed metadata
+    const reParsed = parseExcelWorkbookGrades(
+      outBuf instanceof ArrayBuffer ? outBuf : toArrayBuffer(outBuf as Uint8Array),
+      { className: 'CM2', classLevel: 'CM2' }
+    )
+    expect(reParsed.columns.map(c => c.cleanName)).toEqual(['Calcul écrit', 'Problème'])
   }, 30000)
 
   it('ignores "Clé tri", hidden Excel columns, and trailing macro columns without altering totals, averages, or absent status', () => {

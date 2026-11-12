@@ -122,18 +122,18 @@ function buildPrintableImportedHtml(
         return `
         <tr>
           <td class="c">${i + 1}</td>
-          <td class="c b">${escapeHtml(stu.rankText)}</td>
           <td class="b">${escapeHtml(stu.fullName)}</td>
           <td class="c">${escapeHtml(stu.gender || '—')}</td>
-          ${discCells}
-          <td class="c b">${fmtComma(stu.totalPoints, 1)}</td>
+          <td class="c b">${fmtComma(stu.totalPoints, 1)} pts</td>
           <td class="c b ok">${fmtComma(stu.average, 2)} / ${report.scale}</td>
+          <td class="c b">${escapeHtml(stu.rankText)}</td>
           <td>${escapeHtml(stu.appreciation)}</td>
+          ${discCells}
         </tr>`
       })
       .join('')
 
-    const totalCols = 4 + (showDisciplines ? report.columns.length : 0) + 3
+    const totalCols = 3 + 4 + (showDisciplines ? report.columns.length : 0)
     return `<!doctype html>
 <html lang="fr">
 <head>
@@ -161,14 +161,19 @@ function buildPrintableImportedHtml(
   <table>
     <thead>
       <tr>
+        <th colspan="3">ÉLÈVES</th>
+        <th colspan="4">RÉSULTATS DES ADMIS</th>
+        ${showDisciplines ? `<th colspan="${report.columns.length}">NOTES PAR DISCIPLINE</th>` : ''}
+      </tr>
+      <tr>
         <th class="c" style="width:26px;">N°</th>
-        <th class="c" style="width:52px;">Rang</th>
-        <th style="${showDisciplines ? 'width:160px;' : ''}">Nom et Prénom</th>
+        <th style="${showDisciplines ? 'width:155px;' : ''}">Nom et Prénom</th>
         <th class="c" style="width:32px;">Sexe</th>
-        ${rotatedHeaders}
-        <th class="c" style="width:56px;">Points</th>
+        <th class="c" style="width:58px;">Points obtenus</th>
         <th class="c" style="width:68px;">Moyenne</th>
-        <th style="${showDisciplines ? 'width:115px;' : ''}">Appréciation</th>
+        <th class="c" style="width:48px;">Rang</th>
+        <th style="${showDisciplines ? 'width:110px;' : ''}">Appréciation</th>
+        ${rotatedHeaders}
       </tr>
     </thead>
     <tbody>
@@ -1413,7 +1418,7 @@ export function ImportGradesModal({
                               : 'text-emerald-100 hover:text-white'
                           }`}
                         >
-                          Points &amp; Rang seuls
+                          Points, Moy., Rang &amp; Appréc.
                         </button>
                       </div>
                       <button
@@ -1443,113 +1448,134 @@ export function ImportGradesModal({
                       l&apos;échelle (/20 vs /10).
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-xs border-collapse">
-                        <thead>
-                          <tr className="bg-emerald-50 text-emerald-950 font-bold uppercase">
-                            <th className="py-2.5 px-3 text-center border-b border-emerald-200 w-12">
-                              N°
-                            </th>
-                            <th className="py-2.5 px-3 text-center border-b border-emerald-200 w-24">
-                              Rang officiel
-                            </th>
-                            <th className="py-2.5 px-4 text-left border-b border-emerald-200 whitespace-nowrap">
-                              Nom et Prénom
-                            </th>
-                            <th className="py-2.5 px-2 text-center border-b border-emerald-200 w-16">
-                              Sexe
-                            </th>
-                            {meritWithDisciplines &&
-                              report.columns.map(col => (
+                    <>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-[#0B3B2E] text-white font-bold text-[10.5px] uppercase tracking-wider">
+                              <th colSpan={3} className="py-1.5 px-2 text-center border-b border-r border-emerald-800/70">
+                                ÉLÈVES
+                              </th>
+                              <th colSpan={4} className="py-1.5 px-2 text-center border-b border-r border-emerald-800/70 bg-emerald-800">
+                                RÉSULTATS DES ADMIS
+                              </th>
+                              {meritWithDisciplines && report.columns.length > 0 && (
                                 <th
-                                  key={col.id}
-                                  className="border-b border-l border-emerald-200 px-1 py-2 w-10 min-w-[36px] h-28 align-bottom normal-case"
+                                  colSpan={report.columns.length}
+                                  className="py-1.5 px-2 text-center border-b border-emerald-800/70 bg-[#1B365D]"
                                 >
-                                  <div
-                                    className="mx-auto text-[10.5px] font-semibold leading-tight text-center"
-                                    style={{
-                                      writingMode: 'vertical-rl',
-                                      transform: 'rotate(180deg)',
-                                      maxHeight: '104px',
-                                    }}
-                                  >
-                                    {report.isPrimary
-                                      ? col.name
-                                      : `${col.name} (c.${col.coefficient})`}
-                                  </div>
+                                  NOTES PAR DISCIPLINE
                                 </th>
-                              ))}
-                            <th className="py-2.5 px-3 text-center border-b border-emerald-200 w-32">
-                              Points obtenus
-                            </th>
-                            <th className="py-2.5 px-3 text-center border-b border-emerald-200 w-28">
-                              Moyenne
-                            </th>
-                            <th className="py-2.5 px-4 text-left border-b border-emerald-200">
-                              Appréciation
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-200">
-                          {report.meritPassingRows.map((stu, idx) => (
-                            <tr
-                              key={stu.studentId}
-                              className={idx % 2 === 1 ? 'bg-slate-50' : 'bg-white'}
-                            >
-                              <td className="py-2 px-3 text-center text-slate-500 font-semibold">
-                                {idx + 1}
-                              </td>
-                              <td className="py-2 px-3 text-center whitespace-nowrap">
-                                <span
-                                  className={`inline-block px-2.5 py-0.5 rounded-full font-extrabold ${
-                                    stu.rankNum === 1
-                                      ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                                      : stu.rankNum && stu.rankNum <= 3
-                                        ? 'bg-emerald-100 text-emerald-900'
-                                        : 'text-[#1B365D]'
-                                  }`}
-                                >
-                                  {stu.rankText}
-                                </span>
-                              </td>
-                              <td className="py-2 px-4 font-bold text-slate-900 whitespace-nowrap">
-                                {stu.fullName}
-                              </td>
-                              <td className="py-2 px-2 text-center font-semibold text-slate-700">
-                                {stu.gender || '—'}
-                              </td>
-                              {meritWithDisciplines &&
-                                report.columns.map(col => {
-                                  const val = stu.scores[col.id]
-                                  return (
-                                    <td
-                                      key={col.id}
-                                      className="py-2 px-1.5 text-center border-l border-slate-200 tabular-nums"
-                                    >
-                                      {val !== null && val !== undefined
-                                        ? Number.isInteger(val)
-                                          ? val
-                                          : fmtComma(val, 2)
-                                              .replace(/,00$/, '')
-                                              .replace(/(,\d)0$/, '$1')
-                                        : ''}
-                                    </td>
-                                  )
-                                })}
-                              <td className="py-2 px-3 text-center font-bold text-slate-800 tabular-nums whitespace-nowrap">
-                                {fmtComma(stu.totalPoints, 1)} pts
-                              </td>
-                              <td className="py-2 px-3 text-center font-extrabold text-emerald-700 tabular-nums whitespace-nowrap">
-                                {fmtComma(stu.average, 2)} / {report.scale}
-                              </td>
-                              <td className="py-2 px-4 font-medium text-slate-800 whitespace-nowrap">
-                                {stu.appreciation}
-                              </td>
+                              )}
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                            <tr className="bg-emerald-50 text-emerald-950 font-bold uppercase">
+                              <th className="py-2.5 px-2.5 text-center border-b border-emerald-200 w-10">
+                                N°
+                              </th>
+                              <th className="py-2.5 px-3 text-left border-b border-emerald-200 whitespace-nowrap">
+                                Nom et Prénom
+                              </th>
+                              <th className="py-2.5 px-2 text-center border-b border-r border-emerald-200 w-12">
+                                Sexe
+                              </th>
+                              <th className="py-2.5 px-3 text-center border-b border-emerald-200 bg-emerald-100/60 whitespace-nowrap">
+                                Points obtenus
+                              </th>
+                              <th className="py-2.5 px-3 text-center border-b border-emerald-200 bg-emerald-100/60 whitespace-nowrap">
+                                Moyenne
+                              </th>
+                              <th className="py-2.5 px-3 text-center border-b border-emerald-200 bg-emerald-100/60 whitespace-nowrap">
+                                Rang
+                              </th>
+                              <th className="py-2.5 px-3 text-left border-b border-r border-emerald-200 bg-emerald-100/60 whitespace-nowrap">
+                                Appréciation
+                              </th>
+                              {meritWithDisciplines &&
+                                report.columns.map(col => (
+                                  <th
+                                    key={col.id}
+                                    className="border-b border-l border-emerald-200 px-1 py-2 w-10 min-w-[36px] h-28 align-bottom normal-case bg-slate-50 text-slate-800"
+                                  >
+                                    <div
+                                      className="mx-auto text-[10.5px] font-semibold leading-tight text-center"
+                                      style={{
+                                        writingMode: 'vertical-rl',
+                                        transform: 'rotate(180deg)',
+                                        maxHeight: '104px',
+                                      }}
+                                    >
+                                      {report.isPrimary
+                                        ? col.name
+                                        : `${col.name} (c.${col.coefficient})`}
+                                    </div>
+                                  </th>
+                                ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-200">
+                            {report.meritPassingRows.map((stu, idx) => (
+                              <tr
+                                key={stu.studentId}
+                                className={idx % 2 === 1 ? 'bg-slate-50' : 'bg-white'}
+                              >
+                                <td className="py-2 px-2.5 text-center text-slate-500 font-semibold">
+                                  {idx + 1}
+                                </td>
+                                <td className="py-2 px-3 font-bold text-slate-900 whitespace-nowrap">
+                                  {stu.fullName}
+                                </td>
+                                <td className="py-2 px-2 text-center font-semibold text-slate-700 border-r border-slate-200">
+                                  {stu.gender || '—'}
+                                </td>
+                                <td className="py-2 px-3 text-center font-bold text-slate-900 tabular-nums whitespace-nowrap bg-emerald-50/35">
+                                  {fmtComma(stu.totalPoints, 1)} pts
+                                </td>
+                                <td className="py-2 px-3 text-center font-extrabold text-emerald-700 tabular-nums whitespace-nowrap bg-emerald-50/35">
+                                  {fmtComma(stu.average, 2)} / {report.scale}
+                                </td>
+                                <td className="py-2 px-3 text-center whitespace-nowrap bg-emerald-50/35">
+                                  <span
+                                    className={`inline-block px-2.5 py-0.5 rounded-full font-extrabold ${
+                                      stu.rankNum === 1
+                                        ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                        : stu.rankNum && stu.rankNum <= 3
+                                          ? 'bg-emerald-100 text-emerald-900'
+                                          : 'text-[#1B365D]'
+                                    }`}
+                                  >
+                                    {stu.rankText}
+                                  </span>
+                                </td>
+                                <td className="py-2 px-3 font-semibold text-slate-800 whitespace-nowrap border-r border-slate-200 bg-emerald-50/35">
+                                  {stu.appreciation}
+                                </td>
+                                {meritWithDisciplines &&
+                                  report.columns.map(col => {
+                                    const val = stu.scores[col.id]
+                                    return (
+                                      <td
+                                        key={col.id}
+                                        className="py-2 px-1.5 text-center border-l border-slate-200 tabular-nums"
+                                      >
+                                        {val !== null && val !== undefined
+                                          ? Number.isInteger(val)
+                                            ? val
+                                            : fmtComma(val, 2)
+                                                .replace(/,00$/, '')
+                                                .replace(/(,\d)0$/, '$1')
+                                          : ''}
+                                      </td>
+                                    )
+                                  })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="px-4 py-2 bg-slate-50 border-t border-emerald-200 text-[11px] italic text-slate-600">
+                        {report.legendText}
+                      </div>
+                    </>
                   )}
                 </div>
               )}

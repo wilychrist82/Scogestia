@@ -212,8 +212,12 @@ function classifyHeaderColumn(rawHeader: string): ColumnRole {
     norm === 'total general' ||
     norm === 'total pts' ||
     norm === 'points' ||
+    norm === 'points obtenus' ||
+    norm === 'point obtenu' ||
+    norm === 'points obts' ||
     norm === 'pts' ||
     norm === 'somme' ||
+    norm.startsWith('points ') ||
     norm === 'moyenne' ||
     norm === 'moy' ||
     norm === 'moyenne generale' ||
@@ -985,12 +989,12 @@ export function suggestSubjectMappings(
     const coef = isPrimary
       ? 1
       : col.explicitCoef ??
-        getCoefficientForSubject(
-          col.cleanName,
-          classItem?.name,
-          classItem?.level || undefined,
-          2
-        )
+      getCoefficientForSubject(
+        col.cleanName,
+        classItem?.name,
+        classItem?.level || undefined,
+        2
+      )
 
     const isSplitDicteeOnly =
       hasSeparateQuestionsCol &&
@@ -1160,8 +1164,8 @@ export function buildReportFromImportedData(params: {
     const coefficient = isPrimary
       ? 1
       : ov?.coefficient ??
-        c.explicitCoef ??
-        getCoefficientForSubject(c.cleanName, classItem.name, classItem.level || undefined, 2)
+      c.explicitCoef ??
+      getCoefficientForSubject(c.cleanName, classItem.name, classItem.level || undefined, 2)
 
     return {
       id: `col_${c.colIndex}`,
@@ -1358,8 +1362,8 @@ export function buildReportFromImportedData(params: {
   const classAverage =
     presentAll.length > 0
       ? Number(
-          (presentAll.reduce((acc, r) => acc + (r.average ?? 0), 0) / presentAll.length).toFixed(2)
-        )
+        (presentAll.reduce((acc, r) => acc + (r.average ?? 0), 0) / presentAll.length).toFixed(2)
+      )
       : null
 
   const passRatePct =
@@ -1375,42 +1379,42 @@ export function buildReportFromImportedData(params: {
     label: string
     rangeLabel: string
   }> = [
-    {
-      bucket: 'tres_bon',
-      label: 'Très bon travail',
-      rangeLabel: scale === 10 ? '≥ 9,00' : '≥ 18,00',
-    },
-    {
-      bucket: 'bon',
-      label: 'Bon travail',
-      rangeLabel: scale === 10 ? '8,00 à 8,99' : '16,00 à 17,99',
-    },
-    {
-      bucket: 'assez_bon',
-      label: 'Assez bon travail',
-      rangeLabel: scale === 10 ? '6,00 à 7,99' : '12,00 à 15,99',
-    },
-    {
-      bucket: 'passable',
-      label: 'Passable',
-      rangeLabel: scale === 10 ? '5,00 à 5,99' : '10,00 à 11,99',
-    },
-    {
-      bucket: 'mediocre',
-      label: 'Travail médiocre',
-      rangeLabel: scale === 10 ? '3,00 à 4,99' : '6,00 à 9,99',
-    },
-    {
-      bucket: 'tres_insuffisant',
-      label: 'Travail très insuffisant',
-      rangeLabel: scale === 10 ? '< 3,00' : '< 6,00',
-    },
-    {
-      bucket: 'absent',
-      label: 'Absent(e)',
-      rangeLabel: 'Non noté',
-    },
-  ]
+      {
+        bucket: 'tres_bon',
+        label: 'Très bon travail',
+        rangeLabel: scale === 10 ? '≥ 9,00' : '≥ 18,00',
+      },
+      {
+        bucket: 'bon',
+        label: 'Bon travail',
+        rangeLabel: scale === 10 ? '8,00 à 8,99' : '16,00 à 17,99',
+      },
+      {
+        bucket: 'assez_bon',
+        label: 'Assez bon travail',
+        rangeLabel: scale === 10 ? '6,00 à 7,99' : '12,00 à 15,99',
+      },
+      {
+        bucket: 'passable',
+        label: 'Passable',
+        rangeLabel: scale === 10 ? '5,00 à 5,99' : '10,00 à 11,99',
+      },
+      {
+        bucket: 'mediocre',
+        label: 'Travail médiocre',
+        rangeLabel: scale === 10 ? '3,00 à 4,99' : '6,00 à 9,99',
+      },
+      {
+        bucket: 'tres_insuffisant',
+        label: 'Travail très insuffisant',
+        rangeLabel: scale === 10 ? '< 3,00' : '< 6,00',
+      },
+      {
+        bucket: 'absent',
+        label: 'Absent(e)',
+        rangeLabel: 'Non noté',
+      },
+    ]
 
   const appreciationBreakdown = bucketDefs.map(def => {
     const matched = allRows.filter(r => r.appreciationBucket === def.bucket)
