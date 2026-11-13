@@ -1,8 +1,13 @@
 'use client'
 
-import { useState, useTransition, FormEvent, useEffect, useMemo, useRef } from 'react'
+import { useState, useTransition, FormEvent, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { savePrimaryGrades, saveSecondaryGrades, clearStudentGrades } from '@/app/actions/academique'
+import {
+  savePrimaryGrades,
+  saveSecondaryGrades,
+  clearStudentGrades,
+  saveClassMonthPrimaryGrades,
+} from '@/app/actions/academique'
 import Link from 'next/link'
 import { sortClasses } from '@/lib/classes'
 import { 
@@ -19,19 +24,26 @@ import {
   Layers,
   GraduationCap,
   ArrowLeft,
-  Search,
   FileText,
   Calculator,
   Award,
   Trash2,
   FileSpreadsheet,
   Trophy,
-  ArrowUpDown,
   Upload
 } from 'lucide-react'
 import { ClassResultsPreviewModal } from './ClassResultsPreviewModal'
 import { ImportGradesModal } from './ImportGradesModal'
-import { ExportCycle, FilterMode, SortMode, getAppreciation } from '@/lib/grades-export'
+import { PrimaryClassMatrixGrid } from './PrimaryClassMatrixGrid'
+import { AverageScale, ExportCycle, FilterMode, SortMode } from '@/lib/grades-export'
+import {
+  TRIMESTER_OPTIONS,
+  TRIMESTER_MONTHS_MAP,
+  TrimesterNumber,
+  TrimesterMonthIndex,
+  getMonthNumberFromTrimester,
+  parseCellScoreInput,
+} from '@/lib/primary-class-grid'
 import { 
   getCoefficientForSubject, 
   detectClassSeriesKey, 
@@ -42,7 +54,6 @@ import {
   calculatePrimaryGeneralAverage,
   getPrimarySubjectOrder,
   computePrimaryMonthClassRanks,
-  formatRank
 } from '@/lib/academic-curriculum'
 
 type ClassItem = { id: string; name: string; level?: string }
@@ -98,10 +109,17 @@ export function NotesManager({
     if (classes.length === 1) return classes[0].id
     return ''
   })
-  const [selectedStudent, setSelectedStudent] = useState<string>('') // Mode primaire / maternelle
+  const [selectedStudent, setSelectedStudent] = useState<string>('') // Mode primaire / maternelle (fiche élève optionnelle)
   const [selectedSubject, setSelectedSubject] = useState<string>('') // Mode secondaire
   const [selectedTerm, setSelectedTerm] = useState<string>('1er_trimestre') // Mode secondaire
-  const [searchStudentTerm, setSearchStudentTerm] = useState<string>('')
+
+  // Sélecteurs Trimestre / Mois et brouillons de la grille collective Primaire / Maternelle
+  const [selectedTrimester, setSelectedTrimester] = useState<TrimesterNumber>(1)
+  const [selectedTrimMonth, setSelectedTrimMonth] = useState<TrimesterMonthIndex>(1)
+  const [matrixScale, setMatrixScale] = useState<AverageScale>(20)
+  const [matrixDivisorInput, setMatrixDivisorInput] = useState<string>('')
+  const [classDraftEdits, setClassDraftEdits] = useState<Record<string, string>>({})
+  const [isSavingMatrix, setIsSavingMatrix] = useState<boolean>(false)
 
   const [localSubjects, setLocalSubjects] = useState<SubjectItem[]>(subjects)
   const [localStudents, setLocalStudents] = useState<StudentItem[]>(students)
@@ -118,7 +136,6 @@ export function NotesManager({
   const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false)
   const [previewInitialSort, setPreviewInitialSort] = useState<SortMode>('alphabetical')
   const [previewInitialFilter, setPreviewInitialFilter] = useState<FilterMode>('all')
-  const [rosterDisplayMode, setRosterDisplayMode] = useState<'alpha' | 'merit_all' | 'merit_passing'>('alpha')
 
   const openResultsPreview = (sort: SortMode = 'alphabetical', filter: FilterMode = 'all') => {
     setPreviewInitialSort(sort)
@@ -248,174 +265,307 @@ export function NotesManager({
   const hasPrevStudent = currentStudentIndex > 0
   const hasNextStudent = currentStudentIndex >= 0 && currentStudentIndex < filteredStudents.length - 1
 
-  // Student stats for class roster view (Points obtenus, Moyenne, Rang officiel ex-æquo & Appréciation)
-  const studentStatsMap = useMemo(() => {
-    const stats: Record<
-      string,
-      {
-        count: number
-        total: number
-        maxPossible: number
-        avg: string | null
-        avgNum: number | null
-        rankNum: number | null
-        rankText: string
-        isExAequo: boolean
-        appreciation: string
-        isPassing: boolean
-      }
-    > = {}
-    if (!isPrimaryCycle) return stats
+  // Mois effectif (1..9) piloté par Trimestre (1..3) + Mois du trimestre (1..3)
+  const currentMonthNumber = getMonthNumberFromTrimester(selectedTrimester, selectedTrimMonth)
 
-    const rawEntries = filteredStudents.map(stu => {
-      let count = 0
-      let total = 0
-      let maxPossible = 0
-      allPrimaryGrades.forEach(g => {
-        if (g.student_id === stu.id && g.score !== null && g.score !== undefined) {
-          const subj = localSubjects.find(s => s.id === g.subject_id)
-          const maxS = subj
-            ? getPrimarySubjectMaxScore(subj.name, selectedClassObj?.name, selectedClassObj?.level)
-            : ((g as any).max_score || 10)
-          total += g.score
-          maxPossible += maxS
-          count++
-        }
-      })
-      const avgNum = maxPossible > 0 ? Number(((total / maxPossible) * 10).toFixed(2)) : null
-      return {
-        studentId: stu.id,
-        count,
-        total: Number(total.toFixed(2)),
-        maxPossible,
-        avgNum,
-        avg: avgNum !== null ? avgNum.toFixed(2) : null,
+  // Notes enregistrées en base pour la classe et le mois actifs (clé: `${studentId}_${subjectId}`)
+  const savedScoreMap = useMemo(() => {
+    const map: Record<string, number> = {}
+    if (!isPrimaryCycle || !selectedClass) return map
+    const stuSet = new Set(filteredStudents.map(s => s.id))
+    allPrimaryGrades.forEach(g => {
+      if (
+        g.month_number === currentMonthNumber &&
+        stuSet.has(g.student_id) &&
+        g.score !== null &&
+        g.score !== undefined
+      ) {
+        map[`${g.student_id}_${g.subject_id}`] = Number(g.score)
       }
     })
+    return map
+  }, [isPrimaryCycle, selectedClass, filteredStudents, allPrimaryGrades, currentMonthNumber])
 
-    // Classement officiel sur toute la classe (du plus fort au plus faible, gestion ex-æquo)
-    const gradedSorted = rawEntries
-      .filter(e => e.avgNum !== null)
-      .sort((a, b) => {
-        if ((b.avgNum ?? 0) !== (a.avgNum ?? 0)) return (b.avgNum ?? 0) - (a.avgNum ?? 0)
-        return b.total - a.total
-      })
-
-    const rankById = new Map<string, { rankNum: number; rankText: string; isExAequo: boolean }>()
-    let currentRank = 1
-    for (let i = 0; i < gradedSorted.length; i++) {
-      const cur = gradedSorted[i]
-      const prev = i > 0 ? gradedSorted[i - 1] : null
-      const next = i < gradedSorted.length - 1 ? gradedSorted[i + 1] : null
-
-      const sameAsPrev =
-        prev !== null &&
-        prev.avgNum === cur.avgNum &&
-        Math.abs(prev.total - cur.total) < 0.001
-      const sameAsNext =
-        next !== null &&
-        next.avgNum === cur.avgNum &&
-        Math.abs(next.total - cur.total) < 0.001
-
-      if (!sameAsPrev) {
-        currentRank = i + 1
-      }
-      const isExAequo = sameAsPrev || sameAsNext
-      rankById.set(cur.studentId, {
-        rankNum: currentRank,
-        rankText: formatRank(currentRank, isExAequo),
-        isExAequo,
-      })
-    }
-
-    rawEntries.forEach(entry => {
-      const r = rankById.get(entry.studentId)
-      const isPassing = entry.avgNum !== null && entry.avgNum >= 5
-      const appr = entry.avgNum !== null ? getAppreciation(entry.avgNum, 10).label : '—'
-      stats[entry.studentId] = {
-        count: entry.count,
-        total: entry.total,
-        maxPossible: entry.maxPossible,
-        avg: entry.avg,
-        avgNum: entry.avgNum,
-        rankNum: r?.rankNum ?? null,
-        rankText: r?.rankText ?? '—',
-        isExAequo: r?.isExAequo ?? false,
-        appreciation: appr,
-        isPassing,
+  // Brouillons non encore enregistrés pour (classe, mois) actif (clé: `${studentId}_${subjectId}`)
+  const currentMonthDraftMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    if (!selectedClass) return map
+    const prefix = `${selectedClass}_${currentMonthNumber}_`
+    Object.entries(classDraftEdits).forEach(([fullKey, rawVal]) => {
+      if (fullKey.startsWith(prefix)) {
+        map[fullKey.slice(prefix.length)] = rawVal
       }
     })
+    return map
+  }, [selectedClass, currentMonthNumber, classDraftEdits])
 
-    return stats
-  }, [isPrimaryCycle, filteredStudents, allPrimaryGrades, localSubjects, selectedClassObj])
-
-  // Filtered by search keyword and sorted/filtered by rosterDisplayMode
-  const searchedStudents = useMemo(() => {
-    let list = filteredStudents
-    if (searchStudentTerm.trim()) {
-      const q = searchStudentTerm.toLowerCase().trim()
-      list = list.filter(s => 
-        s.last_name.toLowerCase().includes(q) || 
-        s.first_name.toLowerCase().includes(q) || 
-        (s.matricule && s.matricule.toLowerCase().includes(q))
-      )
-    }
-
-    if (!isPrimaryCycle || rosterDisplayMode === 'alpha') {
-      return list
-    }
-
-    const withAvg = list.map(s => {
-      const st = studentStatsMap[s.id]
-      return { stu: s, avgNum: st?.avgNum ?? null, total: st?.total ?? 0 }
+  // Compteur de notes saisies par mois (1..9) pour la classe active (badge dans le sélecteur de mois)
+  const monthGradeCounts = useMemo(() => {
+    const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 }
+    if (!isPrimaryCycle || !selectedClass) return counts
+    const stuSet = new Set(filteredStudents.map(s => s.id))
+    const mergedKeys = new Set<string>()
+    allPrimaryGrades.forEach(g => {
+      if (
+        stuSet.has(g.student_id) &&
+        g.score !== null &&
+        g.score !== undefined &&
+        g.month_number >= 1 &&
+        g.month_number <= 9
+      ) {
+        mergedKeys.add(`${g.month_number}_${g.student_id}_${g.subject_id}`)
+      }
     })
+    const classPrefix = `${selectedClass}_`
+    Object.entries(classDraftEdits).forEach(([fullKey, raw]) => {
+      if (!fullKey.startsWith(classPrefix)) return
+      const rest = fullKey.slice(classPrefix.length)
+      const parsed = parseCellScoreInput(raw)
+      if (parsed === null) {
+        mergedKeys.delete(rest)
+      } else if (typeof parsed === 'number') {
+        mergedKeys.add(rest)
+      }
+    })
+    mergedKeys.forEach(k => {
+      const mNum = Number(k.split('_')[0])
+      if (mNum >= 1 && mNum <= 9) counts[mNum] = (counts[mNum] || 0) + 1
+    })
+    return counts
+  }, [isPrimaryCycle, selectedClass, filteredStudents, allPrimaryGrades, classDraftEdits])
 
-    if (rosterDisplayMode === 'merit_passing') {
-      return withAvg
-        .filter(item => item.avgNum !== null && item.avgNum >= 5)
-        .sort((a, b) => {
-          if ((b.avgNum ?? 0) !== (a.avgNum ?? 0)) return (b.avgNum ?? 0) - (a.avgNum ?? 0)
-          return b.total - a.total
-        })
-        .map(item => item.stu)
-    }
-
-    // merit_all : du plus fort au plus faible, non notés en dernier
-    return withAvg
-      .sort((a, b) => {
-        if (a.avgNum === null && b.avgNum === null) return 0
-        if (a.avgNum === null) return 1
-        if (b.avgNum === null) return -1
-        if (b.avgNum !== a.avgNum) return b.avgNum - a.avgNum
-        return b.total - a.total
-      })
-      .map(item => item.stu)
-  }, [filteredStudents, searchStudentTerm, isPrimaryCycle, rosterDisplayMode, studentStatsMap])
-
-  // Fusionne les saisies non encore enregistrées de l'élève actif avec allPrimaryGrades pour l'aperçu instantané
+  // Fusionne les saisies non encore enregistrées (grille collective + fiche élève) avec allPrimaryGrades pour l'aperçu/export instantané
   const effectivePrimaryGrades = useMemo(() => {
-    if (!isPrimaryCycle || !selectedStudent || Object.keys(studentScores).length === 0) {
+    if (!isPrimaryCycle) return allPrimaryGrades
+    const hasClassDrafts =
+      !!selectedClass &&
+      Object.keys(classDraftEdits).some(k => k.startsWith(`${selectedClass}_`))
+    const hasStudentDrafts = !!selectedStudent && Object.keys(studentScores).length > 0
+
+    if (!hasClassDrafts && !hasStudentDrafts) {
       return allPrimaryGrades
     }
-    const base = allPrimaryGrades.filter(g => g.student_id !== selectedStudent)
-    for (let m = 1; m <= 9; m++) {
-      filteredPrimarySubjects.forEach(s => {
-        const valStr = studentScores[`${m}_${s.id}`]
-        if (valStr !== undefined && valStr.trim() !== '') {
-          const val = parseFloat(valStr)
-          if (!isNaN(val)) {
-            base.push({
-              student_id: selectedStudent,
-              subject_id: s.id,
-              month_number: m,
-              score: val,
-            })
-          }
+
+    const gradeMap = new Map<string, PrimaryGradeItem>()
+    allPrimaryGrades.forEach(g => {
+      gradeMap.set(`${g.student_id}_${g.subject_id}_${g.month_number}`, g)
+    })
+
+    if (hasClassDrafts && selectedClass) {
+      const classPrefix = `${selectedClass}_`
+      Object.entries(classDraftEdits).forEach(([fullKey, raw]) => {
+        if (!fullKey.startsWith(classPrefix)) return
+        const rest = fullKey.slice(classPrefix.length)
+        const parts = rest.split('_')
+        if (parts.length < 3) return
+        const mNum = Number(parts[0])
+        const stuId = parts[1]
+        const subId = parts.slice(2).join('_')
+        const mapKey = `${stuId}_${subId}_${mNum}`
+        const parsed = parseCellScoreInput(raw)
+        if (parsed === null) {
+          gradeMap.delete(mapKey)
+        } else if (typeof parsed === 'number') {
+          gradeMap.set(mapKey, {
+            student_id: stuId,
+            subject_id: subId,
+            month_number: mNum,
+            score: parsed,
+          })
         }
       })
     }
-    return base
-  }, [isPrimaryCycle, selectedStudent, studentScores, allPrimaryGrades, filteredPrimarySubjects])
+
+    if (hasStudentDrafts && selectedStudent) {
+      for (let m = 1; m <= 9; m++) {
+        filteredPrimarySubjects.forEach(s => {
+          const valStr = studentScores[`${m}_${s.id}`]
+          const mapKey = `${selectedStudent}_${s.id}_${m}`
+          if (valStr !== undefined) {
+            if (valStr.trim() === '') {
+              gradeMap.delete(mapKey)
+            } else {
+              const val = parseFloat(valStr.replace(',', '.'))
+              if (!isNaN(val)) {
+                gradeMap.set(mapKey, {
+                  student_id: selectedStudent,
+                  subject_id: s.id,
+                  month_number: m,
+                  score: val,
+                })
+              }
+            }
+          }
+        })
+      }
+    }
+
+    return Array.from(gradeMap.values())
+  }, [
+    isPrimaryCycle,
+    selectedClass,
+    selectedStudent,
+    classDraftEdits,
+    studentScores,
+    allPrimaryGrades,
+    filteredPrimarySubjects,
+  ])
+
+  const handleMatrixCellChange = (studentId: string, subjectId: string, rawValue: string) => {
+    if (!selectedClass) return
+    const cellKey = `${studentId}_${subjectId}`
+    const draftKey = `${selectedClass}_${currentMonthNumber}_${cellKey}`
+    const savedVal = savedScoreMap[cellKey]
+
+    setClassDraftEdits(prev => {
+      const parsed = parseCellScoreInput(rawValue)
+      const isTrailingSep = /[.,]$/.test(rawValue.trim())
+
+      const matchesSaved =
+        (savedVal === undefined && parsed === null) ||
+        (savedVal !== undefined &&
+          typeof parsed === 'number' &&
+          Math.abs(parsed - savedVal) < 0.0001 &&
+          !isTrailingSep)
+
+      if (matchesSaved) {
+        if (!(draftKey in prev)) return prev
+        const next = { ...prev }
+        delete next[draftKey]
+        return next
+      }
+
+      return { ...prev, [draftKey]: rawValue }
+    })
+  }
+
+  const handleResetMatrixDrafts = () => {
+    if (!selectedClass) return
+    const prefix = `${selectedClass}_${currentMonthNumber}_`
+    setClassDraftEdits(prev => {
+      const next: Record<string, string> = {}
+      Object.entries(prev).forEach(([k, v]) => {
+        if (!k.startsWith(prefix)) next[k] = v
+      })
+      return next
+    })
+    setError(null)
+  }
+
+  const handleSaveClassMonth = async () => {
+    if (!selectedClass || isSavingMatrix) return
+    setError(null)
+    setSuccess(null)
+
+    const subjectById = new Map(filteredPrimarySubjects.map(s => [s.id, s]))
+    const upserts: Array<{ studentId: string; subjectId: string; score: number }> = []
+    const deletes: Array<{ studentId: string; subjectId: string }> = []
+
+    for (const [cellKey, raw] of Object.entries(currentMonthDraftMap)) {
+      const sepIdx = cellKey.indexOf('_')
+      if (sepIdx <= 0) continue
+      const studentId = cellKey.slice(0, sepIdx)
+      const subjectId = cellKey.slice(sepIdx + 1)
+      const subj = subjectById.get(subjectId)
+      const maxS = subj
+        ? getPrimarySubjectMaxScore(subj.name, selectedClassObj?.name, selectedClassObj?.level)
+        : 20
+
+      const parsed = parseCellScoreInput(raw)
+      if (parsed === 'invalid') {
+        setError(`Valeur numérique invalide saisie ("${raw}") en ${subj?.name || 'discipline'}.`)
+        return
+      }
+      if (parsed === null) {
+        if (savedScoreMap[cellKey] !== undefined) {
+          deletes.push({ studentId, subjectId })
+        }
+        continue
+      }
+      if (parsed > maxS) {
+        setError(`La note ${parsed} dépasse le barème maximal (${maxS}) en ${subj?.name || 'discipline'}.`)
+        return
+      }
+
+      const existing = savedScoreMap[cellKey]
+      if (existing === undefined || Math.abs(parsed - existing) >= 0.0001) {
+        upserts.push({ studentId, subjectId, score: parsed })
+      }
+    }
+
+    if (upserts.length === 0 && deletes.length === 0) {
+      setSuccess('Toutes les notes de ce mois sont déjà enregistrées.')
+      setTimeout(() => setSuccess(null), 3000)
+      return
+    }
+
+    setIsSavingMatrix(true)
+    try {
+      const result = await saveClassMonthPrimaryGrades({
+        classId: selectedClass,
+        monthNumber: currentMonthNumber,
+        upserts,
+        deletes,
+      })
+
+      if (result.error) {
+        setError(result.error)
+        return
+      }
+
+      const resolvedEtude = result.resolvedEtudeSubject
+      if (resolvedEtude) {
+        setLocalSubjects(prev => {
+          if (prev.some(s => s.id === resolvedEtude.id)) return prev
+          return [...prev, resolvedEtude]
+        })
+      }
+
+      const deleteKeys = new Set(
+        (result.deletedPairs || []).map(p => `${p.student_id}_${p.subject_id}_${p.month_number}`)
+      )
+      const upsertKeys = new Set(
+        (result.savedGrades || []).map(g => `${g.student_id}_${g.subject_id}_${g.month_number}`)
+      )
+
+      setAllPrimaryGrades(prev => {
+        const filtered = prev.filter(g => {
+          const k = `${g.student_id}_${g.subject_id}_${g.month_number}`
+          return !deleteKeys.has(k) && !upsertKeys.has(k)
+        })
+        return [...filtered, ...(result.savedGrades || [])]
+      })
+
+      const savedPrefix = `${selectedClass}_${currentMonthNumber}_`
+      setClassDraftEdits(prev => {
+        const next: Record<string, string> = {}
+        Object.entries(prev).forEach(([k, v]) => {
+          if (k.startsWith(savedPrefix)) return
+          if (resolvedEtude && k.endsWith('_virtual-etude-de-texte')) {
+            next[k.replace(/_virtual-etude-de-texte$/, `_${resolvedEtude.id}`)] = v
+          } else {
+            next[k] = v
+          }
+        })
+        return next
+      })
+
+      const totalTouched = (result.savedCount || 0) + (result.deletedCount || 0)
+      const trimLabel = TRIMESTER_OPTIONS.find(t => t.value === selectedTrimester)?.shortLabel || `T${selectedTrimester}`
+      const monthLabel =
+        TRIMESTER_MONTHS_MAP[selectedTrimester]?.find(m => m.trimMonth === selectedTrimMonth)?.label ||
+        `Mois ${currentMonthNumber}`
+      setSuccess(
+        `Grille enregistrée (${trimLabel} · ${monthLabel}) : ${totalTouched} note(s) synchronisée(s) avec succès !`
+      )
+      setTimeout(() => setSuccess(null), 4500)
+      router.refresh()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erreur inattendue lors de l’enregistrement.')
+    } finally {
+      setIsSavingMatrix(false)
+    }
+  }
 
   // Synchronize studentScores when selected student changes
   useEffect(() => {
@@ -704,7 +854,11 @@ export function NotesManager({
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-slate-200 ring-1 ring-inset ring-white/15">
                 <GraduationCap className="w-3.5 h-3.5 text-emerald-300" />
-                {isPrimaryCycle ? 'Primaire (par élève)' : 'Secondaire (par matière)'}
+                {isPrimaryCycle
+                  ? selectedStudent
+                    ? 'Primaire · Fiche élève (9 mois)'
+                    : 'Primaire · Grille collective de classe'
+                  : 'Secondaire (par matière)'}
               </span>
             </div>
             <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
@@ -712,7 +866,9 @@ export function NotesManager({
             </h2>
             <p className="mt-1 text-[13px] font-medium text-slate-300 sm:text-sm">
               {isPrimaryCycle
-                ? 'Importez votre fichier Excel complet par disciplines ou saisissez les notes élève par élève.'
+                ? selectedStudent
+                  ? 'Visualisez ou ajustez les 9 mois d’évaluations pour cet élève, ou revenez à la grille collective.'
+                  : 'Sélectionnez le niveau, la classe, le trimestre et le mois pour saisir toute la classe d’un coup avec calcul automatique du total et de la moyenne.'
                 : 'Importez votre fichier Excel de classe par matières ou saisissez les notes ci-dessous.'}
             </p>
           </div>
@@ -817,40 +973,92 @@ export function NotesManager({
               </select>
             </div>
 
-            {/* In Primary mode: 3rd selector is Élève! */}
+            {/* In Primary mode: Trimestre -> Mois -> Élève (fiche 9m optionnelle) */}
             {isPrimaryCycle ? (
-              <div className="flex flex-col gap-1.5 flex-1 min-w-[220px]">
-                <div className="flex items-center justify-between">
+              <>
+                <div className="flex flex-col gap-1.5 min-w-[195px] flex-1">
                   <label className="text-sm font-semibold text-[var(--color-on-surface)] flex items-center gap-1.5">
-                    <User className="w-4 h-4 text-[var(--color-primary)]" />
-                    Élève
+                    <Calendar className="w-4 h-4 text-[var(--color-primary)]" />
+                    Trimestre
                   </label>
-                  {selectedStudent && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedStudent('')}
-                      className="text-xs text-[var(--color-primary)] hover:underline font-medium"
-                    >
-                      Voir toute la classe
-                    </button>
-                  )}
+                  <select
+                    value={selectedTrimester}
+                    onChange={(e) => {
+                      const t = Number(e.target.value) as TrimesterNumber
+                      setSelectedTrimester(t)
+                      setSelectedStudent('')
+                    }}
+                    disabled={!selectedClass}
+                    className="h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] font-medium disabled:opacity-50 disabled:bg-gray-50"
+                  >
+                    {TRIMESTER_OPTIONS.map(t => (
+                      <option key={t.value} value={t.value}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <select 
-                  value={selectedStudent} 
-                  onChange={(e) => setSelectedStudent(e.target.value)}
-                  disabled={!selectedClass}
-                  className="h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] font-medium disabled:opacity-50 disabled:bg-gray-50"
-                >
-                  <option value="">
-                    {!selectedClass ? "Sélectionnez d'abord une classe" : "Choisir un élève ou voir la liste ci-dessous..."}
-                  </option>
-                  {filteredStudents.map((s, idx) => (
-                    <option key={s.id} value={s.id}>
-                      {idx + 1}. {s.last_name} {s.first_name} {s.matricule ? `(${s.matricule})` : ''}
+
+                <div className="flex flex-col gap-1.5 min-w-[185px] flex-1">
+                  <label className="text-sm font-semibold text-[var(--color-on-surface)] flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-emerald-700" />
+                    Mois du trimestre
+                  </label>
+                  <select
+                    value={selectedTrimMonth}
+                    onChange={(e) => {
+                      setSelectedTrimMonth(Number(e.target.value) as TrimesterMonthIndex)
+                      setSelectedStudent('')
+                    }}
+                    disabled={!selectedClass}
+                    className="h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] font-medium disabled:opacity-50 disabled:bg-gray-50"
+                  >
+                    {TRIMESTER_MONTHS_MAP[selectedTrimester].map(m => {
+                      const cnt = monthGradeCounts[m.monthNumber] || 0
+                      return (
+                        <option key={m.monthNumber} value={m.trimMonth}>
+                          {m.label}{selectedClass && cnt > 0 ? ` (${cnt} notes)` : ''}
+                        </option>
+                      )
+                    })}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5 flex-1 min-w-[205px]">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-semibold text-[var(--color-on-surface)] flex items-center gap-1.5">
+                      <User className="w-4 h-4 text-[var(--color-primary)]" />
+                      Vue / Élève
+                    </label>
+                    {selectedStudent && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedStudent('')}
+                        className="text-xs text-[var(--color-primary)] hover:underline font-semibold cursor-pointer"
+                      >
+                        Retour grille classe
+                      </button>
+                    )}
+                  </div>
+                  <select 
+                    value={selectedStudent} 
+                    onChange={(e) => setSelectedStudent(e.target.value)}
+                    disabled={!selectedClass}
+                    className="h-11 px-3 border border-[var(--color-outline-variant)] rounded-lg text-sm focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)] font-medium disabled:opacity-50 disabled:bg-gray-50"
+                  >
+                    <option value="">
+                      {!selectedClass
+                        ? "Sélectionnez d'abord une classe"
+                        : `Toute la classe (${filteredStudents.length} élèves)`}
                     </option>
-                  ))}
-                </select>
-              </div>
+                    {filteredStudents.map((s, idx) => (
+                      <option key={s.id} value={s.id}>
+                        {idx + 1}. {s.last_name} {s.first_name} {s.matricule ? `(${s.matricule})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
             ) : (
               /* In Secondary mode: 3rd selector is Matière */
               <div className="flex flex-col gap-1.5 flex-1 min-w-[180px]">
@@ -994,250 +1202,28 @@ export function NotesManager({
                 </button>
               </div>
             ) : !selectedStudent ? (
-              /* Étape 3 : Liste / Tableau des élèves de la classe (Roster view avec double-clic ou bouton) */
-              <div className="flex flex-col">
-                <div className="p-4 sm:p-6 border-b border-[var(--color-outline-variant)] bg-[var(--color-surface-container-low)] flex flex-col gap-4">
-                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-bold text-lg text-[var(--color-on-surface)] flex items-center gap-2">
-                          <span>Liste des élèves de la classe :</span>
-                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[var(--color-primary)] text-white">
-                            {selectedClassObj?.name}
-                          </span>
-                          <span className="text-sm font-normal text-[var(--color-on-surface-variant)]">
-                            ({searchedStudents.length} / {filteredStudents.length} élèves)
-                          </span>
-                        </h3>
-                      </div>
-                      <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">
-                        💡 Cliquez sur un élève pour saisir ses notes, ou visualisez directement la feuille complète de résultats et l&apos;export Excel.
-                      </p>
-                    </div>
-
-                    {/* Recherche rapide d'un élève */}
-                    <div className="relative w-full lg:w-72">
-                      <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-on-surface-variant)]" />
-                      <input 
-                        type="text"
-                        placeholder="Rechercher un élève..."
-                        value={searchStudentTerm}
-                        onChange={(e) => setSearchStudentTerm(e.target.value)}
-                        className="w-full h-10 pl-9 pr-3 text-xs rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface)] outline-none focus:border-[var(--color-primary)]"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Barre de filtrage et recherche — épurée sans doublons */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-[var(--color-outline-variant)]/70">
-                    <div className="inline-flex flex-wrap items-center rounded-xl border border-slate-200 bg-white p-1 gap-1 shadow-2xs">
-                      <button
-                        type="button"
-                        onClick={() => setRosterDisplayMode('alpha')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                          rosterDisplayMode === 'alpha'
-                            ? 'bg-slate-900 text-white shadow-2xs'
-                            : 'text-slate-600 hover:bg-slate-100'
-                        }`}
-                      >
-                        Ordre alphabétique (Tous)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRosterDisplayMode('merit_all')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                          rosterDisplayMode === 'merit_all'
-                            ? 'bg-slate-900 text-white shadow-2xs'
-                            : 'text-slate-600 hover:bg-slate-100'
-                        }`}
-                      >
-                        <ArrowUpDown className="w-3.5 h-3.5" />
-                        <span>Ordre de mérite (Tous)</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRosterDisplayMode('merit_passing')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                          rosterDisplayMode === 'merit_passing'
-                            ? 'bg-emerald-600 text-white shadow-2xs'
-                            : 'text-emerald-800 hover:bg-emerald-50'
-                        }`}
-                      >
-                        <Trophy className="w-3.5 h-3.5" />
-                        <span>Admis uniquement (≥ 5/10)</span>
-                      </button>
-                    </div>
-
-                    <span className="text-xs font-medium text-slate-500">
-                      {rosterDisplayMode === 'merit_passing'
-                        ? `${searchedStudents.length} admis · Points obtenus, Moyenne, Rang & Appréciation`
-                        : rosterDisplayMode === 'merit_all'
-                          ? 'Classement du plus fort au plus faible'
-                          : 'Tri alphabétique par nom de famille'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Tableau de la classe */}
-                <div className="overflow-x-auto min-h-[350px] custom-scrollbar">
-                  <table className="w-full text-left border-collapse whitespace-nowrap">
-                    <thead>
-                      <tr className="bg-[var(--color-surface-container)] border-b border-[var(--color-outline-variant)] text-[var(--color-on-surface-variant)] text-xs font-semibold uppercase tracking-wider">
-                        <th className="py-3 px-3 w-12 text-center">N°</th>
-                        <th className="py-3 px-4">Nom & Prénoms</th>
-                        <th className="py-3 px-3">Matricule</th>
-                        <th className="py-3 px-3 text-center">Notes saisies</th>
-                        <th className="py-3 px-3 text-center">Points obtenus</th>
-                        <th className="py-3 px-3 text-center">Moyenne</th>
-                        <th className="py-3 px-3 text-center">Rang</th>
-                        <th className="py-3 px-4 text-left">Appréciation</th>
-                        <th className="py-3 px-4 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--color-outline-variant)] text-sm">
-                      {searchedStudents.length === 0 ? (
-                        <tr>
-                          <td colSpan={9} className="py-12 px-4 text-center text-sm text-[var(--color-on-surface-variant)]">
-                            {rosterDisplayMode === 'merit_passing'
-                              ? 'Aucun élève n’a encore atteint la moyenne (≥ 5 / 10). Saisissez des notes ou affichez tous les élèves.'
-                              : 'Aucun élève ne correspond à votre recherche.'}
-                          </td>
-                        </tr>
-                      ) : searchedStudents.map((stu, idx) => {
-                        const st = studentStatsMap[stu.id] || {
-                          count: 0,
-                          total: 0,
-                          maxPossible: 0,
-                          avg: null,
-                          avgNum: null,
-                          rankNum: null,
-                          rankText: '—',
-                          isExAequo: false,
-                          appreciation: '—',
-                          isPassing: false,
-                        }
-                        const totalCells = filteredPrimarySubjects.length * 9
-                        const progressPct = Math.min(100, Math.round((st.count / (totalCells || 1)) * 100))
-
-                        return (
-                          <tr 
-                            key={stu.id}
-                            onClick={() => setSelectedStudent(stu.id)}
-                            onDoubleClick={() => setSelectedStudent(stu.id)}
-                            className="hover:bg-[var(--color-primary)]/5 cursor-pointer transition-colors group"
-                            title="Double-cliquez pour ouvrir la grille de notes"
-                          >
-                            <td className="py-3 px-3 text-center text-xs font-bold text-[var(--color-on-surface-variant)]">
-                              {idx + 1}
-                            </td>
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-[var(--color-primary)] group-hover:text-white transition-all">
-                                  {stu.last_name[0]}{stu.first_name[0]}
-                                </div>
-                                <div>
-                                  <div className="font-bold text-[var(--color-on-surface)] group-hover:text-[var(--color-primary)] transition-colors">
-                                    {stu.last_name} {stu.first_name}
-                                  </div>
-                                  <div className="text-xs text-[var(--color-on-surface-variant)]">
-                                    Élève {selectedClassObj?.name}
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="py-3 px-3 font-mono text-xs text-[var(--color-on-surface-variant)]">
-                              {stu.matricule || '—'}
-                            </td>
-                            <td className="py-3 px-3 text-center">
-                              <div className="flex flex-col items-center gap-1">
-                                <span className="text-xs font-semibold text-[var(--color-on-surface)]">
-                                  {st.count} / {totalCells} notes
-                                </span>
-                                <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                  <div 
-                                    className="h-full bg-[var(--color-primary)] transition-all" 
-                                    style={{ width: `${progressPct}%` }}
-                                  />
-                                </div>
-                              </div>
-                            </td>
-                            <td className="py-3 px-3 text-center">
-                              {st.count > 0 ? (
-                                <div className="flex flex-col items-center leading-tight">
-                                  <span className="text-xs font-extrabold text-[var(--color-on-surface)] tabular-nums">
-                                    {st.total.toFixed(1).replace('.', ',')} pts
-                                  </span>
-                                  <span className="text-[10px] text-[var(--color-on-surface-variant)] tabular-nums">
-                                    / {st.maxPossible}
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className="text-xs text-[var(--color-on-surface-variant)] opacity-50">—</span>
-                              )}
-                            </td>
-                            <td className="py-3 px-3 text-center">
-                              {st.avg ? (
-                                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold tabular-nums ${
-                                  st.isPassing ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {st.avg} / 10
-                                </span>
-                              ) : (
-                                <span className="text-xs text-[var(--color-on-surface-variant)] opacity-50">
-                                  Non calculé
-                                </span>
-                              )}
-                            </td>
-                            <td className="py-3 px-3 text-center">
-                              {st.rankNum !== null ? (
-                                <span
-                                  className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
-                                    st.rankNum === 1
-                                      ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                                      : st.rankNum <= 3
-                                        ? 'bg-emerald-100 text-emerald-900'
-                                        : 'bg-slate-100 text-[#1B365D]'
-                                  }`}
-                                >
-                                  {st.rankText}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-[var(--color-on-surface-variant)] opacity-50">—</span>
-                              )}
-                            </td>
-                            <td className="py-3 px-4 text-left">
-                              {st.avgNum !== null ? (
-                                <span
-                                  className={`text-xs font-semibold ${
-                                    st.isPassing ? 'text-slate-800' : 'text-red-600'
-                                  }`}
-                                >
-                                  {st.appreciation}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-[var(--color-on-surface-variant)] opacity-50">—</span>
-                              )}
-                            </td>
-                            <td className="py-3 px-4 text-right">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setSelectedStudent(stu.id)
-                                }}
-                                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--color-primary)] text-white hover:opacity-90 transition-all shadow-2xs flex items-center gap-1.5 ml-auto cursor-pointer"
-                              >
-                                <span>Saisir les notes</span>
-                                <ChevronRight className="w-3.5 h-3.5" />
-                              </button>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              /* Étape 3 : Grille collective de saisie directe par classe (N°, Nom et Prénoms, Sexe, Disciplines, Total, Moyenne) */
+              <PrimaryClassMatrixGrid
+                classId={selectedClass}
+                className={selectedClassObj?.name || ''}
+                classLevel={selectedClassObj?.level}
+                students={filteredStudents}
+                subjects={filteredPrimarySubjects}
+                trimester={selectedTrimester}
+                trimMonth={selectedTrimMonth}
+                monthNumber={currentMonthNumber}
+                savedScoreMap={savedScoreMap}
+                draftMap={currentMonthDraftMap}
+                onCellChange={handleMatrixCellChange}
+                onResetDrafts={handleResetMatrixDrafts}
+                onSaveMonth={handleSaveClassMonth}
+                onOpenStudentFiche={(studentId) => setSelectedStudent(studentId)}
+                isSaving={isSavingMatrix}
+                scale={matrixScale}
+                onScaleChange={setMatrixScale}
+                customDivisorInput={matrixDivisorInput}
+                onCustomDivisorChange={setMatrixDivisorInput}
+              />
             ) : (
               /* Étape 4 : Grille Excel de l'élève sélectionné */
               <form onSubmit={handleSubmit} className="flex flex-col">
@@ -1251,7 +1237,7 @@ export function NotesManager({
                       type="button"
                       onClick={() => setSelectedStudent('')}
                       className="p-2 rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] transition-all"
-                      title="Retour à la liste des élèves"
+                      title="Retour à la grille de classe"
                     >
                       <ArrowLeft className="w-4 h-4 text-[var(--color-primary)]" />
                     </button>
@@ -1277,15 +1263,15 @@ export function NotesManager({
                     </div>
                   </div>
 
-                  {/* Quick Prev / Next navigation + Back to List button */}
+                  {/* Quick Prev / Next navigation + Back to Class Grid button */}
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => setSelectedStudent('')}
-                      className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] transition-all flex items-center gap-1.5 shadow-2xs"
+                      className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-[var(--color-outline-variant)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
-                      <span>Liste des élèves</span>
+                      <span>Grille de classe</span>
                     </button>
 
                     <button

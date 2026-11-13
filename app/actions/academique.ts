@@ -291,6 +291,242 @@ export async function savePrimaryGrades(
   }
 }
 
+export interface ClassMonthPrimaryGradesPayload {
+  classId: string;
+  monthNumber: number;
+  upserts: Array<{ studentId: string; subjectId: string; score: number }>;
+  deletes: Array<{ studentId: string; subjectId: string }>;
+}
+
+export async function saveClassMonthPrimaryGrades(
+  payload: ClassMonthPrimaryGradesPayload,
+): Promise<{
+  success?: boolean;
+  error?: string;
+  savedCount?: number;
+  deletedCount?: number;
+  savedGrades?: Array<{ student_id: string; subject_id: string; month_number: number; score: number }>;
+  deletedPairs?: Array<{ student_id: string; subject_id: string; month_number: number }>;
+  resolvedEtudeSubject?: { id: string; name: string; cycle: string; category: string | null; coefficient: number };
+}> {
+  if (!payload?.classId) {
+    return { error: "Classe manquante pour l'enregistrement des notes." };
+  }
+
+  const monthNumber = Math.round(payload.monthNumber || 1);
+  if (monthNumber < 1 || monthNumber > 9) {
+    return { error: "Mois d'évaluation invalide (1 à 9 requis)." };
+  }
+
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authErr,
+    } = await supabase.auth.getUser();
+
+    if (authErr || !user) {
+      return { error: "Session expirée. Veuillez vous reconnecter." };
+    }
+
+    const { data: roleData, error: roleErr } = await supabase
+      .from("user_school_roles")
+      .select("school_id, role")
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (roleErr || !roleData?.school_id) {
+      return { error: "Établissement introuvable." };
+    }
+
+    const allowedRoles = ["admin", "super_admin", "directeur", "censeur", "enseignant", "secretaire"];
+    if (!allowedRoles.includes(roleData.role)) {
+      return { error: "Action non autorisée pour votre rôle." };
+    }
+
+    const school_id = roleData.school_id;
+    const admin = createAdminClient();
+
+    // 1. Vérifier que la classe appartient bien à l'école
+    const { data: clsData, error: clsErr } = await admin
+      .from("classes")
+      .select("id, name, level")
+      .eq("id", payload.classId)
+      .eq("school_id", school_id)
+      .maybeSingle();
+
+    if (clsErr || !clsData) {
+      return { error: "Classe introuvable dans cet établissement." };
+    }
+
+    // 2. Vérifier que les élèves concernés appartiennent à cette classe et école
+    const { data: classStudents } = await admin
+      .from("students")
+      .select("id, last_name, first_name")
+      .eq("school_id", school_id)
+      .eq("class_id", payload.classId);
+
+    const studentMap = new Map(
+      (classStudents || []).map(s => [s.id, `${s.last_name || ''} ${s.first_name || ''}`.trim()])
+    );
+
+    // 3. Charger les matières de l'école (et résoudre virtual-etude-de-texte si utilisé)
+    const { data: subjectsData } = await admin
+      .from("subjects")
+      .select("id, name, cycle, category, coefficient")
+      .eq("school_id", school_id);
+
+    const subjectsMap = new Map((subjectsData || []).map(s => [s.id, s.name]));
+    let resolvedEtudeSubject: { id: string; name: string; cycle: string; category: string | null; coefficient: number } | undefined;
+
+    const usesVirtualEtude =
+      payload.upserts.some(u => u.subjectId === "virtual-etude-de-texte") ||
+      payload.deletes.some(d => d.subjectId === "virtual-etude-de-texte");
+
+    let realEtudeId: string | null = null;
+    if (usesVirtualEtude) {
+      const existingEtude = (subjectsData || []).find(s => {
+        const n = (s.name || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .trim();
+        return n === "etude de texte" || n.includes("etude de texte") || n.includes("etude texte");
+      });
+
+      if (existingEtude) {
+        realEtudeId = existingEtude.id;
+      } else {
+        const { data: insertedEtude, error: etudeErr } = await admin
+          .from("subjects")
+          .insert({
+            school_id,
+            name: "Étude de texte",
+            cycle: "primaire",
+            category: "Français",
+            coefficient: 1,
+          })
+          .select("id, name, cycle, category, coefficient")
+          .single();
+
+        if (etudeErr || !insertedEtude) {
+          return { error: `Impossible d'initialiser la matière Étude de texte : ${etudeErr?.message}` };
+        }
+        realEtudeId = insertedEtude.id;
+        subjectsMap.set(insertedEtude.id, insertedEtude.name);
+        resolvedEtudeSubject = insertedEtude;
+      }
+    }
+
+    const resolveSubjectId = (id: string) =>
+      id === "virtual-etude-de-texte" && realEtudeId ? realEtudeId : id;
+
+    const academicYear = getDynamicAcademicYear();
+    const upsertMap = new Map<string, any>();
+
+    for (const item of payload.upserts) {
+      if (!studentMap.has(item.studentId)) continue;
+      const subjectId = resolveSubjectId(item.subjectId);
+      const subjName = subjectsMap.get(subjectId);
+      if (!subjName) continue;
+
+      const score = Number(item.score);
+      if (!Number.isFinite(score)) {
+        return { error: `Note invalide détectée pour ${studentMap.get(item.studentId)} (${subjName}).` };
+      }
+
+      const officialMax = getPrimarySubjectMaxScore(subjName, clsData.name, clsData.level);
+      if (score < 0 || score > officialMax) {
+        return {
+          error: `La note de ${subjName} (${score}) pour ${studentMap.get(item.studentId)} doit être comprise entre 0 et ${officialMax}.`,
+        };
+      }
+
+      const key = `${item.studentId}_${subjectId}`;
+      upsertMap.set(key, {
+        school_id,
+        student_id: item.studentId,
+        subject_id: subjectId,
+        month_number: monthNumber,
+        score,
+        max_score: officialMax,
+        academic_year: academicYear,
+        entered_by: user.id,
+      });
+    }
+
+    const records = Array.from(upsertMap.values());
+    if (records.length > 0) {
+      const { error: upErr } = await admin
+        .from("primary_grades")
+        .upsert(records, {
+          onConflict: "student_id, subject_id, month_number, academic_year",
+        });
+      if (upErr) {
+        return { error: `Erreur lors de l'enregistrement des notes : ${upErr.message}` };
+      }
+    }
+
+    const deletedPairs: Array<{ student_id: string; subject_id: string; month_number: number }> = [];
+    const seenDeletes = new Set<string>();
+    const validDeletes: Array<{ studentId: string; subjectId: string }> = [];
+
+    for (const d of payload.deletes) {
+      if (!studentMap.has(d.studentId)) continue;
+      const subjectId = resolveSubjectId(d.subjectId);
+      if (!subjectsMap.has(subjectId)) continue;
+      const key = `${d.studentId}_${subjectId}`;
+      if (upsertMap.has(key) || seenDeletes.has(key)) continue;
+      seenDeletes.add(key);
+      validDeletes.push({ studentId: d.studentId, subjectId });
+    }
+
+    for (let i = 0; i < validDeletes.length; i += 20) {
+      const chunk = validDeletes.slice(i, i + 20);
+      await Promise.all(
+        chunk.map(async d => {
+          const { error: delErr } = await admin
+            .from("primary_grades")
+            .delete()
+            .eq("school_id", school_id)
+            .eq("student_id", d.studentId)
+            .eq("subject_id", d.subjectId)
+            .eq("month_number", monthNumber)
+            .eq("academic_year", academicYear);
+          if (!delErr) {
+            deletedPairs.push({
+              student_id: d.studentId,
+              subject_id: d.subjectId,
+              month_number: monthNumber,
+            });
+          }
+        })
+      );
+    }
+
+    revalidatePath("/admin/academique/notes");
+    revalidatePath("/admin/academique/bulletins");
+    revalidatePath("/enseignant/notes");
+
+    return {
+      success: true,
+      savedCount: records.length,
+      deletedCount: deletedPairs.length,
+      savedGrades: records.map(r => ({
+        student_id: r.student_id,
+        subject_id: r.subject_id,
+        month_number: r.month_number,
+        score: r.score,
+      })),
+      deletedPairs,
+      resolvedEtudeSubject,
+    };
+  } catch (err: any) {
+    return { error: err?.message || "Erreur inattendue lors de l'enregistrement." };
+  }
+}
+
 export async function saveSecondaryGrades(
   prevState: ActionState,
   formData: FormData,
