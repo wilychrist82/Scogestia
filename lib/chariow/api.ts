@@ -29,16 +29,24 @@ export type ChariowCheckoutParams = {
 }
 
 export type ChariowCheckoutResponse = {
-  purchase: {
+  purchase?: {
     id: string
-    amount: {
-      value: number
-      currency: string
-    }
+    amount?: {
+      value?: number
+      currency?: string
+    } | number
   }
-  payment: {
+  sale?: {
+    id: string
+    amount?: {
+      value?: number
+      currency?: string
+    } | number
+  }
+  payment?: {
     checkout_url: string
   }
+  checkout_url?: string
 }
 
 /**
@@ -100,8 +108,29 @@ export async function getChariowProducts(): Promise<ChariowProduct[]> {
     }
 
     const json = await res.json()
-    // Adapter selon la structure réelle de l'API. On suppose que json.data contient les produits.
-    return json.data || json || []
+    const rawList: any[] = Array.isArray(json.data) ? json.data : Array.isArray(json) ? json : []
+    return rawList.map((raw) => {
+      const priceValue =
+        raw?.pricing?.current_price?.value ??
+        raw?.pricing?.effective?.value ??
+        raw?.pricing?.sale_price?.value ??
+        raw?.pricing?.price?.value ??
+        raw?.price ??
+        0
+      const currency =
+        raw?.pricing?.current_price?.currency ??
+        raw?.pricing?.effective?.currency ??
+        raw?.currency ??
+        'FCFA'
+
+      return {
+        id: String(raw?.id || ''),
+        name: String(raw?.name || ''),
+        price: Number(priceValue) || 0,
+        currency: String(currency),
+        status: String(raw?.status || 'active'),
+      }
+    })
   } catch (error) {
     console.error('Erreur getChariowProducts:', error)
     return []

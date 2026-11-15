@@ -2,12 +2,16 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service'
 import { createChariowCheckout, resolveChariowPhone } from '@/lib/chariow/api'
+import {
+  PENDING_CHECKOUT_COOKIE,
+  signPendingCheckoutToken,
+} from '@/lib/chariow/pending-token'
 
 export async function POST(req: Request) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
@@ -43,10 +47,8 @@ export async function POST(req: Request) {
       new URL(req.url).origin
     ).replace(/\/$/, '')
 
-    // Résoudre le format de numéro attendu par Chariow
     const resolvedPhone = resolveChariowPhone(phone, phoneCountry)
 
-    // Créer la vente chez Chariow
     const chariowRes = await createChariowCheckout({
       product_id,
       email: user.email || 'contact@ecole.com',
@@ -55,31 +57,77 @@ export async function POST(req: Request) {
       phone: resolvedPhone,
       redirect_url: `${baseUrl}/admin/abonnement/success?sale_id={sale_id}`,
       custom_metadata: {
-        school_id: roleData.school_id
-      }
+        school_id: roleData.school_id,
+      },
     })
 
-    // Enregistrer le paiement en 'pending' via service_role (saas_payments n'a pas de policy INSERT publique)
+    const saleObj = chariowRes.purchase || chariowRes.sale
+    const saleId = saleObj?.id
+    const checkoutUrl = chariowRes.payment?.checkout_url || chariowRes.checkout_url
+
+    if (!saleId || !checkoutUrl) {
+      console.error('Réponse Chariow incomplète:', chariowRes)
+      return NextResponse.json(
+        { error: 'Réponse Chariow invalide lors de la création du paiement.' },
+        { status: 502 },
+      )
+    }
+
+    const rawAmount = saleObj?.amount
+    const amountValue =
+      typeof rawAmount === 'number'
+        ? rawAmount
+        : Number(rawAmount?.value ?? body.amount ?? 0)
+    const currencyValue =
+      typeof rawAmount === 'object' && rawAmount?.currency
+        ? String(rawAmount.currency)
+        : 'XOF'
+    const resolvedPlanName = typeof plan_name === 'string' && plan_name.trim() ? plan_name.trim() : 'Standard'
+
+    const pendingToken = signPendingCheckoutToken({
+      saleId,
+      schoolId: roleData.school_id,
+      planName: resolvedPlanName,
+      expectedAmount: Number.isFinite(amountValue) ? amountValue : 0,
+      exp: Date.now() + 2 * 60 * 60 * 1000,
+    })
+
     const serviceClient = createServiceRoleClient()
     const { error: insertError } = await serviceClient.from('saas_payments').insert({
       school_id: roleData.school_id,
-      provider_sale_id: chariowRes.purchase.id,
-      amount: chariowRes.purchase.amount.value,
-      currency: chariowRes.purchase.amount.currency,
+      provider_sale_id: saleId,
+      amount: Number.isFinite(amountValue) ? amountValue : 0,
+      currency: currencyValue,
       status: 'pending',
-      plan_name: plan_name || 'Standard'
+      plan_name: resolvedPlanName,
     })
 
     if (insertError) {
       console.error('Erreur insertion saas_payments:', insertError)
-      return NextResponse.json(
-        { error: "Impossible d'enregistrer l'initialisation du paiement." },
-        { status: 500 }
+      const isPermissionDenied = insertError.code === '42501'
+      if (!isPermissionDenied || !pendingToken) {
+        return NextResponse.json(
+          { error: "Impossible d'enregistrer l'initialisation du paiement." },
+          { status: 500 },
+        )
+      }
+      console.warn(
+        '[Chariow Checkout] Privilèges SQL 42501 manquants sur saas_payments — poursuite via jeton HMAC serveur. Exécutez supabase/migrations/0052_grant_service_role_and_saas_billing.sql dans Supabase.',
       )
     }
 
-    return NextResponse.json({ checkout_url: chariowRes.payment.checkout_url })
+    const response = NextResponse.json({ checkout_url: checkoutUrl })
+    if (pendingToken) {
+      response.cookies.set(PENDING_CHECKOUT_COOKIE, pendingToken, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 2 * 60 * 60,
+      })
+    }
 
+    return response
   } catch (error) {
     console.error('Checkout Error:', error)
     return NextResponse.json({ error: 'Erreur lors de la création du paiement.' }, { status: 500 })

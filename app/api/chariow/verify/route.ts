@@ -1,14 +1,40 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service'
-import { reconcileChariowPayment } from '@/lib/chariow/reconcile'
+import { reconcileChariowPayment, reconcilePendingCheckoutToken } from '@/lib/chariow/reconcile'
+import {
+  PENDING_CHECKOUT_COOKIE,
+  verifyPendingCheckoutToken,
+} from '@/lib/chariow/pending-token'
 import { isOwnerEmail } from '@/lib/owner'
+
+async function hasSchoolBillingAccess(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  user: { id: string; email?: string | null },
+  schoolId: string,
+): Promise<boolean> {
+  if (isOwnerEmail(user.email)) return true
+
+  const [{ data: isSuperAdmin }, { data: roles }] = await Promise.all([
+    supabase.rpc('is_super_admin'),
+    supabase
+      .from('user_school_roles')
+      .select('school_id, role')
+      .eq('user_id', user.id)
+      .eq('school_id', schoolId)
+      .in('role', ['admin', 'comptable', 'directeur', 'super_admin'])
+      .limit(1),
+  ])
+
+  return Boolean(isSuperAdmin) || Boolean(roles && roles.length > 0)
+}
 
 export async function POST(req: Request) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
@@ -22,7 +48,6 @@ export async function POST(req: Request) {
 
     const supabaseAdmin = createServiceRoleClient()
 
-    // Vérifier que le paiement existe et appartient bien à une école administrée par l'utilisateur
     const { data: payment, error: paymentErr } = await supabaseAdmin
       .from('saas_payments')
       .select('school_id')
@@ -30,36 +55,47 @@ export async function POST(req: Request) {
       .limit(1)
       .maybeSingle()
 
-    if (paymentErr || !payment) {
+    if (!paymentErr && payment) {
+      const allowed = await hasSchoolBillingAccess(supabase, user, payment.school_id)
+      if (!allowed) {
+        return NextResponse.json({ error: 'Accès interdit pour cette transaction' }, { status: 403 })
+      }
+
+      const isSuccess = await reconcileChariowPayment(sale_id, supabaseAdmin)
+      const res = NextResponse.json({ status: isSuccess ? 'succeeded' : 'pending' })
+      if (isSuccess) {
+        res.cookies.delete(PENDING_CHECKOUT_COOKIE)
+      }
+      return res
+    }
+
+    // Fallback sécurisé si la ligne saas_payments n'a pas pu être écrite (ex: droits SQL 42501 en attente)
+    const cookieStore = await cookies()
+    const pendingToken = verifyPendingCheckoutToken(
+      cookieStore.get(PENDING_CHECKOUT_COOKIE)?.value,
+    )
+
+    if (!pendingToken || pendingToken.saleId !== sale_id) {
       return NextResponse.json({ error: 'Transaction introuvable' }, { status: 404 })
     }
 
-    const [{ data: isSuperAdmin }, { data: roles }] = await Promise.all([
-      supabase.rpc('is_super_admin'),
-      supabase
-        .from('user_school_roles')
-        .select('school_id, role')
-        .eq('user_id', user.id)
-        .eq('school_id', payment.school_id)
-        .in('role', ['admin', 'comptable', 'directeur', 'super_admin'])
-        .limit(1),
-    ])
-
-    const isPrivileged = Boolean(isSuperAdmin) || isOwnerEmail(user.email)
-    const hasSchoolAccess = Boolean(roles && roles.length > 0)
-
-    if (!isPrivileged && !hasSchoolAccess) {
+    const allowed = await hasSchoolBillingAccess(supabase, user, pendingToken.schoolId)
+    if (!allowed) {
       return NextResponse.json({ error: 'Accès interdit pour cette transaction' }, { status: 403 })
     }
 
-    // Réconciliation sécurisée avec client service_role et contrôle multi-tenant préalable
-    const isSuccess = await reconcileChariowPayment(sale_id, supabaseAdmin)
+    const isSuccess = await reconcilePendingCheckoutToken(supabaseAdmin, {
+      saleId: sale_id,
+      schoolId: pendingToken.schoolId,
+      planName: pendingToken.planName,
+      expectedAmount: pendingToken.expectedAmount,
+    })
 
+    const res = NextResponse.json({ status: isSuccess ? 'succeeded' : 'pending' })
     if (isSuccess) {
-      return NextResponse.json({ status: 'succeeded' })
+      res.cookies.delete(PENDING_CHECKOUT_COOKIE)
     }
-    return NextResponse.json({ status: 'pending' })
-
+    return res
   } catch (error) {
     console.error('Verify Error:', error)
     return NextResponse.json({ error: 'Erreur interne lors de la vérification.' }, { status: 500 })

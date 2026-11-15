@@ -24,23 +24,36 @@ export default async function AbonnementPage() {
       return <div className="p-8 text-[var(--color-status-retard-text)]">Accès refusé. Réservé à l'administration.</div>
     }
 
-    // Récupérer le statut de l'abonnement
-    const { data: subscription, error: subError } = await supabase
-      .from('saas_subscriptions')
-      .select('*')
-      .eq('school_id', roleData.school_id)
-      .maybeSingle()
-      
+    // Récupérer le statut réel de l'abonnement (saas_subscriptions + repli schools)
+    const [{ data: subscription, error: subError }, { data: schoolRow }, { data: saasPayments }] = await Promise.all([
+      supabase
+        .from('saas_subscriptions')
+        .select('*')
+        .eq('school_id', roleData.school_id)
+        .maybeSingle(),
+      supabase
+        .from('schools')
+        .select('subscription_status, subscription_plan')
+        .eq('id', roleData.school_id)
+        .maybeSingle(),
+      supabase
+        .from('saas_payments')
+        .select('*')
+        .eq('school_id', roleData.school_id)
+        .order('created_at', { ascending: false }),
+    ])
+
     if (subError) {
-      console.warn("Abonnement non trouvé ou erreur:", subError)
+      console.warn('Abonnement saas_subscriptions inaccessible ou absent:', subError.message)
     }
 
-    // Récupérer l'historique des paiements SaaS
-    const { data: saasPayments } = await supabase
-      .from('saas_payments')
-      .select('*')
-      .eq('school_id', roleData.school_id)
-      .order('created_at', { ascending: false })
+    const effectiveSubscription = subscription || (schoolRow
+      ? {
+          plan_name: schoolRow.subscription_plan || 'Standard',
+          status: schoolRow.subscription_status === 'suspended' ? 'expired' : (schoolRow.subscription_status || 'active'),
+          current_period_end: null,
+        }
+      : null)
 
     // Récupérer les produits Chariow
     const chariowProducts = await getChariowProducts()
@@ -73,28 +86,28 @@ export default async function AbonnementPage() {
           {/* Status */}
           <div className="bg-[var(--color-surface-container-lowest)] p-6 rounded-xl border border-[var(--color-outline-variant)] shadow-sm">
             <h3 className="font-bold text-lg text-[var(--color-on-surface)] mb-4">Statut Actuel</h3>
-            {subscription ? (
+            {effectiveSubscription ? (
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-[var(--color-on-surface-variant)]">Plan :</span>
-                  <span className="text-[var(--color-on-surface)] font-bold">{subscription.plan_name || 'Standard'}</span>
+                  <span className="text-[var(--color-on-surface)] font-bold">{effectiveSubscription.plan_name || 'Standard'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-[var(--color-on-surface-variant)]">Statut :</span>
                   <span className={`px-2 py-1 rounded-md text-xs font-bold ${
-                    subscription.status === 'active' ? 'bg-[#e6f4ea] text-[#1e8e3e]' : 
-                    subscription.status === 'trial' ? 'bg-[#fff8e1] text-[#f57f17]' : 
+                    effectiveSubscription.status === 'active' ? 'bg-[#e6f4ea] text-[#1e8e3e]' : 
+                    effectiveSubscription.status === 'trial' ? 'bg-[#fff8e1] text-[#f57f17]' : 
                     'bg-[#fce8e6] text-[#d93025]'
                   }`}>
-                    {subscription.status === 'active' ? 'Actif' : subscription.status === 'trial' ? 'Essai Gratuit' : 'Expiré'}
+                    {effectiveSubscription.status === 'active' ? 'Actif' : effectiveSubscription.status === 'trial' ? 'Essai Gratuit' : 'Expiré'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-[var(--color-on-surface-variant)]">Valable jusqu'au :</span>
                   <span className="text-[var(--color-on-surface)]">
-                    {subscription.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString('fr-FR', {
+                    {effectiveSubscription.current_period_end ? new Date(effectiveSubscription.current_period_end).toLocaleDateString('fr-FR', {
                       day: 'numeric', month: 'long', year: 'numeric'
-                    }) : 'Non défini'}
+                    }) : 'Actif'}
                   </span>
                 </div>
               </div>
