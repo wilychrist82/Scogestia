@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { ActionState } from "./finance";
 import { getPrimarySubjectMaxScore } from "@/lib/academic-curriculum";
+import { getDynamicAcademicYear as computeDynamicAcademicYear } from "@/lib/academic-year";
 import { getSchoolSubscriptionStatus } from "@/lib/subscription";
 import { ACADEMIC_MANAGEMENT_ROLES, BULLETIN_GENERATION_ROLES } from "@/lib/roles";
 
@@ -28,17 +29,7 @@ async function getActiveSchoolId() {
 }
 
 function getDynamicAcademicYear() {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = date.getMonth(); // 0-indexed (0 = Jan, 7 = Aug)
-  
-  // Si on est avant août, l'année a commencé l'année précédente
-  if (month < 7) {
-    return `${year - 1}/${year}`;
-  } else {
-    // Si on est en août ou après, c'est la nouvelle rentrée
-    return `${year}/${year + 1}`;
-  }
+  return computeDynamicAcademicYear("/");
 }
 
 export async function saveSchoolSubject(

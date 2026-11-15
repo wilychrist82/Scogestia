@@ -4,6 +4,7 @@ import { useState, useTransition, FormEvent } from 'react'
 import { publishHomework, deleteHomework } from '@/app/actions/academique'
 import Link from 'next/link'
 import { ChevronRight, PlusCircle, CheckCircle2, Search, BookOpen, Paperclip, Trash2, X, Camera, FileText, Download } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 type ClassItem = { id: string; name: string; level: string }
 type SubjectItem = { id: string; name: string; cycle: string }
@@ -43,7 +44,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
   const [selectedClassId, setSelectedClassId] = useState<string>('')
   const [assignmentMode, setAssignmentMode] = useState<'all' | 'selective'>('all')
   const [selectedStudents, setSelectedStudents] = useState<string[]>([])
-  
+
   const availableSubjects = subjects;
   const availableStudents = students.filter(s => s.class_id === selectedClassId)
 
@@ -84,7 +85,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
       const lessonTitle = rawTitle ? `[LEÇON] ${rawTitle.replace(/^\[LEÇON\]\s*/i, '')}` : '[LEÇON] Séance de cours'
       formData.set('title', lessonTitle)
     }
-    
+
     if (assignmentMode === 'selective' && entryType === 'homework') {
       if (selectedStudents.length === 0) {
         setError("Veuillez sélectionner au moins un élève.");
@@ -92,7 +93,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
       }
       formData.append('targetStudents', JSON.stringify(selectedStudents));
     }
-    
+
     startTransition(async () => {
       const result = await publishHomework(null, formData)
       if (result?.error) {
@@ -107,11 +108,11 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
 
   const handleDelete = (id: string) => {
     if (!confirm("Voulez-vous vraiment supprimer ce devoir ?")) return;
-    
+
     startDeleteTransition(async () => {
       const result = await deleteHomework(id)
       if (result?.error) {
-        alert(result.error)
+        toast.error(result.error)
       } else {
         setSuccessMsg("Devoir supprimé avec succès !")
         setTimeout(() => setSuccessMsg(null), 5000)
@@ -122,7 +123,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-[1280px] mx-auto space-y-6">
-        
+
         {/* En-tête Exécutif — Stripe Royal Indigo & Sapphire */}
         <div className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] px-6 py-5 text-white shadow-[0_14px_34px_-12px_rgba(67,56,202,0.45)] ring-1 ring-indigo-400/25 sm:px-7 sm:py-6 lg:flex-row lg:items-center">
           <div aria-hidden className="pointer-events-none absolute inset-0">
@@ -169,33 +170,30 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
               <button
                 type="button"
                 onClick={() => setActiveTab('all')}
-                className={`px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all ${
-                  activeTab === 'all'
-                    ? 'bg-indigo-950 text-white shadow-xs'
-                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                }`}
+                className={`px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all ${activeTab === 'all'
+                  ? 'bg-indigo-950 text-white shadow-xs'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
               >
                 Tout ({homeworks.length})
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('homework')}
-                className={`px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all ${
-                  activeTab === 'homework'
-                    ? 'bg-amber-600 text-white shadow-xs'
-                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                }`}
+                className={`px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all ${activeTab === 'homework'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
               >
                 Devoirs à la maison ({homeworksOnlyCount})
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('lesson')}
-                className={`px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all ${
-                  activeTab === 'lesson'
-                    ? 'bg-indigo-700 text-white shadow-xs'
-                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                }`}
+                className={`px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all ${activeTab === 'lesson'
+                  ? 'bg-indigo-700 text-white shadow-xs'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
               >
                 Cahier de Textes · Leçons ({lessonsCount})
               </button>
@@ -226,56 +224,57 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
           </div>
 
           {filteredHomeworks.length === 0 ? (
-             <div className="p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] flex-1">
-               <BookOpen className="w-10 h-10 mb-2 opacity-50" />
-               <p className="text-lg font-medium">Aucune entrée trouvée</p>
-               <p className="text-sm">Publiez un devoir ou renseignez une leçon dans le cahier de textes.</p>
+            <div className="p-12 flex flex-col items-center justify-center text-center text-[var(--color-on-surface-variant)] flex-1">
+              <BookOpen className="w-10 h-10 mb-2 opacity-50" />
+              <p className="text-lg font-medium">Aucune entrée trouvée</p>
+              <p className="text-sm">Publiez un devoir ou renseignez une leçon dans le cahier de textes.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
               {filteredHomeworks.map((hw) => {
                 const isLesson = isLessonItem(hw)
                 return (
-                <div key={hw.id} className="bg-white border border-[var(--color-outline-variant)] rounded-xl p-5 hover:shadow-md transition-shadow flex flex-col">
-                  <div className="flex justify-between items-start mb-3 gap-2">
-                    <span className="px-2.5 py-1 bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] rounded text-xs font-semibold uppercase tracking-wider">
-                      {hw.subject_name}
-                    </span>
-                    {isLesson ? (
-                      <span className="px-2.5 py-1 bg-indigo-50 text-indigo-800 rounded-full text-xs font-extrabold border border-indigo-200">
-                        📘 Cahier de Textes · {new Date(hw.due_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                  <div key={hw.id} className="bg-white border border-[var(--color-outline-variant)] rounded-xl p-5 hover:shadow-md transition-shadow flex flex-col">
+                    <div className="flex justify-between items-start mb-3 gap-2">
+                      <span className="px-2.5 py-1 bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] rounded text-xs font-semibold uppercase tracking-wider">
+                        {hw.subject_name}
                       </span>
-                    ) : (
-                      <span className="px-2.5 py-1 bg-[#fff8e1] text-[#f57f17] rounded-full text-xs font-bold border border-[#ffe082]">
-                        À rendre le {new Date(hw.due_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                      </span>
-                    )}
+                      {isLesson ? (
+                        <span className="px-2.5 py-1 bg-indigo-50 text-indigo-800 rounded-full text-xs font-extrabold border border-indigo-200">
+                          📘 Cahier de Textes · {new Date(hw.due_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 bg-[#fff8e1] text-[#f57f17] rounded-full text-xs font-bold border border-[#ffe082]">
+                          À rendre le {new Date(hw.due_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-bold text-[var(--color-on-surface)] text-lg mb-1 leading-tight">{cleanTitle(hw.title)}</h3>
+                    <p className="text-sm text-[var(--color-on-surface-variant)] mb-4 flex-1">
+                      Classe : {hw.class?.name || '-'} {hw.target_students ? <span className="text-xs bg-[#e0f7fa] text-[#006064] px-2 py-0.5 rounded-full ml-2">{hw.target_students.length} ciblés</span> : null}<br />
+                      Publié le : {new Date(hw.created_at).toLocaleDateString('fr-FR')} par {hw.creator?.full_name || 'Admin'}
+                    </p>
+                    <div className="flex gap-2 mt-auto">
+                      {hw.attachment_url && (
+                        <a href={hw.attachment_url.startsWith('http') ? hw.attachment_url : `https://mxttnddswkntrryshqzl.supabase.co/storage/v1/object/public/homework-attachments/${hw.attachment_url}`} target="_blank" rel="noreferrer" className="flex-1 bg-[#f0f4ff] text-[var(--color-primary)] border border-[#cce0ff] hover:bg-[#e0edff] py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1">
+                          <Paperclip className="w-4 h-4" /> Pièce jointe
+                        </a>
+                      )}
+                      <button
+                        onClick={() => setSelectedHomework(hw)}
+                        className="flex-1 bg-[var(--color-surface-bright)] text-[var(--color-on-surface)] border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] py-2 rounded-lg text-sm font-semibold transition-colors">
+                        Voir
+                      </button>
+                      <button
+                        onClick={() => handleDelete(hw.id)}
+                        disabled={isDeleting}
+                        className="px-3 bg-[var(--color-surface-bright)] text-[var(--color-status-retard-text)] border border-[var(--color-outline-variant)] hover:border-[var(--color-status-retard-text)] hover:bg-[#fff0f0] rounded-lg transition-colors flex items-center justify-center disabled:opacity-50">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  <h3 className="font-bold text-[var(--color-on-surface)] text-lg mb-1 leading-tight">{cleanTitle(hw.title)}</h3>
-                  <p className="text-sm text-[var(--color-on-surface-variant)] mb-4 flex-1">
-                    Classe : {hw.class?.name || '-'} {hw.target_students ? <span className="text-xs bg-[#e0f7fa] text-[#006064] px-2 py-0.5 rounded-full ml-2">{hw.target_students.length} ciblés</span> : null}<br/>
-                    Publié le : {new Date(hw.created_at).toLocaleDateString('fr-FR')} par {hw.creator?.full_name || 'Admin'}
-                  </p>
-                  <div className="flex gap-2 mt-auto">
-                    {hw.attachment_url && (
-                      <a href={hw.attachment_url.startsWith('http') ? hw.attachment_url : `https://mxttnddswkntrryshqzl.supabase.co/storage/v1/object/public/homework-attachments/${hw.attachment_url}`} target="_blank" rel="noreferrer" className="flex-1 bg-[#f0f4ff] text-[var(--color-primary)] border border-[#cce0ff] hover:bg-[#e0edff] py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1">
-                        <Paperclip className="w-4 h-4" /> Pièce jointe
-                      </a>
-                    )}
-                    <button 
-                      onClick={() => setSelectedHomework(hw)}
-                      className="flex-1 bg-[var(--color-surface-bright)] text-[var(--color-on-surface)] border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] py-2 rounded-lg text-sm font-semibold transition-colors">
-                      Voir
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(hw.id)}
-                      disabled={isDeleting}
-                      className="px-3 bg-[var(--color-surface-bright)] text-[var(--color-status-retard-text)] border border-[var(--color-outline-variant)] hover:border-[var(--color-status-retard-text)] hover:bg-[#fff0f0] rounded-lg transition-colors flex items-center justify-center disabled:opacity-50">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )})}
+                )
+              })}
             </div>
           )}
         </div>
@@ -303,24 +302,24 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="flex flex-col">
               <div className="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar space-y-4">
-                
+
                 {error && (
                   <div className="bg-[#fff0f0] text-[var(--color-status-retard-text)] p-3 rounded-lg text-sm font-medium border border-[var(--color-status-retard-text)]/20">
                     {error}
                   </div>
                 )}
-                
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="classId">
                     Classe <span className="text-[var(--color-status-retard-text)]">*</span>
                   </label>
-                  <select 
-                    className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]" 
-                    id="classId" 
-                    name="classId" 
+                  <select
+                    className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                    id="classId"
+                    name="classId"
                     required
                     value={selectedClassId}
                     onChange={(e) => setSelectedClassId(e.target.value)}
@@ -334,10 +333,10 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                   <label className="text-sm font-semibold text-[var(--color-on-surface)]" htmlFor="subjectName">
                     Matière (Optionnel)
                   </label>
-                  <select 
-                    className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]" 
-                    id="subjectName" 
-                    name="subjectName" 
+                  <select
+                    className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
+                    id="subjectName"
+                    name="subjectName"
                     disabled={!selectedClassId}
                   >
                     <option value="">Sélectionner une matière</option>
@@ -350,8 +349,8 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                     Pièce jointe (Optionnel)
                   </label>
                   <div className="flex flex-wrap gap-3 mt-1">
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => {
                         const input = document.getElementById('attachment_input') as HTMLInputElement;
                         if (input) {
@@ -367,8 +366,8 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                       Prendre une photo
                     </button>
 
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => {
                         const input = document.getElementById('attachment_input') as HTMLInputElement;
                         if (input) {
@@ -383,12 +382,12 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                       Joindre un document
                     </button>
                   </div>
-                  
-                  <input 
-                    id="attachment_input" 
-                    name="attachment" 
-                    type="file" 
-                    className="hidden" 
+
+                  <input
+                    id="attachment_input"
+                    name="attachment"
+                    type="file"
+                    className="hidden"
                     onChange={(e) => {
                       const fileLabel = document.getElementById('attachment_label');
                       if (fileLabel && e.target.files && e.target.files.length > 0) {
@@ -468,8 +467,8 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                         ) : (
                           availableStudents.map(student => (
                             <label key={student.id} className="flex items-center gap-3 p-2 hover:bg-[#f0f4ff] rounded cursor-pointer">
-                              <input 
-                                type="checkbox" 
+                              <input
+                                type="checkbox"
                                 checked={selectedStudents.includes(student.id)}
                                 onChange={(e) => {
                                   if (e.target.checked) setSelectedStudents([...selectedStudents, student.id])
@@ -487,7 +486,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                 )}
 
               </div>
-              
+
               <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end gap-3 mt-auto">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors" disabled={isPending}>Annuler</button>
                 <button type="submit" className="px-5 py-2.5 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors shadow-sm disabled:opacity-50" disabled={isPending}>
@@ -511,7 +510,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar space-y-4">
               <div>
                 <h3 className="text-lg font-bold text-[var(--color-on-surface)]">{selectedHomework.title}</h3>
@@ -548,7 +547,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
                 </div>
               )}
             </div>
-            
+
             <div className="px-6 py-4 border-t border-[var(--color-outline-variant)] bg-[var(--color-surface-bright)] flex justify-end">
               <button onClick={() => setSelectedHomework(null)} className="px-5 py-2.5 rounded-lg border border-[var(--color-outline)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[#eff4ff] transition-colors">
                 Fermer

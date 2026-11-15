@@ -1242,7 +1242,7 @@ export function StudentDetailTabs({
                     href={student.parent_phone ? `https://wa.me/${student.parent_phone.replace(/[^0-9]/g, '')}` : '#'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={(e) => { if (!student.parent_phone) { e.preventDefault(); alert("Le numéro de téléphone du parent n'est pas encore renseigné. Veuillez l'ajouter dans les informations de l'élève."); } }}
+                    onClick={(e) => { if (!student.parent_phone) { e.preventDefault(); toast.error("Le numéro de téléphone du parent n'est pas encore renseigné. Veuillez l'ajouter dans les informations de l'élève."); } }}
                     className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[#25D366] hover:bg-[#dcf8c6]/30 transition-all group cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
@@ -1261,7 +1261,7 @@ export function StudentDetailTabs({
 
                   <a
                     href={student.parent_email ? `mailto:${student.parent_email}` : '#'}
-                    onClick={(e) => { if (!student.parent_email) { e.preventDefault(); alert("L'email du parent n'est pas encore renseigné. Veuillez l'ajouter dans les informations de l'élève."); } }}
+                    onClick={(e) => { if (!student.parent_email) { e.preventDefault(); toast.error("L'email du parent n'est pas encore renseigné. Veuillez l'ajouter dans les informations de l'élève."); } }}
                     className="w-full flex items-center justify-between p-4 rounded-lg border border-[var(--color-outline-variant)] hover:border-[var(--color-primary)] hover:bg-[#eff4ff] transition-all group cursor-pointer"
                   >
                     <div className="flex items-center gap-3">

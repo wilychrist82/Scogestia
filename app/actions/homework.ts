@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { ACADEMIC_MANAGEMENT_ROLES } from '@/lib/roles'
+import { chunkArray } from '@/lib/collections'
 import { revalidatePath } from 'next/cache'
 
 export type HomeworkState = {
@@ -30,18 +32,31 @@ export async function createHomework(prevState: HomeworkState, formData: FormDat
     return { error: "Veuillez remplir les champs obligatoires (Matière, Titre, Date)." };
   }
 
-  // Verify that the user has a role in the school, to get the school_id
+  // Verify that the user has an academic staff role in the school, to get the school_id
   const { data: roles } = await supabase
     .from('user_school_roles')
-    .select('school_id, full_name')
+    .select('school_id, full_name, role')
     .eq('user_id', user.id)
+    .in('role', [...ACADEMIC_MANAGEMENT_ROLES])
     .limit(1);
 
   if (!roles || roles.length === 0) {
-    return { error: "École introuvable pour cet utilisateur." };
+    return { error: "Accès refusé ou école introuvable pour cet utilisateur." };
   }
   const schoolId = roles[0].school_id;
   const teacherName = roles[0].full_name || 'L\'enseignant';
+
+  const adminClient = createAdminClient();
+  const { data: targetClass } = await adminClient
+    .from('classes')
+    .select('id')
+    .eq('id', classId)
+    .eq('school_id', schoolId)
+    .maybeSingle();
+
+  if (!targetClass) {
+    return { error: "Classe introuvable ou non rattachée à votre établissement." };
+  }
 
   // Combine date and time
   let due_date = dateLimite;
@@ -103,7 +118,6 @@ export async function createHomework(prevState: HomeworkState, formData: FormDat
   // Notifications : parents des élèves de la classe + admins de l'école
   // ─────────────────────────────────────────────────────────────────────────
   try {
-    const adminClient = createAdminClient();
     const usersToNotify: string[] = [];
 
     const notifTitle = `Nouveau devoir — ${subjectName}`;
@@ -113,7 +127,8 @@ export async function createHomework(prevState: HomeworkState, formData: FormDat
     const { data: studentsInClass } = await adminClient
       .from('students')
       .select('id')
-      .eq('class_id', classId);
+      .eq('class_id', classId)
+      .eq('school_id', schoolId);
 
     if (studentsInClass && studentsInClass.length > 0) {
       const studentIds = studentsInClass.map(s => s.id);
@@ -159,7 +174,9 @@ export async function createHomework(prevState: HomeworkState, formData: FormDat
         action_url: '/parent/devoirs'
       }));
 
-      await adminClient.from('notifications').insert(notificationsToInsert);
+      for (const batch of chunkArray(notificationsToInsert, 200)) {
+        await adminClient.from('notifications').insert(batch);
+      }
     }
   } catch (notifErr) {
     // Ne pas bloquer l'UI si la notification échoue

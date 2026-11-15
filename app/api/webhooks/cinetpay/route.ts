@@ -1,22 +1,19 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createServiceRoleClient } from '@/lib/supabase/service'
 import { sendSms } from '@/lib/sms'
 import { webhookRateLimit, checkRateLimit } from '@/lib/ratelimit'
 import * as Sentry from '@sentry/nextjs'
 
 export async function POST(req: Request) {
-  // Rate Limiting by IP
-  const ip = req.headers.get('x-forwarded-for') || '127.0.0.1'
+  // Rate Limiting by IP (extraire l'IP client initiale si plusieurs proxies)
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1'
   const rateLimit = await checkRateLimit(webhookRateLimit, ip)
 
   if (!rateLimit.success) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const supabaseAdmin = createServiceRoleClient()
 
   try {
     // 1. Lire le payload (form-urlencoded envoyé par CinetPay)
@@ -55,6 +52,20 @@ export async function POST(req: Request) {
           .eq('id', logId)
       }
       return NextResponse.json({ error: 'Paramètres manquants.' }, { status: 400 })
+    }
+
+    const expectedSiteId = process.env.CINETPAY_SITE_ID?.trim()
+    if (expectedSiteId && cpm_site_id !== expectedSiteId) {
+      if (logId) {
+        await supabaseAdmin
+          .from('payment_webhook_logs')
+          .update({ status: 'rejected', error_details: 'cpm_site_id invalide' })
+          .eq('id', logId)
+      }
+      Sentry.captureException(new Error(`CinetPay Site ID Mismatch: ${cpm_site_id}`), {
+        tags: { feature: 'cinetpay_webhook', transaction_id: cpm_trans_id },
+      })
+      return NextResponse.json({ error: 'Site ID invalide.' }, { status: 403 })
     }
 
     const CINETPAY_API_KEY = process.env.CINETPAY_API_KEY

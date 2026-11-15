@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ChariowProduct } from '@/lib/chariow/api'
 import { ChariowCheckout } from './ChariowCheckout'
 import { CheckCircle2, PackageX } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 type Props = {
   plans: ChariowProduct[]
@@ -135,7 +136,7 @@ export function AbonnementManager({ plans }: Props) {
               if (annuelPlan) {
                 setSelectedPlan(annuelPlan)
               } else {
-                alert("Le Plan Annuel n'a pas été trouvé dans votre catalogue de produits Chariow. Veuillez le créer dans votre tableau de bord Chariow.")
+                toast.error("Le Plan Annuel n'a pas été trouvé dans votre catalogue de produits Chariow. Veuillez le créer dans votre tableau de bord Chariow.")
               }
             }}
             className="w-full py-4 rounded-xl bg-blue-600 font-bold text-white hover:bg-blue-500 transition-colors text-center relative z-10 shadow-md block mt-auto"

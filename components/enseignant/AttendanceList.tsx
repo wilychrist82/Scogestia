@@ -4,6 +4,7 @@ import React, { useState, useTransition } from 'react'
 import { saveClassAttendance, AttendanceStatus, AttendanceSavePayload } from '@/app/actions/attendance'
 import { useRouter } from 'next/navigation'
 import { Calendar, CheckCircle2, Clock, XCircle, Loader2, Save } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 type Student = {
   id: string
@@ -57,9 +58,9 @@ export function AttendanceList({ classId, className, date, students, initialAtte
 
       const result = await saveClassAttendance(classId, date, payload)
       if (result.error) {
-        alert(result.error)
+        toast.error(result.error)
       } else {
-        alert("L'appel a été enregistré avec succès.")
+        toast.success("L'appel a été enregistré avec succès.")
         router.refresh()
       }
     })

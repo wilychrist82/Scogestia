@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendNotification } from './notifications'
 import { assertActiveSubscription } from '@/lib/subscription'
+import { getDynamicAcademicYear as computeDynamicAcademicYear } from '@/lib/academic-year'
 
 export type ActionState = {
   error?: string;
@@ -34,17 +35,7 @@ async function getActiveSchoolId(roles?: string[]) {
 }
 
 function getDynamicAcademicYear() {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = date.getMonth(); // 0-indexed (0 = Jan, 7 = Aug)
-  
-  // Si on est avant août, l'année a commencé l'année précédente
-  if (month < 7) {
-    return `${year - 1}-${year}`;
-  } else {
-    // Si on est en août ou après, c'est la nouvelle rentrée
-    return `${year}-${year + 1}`;
-  }
+  return computeDynamicAcademicYear('-');
 }
 
 export async function generateSchedule(prevState: ActionState, formData: FormData): Promise<ActionState> {

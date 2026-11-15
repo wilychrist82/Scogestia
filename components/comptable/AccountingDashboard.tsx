@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { sendManualReminder } from '@/app/actions/accounting'
 import { Wallet, Banknote, TrendingUp, Download, Send, Loader2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 type UnpaidDue = {
   id: string
@@ -34,9 +35,9 @@ export function AccountingDashboard({ totalExpected, totalCollected, unpaidDues 
     startTransition(async () => {
       const result = await sendManualReminder(dueId)
       if (result?.error) {
-        alert(result.error)
+        toast.error(result.error)
       } else {
-        alert('Relance envoyée avec succès.')
+        toast.success('Relance envoyée avec succès.')
       }
       setLoadingDueId(null)
     })
@@ -44,7 +45,7 @@ export function AccountingDashboard({ totalExpected, totalCollected, unpaidDues 
 
   const handleExportCSV = () => {
     if (unpaidDues.length === 0) {
-      alert("Aucune donnée à exporter.")
+      toast.error("Aucune donnée à exporter.")
       return
     }
 
