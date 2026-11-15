@@ -1,15 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-
-const ADMIN_SPACE_ROLES = [
-  'admin',
-  'comptable',
-  'secretaire',
-  'directeur',
-  'censeur',
-  'surveillant',
-  'conseiller',
-]
+import { ADMIN_SPACE_ROLES } from '@/lib/roles'
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -115,7 +106,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Define route mapping
-  const routePrefix = ADMIN_SPACE_ROLES.includes(userRole) ? '/admin' : `/${userRole}` // e.g. /admin, /enseignant, /parent
+  const routePrefix = (ADMIN_SPACE_ROLES as readonly string[]).includes(userRole) ? '/admin' : `/${userRole}` // e.g. /admin, /enseignant, /parent
 
   // If user is going to the root or an auth page, redirect them to their dashboard
   const isAuthRouteForRedirect =
@@ -139,7 +130,7 @@ export async function proxy(request: NextRequest) {
   if (attemptingToAccess) {
     if (!isSuperAdmin) {
       const canAccessAdmin =
-        ADMIN_SPACE_ROLES.includes(userRole) && attemptingToAccess === '/admin'
+        (ADMIN_SPACE_ROLES as readonly string[]).includes(userRole) && attemptingToAccess === '/admin'
       const canAccessEnseignant =
         userRole === 'enseignant' && attemptingToAccess === '/enseignant'
       const canAccessParent =

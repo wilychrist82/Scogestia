@@ -136,7 +136,8 @@ export async function submitAbsenceJustification(
         .select('id')
         .eq('user_id', user.id)
         .eq('school_id', record.school_id)
-        .in('role', ['admin', 'enseignant', 'super_admin'])
+        .in('role', ['admin', 'enseignant', 'super_admin', 'directeur', 'censeur', 'surveillant', 'conseiller'])
+        .limit(1)
         .maybeSingle()
 
       if (!adminRole) {

@@ -15,9 +15,11 @@ export default async function EnseignantParametresPage() {
     .from('user_school_roles')
     .select('full_name, role')
     .eq('user_id', user.id)
+    .eq('role', 'enseignant')
+    .limit(1)
     .maybeSingle()
 
-  if (roleError || !roleData || roleData.role !== 'enseignant') {
+  if (roleError || !roleData) {
     return <DataErrorCard title="Accès restreint" message="Cette section est exclusivement réservée aux enseignants." actionHref="/enseignant" actionLabel="Retour à l'espace enseignant" />
   }
 

@@ -1,5 +1,17 @@
 import { describe, it, expect, vi } from 'vitest';
-import { getSchoolSubscriptionStatus, assertActiveSubscription } from '../lib/subscription';
+import { getSchoolSubscriptionStatus, assertActiveSubscription, inferPlanDetails } from '../lib/subscription';
+
+function createTableMock(tables: Record<string, any>) {
+  return {
+    from: vi.fn((table: string) => ({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: tables[table] ?? null }),
+        }),
+      }),
+    })),
+  };
+}
 
 describe('SaaS Subscription & Multi-Tenant Entitlements', () => {
   it('identifies active school with starter plan defaults', async () => {
@@ -84,5 +96,74 @@ describe('SaaS Subscription & Multi-Tenant Entitlements', () => {
     await expect(assertActiveSubscription(mockSupabase, 'school-suspended')).rejects.toThrow(
       /Abonnement requis/
     );
+  });
+
+  it('detects expired trial or subscription from saas_subscriptions current_period_end', async () => {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const mockSupabase = createTableMock({
+      schools: {
+        id: 'school-exp',
+        name: 'École Expirée',
+        subscription_status: 'active',
+        subscription_plan: 'starter',
+        max_students: 200,
+      },
+      saas_subscriptions: {
+        status: 'trial',
+        plan_name: 'Essai Gratuit',
+        current_period_end: yesterday,
+      },
+    });
+
+    const status = await getSchoolSubscriptionStatus(mockSupabase, 'school-exp');
+    expect(status.isExpired).toBe(true);
+    expect(status.status).toBe('expired');
+    expect(status.daysRemaining).toBe(0);
+    await expect(assertActiveSubscription(mockSupabase, 'school-exp')).rejects.toThrow(/Abonnement requis/);
+  });
+
+  it('computes real remaining days for active trial in saas_subscriptions', async () => {
+    const inSevenDays = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const mockSupabase = createTableMock({
+      schools: {
+        id: 'school-trial',
+        name: 'École Essai',
+        subscription_status: 'active',
+        subscription_plan: 'starter',
+        max_students: 200,
+      },
+      saas_subscriptions: {
+        status: 'trial',
+        plan_name: 'Essai Gratuit',
+        current_period_end: inSevenDays,
+      },
+    });
+
+    const status = await getSchoolSubscriptionStatus(mockSupabase, 'school-trial');
+    expect(status.isExpired).toBe(false);
+    expect(status.status).toBe('trial');
+    expect(status.daysRemaining).toBeGreaterThanOrEqual(7);
+    expect(status.daysRemaining).toBeLessThanOrEqual(8);
+  });
+
+  it('infers plan metadata including Pro, Premium and Annuel durations/quotas', () => {
+    expect(inferPlanDetails('Plan Standard')).toEqual({
+      subscriptionPlan: 'starter',
+      maxStudents: 200,
+      monthsToAdd: 1,
+      isPro: false,
+    });
+    expect(inferPlanDetails('Plan Pro')).toEqual({
+      subscriptionPlan: 'pro',
+      maxStudents: 400,
+      monthsToAdd: 1,
+      isPro: true,
+    });
+    expect(inferPlanDetails('SCOGESTIA Plan Annuel')).toEqual({
+      subscriptionPlan: 'premium',
+      maxStudents: 999999,
+      monthsToAdd: 12,
+      isPro: true,
+    });
   });
 });

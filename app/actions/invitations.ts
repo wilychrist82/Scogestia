@@ -1,17 +1,19 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { randomInt } from 'crypto'
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { authRateLimit, checkRateLimit } from '@/lib/ratelimit'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { ALL_STAFF_ROLES } from '@/lib/roles'
 
-// Fonction pour générer un code alphanumérique aléatoire
+// Fonction cryptographiquement sûre pour générer un code alphanumérique aléatoire
 function generateRandomCode(length: number = 6): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   let result = ''
   for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length))
+    result += chars.charAt(randomInt(0, chars.length))
   }
   return result
 }
@@ -28,10 +30,24 @@ export async function generateParentCode(studentId: string): Promise<{ code?: st
     .from('students')
     .select('school_id')
     .eq('id', studentId)
-    .single()
+    .maybeSingle()
 
   if (studentError || !student) {
     return { error: 'Élève introuvable' }
+  }
+
+  // Vérifier que l'utilisateur est bien un membre du personnel de cette école
+  const { data: staffRole } = await supabase
+    .from('user_school_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('school_id', student.school_id)
+    .in('role', [...ALL_STAFF_ROLES])
+    .limit(1)
+    .maybeSingle()
+
+  if (!staffRole) {
+    return { error: 'Action réservée au personnel autorisé de cet établissement.' }
   }
 
   // Vérifier si un code actif existe déjà

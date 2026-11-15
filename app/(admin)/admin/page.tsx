@@ -16,6 +16,7 @@ import { DashboardHero, KpiCard, DashPanel, EmptyState } from '@/components/dash
 import { OnboardingWizard } from '@/components/admin/OnboardingWizard'
 import { ShortcutsButton } from '@/components/admin/ShortcutsButton'
 import { RaccourcisTrigger } from '@/components/admin/RaccourcisTrigger'
+import { ALL_STAFF_ROLES } from '@/lib/roles'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,7 +55,7 @@ export default async function AdminDashboard() {
 
   const { count: staffCount } = await supabase
     .from('user_school_roles').select('*', { count: 'exact', head: true })
-    .eq('school_id', schoolId).in('role', ['admin', 'comptable', 'enseignant'])
+    .eq('school_id', schoolId).in('role', [...ALL_STAFF_ROLES])
 
   // ── Paiements réels groupés par mois ──
   const { data: allPayments } = await supabase

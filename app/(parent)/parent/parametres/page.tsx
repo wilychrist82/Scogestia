@@ -14,9 +14,11 @@ export default async function ParentParametresPage() {
     .from('user_school_roles')
     .select('school_id, role')
     .eq('user_id', user.id)
+    .eq('role', 'parent')
+    .limit(1)
     .maybeSingle()
 
-  if (roleError || !roleData || roleData.role !== 'parent') {
+  if (roleError || !roleData) {
     return <div className="p-8 text-[var(--color-status-retard-text)]">Accès refusé.</div>
   }
 

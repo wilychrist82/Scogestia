@@ -7,16 +7,7 @@ import { AlertTriangle } from 'lucide-react'
 import { UnauthorizedAccess } from '@/components/shared/UnauthorizedAccess'
 import { getSchoolSubscriptionStatus } from '@/lib/subscription'
 import { isOwnerEmail } from '@/lib/owner'
-
-const ADMIN_SPACE_ROLES = [
-  'admin',
-  'comptable',
-  'secretaire',
-  'directeur',
-  'censeur',
-  'surveillant',
-  'conseiller',
-]
+import { ADMIN_SPACE_ROLES } from '@/lib/roles'
 
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Administrateur',
@@ -53,7 +44,7 @@ export default async function AdminLayout({
       )
     `)
     .eq('user_id', user.id)
-    .in('role', ADMIN_SPACE_ROLES)
+    .in('role', [...ADMIN_SPACE_ROLES])
     .limit(1)
     .maybeSingle()
 

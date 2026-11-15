@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { ActionState } from "./finance";
 import { getPrimarySubjectMaxScore } from "@/lib/academic-curriculum";
 import { getSchoolSubscriptionStatus } from "@/lib/subscription";
+import { ACADEMIC_MANAGEMENT_ROLES } from "@/lib/roles";
 
 async function getActiveSchoolId() {
   const supabase = await createClient();
@@ -18,10 +19,11 @@ async function getActiveSchoolId() {
     .from("user_school_roles")
     .select("school_id")
     .eq("user_id", user.id)
+    .in("role", [...ACADEMIC_MANAGEMENT_ROLES])
     .limit(1)
     .maybeSingle();
 
-  if (error || !roleData) throw new Error("École introuvable");
+  if (error || !roleData) throw new Error("Action non autorisée ou établissement introuvable");
   return roleData.school_id;
 }
 
@@ -1185,7 +1187,7 @@ export async function importClassGrades(payload: ImportClassGradesPayload): Prom
     const createdSubjects: Array<{ id: string; name: string; cycle: string; category: string | null; coefficient: number }> = [];
 
     for (const col of payload.columns) {
-      let targetSubjectId = col.subjectId;
+      const targetSubjectId = col.subjectId;
       if (targetSubjectId && targetSubjectId !== "virtual-etude-de-texte") {
         const found = (existingSubjects || []).find(s => s.id === targetSubjectId);
         if (found) {

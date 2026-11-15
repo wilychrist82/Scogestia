@@ -12,8 +12,8 @@ export async function sendSms(phoneNumber: string, message: string): Promise<boo
     const apiKey = process.env.AFRICASTALKING_API_KEY
 
     if (!username || !apiKey) {
-      console.log(`[SMS MOCK] Message to ${phoneNumber}: ${message}`)
-      return true
+      console.warn(`[SMS NON ENVOYÉ — Clés Africa's Talking manquantes] Destinataire: ${phoneNumber}`)
+      return false
     }
 
     let formattedPhone = phoneNumber

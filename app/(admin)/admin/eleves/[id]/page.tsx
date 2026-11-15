@@ -218,6 +218,7 @@ export default async function StudentDetailPage({
                 .select('full_name, phone')
                 .eq('user_id', link.parent_user_id)
                 .eq('school_id', roleData.school_id)
+                .limit(1)
                 .maybeSingle(),
             ])
 

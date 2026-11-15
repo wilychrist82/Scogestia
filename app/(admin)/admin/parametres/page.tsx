@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ParametresManager } from '@/components/admin/parametres/ParametresManager'
 import { DataErrorCard } from '@/components/shared/DataErrorCard'
+import { ADMIN_SPACE_ROLES } from '@/lib/roles'
+import { isOwnerEmail } from '@/lib/owner'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,18 +13,25 @@ export default async function ParametresPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/connexion')
 
-  const { data: roleData, error: roleError } = await supabase
-    .from('user_school_roles')
-    .select('school_id, role')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  const [{ data: roleData, error: roleError }, { data: isSuperAdmin }] = await Promise.all([
+    supabase
+      .from('user_school_roles')
+      .select('school_id, role')
+      .eq('user_id', user.id)
+      .in('role', [...ADMIN_SPACE_ROLES, 'super_admin'])
+      .limit(1)
+      .maybeSingle(),
+    supabase.rpc('is_super_admin'),
+  ])
+
+  const isPrivileged = Boolean(isSuperAdmin) || isOwnerEmail(user.email)
 
   if (roleError || !roleData?.school_id) {
     return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
   }
 
-  // Seul l'admin a accès à la configuration globale de l'école ; les autres rôles sont redirigés vers leur profil personnel
-  if (roleData.role !== 'admin') {
+  // Seul l'admin (ou super_admin) a accès à la configuration globale de l'école ; les autres rôles sont redirigés vers leur profil personnel
+  if (roleData.role !== 'admin' && roleData.role !== 'super_admin' && !isPrivileged) {
     redirect('/admin/parametres/profil')
   }
 

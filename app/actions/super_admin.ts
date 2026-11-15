@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { isOwnerEmail } from '@/lib/owner'
+import { inferPlanDetails } from '@/lib/subscription'
 
 export type ActionState = {
   error?: string
@@ -190,7 +191,7 @@ export async function updateSchoolPlan(schoolId: string, newPlan: string): Promi
     await verifySuperAdmin(supabase)
 
     const admin = createAdminClient()
-    const maxStudents = newPlan === 'pro' || newPlan === 'premium' ? 400 : 200
+    const { maxStudents } = inferPlanDetails(newPlan)
 
     const { error } = await admin
       .from('schools')

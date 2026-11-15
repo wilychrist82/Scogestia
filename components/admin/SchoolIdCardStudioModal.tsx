@@ -849,6 +849,7 @@ export function SchoolIdCardStudioModal({
           .from('user_school_roles')
           .select('school_id')
           .eq('user_id', user.id)
+          .limit(1)
           .maybeSingle()
 
         const targetSchoolId = roleRow?.school_id || schoolInfo?.id

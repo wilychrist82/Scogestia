@@ -16,9 +16,11 @@ export default async function AbonnementPage() {
       .from('user_school_roles')
       .select('school_id, role')
       .eq('user_id', user.id)
-      .single()
+      .in('role', ['admin', 'comptable', 'directeur', 'super_admin'])
+      .limit(1)
+      .maybeSingle()
 
-    if (!roleData || !['admin', 'comptable'].includes(roleData.role)) {
+    if (!roleData?.school_id) {
       return <div className="p-8 text-[var(--color-status-retard-text)]">Accès refusé. Réservé à l'administration.</div>
     }
 
@@ -162,12 +164,12 @@ export default async function AbonnementPage() {
         </div>
       </div>
     )
-  } catch (error: any) {
+  } catch (error) {
+    console.error('Erreur chargement page Abonnement:', error)
     return (
-      <div className="p-8 text-red-500 font-mono text-sm whitespace-pre-wrap">
-        <h2>Une erreur est survenue lors du chargement de la page :</h2>
-        <p>{error.message}</p>
-        <p>{error.stack}</p>
+      <div className="p-8 text-red-600 text-sm">
+        <h2>Une erreur est survenue lors du chargement de la page d'abonnement.</h2>
+        <p className="mt-1 text-slate-600">Veuillez rafraîchir la page ou contacter le support.</p>
       </div>
     )
   }

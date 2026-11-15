@@ -6,6 +6,16 @@ import { revalidatePath } from 'next/cache'
 import { sendSms } from '@/lib/sms'
 import { sendEmail } from '@/lib/emails/send'
 import { isOwnerEmail } from '@/lib/owner'
+import { ADMIN_MANAGEMENT_ROLES, ALL_STAFF_ROLES } from '@/lib/roles'
+
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
 
 export async function sendCommunication(formData: FormData) {
   const supabase = await createClient()
@@ -13,24 +23,72 @@ export async function sendCommunication(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autorisé' }
 
-  const adminClient = await createAdminClient()
+  const adminClient = createAdminClient()
 
-  const { data: roleData } = await adminClient
-    .from('user_school_roles')
-    .select('school_id, role')
-    .eq('user_id', user.id)
-    .limit(1)
-    .maybeSingle()
+  const [{ data: callerRoles }, { data: superAdminRow }] = await Promise.all([
+    adminClient
+      .from('user_school_roles')
+      .select('school_id, role')
+      .eq('user_id', user.id),
+    adminClient
+      .from('super_admins')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+  ])
 
-  let targetSchoolId = roleData?.school_id
+  const isPlatformOwner = Boolean(superAdminRow) || isOwnerEmail(user.email)
+  const rolesList = callerRoles || []
+
   const studentId = formData.get('studentId') as string | null
-  if (!targetSchoolId && studentId) {
+  let targetSchoolId: string | undefined
+  let callerRole: string | null = null
+
+  if (studentId) {
     const { data: student } = await adminClient
       .from('students')
       .select('school_id')
       .eq('id', studentId)
       .maybeSingle()
-    if (student?.school_id) targetSchoolId = student.school_id
+
+    if (!student?.school_id) {
+      return { error: 'Élève introuvable' }
+    }
+
+    const matchingSchoolRole =
+      rolesList.find(
+        r => r.school_id === student.school_id && (ALL_STAFF_ROLES as readonly string[]).includes(r.role)
+      ) || rolesList.find(r => r.school_id === student.school_id)
+
+    if (matchingSchoolRole) {
+      targetSchoolId = student.school_id
+      callerRole = matchingSchoolRole.role
+    } else if (isPlatformOwner) {
+      targetSchoolId = student.school_id
+      callerRole = 'super_admin'
+    } else {
+      const { data: parentLink } = await adminClient
+        .from('parent_student_links')
+        .select('id')
+        .eq('parent_user_id', user.id)
+        .eq('student_id', studentId)
+        .limit(1)
+        .maybeSingle()
+
+      if (!parentLink) {
+        return { error: 'Accès non autorisé pour cet élève.' }
+      }
+      targetSchoolId = student.school_id
+      callerRole = 'parent'
+    }
+  } else {
+    const preferredRole =
+      rolesList.find(r => (ADMIN_MANAGEMENT_ROLES as readonly string[]).includes(r.role)) ||
+      rolesList.find(r => r.role === 'enseignant') ||
+      rolesList[0]
+
+    targetSchoolId = preferredRole?.school_id
+    callerRole = preferredRole?.role || (isPlatformOwner ? 'super_admin' : null)
   }
 
   if (!targetSchoolId) return { error: 'École introuvable' }
@@ -48,51 +106,88 @@ export async function sendCommunication(formData: FormData) {
   const fileType = formData.get('fileType') as string | null
   const originalFileName = formData.get('originalFileName') as string | null
 
+  // Contrôle strict des types de destinataires autorisés par rôle
+  const isManagement =
+    isPlatformOwner ||
+    Boolean(callerRole && (ADMIN_MANAGEMENT_ROLES as readonly string[]).includes(callerRole))
+  const isTeacher = callerRole === 'enseignant'
+  const isParent = callerRole === 'parent'
+
+  const allowedRecipientTypes = isManagement
+    ? ['all', 'all_teachers', 'class', 'parent', 'enseignant', 'admin']
+    : isTeacher
+      ? ['parent', 'admin', 'class']
+      : isParent
+        ? ['admin', 'enseignant']
+        : []
+
+  if (!allowedRecipientTypes.includes(recipientType)) {
+    return { error: 'Action non autorisée pour votre rôle.' }
+  }
+
   if (!subject && !audioUrl && !fileUrl) {
     return { error: 'L\'objet, l\'audio ou un fichier est requis' }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Résolution du recipient_id selon le type
+  // Résolution & vérification multi-tenant du recipient_id selon le type
   // ─────────────────────────────────────────────────────────────────────────
   let recipientId: string | null = null
   let parentUserIds: string[] = []
 
   if (recipientType === 'class') {
     if (!selectedClass) return { error: 'La classe est requise' }
-    recipientId = selectedClass
+    const { data: classRow } = await adminClient
+      .from('classes')
+      .select('id')
+      .eq('id', selectedClass)
+      .eq('school_id', targetSchoolId)
+      .maybeSingle()
+
+    if (!classRow) {
+      return { error: 'Classe introuvable dans cet établissement.' }
+    }
+    recipientId = classRow.id
 
   } else if (recipientType === 'parent') {
     if (!selectedParent) return { error: 'L\'élève/parent est requis' }
-    
-    // selectedParent est un student_id → on trouve le(s) parent(s) lié(s)
-    // On utilise adminClient car les enseignants n'ont pas accès en RLS à parent_student_links
-    // Note : On n'utilise PAS .maybeSingle() car un élève peut avoir plusieurs parents liés (PGRST116)
-    const { data: links, error: linksError } = await adminClient
-      .from('parent_student_links')
-      .select('parent_user_id')
-      .eq('student_id', selectedParent)
 
-    if (linksError) {
-      console.error('Error fetching parent_student_links:', linksError)
-    }
+    const { data: studentInSchool } = await adminClient
+      .from('students')
+      .select('id')
+      .eq('id', selectedParent)
+      .eq('school_id', targetSchoolId)
+      .maybeSingle()
 
-    if (links && links.length > 0) {
-      parentUserIds = Array.from(new Set(links.map(l => l.parent_user_id).filter(Boolean)))
-    }
+    if (studentInSchool) {
+      // selectedParent est un student_id de cette école → on trouve le(s) parent(s) lié(s)
+      const { data: links, error: linksError } = await adminClient
+        .from('parent_student_links')
+        .select('parent_user_id')
+        .eq('student_id', selectedParent)
 
-    // Si aucun lien trouvé dans parent_student_links, vérifions si selectedParent est directement un user_id d'un compte parent
-    if (parentUserIds.length === 0) {
+      if (linksError) {
+        console.error('Error fetching parent_student_links:', linksError)
+      }
+
+      if (links && links.length > 0) {
+        parentUserIds = Array.from(new Set(links.map(l => l.parent_user_id).filter(Boolean)))
+      }
+    } else {
+      // Sinon, vérifions que selectedParent est directement un user_id parent de CETTE école
       const { data: userRole } = await adminClient
         .from('user_school_roles')
         .select('user_id')
         .eq('user_id', selectedParent)
+        .eq('school_id', targetSchoolId)
         .eq('role', 'parent')
+        .limit(1)
         .maybeSingle()
 
-      if (userRole?.user_id) {
-        parentUserIds = [userRole.user_id]
+      if (!userRole?.user_id) {
+        return { error: 'Élève ou parent introuvable dans cet établissement.' }
       }
+      parentUserIds = [userRole.user_id]
     }
 
     if (parentUserIds.length === 0) {
@@ -102,8 +197,19 @@ export async function sendCommunication(formData: FormData) {
     recipientId = parentUserIds[0]
 
   } else if (recipientType === 'enseignant') {
-    // selectedEnseignant est directement un user_id d'enseignant
     if (!selectedEnseignant) return { error: 'L\'enseignant est requis' }
+    const { data: teacherRole } = await adminClient
+      .from('user_school_roles')
+      .select('user_id')
+      .eq('user_id', selectedEnseignant)
+      .eq('school_id', targetSchoolId)
+      .in('role', [...ALL_STAFF_ROLES])
+      .limit(1)
+      .maybeSingle()
+
+    if (!teacherRole) {
+      return { error: 'Enseignant introuvable dans cet établissement.' }
+    }
     recipientId = selectedEnseignant
 
   } else if (recipientType === 'admin') {
@@ -244,6 +350,7 @@ export async function sendCommunication(formData: FormData) {
         .select('full_name, role')
         .eq('user_id', user.id)
         .eq('school_id', targetSchoolId)
+        .limit(1)
         .maybeSingle()
 
       const senderName = senderRole?.full_name || 'Utilisateur'
@@ -276,7 +383,7 @@ export async function sendCommunication(formData: FormData) {
         const targetRole = roleMap.get(uid)
         let actionUrl = '/parent/messages'
         if (targetRole === 'enseignant') actionUrl = '/enseignant/messages'
-        else if (['admin', 'super_admin', 'comptable'].includes(targetRole || '')) actionUrl = '/admin/communication'
+        else if ((ADMIN_MANAGEMENT_ROLES as readonly string[]).includes(targetRole || '')) actionUrl = '/admin/communication'
 
         return {
           user_id: uid,
@@ -313,10 +420,14 @@ export async function sendCommunication(formData: FormData) {
         if (data) parentIdsToSms = data.map(d => d.user_id)
 
       } else if (recipientType === 'class') {
-        const studentsRes = await supabase.from('students').select('id').eq('class_id', selectedClass)
+        const studentsRes = await adminClient
+          .from('students')
+          .select('id')
+          .eq('class_id', selectedClass)
+          .eq('school_id', targetSchoolId)
         const studentIds = studentsRes.data?.map(s => s.id) || []
         if (studentIds.length > 0) {
-          const { data } = await supabase
+          const { data } = await adminClient
             .from('parent_student_links')
             .select('parent_user_id')
             .in('student_id', studentIds)
@@ -364,7 +475,10 @@ export async function sendCommunication(formData: FormData) {
 
       } else if (recipientType === 'class' && selectedClass) {
         const { data: studentsInClass } = await adminClient
-          .from('students').select('id').eq('class_id', selectedClass)
+          .from('students')
+          .select('id')
+          .eq('class_id', selectedClass)
+          .eq('school_id', targetSchoolId)
         if (studentsInClass?.length) {
           const { data: links } = await adminClient
             .from('parent_student_links')
@@ -393,19 +507,22 @@ export async function sendCommunication(formData: FormData) {
 
           const { data: schoolData } = await adminClient
             .from('schools').select('name').eq('id', targetSchoolId).maybeSingle()
-          const schoolName = (schoolData as any)?.name || 'Scogestia'
+          const schoolName = (schoolData as { name?: string } | null)?.name || 'Scogestia'
+          const safeSchoolName = escapeHtml(schoolName)
+          const safeSubject = escapeHtml(subject)
+          const safeMessageHtml = escapeHtml(message).replace(/\n/g, '<br/>')
 
           const emailHtml = `
             <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
               <div style="background:#065F46;color:#fff;padding:16px 24px;border-radius:12px 12px 0 0;">
-                <h2 style="margin:0;font-size:18px;">📢 Annonce — ${schoolName}</h2>
+                <h2 style="margin:0;font-size:18px;">📢 Annonce — ${safeSchoolName}</h2>
               </div>
               <div style="background:#f8f9ff;padding:24px;border:1px solid #e2e8f0;border-radius:0 0 12px 12px;">
-                <h3 style="color:#0b1c30;margin-top:0;">${subject}</h3>
-                <p style="color:#3f4944;line-height:1.7;">${message.replace(/\n/g, '<br/>')}</p>
+                <h3 style="color:#0b1c30;margin-top:0;">${safeSubject}</h3>
+                <p style="color:#3f4944;line-height:1.7;">${safeMessageHtml}</p>
                 <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;"/>
                 <p style="color:#94a3b8;font-size:12px;margin:0;">
-                  Ce message vous a été envoyé par ${schoolName} via Scogestia.
+                  Ce message vous a été envoyé par ${safeSchoolName} via Scogestia.
                   <a href="${process.env.NEXT_PUBLIC_SITE_URL || ''}/parent" style="color:#065F46;">Voir dans l'application →</a>
                 </p>
               </div>
@@ -439,8 +556,8 @@ export async function deleteCommunication(id: string, type: 'for_me' | 'for_ever
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non autorisé' }
 
-  // 1. Récupérer le message pour vérifier s'il existe et si l'utilisateur en est l'auteur
-  const adminClient = await createAdminClient()
+  // 1. Récupérer le message pour vérifier s'il existe et si l'utilisateur en a accès
+  const adminClient = createAdminClient()
   const { data: message, error: getError } = await adminClient
     .from('communications')
     .select('id, sender_id, school_id, deleted_by, is_deleted_for_everyone')
@@ -448,6 +565,21 @@ export async function deleteCommunication(id: string, type: 'for_me' | 'for_ever
     .single()
 
   if (getError || !message) return { error: 'Message introuvable' }
+
+  // Vérifier l'appartenance à l'école du message (sauf si auteur)
+  if (message.sender_id !== user.id) {
+    const { data: memberRole } = await adminClient
+      .from('user_school_roles')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('school_id', message.school_id)
+      .limit(1)
+      .maybeSingle()
+
+    if (!memberRole) {
+      return { error: 'Accès non autorisé pour ce message' }
+    }
+  }
 
   // 2. Traitement selon le type
   if (type === 'for_everyone') {
@@ -534,7 +666,7 @@ async function verifyAdminForSchool(
   targetSchoolId?: string
 ): Promise<{ schoolId: string | null; error?: string }> {
   const adminClient = createAdminClient()
-  const ADMIN_ROLES = ['admin', 'super_admin', 'comptable']
+  const ADMIN_ROLES = ['admin', 'super_admin', 'comptable', 'directeur']
 
   // 1. Détection Super Admin du SaaS : table super_admins OU liste blanche exacte (env)
   const { data: superAdminRow } = await adminClient

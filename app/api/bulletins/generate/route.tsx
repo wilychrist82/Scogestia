@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createServiceRoleClient } from '@/lib/supabase/service'
+import { BULLETIN_GENERATION_ROLES } from '@/lib/roles'
 import { renderToStream } from '@react-pdf/renderer'
 import { BulletinDocument, BulletinPage, BulletinData } from '@/components/pdf/BulletinDocument'
 import React from 'react'
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient()
 
-    // 1. Authentification & Vérification (Direction / Admin uniquement)
+    // 1. Authentification & Vérification (Direction / Administration académique uniquement)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
@@ -22,12 +23,13 @@ export async function POST(request: Request) {
       .from('user_school_roles')
       .select('role, school_id')
       .eq('user_id', user.id)
+      .in('role', [...BULLETIN_GENERATION_ROLES])
       .limit(1)
       .maybeSingle()
 
-    if (!roleData || (roleData.role !== 'admin' && roleData.role !== 'super_admin' && roleData.role !== 'comptable')) {
+    if (!roleData?.school_id) {
       return NextResponse.json({ 
-        error: "Accès interdit : La génération et la publication des bulletins et livrets sont strictement réservées à l'administration." 
+        error: "Accès interdit : La génération et la publication des bulletins et livrets sont strictement réservées à la direction / administration." 
       }, { status: 403 })
     }
 
@@ -59,49 +61,62 @@ export async function POST(request: Request) {
     }
     const pdfBuffer = Buffer.concat(chunks)
 
-    // 3. Publier si demandé (uniquement si 1 seul élève pour le moment, ou on pourrait boucler)
+    // 3. Publier si demandé (uniquement si 1 seul élève et appartenance vérifiée à l'école)
     if (action === 'publish' && dataList.length === 1) {
-      const data = dataList[0];
-      const trueStudentId = (data.student as any).id || dataList[0].student.matricule; // Fallback
-      if (trueStudentId) {
-        const filePath = `${data.schoolName.replace(/ /g, '_')}/${trueStudentId}_${data.termOrMonth}.pdf`;
-        
-        const supabaseAdmin = createSupabaseClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!
+      const data = dataList[0]
+      const candidateStudentId = (data.student as { id?: string })?.id
+
+      if (!candidateStudentId) {
+        return NextResponse.json(
+          { error: "Identifiant de l'élève manquant pour la publication." },
+          { status: 400 }
         )
+      }
 
-        const { error: uploadError } = await supabaseAdmin.storage
-          .from('bulletins')
-          .upload(filePath, pdfBuffer, {
-            contentType: 'application/pdf',
-            upsert: true
-          });
+      const supabaseAdmin = createServiceRoleClient()
 
-        if (!uploadError) {
-          const { data: urlData } = supabaseAdmin.storage.from('bulletins').getPublicUrl(filePath)
-          
-          // Récupérer le school_id de l'admin actuel
-          const { data: roleData } = await supabase.from('user_school_roles').select('school_id').eq('user_id', user.id).single();
-          
-          if (roleData) {
-            const { error: upsertError } = await supabaseAdmin.from('published_bulletins').upsert({
-              student_id: trueStudentId,
-              school_id: roleData.school_id,
-              term_or_month: data.termOrMonth,
-              academic_year: data.academicYear,
-              file_url: urlData.publicUrl
-            }, { onConflict: 'student_id, term_or_month, academic_year' });
-            
-            if (upsertError) {
-              throw new Error("Erreur base de données lors de la publication: " + upsertError.message);
-            }
-          } else {
-            throw new Error("Impossible de déterminer l'école de l'utilisateur pour publier le bulletin.");
-          }
-        } else {
-          throw new Error("Erreur de téléversement du PDF: " + uploadError.message);
-        }
+      // Contrôle strict multi-tenant : l'élève publié doit appartenir à l'établissement de l'utilisateur
+      const { data: studentRecord, error: studentErr } = await supabaseAdmin
+        .from('students')
+        .select('id, school_id')
+        .eq('id', candidateStudentId)
+        .eq('school_id', roleData.school_id)
+        .maybeSingle()
+
+      if (studentErr || !studentRecord) {
+        return NextResponse.json(
+          { error: "Accès interdit : Cet élève n'appartient pas à votre établissement." },
+          { status: 403 }
+        )
+      }
+
+      const safeSchoolFolder = (data.schoolName || 'ecole').replace(/[^a-zA-Z0-9_-]/g, '_')
+      const safeTerm = (data.termOrMonth || 'periode').replace(/[^a-zA-Z0-9_-]/g, '_')
+      const filePath = `${safeSchoolFolder}/${studentRecord.id}_${safeTerm}.pdf`
+
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from('bulletins')
+        .upload(filePath, pdfBuffer, {
+          contentType: 'application/pdf',
+          upsert: true
+        })
+
+      if (uploadError) {
+        throw new Error('Erreur de téléversement du PDF: ' + uploadError.message)
+      }
+
+      const { data: urlData } = supabaseAdmin.storage.from('bulletins').getPublicUrl(filePath)
+
+      const { error: upsertError } = await supabaseAdmin.from('published_bulletins').upsert({
+        student_id: studentRecord.id,
+        school_id: roleData.school_id,
+        term_or_month: data.termOrMonth,
+        academic_year: data.academicYear,
+        file_url: urlData.publicUrl
+      }, { onConflict: 'student_id, term_or_month, academic_year' })
+
+      if (upsertError) {
+        throw new Error('Erreur base de données lors de la publication: ' + upsertError.message)
       }
     }
 
@@ -113,8 +128,8 @@ export async function POST(request: Request) {
       }
     })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("PDF Generation Error:", error)
-    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Erreur lors de la génération du bulletin PDF.' }, { status: 500 })
   }
 }

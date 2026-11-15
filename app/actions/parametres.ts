@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { ADMIN_SPACE_ROLES } from '@/lib/roles'
+import { isOwnerEmail } from '@/lib/owner'
 
 export type ActionState = {
   success?: boolean
@@ -50,14 +52,20 @@ export async function updateSchoolSettings(prevState: ActionState, formData: For
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Non authentifié');
 
-    const { data: roleData, error: roleError } = await supabase
-      .from('user_school_roles')
-      .select('school_id, role')
-      .eq('user_id', user.id)
-      .limit(1)
-      .maybeSingle();
+    const [{ data: roleData, error: roleError }, { data: isSuperAdmin }] = await Promise.all([
+      supabase
+        .from('user_school_roles')
+        .select('school_id, role')
+        .eq('user_id', user.id)
+        .in('role', [...ADMIN_SPACE_ROLES, 'super_admin'])
+        .limit(1)
+        .maybeSingle(),
+      supabase.rpc('is_super_admin'),
+    ]);
 
-    if (roleError || !roleData || roleData.role !== 'admin') {
+    const isPrivileged = Boolean(isSuperAdmin) || isOwnerEmail(user.email);
+
+    if (roleError || !roleData?.school_id || (!isPrivileged && !['admin', 'super_admin'].includes(roleData.role))) {
       throw new Error('Permission refusée');
     }
 
@@ -191,10 +199,12 @@ export async function updateSchoolAssetUrl(
       .from('user_school_roles')
       .select('school_id, role')
       .eq('user_id', user.id)
+      .in('role', ['admin', 'directeur', 'super_admin'])
+      .limit(1)
       .maybeSingle()
 
     if (roleError || !roleData?.school_id) {
-      throw new Error('Établissement introuvable')
+      throw new Error('Permission refusée ou établissement introuvable')
     }
 
     const updatePayload =

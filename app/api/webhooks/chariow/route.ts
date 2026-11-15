@@ -1,14 +1,64 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import crypto from 'crypto'
+import { createServiceRoleClient } from '@/lib/supabase/service'
 import { reconcileChariowPayment } from '@/lib/chariow/reconcile'
+import { webhookRateLimit, checkRateLimit } from '@/lib/ratelimit'
 
 export const dynamic = 'force-dynamic'
 
 const SUCCESS_EVENTS = ['successful.sale', 'settled.sale', 'completed.sale']
 
+function verifyWebhookSecret(req: Request, rawBody: string, secret: string): boolean {
+  const headerSecret =
+    req.headers.get('x-chariow-secret') ||
+    req.headers.get('x-webhook-secret')
+
+  if (headerSecret) {
+    const a = Buffer.from(headerSecret)
+    const b = Buffer.from(secret)
+    return a.length === b.length && crypto.timingSafeEqual(a, b)
+  }
+
+  const signature =
+    req.headers.get('x-chariow-signature') ||
+    req.headers.get('x-webhook-signature')
+
+  if (signature) {
+    const cleanSig = signature.replace(/^sha256=/i, '').trim()
+    const expectedHmac = crypto
+      .createHmac('sha256', secret)
+      .update(rawBody)
+      .digest('hex')
+    const a = Buffer.from(cleanSig)
+    const b = Buffer.from(expectedHmac)
+    return a.length === b.length && crypto.timingSafeEqual(a, b)
+  }
+
+  return false
+}
+
 export async function POST(req: Request) {
   try {
-    const body = await req.json()
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1'
+    const rateLimit = await checkRateLimit(webhookRateLimit, `chariow_${ip}`)
+    if (!rateLimit.success) {
+      return NextResponse.json({ error: 'Trop de requêtes' }, { status: 429 })
+    }
+
+    const rawBody = await req.text()
+    const webhookSecret = process.env.CHARIOW_WEBHOOK_SECRET
+    if (webhookSecret && !verifyWebhookSecret(req, rawBody, webhookSecret)) {
+      console.warn('[Chariow Webhook] Signature ou secret invalide depuis', ip)
+      return NextResponse.json({ error: 'Signature invalide' }, { status: 401 })
+    }
+
+    let body: { event?: string; data?: { sale?: { id?: string }; purchase?: { id?: string }; id?: string } } | null = null
+    try {
+      body = JSON.parse(rawBody)
+    } catch {
+      return NextResponse.json({ error: 'JSON invalide' }, { status: 400 })
+    }
+
     const { event, data } = body ?? {}
 
     if (!event || !data) {
@@ -22,14 +72,11 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'No sale ID found' }, { status: 400 })
       }
 
-      const supabaseAdmin = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      )
+      const supabaseAdmin = createServiceRoleClient()
 
       // Zero-trust : le contenu du webhook n'est jamais cru directement.
       // On relit la vente chez Chariow (source de vérité), on contrôle le montant
-      // et on met à jour saas_payments / saas_subscriptions.
+      // et on synchronise saas_payments, saas_subscriptions et schools.
       const ok = await reconcileChariowPayment(String(saleId), supabaseAdmin)
       console.log(`[Chariow Webhook] Sale ${saleId} reconcile => ${ok}`)
     }

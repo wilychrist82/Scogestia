@@ -29,9 +29,11 @@ export async function processCashPayment(data: {
       .select('role')
       .eq('user_id', user.id)
       .eq('school_id', due.school_id)
-      .single()
+      .in('role', ['admin', 'comptable', 'super_admin'])
+      .limit(1)
+      .maybeSingle()
 
-    if (!roleData || !['admin', 'comptable'].includes(roleData.role)) {
+    if (!roleData) {
       throw new Error('Permission refusée')
     }
 

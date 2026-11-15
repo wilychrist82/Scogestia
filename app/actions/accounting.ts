@@ -28,12 +28,14 @@ export async function generateDues(prevState: any, formData: FormData): Promise<
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('school_id')
+    .select('school_id, role')
     .eq('user_id', user.id)
-    .single()
+    .in('role', ['admin', 'comptable', 'directeur', 'super_admin'])
+    .limit(1)
+    .maybeSingle()
 
   if (!roleData?.school_id) {
-    return { error: 'École introuvable pour cet utilisateur.' }
+    return { error: 'Action réservée à la comptabilité / direction.' }
   }
 
   const schoolId = roleData.school_id
@@ -101,8 +103,9 @@ export async function sendManualReminder(scheduleId: string): Promise<{ error?: 
     .from('user_school_roles')
     .select('school_id, role')
     .eq('user_id', user.id)
-    .in('role', ['admin', 'comptable'])
-    .single()
+    .in('role', ['admin', 'comptable', 'super_admin'])
+    .limit(1)
+    .maybeSingle()
 
   if (!roleData) return { error: 'Non autorisé' }
 

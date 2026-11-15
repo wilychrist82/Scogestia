@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { STUDENT_MANAGEMENT_ROLES } from '@/lib/roles'
 
 export type ActionState = {
   error?: string;
@@ -18,7 +19,7 @@ async function getActiveSchoolId() {
     .from('user_school_roles')
     .select('school_id')
     .eq('user_id', user.id)
-    .in('role', ['admin', 'comptable', 'super_admin'])
+    .in('role', [...STUDENT_MANAGEMENT_ROLES])
     .limit(1)
     .maybeSingle();
 

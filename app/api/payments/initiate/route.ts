@@ -42,7 +42,8 @@ export async function POST(req: Request) {
       .select('id')
       .eq('parent_user_id', user.id)
       .eq('student_id', schedule.student_id)
-      .single()
+      .limit(1)
+      .maybeSingle()
 
     if (linkError || !link) {
       return NextResponse.json({ error: 'Non autorisé à payer pour cet élève.' }, { status: 403 })
@@ -53,7 +54,12 @@ export async function POST(req: Request) {
     // IMPORTANT : On n'insère JAMAIS de ligne dans `payments` avant la confirmation effective du paiement.
     const CHARIOW_API_KEY = process.env.CHARIOW_API_KEY
     const CHARIOW_PRODUCT_ID = process.env.CHARIOW_PRODUCT_ID
-    const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+    const BASE_URL = (
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      req.headers.get('origin') ||
+      new URL(req.url).origin
+    ).replace(/\/$/, '')
 
     if (!CHARIOW_API_KEY || !CHARIOW_PRODUCT_ID) {
       return NextResponse.json(

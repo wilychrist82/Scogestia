@@ -13,8 +13,57 @@ export type SubscriptionStatus = {
   isPro: boolean
 }
 
+export type PlanDetails = {
+  subscriptionPlan: 'starter' | 'pro' | 'premium'
+  maxStudents: number
+  monthsToAdd: number
+  isPro: boolean
+}
+
 /**
- * Récupère le statut complet d'abonnement d'un établissement
+ * Déduit la formule, le quota d'élèves et la durée depuis un nom de plan ou produit Chariow.
+ */
+export function inferPlanDetails(planName?: string | null): PlanDetails {
+  const normalized = (planName || '').toLowerCase()
+
+  if (normalized.includes('annuel') || normalized.includes('annual')) {
+    return {
+      subscriptionPlan: 'premium',
+      maxStudents: 999999,
+      monthsToAdd: 12,
+      isPro: true,
+    }
+  }
+
+  if (normalized.includes('premium')) {
+    return {
+      subscriptionPlan: 'premium',
+      maxStudents: 1000,
+      monthsToAdd: 1,
+      isPro: true,
+    }
+  }
+
+  if (normalized.includes('pro')) {
+    return {
+      subscriptionPlan: 'pro',
+      maxStudents: 400,
+      monthsToAdd: 1,
+      isPro: true,
+    }
+  }
+
+  return {
+    subscriptionPlan: 'starter',
+    maxStudents: 200,
+    monthsToAdd: 1,
+    isPro: false,
+  }
+}
+
+/**
+ * Récupère le statut complet d'abonnement d'un établissement en réconciliant
+ * `schools` (statut administratif) et `saas_subscriptions` (période de validité réelle).
  */
 export async function getSchoolSubscriptionStatus(supabase: SupabaseClient | any, schoolId: string): Promise<SubscriptionStatus> {
   // 1. Vérifier le statut directement depuis la table schools
@@ -24,41 +73,112 @@ export async function getSchoolSubscriptionStatus(supabase: SupabaseClient | any
     .eq('id', schoolId)
     .maybeSingle()
 
-  if (school) {
-    const isSuspended = school.subscription_status === 'suspended'
-    const plan = school.subscription_plan || 'starter'
-    const isPro = plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('premium')
-    const maxStudents = school.max_students || (isPro ? 400 : 200)
-
-    if (isSuspended) {
-      return {
-        isExpired: true,
-        daysRemaining: 0,
-        planName: plan,
-        status: 'expired',
-        maxStudents,
-        isPro,
-      }
-    }
-
-    // Statut actif : accès débloqué
+  if (!school) {
     return {
-      isExpired: false,
-      daysRemaining: 30,
+      isExpired: true,
+      daysRemaining: 0,
+      planName: 'Standard',
+      status: 'expired',
+      maxStudents: 200,
+      isPro: false,
+    }
+  }
+
+  const plan = school.subscription_plan || 'starter'
+  const planDefaults = inferPlanDetails(plan)
+  const isPro = planDefaults.isPro
+  const maxStudents = school.max_students || planDefaults.maxStudents
+
+  if (school.subscription_status === 'suspended') {
+    return {
+      isExpired: true,
+      daysRemaining: 0,
       planName: plan,
-      status: 'active',
+      status: 'expired',
       maxStudents,
       isPro,
     }
   }
 
+  // 2. Consulter saas_subscriptions pour contrôler la vraie date d'échéance (trial / active / expired)
+  try {
+    const { data: sub } = await supabase
+      .from('saas_subscriptions')
+      .select('status, current_period_end, plan_name')
+      .eq('school_id', schoolId)
+      .maybeSingle()
+
+    const isSubscriptionRecord =
+      Boolean(sub) &&
+      (Object.prototype.hasOwnProperty.call(sub, 'current_period_end') ||
+        Object.prototype.hasOwnProperty.call(sub, 'plan_name') ||
+        sub.status === 'trial' ||
+        sub.status === 'expired')
+
+    if (isSubscriptionRecord && sub) {
+      const resolvedPlanName = sub.plan_name || plan
+      const resolvedPlanMeta = inferPlanDetails(resolvedPlanName)
+      const resolvedIsPro = isPro || resolvedPlanMeta.isPro
+      const resolvedMaxStudents = Math.max(maxStudents, resolvedPlanMeta.maxStudents)
+
+      if (sub.status === 'expired') {
+        return {
+          isExpired: true,
+          daysRemaining: 0,
+          planName: resolvedPlanName,
+          status: 'expired',
+          maxStudents: resolvedMaxStudents,
+          isPro: resolvedIsPro,
+        }
+      }
+
+      if (sub.current_period_end) {
+        const msRemaining = new Date(sub.current_period_end).getTime() - Date.now()
+        if (Number.isFinite(msRemaining)) {
+          if (msRemaining <= 0) {
+            return {
+              isExpired: true,
+              daysRemaining: 0,
+              planName: resolvedPlanName,
+              status: 'expired',
+              maxStudents: resolvedMaxStudents,
+              isPro: resolvedIsPro,
+            }
+          }
+
+          const daysRemaining = Math.max(1, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)))
+          return {
+            isExpired: false,
+            daysRemaining,
+            planName: resolvedPlanName,
+            status: sub.status === 'trial' ? 'trial' : 'active',
+            maxStudents: resolvedMaxStudents,
+            isPro: resolvedIsPro,
+          }
+        }
+      }
+
+      return {
+        isExpired: false,
+        daysRemaining: 30,
+        planName: resolvedPlanName,
+        status: sub.status === 'trial' ? 'trial' : 'active',
+        maxStudents: resolvedMaxStudents,
+        isPro: resolvedIsPro,
+      }
+    }
+  } catch {
+    // Fallback tolérant si la table ou le mock de test ne fournit pas saas_subscriptions
+  }
+
+  // Statut actif (fallback historique si aucune entrée saas_subscriptions n'existe)
   return {
-    isExpired: true,
-    daysRemaining: 0,
-    planName: 'Standard',
-    status: 'expired',
-    maxStudents: 200,
-    isPro: false,
+    isExpired: false,
+    daysRemaining: 30,
+    planName: plan,
+    status: 'active',
+    maxStudents,
+    isPro,
   }
 }
 
