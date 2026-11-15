@@ -5,6 +5,7 @@ import { publishHomework, deleteHomework } from '@/app/actions/academique'
 import Link from 'next/link'
 import { ChevronRight, PlusCircle, CheckCircle2, Search, BookOpen, Paperclip, Trash2, X, Camera, FileText, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 type ClassItem = { id: string; name: string; level: string }
 type SubjectItem = { id: string; name: string; cycle: string }
@@ -40,6 +41,7 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
   const [error, setError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [selectedHomework, setSelectedHomework] = useState<HomeworkItem | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const [selectedClassId, setSelectedClassId] = useState<string>('')
   const [assignmentMode, setAssignmentMode] = useState<'all' | 'selective'>('all')
@@ -107,10 +109,15 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
   }
 
   const handleDelete = (id: string) => {
-    if (!confirm("Voulez-vous vraiment supprimer ce devoir ?")) return;
+    setConfirmDeleteId(id)
+  }
 
+  const executeDelete = () => {
+    if (!confirmDeleteId) return
+    const id = confirmDeleteId
     startDeleteTransition(async () => {
       const result = await deleteHomework(id)
+      setConfirmDeleteId(null)
       if (result?.error) {
         toast.error(result.error)
       } else {
@@ -556,6 +563,17 @@ export function DevoirsManager({ homeworks, classes, subjects, students = [] }: 
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDeleteId !== null}
+        title="Supprimer ce devoir ?"
+        description="Cette action supprimera définitivement ce devoir pour l'enseignant et les parents."
+        confirmLabel="Supprimer"
+        variant="danger"
+        isLoading={isDeleting}
+        onCancel={() => setConfirmDeleteId(null)}
+        onConfirm={executeDelete}
+      />
     </div>
   )
 }

@@ -7,6 +7,7 @@ import {
   CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft, RefreshCw, 
   Users, School, Check, Search, Filter, ShieldCheck, Sparkles, AlertCircle
 } from 'lucide-react'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export type PromotionStudent = {
   id: string
@@ -168,6 +169,7 @@ export function PromotionManager({ classes, students }: Props) {
   // État de transition et notification
   const [isPending, startTransition] = useTransition()
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+  const [confirmTransfer, setConfirmTransfer] = useState<{ ids: string[]; targetClassName: string } | null>(null)
 
   const handlePromote = () => {
     setFeedback(null)
@@ -186,18 +188,24 @@ export function PromotionManager({ classes, students }: Props) {
     }
 
     const targetClass = classes.find(c => c.id === targetClassId)
-    const confirmMessage = `Confirmez-vous le transfert de ${idsToPromote.length} élève(s) de "${sourceClass?.name}" vers "${targetClass?.name}" ?`
-    
-    if (!window.confirm(confirmMessage)) return
+    setConfirmTransfer({
+      ids: idsToPromote,
+      targetClassName: targetClass?.name || 'la classe cible',
+    })
+  }
 
+  const executePromote = () => {
+    if (!confirmTransfer) return
+    const { ids, targetClassName } = confirmTransfer
     startTransition(async () => {
-      const result = await promoteStudents(idsToPromote, targetClassId)
+      const result = await promoteStudents(ids, targetClassId)
+      setConfirmTransfer(null)
       if (result.error) {
         setFeedback({ type: 'error', message: result.error })
       } else {
         setFeedback({ 
           type: 'success', 
-          message: `Félicitations ! ${result.count} élève(s) ont été transférés avec succès vers la classe "${targetClass?.name}".` 
+          message: `Félicitations ! ${result.count} élève(s) ont été transférés avec succès vers la classe "${targetClassName}".` 
         })
       }
     })
@@ -501,6 +509,21 @@ export function PromotionManager({ classes, students }: Props) {
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmTransfer !== null}
+        title="Confirmer le transfert de classe ?"
+        description={
+          confirmTransfer
+            ? `Vous allez transférer ${confirmTransfer.ids.length} élève(s) de "${sourceClass?.name || 'la classe source'}" vers "${confirmTransfer.targetClassName}".`
+            : ''
+        }
+        confirmLabel="Confirmer le transfert"
+        variant="primary"
+        isLoading={isPending}
+        onCancel={() => setConfirmTransfer(null)}
+        onConfirm={executePromote}
+      />
     </div>
   )
 }

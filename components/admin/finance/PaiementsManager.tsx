@@ -7,6 +7,7 @@ import { recordPayment } from '@/app/actions/finance'
 import { generatePaymentReceipt } from '@/lib/pdf/receipt'
 import { FinanceNavTabs } from './FinanceNavTabs'
 import { FinancePageBanner } from './FinancePageBanner'
+import { formatCFA, getAvatarTone as avatarTone } from '@/lib/format'
 
 type PaymentItem = {
   id: string
@@ -63,23 +64,6 @@ const METHOD_STYLES: Record<string, { tone: string; icon: typeof Banknote }> = {
 }
 const methodStyle = (m: string) =>
   METHOD_STYLES[m] ?? { tone: 'bg-slate-100 text-slate-900 ring-slate-300', icon: Wallet }
-
-const AVATAR_TONES = [
-  'bg-emerald-100 text-emerald-900 ring-emerald-300',
-  'bg-sky-100 text-sky-900 ring-sky-300',
-  'bg-violet-100 text-violet-900 ring-violet-300',
-  'bg-amber-100 text-amber-900 ring-amber-300',
-  'bg-rose-100 text-rose-900 ring-rose-300',
-  'bg-teal-100 text-teal-900 ring-teal-300',
-]
-const avatarTone = (seed: string) => {
-  let h = 0
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
-  return AVATAR_TONES[h % AVATAR_TONES.length]
-}
-
-const formatCFA = (amount: number) =>
-  `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount)} FCFA`
 
 const inputCls =
   'w-full h-11 px-3 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-600 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/15 outline-none transition-all'

@@ -6,6 +6,7 @@ import { TrendingUp, Banknote, Users, Receipt, AlertTriangle, ChevronRight, File
 import { FinanceNavTabs } from './FinanceNavTabs'
 import { FinancePageBanner } from './FinancePageBanner'
 import { FinancialReportDocument, SchoolInfo } from './FinancialReportDocument'
+import { formatCFA, PAYMENT_METHOD_LABELS as METHOD_LABELS } from '@/lib/format'
 
 type Stats = {
   totalEncaisse: number
@@ -35,19 +36,6 @@ type Props = {
   payments: PaymentItem[]
   schedules: ScheduleItem[]
   basePath?: string
-}
-
-const formatCFA = (amount: number) =>
-  `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount)} FCFA`
-
-const METHOD_LABELS: Record<string, string> = {
-  especes: 'Espèces',
-  tmoney: 'T-Money',
-  flooz: 'Flooz',
-  wave: 'Wave',
-  virement: 'Virement bancaire',
-  cheque: 'Chèque',
-  Autre: 'Autre',
 }
 
 export function RapportsFinanciers({ school, userFullName, stats, payments, schedules, basePath = '/admin/finance' }: Props) {

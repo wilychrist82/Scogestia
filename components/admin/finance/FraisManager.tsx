@@ -6,6 +6,8 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Banknote, X, Tag, Calendar, Users2, Plus, Trash2, ChevronRight, Loader2, AlertCircle, CheckCircle2, DollarSign } from 'lucide-react'
 import { FinanceNavTabs } from './FinanceNavTabs'
 import { FinancePageBanner } from './FinancePageBanner'
+import { formatCFA } from '@/lib/format'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 type FeeType = {
   id: string
@@ -36,9 +38,6 @@ const TARGETS = [
   { value: 'secondaire', label: 'Secondaire seulement' },
 ]
 
-const formatCFA = (amount: number) =>
-  `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount)} FCFA`
-
 const inputCls =
   'w-full h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/15 outline-none transition-all'
 
@@ -49,6 +48,7 @@ export function FraisManager({ feeTypes, onAdd, onDelete, basePath = '/admin/fin
   const [actionError, setActionError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [localFees, setLocalFees] = useState<FeeType[]>(feeTypes)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   useEffect(() => {
     setLocalFees(feeTypes)
@@ -98,17 +98,24 @@ export function FraisManager({ feeTypes, onAdd, onDelete, basePath = '/admin/fin
   }
 
   const handleDelete = (id: string) => {
-    if (!window.confirm('Supprimer cette configuration de frais ?')) return
+    setConfirmDeleteId(id)
+  }
+
+  const executeDelete = () => {
+    if (!confirmDeleteId) return
+    const id = confirmDeleteId
     setActionError(null)
 
     startTransition(async () => {
       if (onDelete) {
         const result = await onDelete(id)
         if (result?.error) {
+          setConfirmDeleteId(null)
           setActionError(result.error)
           return
         }
       }
+      setConfirmDeleteId(null)
       setLocalFees(prev => prev.filter(f => f.id !== id))
     })
   }
@@ -327,6 +334,17 @@ export function FraisManager({ feeTypes, onAdd, onDelete, basePath = '/admin/fin
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDeleteId !== null}
+        title="Supprimer cette configuration de frais ?"
+        description="Cette rubrique tarifaire sera retirée de la grille des frais scolaires."
+        confirmLabel="Supprimer"
+        variant="danger"
+        isLoading={isPending}
+        onCancel={() => setConfirmDeleteId(null)}
+        onConfirm={executeDelete}
+      />
     </div>
   )
 }

@@ -26,6 +26,7 @@ import {
 import { deleteStudent } from '@/app/actions/students'
 import { ImportStudentsModal } from './ImportStudentsModal'
 import { KpiCard } from './KpiCard'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export type StudentItem = {
   id: string
@@ -76,6 +77,7 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
   const [isPending, startTransition] = useTransition()
   const [actionError, setActionError] = useState<string | null>(null)
   const [openActionId, setOpenActionId] = useState<string | null>(null)
+  const [confirmDeleteStudent, setConfirmDeleteStudent] = useState<{ id: string; name: string } | null>(null)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 
   // Fermeture du menu d'action au clic extérieur
@@ -87,15 +89,20 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
   }, [openActionId])
 
   const handleDelete = (id: string, name: string) => {
-    if (!window.confirm(`Supprimer l'élève ${name} ? Cette action est irréversible.`)) return
+    setConfirmDeleteStudent({ id, name })
+    setOpenActionId(null)
+  }
+
+  const executeDelete = () => {
+    if (!confirmDeleteStudent) return
+    const { id } = confirmDeleteStudent
     setActionError(null)
 
     startTransition(async () => {
       const result = await deleteStudent(id)
+      setConfirmDeleteStudent(null)
       if (result?.error) {
         setActionError(result.error)
-      } else {
-        setOpenActionId(null)
       }
     })
   }
@@ -504,6 +511,21 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
         onClose={() => setIsImportModalOpen(false)}
         classes={classes}
         initialClassId={searchParams.get('classId') || undefined}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDeleteStudent !== null}
+        title="Supprimer cet élève ?"
+        description={
+          confirmDeleteStudent
+            ? `Le dossier de ${confirmDeleteStudent.name} sera définitivement supprimé. Cette action est irréversible.`
+            : ''
+        }
+        confirmLabel="Supprimer l'élève"
+        variant="danger"
+        isLoading={isPending}
+        onCancel={() => setConfirmDeleteStudent(null)}
+        onConfirm={executeDelete}
       />
     </div>
   )

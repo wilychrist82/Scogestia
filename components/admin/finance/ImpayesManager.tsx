@@ -6,6 +6,7 @@ import { Send, Search, Phone, MessageCircle, BellRing, Loader2, CheckCircle2, Al
 import { sendPaymentReminder, sendBulkPaymentReminders } from '@/app/actions/finance'
 import { FinanceNavTabs } from './FinanceNavTabs'
 import { FinancePageBanner } from './FinancePageBanner'
+import { formatCFA, getAvatarTone as avatarTone } from '@/lib/format'
 
 type ImpayeItem = {
   id: string
@@ -30,24 +31,6 @@ type Props = {
 }
 
 type Feedback = { type: 'success' | 'error', message: string } | null
-
-const formatCFA = (amount: number) =>
-  `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount)} FCFA`
-
-const AVATAR_TONES = [
-  'bg-emerald-100 text-emerald-900 ring-emerald-300',
-  'bg-sky-100 text-sky-900 ring-sky-300',
-  'bg-violet-100 text-violet-900 ring-violet-300',
-  'bg-amber-100 text-amber-900 ring-amber-300',
-  'bg-rose-100 text-rose-900 ring-rose-300',
-  'bg-teal-100 text-teal-900 ring-teal-300',
-]
-
-const avatarTone = (seed: string) => {
-  let h = 0
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
-  return AVATAR_TONES[h % AVATAR_TONES.length]
-}
 
 /** Nombre de jours de retard (0 si l'échéance n'est pas encore dépassée). */
 const getDaysLate = (dueDateStr: string) => {
@@ -167,11 +150,10 @@ export function ImpayesManager({ impayes, basePath = '/admin/finance' }: Props &
       {feedback && (
         <div
           role="status"
-          className={`flex items-start gap-2.5 rounded-xl border px-4 py-3 text-sm font-semibold ${
-            feedback.type === 'success'
-              ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-              : 'bg-rose-50 border-rose-300 text-rose-900'
-          }`}
+          className={`flex items-start gap-2.5 rounded-xl border px-4 py-3 text-sm font-semibold ${feedback.type === 'success'
+            ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+            : 'bg-rose-50 border-rose-300 text-rose-900'
+            }`}
         >
           {feedback.type === 'success' ? <CheckCircle2 size={17} className="mt-0.5 shrink-0" /> : <AlertCircle size={17} className="mt-0.5 shrink-0" />}
           <p className="flex-1">{feedback.message}</p>

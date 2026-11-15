@@ -4,6 +4,7 @@ import { useState, useTransition, useMemo, useEffect, FormEvent } from 'react'
 import { saveSchoolSubject, deleteSchoolSubject, ensurePhilosophieSubject, ensureEtudeDeTexteSubject } from '@/app/actions/academique'
 import Link from 'next/link'
 import { ChevronRight, Plus, BookOpen, Trash2, X, Loader2, Sparkles, CheckCircle2 } from 'lucide-react'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { 
   LYCEE_SERIES_CONFIG, 
   LyceeSeriesKey, 
@@ -30,6 +31,7 @@ export function MatieresManager({ subjects }: Props) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [confirmDeleteSubject, setConfirmDeleteSubject] = useState<{ id: string; name: string } | null>(null)
   
   // Cycles: primaire | college | lycee
   const [selectedCycle, setSelectedCycle] = useState<'primaire' | 'college' | 'lycee'>('primaire')
@@ -60,10 +62,16 @@ export function MatieresManager({ subjects }: Props) {
   }
 
   const handleDelete = (subjectId: string, subjectName: string) => {
-    if (!confirm(`Confirmez-vous la suppression de la matière "${subjectName}" ?`)) return
+    setConfirmDeleteSubject({ id: subjectId, name: subjectName })
+  }
+
+  const executeDelete = () => {
+    if (!confirmDeleteSubject) return
+    const { id: subjectId, name: subjectName } = confirmDeleteSubject
     setError(null)
     startTransition(async () => {
       const res = await deleteSchoolSubject(subjectId)
+      setConfirmDeleteSubject(null)
       if (res?.error) {
         setError(res.error)
       } else {
@@ -626,6 +634,21 @@ export function MatieresManager({ subjects }: Props) {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDeleteSubject !== null}
+        title="Supprimer cette matière ?"
+        description={
+          confirmDeleteSubject
+            ? `La matière « ${confirmDeleteSubject.name} » sera retirée du programme.`
+            : ''
+        }
+        confirmLabel="Supprimer"
+        variant="danger"
+        isLoading={isPending}
+        onCancel={() => setConfirmDeleteSubject(null)}
+        onConfirm={executeDelete}
+      />
     </div>
   )
 }

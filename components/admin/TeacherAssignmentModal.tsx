@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect, FormEvent } from 'react'
 import { getTeacherAssignments, assignTeacherToClass, removeTeacherAssignment, getSchoolClassesAndSubjects } from '@/app/actions/staff'
 import { X, PlusCircle, ListOrdered, UserCheck, BookOpen, Trash2, Loader2 } from 'lucide-react'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 type Props = {
   isOpen: boolean
@@ -18,6 +19,7 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
   const [subjects, setSubjects] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null)
   
   const [selectedClassId, setSelectedClassId] = useState<string>('')
 
@@ -71,10 +73,15 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
 
 
   const handleRemove = (assignmentId: string) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir retirer cette classe à l'enseignant ?")) return
-    
+    setConfirmRemoveId(assignmentId)
+  }
+
+  const executeRemove = () => {
+    if (!confirmRemoveId) return
+    const assignmentId = confirmRemoveId
     startTransition(async () => {
       const result = await removeTeacherAssignment(assignmentId)
+      setConfirmRemoveId(null)
       if (result?.error) {
         setError(result.error)
       } else {
@@ -212,6 +219,17 @@ export function TeacherAssignmentModal({ isOpen, onClose, teacherId, teacherName
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmRemoveId !== null}
+        title="Retirer cette affectation ?"
+        description="Êtes-vous sûr de vouloir retirer cette classe à l'enseignant ?"
+        confirmLabel="Retirer"
+        variant="warning"
+        isLoading={isPending}
+        onCancel={() => setConfirmRemoveId(null)}
+        onConfirm={executeRemove}
+      />
     </div>
   )
 }

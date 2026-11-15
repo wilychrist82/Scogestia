@@ -6,6 +6,8 @@ import { Plus, MessageCircle, Trash2, MoreVertical, X, ChevronRight, Loader2, Al
 import { generateSchedule, deleteSchedule } from '@/app/actions/finance'
 import { FinanceNavTabs } from './FinanceNavTabs'
 import { FinancePageBanner } from './FinancePageBanner'
+import { formatCFA } from '@/lib/format'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 type ClassItem = { id: string; name: string }
 type StudentItem = { id: string; last_name: string; first_name: string; matricule: string }
@@ -23,9 +25,6 @@ type Props = {
   classes: ClassItem[]
   students: StudentItem[]
 }
-
-const formatCFA = (amount: number) =>
-  `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount)} FCFA`
 
 const inputCls =
   'w-full h-10 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/15 outline-none transition-all'
@@ -56,6 +55,7 @@ export function EcheancesManager({ schedules, classes, students, basePath = '/ad
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [classFilter, setClassFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [query, setQuery] = useState('')
@@ -101,15 +101,21 @@ export function EcheancesManager({ schedules, classes, students, basePath = '/ad
   }
 
   const handleDelete = (id: string) => {
-    if (!window.confirm('Supprimer cette échéance ? Cette action est irréversible.')) return
+    setConfirmDeleteId(id)
+    setOpenDropdownId(null)
+  }
+
+  const executeDelete = () => {
+    if (!confirmDeleteId) return
+    const id = confirmDeleteId
     setActionError(null)
 
     startTransition(async () => {
       const result = await deleteSchedule(id)
+      setConfirmDeleteId(null)
       if (result?.error) {
         setActionError(result.error)
       }
-      setOpenDropdownId(null)
     })
   }
 
@@ -373,6 +379,17 @@ export function EcheancesManager({ schedules, classes, students, basePath = '/ad
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDeleteId !== null}
+        title="Supprimer cette échéance ?"
+        description="Cette échéance de paiement sera définitivement supprimée. Cette action est irréversible."
+        confirmLabel="Supprimer"
+        variant="danger"
+        isLoading={isPending}
+        onCancel={() => setConfirmDeleteId(null)}
+        onConfirm={executeDelete}
+      />
     </div>
   )
 }

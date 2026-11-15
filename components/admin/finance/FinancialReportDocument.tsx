@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { Printer, FileSpreadsheet, X, Download, ShieldCheck, CheckCircle2, Building2 } from 'lucide-react'
+import { formatCFA, PAYMENT_METHOD_LABELS as METHOD_LABELS } from '@/lib/format'
 
 export type SchoolInfo = {
   id?: string
@@ -37,19 +38,6 @@ type Props = {
   stats: Stats
   payments: PaymentItem[]
   onClose: () => void
-}
-
-const formatCFA = (amount: number) =>
-  `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount)} FCFA`
-
-const METHOD_LABELS: Record<string, string> = {
-  especes: 'Espèces',
-  tmoney: 'T-Money',
-  flooz: 'Flooz',
-  wave: 'Wave',
-  virement: 'Virement bancaire',
-  cheque: 'Chèque',
-  Autre: 'Autre',
 }
 
 export function FinancialReportDocument({ school, userFullName, stats, payments, onClose }: Props) {

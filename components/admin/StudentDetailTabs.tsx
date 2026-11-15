@@ -14,6 +14,8 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { getDynamicAcademicYear } from '@/lib/academic-year'
 import { AudioRecorder } from '@/components/ui/AudioRecorder'
 import { generateSchoolCertificatePDF, generateHonorRollPDF } from '@/lib/pdf/student-documents'
 import { SchoolIdCardStudioModal } from '@/components/admin/SchoolIdCardStudioModal'
@@ -95,7 +97,7 @@ export function StudentDetailTabs({
     schoolCity: schoolInfo?.city || null,
     schoolPhone: schoolInfo?.phone || null,
     schoolEmail: schoolInfo?.email || null,
-    academicYear: schoolInfo?.current_academic_year || '2025-2026',
+    academicYear: schoolInfo?.current_academic_year || getDynamicAcademicYear('-'),
     directorName: schoolInfo?.director_name || null,
     schoolLogoUrl: schoolInfo?.logo_url || null,
     schoolStampUrl: schoolInfo?.stamp_url || null,
@@ -105,6 +107,7 @@ export function StudentDetailTabs({
   const [isPending, startTransition] = useTransition()
   const [invitationCode, setInvitationCode] = useState<string | null>(initialInvitationCode)
   const [error, setError] = useState<string | null>(null)
+  const [confirmUnlinkParent, setConfirmUnlinkParent] = useState<{ linkId: string; parentName: string } | null>(null)
 
   // Modale Réinitialisation Mot de passe Parent
   const [parentToReset, setParentToReset] = useState<LinkedParent | null>(null)
@@ -333,10 +336,15 @@ export function StudentDetailTabs({
   }
 
   const handleUnlinkParent = (linkId: string, parentName: string) => {
-    if (!window.confirm(`Dissocier le compte de ${parentName} de cet élève ?`)) return
+    setConfirmUnlinkParent({ linkId, parentName })
+  }
 
+  const executeUnlinkParent = () => {
+    if (!confirmUnlinkParent) return
+    const { linkId } = confirmUnlinkParent
     startTransition(async () => {
       const res = await unlinkParentFromStudent(linkId, student.id)
+      setConfirmUnlinkParent(null)
       if (res?.error) {
         toast.error(res.error)
       } else {
@@ -1690,6 +1698,21 @@ export function StudentDetailTabs({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmUnlinkParent !== null}
+        title="Dissocier ce compte parent ?"
+        description={
+          confirmUnlinkParent
+            ? `Le compte de ${confirmUnlinkParent.parentName} ne sera plus lié au dossier de cet élève.`
+            : ''
+        }
+        confirmLabel="Dissocier"
+        variant="warning"
+        isLoading={isPending}
+        onCancel={() => setConfirmUnlinkParent(null)}
+        onConfirm={executeUnlinkParent}
+      />
     </div>
   )
 }

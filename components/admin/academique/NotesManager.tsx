@@ -33,6 +33,7 @@ import {
   Upload
 } from 'lucide-react'
 import { ClassResultsPreviewModal } from './ClassResultsPreviewModal'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ImportGradesModal } from './ImportGradesModal'
 import { PrimaryClassMatrixGrid } from './PrimaryClassMatrixGrid'
 import { AverageScale, ExportCycle, FilterMode, SortMode } from '@/lib/grades-export'
@@ -134,6 +135,7 @@ export function NotesManager({
 
   const [isResultsPreviewOpen, setIsResultsPreviewOpen] = useState<boolean>(false)
   const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false)
+  const [isConfirmClearOpen, setIsConfirmClearOpen] = useState<boolean>(false)
   const [previewInitialSort, setPreviewInitialSort] = useState<SortMode>('alphabetical')
   const [previewInitialFilter, setPreviewInitialFilter] = useState<FilterMode>('all')
 
@@ -738,11 +740,14 @@ export function NotesManager({
   // Handle Clear all grades for student
   const handleClearAllGrades = () => {
     if (!selectedStudent || !currentStudent) return
-    const confirmed = window.confirm(`Voulez-vous vraiment effacer toutes les notes saisies pour ${currentStudent.first_name} ${currentStudent.last_name} ? L'espace parent et les bulletins redeviendront vides pour cet élève.`)
-    if (!confirmed) return
+    setIsConfirmClearOpen(true)
+  }
 
+  const executeClearAllGrades = () => {
+    if (!selectedStudent || !currentStudent) return
     startTransition(async () => {
       const res = await clearStudentGrades(selectedStudent)
+      setIsConfirmClearOpen(false)
       if (res?.error) {
         setError(res.error)
       } else {
@@ -1897,6 +1902,21 @@ export function NotesManager({
           setTimeout(() => setSuccess(null), 5000)
           router.refresh()
         }}
+      />
+
+      <ConfirmDialog
+        isOpen={isConfirmClearOpen}
+        title="Effacer toutes les notes de cet élève ?"
+        description={
+          currentStudent
+            ? `Toutes les notes saisies pour ${currentStudent.first_name} ${currentStudent.last_name} seront supprimées. L'espace parent et les bulletins redeviendront vides pour cet élève.`
+            : ''
+        }
+        confirmLabel="Effacer les notes"
+        variant="danger"
+        isLoading={isPending}
+        onCancel={() => setIsConfirmClearOpen(false)}
+        onConfirm={executeClearAllGrades}
       />
     </div>
   )

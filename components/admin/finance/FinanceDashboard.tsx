@@ -33,6 +33,11 @@ import {
 } from 'lucide-react'
 import { FinanceNavTabs } from './FinanceNavTabs'
 import { generatePaymentReceipt } from '@/lib/pdf/receipt'
+import {
+  formatCFA,
+  getAvatarTone as avatarTone,
+  PAYMENT_METHOD_LABELS as METHOD_LABELS,
+} from '@/lib/format'
 
 export type Schedule = {
   id?: string
@@ -79,33 +84,6 @@ type Props = {
 }
 
 const MONTHS = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc']
-
-const METHOD_LABELS: Record<string, string> = {
-  especes: 'Espèces',
-  tmoney: 'T-Money',
-  flooz: 'Flooz',
-  wave: 'Wave',
-  banque: 'Virement',
-  autre: 'Autre',
-}
-
-const AVATAR_TONES = [
-  'bg-emerald-100 text-emerald-900 ring-emerald-300',
-  'bg-sky-100 text-sky-900 ring-sky-300',
-  'bg-violet-100 text-violet-900 ring-violet-300',
-  'bg-amber-100 text-amber-900 ring-amber-300',
-  'bg-rose-100 text-rose-900 ring-rose-300',
-  'bg-teal-100 text-teal-900 ring-teal-300',
-]
-
-const avatarTone = (seed: string) => {
-  let h = 0
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
-  return AVATAR_TONES[h % AVATAR_TONES.length]
-}
-
-const formatCFA = (amount: number) =>
-  `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount)} FCFA`
 
 const compact = (val: number) => {
   if (val >= 1_000_000) return `${+(val / 1_000_000).toFixed(1)}M`

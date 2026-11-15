@@ -5,6 +5,7 @@ import { ExportButtons } from '@/components/ui/ExportButtons'
 import Link from 'next/link'
 import { RapportsNavTabs } from './RapportsNavTabs'
 import { Wallet, TrendingUp, BarChart3 } from 'lucide-react'
+import { formatCFA } from '@/lib/format'
 
 type MonthlyData = {
   month: string
@@ -24,12 +25,12 @@ type Props = {
 }
 
 export function FinanceRapportsManager({ monthlyData, classData, totalCollected }: Props) {
-  
+
   const COLORS = [
-    '#4285F4', '#DB4437', '#F4B400', '#0F9D58', '#AB47BC', 
+    '#4285F4', '#DB4437', '#F4B400', '#0F9D58', '#AB47BC',
     '#00ACC1', '#FF7043', '#9E9D24', '#5C6BC0', '#F06292'
   ]
-  
+
   // Format data for export
   const exportData = monthlyData.map(m => ({
     Mois: m.month,
@@ -41,14 +42,12 @@ export function FinanceRapportsManager({ monthlyData, classData, totalCollected 
     { key: 'Montant Encaissé (F CFA)', label: 'Montant Encaissé (F CFA)' }
   ]
 
-  const formatFCFA = (value: number) => {
-    return value.toLocaleString('fr-FR') + ' F'
-  }
+  const formatFCFA = (value: number) => formatCFA(value, 'F')
 
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
       <div className="max-w-[1280px] mx-auto space-y-6">
-        
+
         {/* Navigation Tabs */}
         <div className="print:hidden">
           <RapportsNavTabs />
@@ -86,7 +85,7 @@ export function FinanceRapportsManager({ monthlyData, classData, totalCollected 
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10">
-          
+
           <div className="bg-[var(--color-surface-container-lowest)] rounded-xl border border-[var(--color-outline-variant)] p-6 shadow-sm min-h-[400px] flex flex-col">
             <h3 className="font-bold text-[var(--color-on-surface)] mb-6 text-lg">Évolution Mensuelle des Encaissements</h3>
             <div className="flex-1 min-h-[300px] flex items-center justify-center">
@@ -96,8 +95,8 @@ export function FinanceRapportsManager({ monthlyData, classData, totalCollected 
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
                     <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} tickFormatter={(val) => `${val / 1000}k`} />
-                    <Tooltip 
-                      cursor={{ stroke: 'var(--color-outline)' }} 
+                    <Tooltip
+                      cursor={{ stroke: 'var(--color-outline)' }}
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                       formatter={(value: any) => [formatFCFA(Number(value)), 'Encaissé']}
                     />
@@ -122,8 +121,8 @@ export function FinanceRapportsManager({ monthlyData, classData, totalCollected 
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e0e0e0" />
                     <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} tickFormatter={(val) => `${val / 1000}k`} />
                     <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                    <Tooltip 
-                      cursor={{ fill: 'transparent' }} 
+                    <Tooltip
+                      cursor={{ fill: 'transparent' }}
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                       formatter={(value: any) => [formatFCFA(Number(value)), 'Encaissé']}
                     />

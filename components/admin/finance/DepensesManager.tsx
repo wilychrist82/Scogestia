@@ -21,6 +21,7 @@ import {
   Printer,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { generateExpenseVoucherPDF } from '@/lib/pdf/student-documents'
 
 export interface SchoolExpenseItem {
@@ -68,6 +69,7 @@ export function DepensesManager({ expenses, totalCollected, schoolInfo = null }:
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [confirmDeleteExpense, setConfirmDeleteExpense] = useState<{ id: string; label: string } | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('ALL')
 
@@ -106,9 +108,15 @@ export function DepensesManager({ expenses, totalCollected, schoolInfo = null }:
   }
 
   const handleDelete = (id: string, label: string) => {
-    if (!window.confirm(`Supprimer la dépense "${label}" ?`)) return
+    setConfirmDeleteExpense({ id, label })
+  }
+
+  const executeDelete = () => {
+    if (!confirmDeleteExpense) return
+    const { id } = confirmDeleteExpense
     startTransition(async () => {
       const res = await deleteSchoolExpense(id)
+      setConfirmDeleteExpense(null)
       if (res?.error) {
         toast.error(res.error)
       } else {
@@ -512,6 +520,21 @@ export function DepensesManager({ expenses, totalCollected, schoolInfo = null }:
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDeleteExpense !== null}
+        title="Supprimer cette dépense ?"
+        description={
+          confirmDeleteExpense
+            ? `La dépense « ${confirmDeleteExpense.label} » sera définitivement supprimée.`
+            : ''
+        }
+        confirmLabel="Supprimer"
+        variant="danger"
+        isLoading={isPending}
+        onCancel={() => setConfirmDeleteExpense(null)}
+        onConfirm={executeDelete}
+      />
     </div>
   )
 }

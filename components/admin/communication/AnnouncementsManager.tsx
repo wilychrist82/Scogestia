@@ -6,6 +6,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { CommunicationNavTabs } from './CommunicationNavTabs'
 import { Megaphone, EyeOff, CheckCircle2, FileEdit, Plus, Users, Clock, Eye, Edit2, Trash2, X } from 'lucide-react'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 type Announcement = {
   id: string
@@ -73,6 +74,7 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
   const [announcements, setAnnouncements] = useState(initialAnnouncements)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [selectedViewAnnouncement, setSelectedViewAnnouncement] = useState<Announcement | null>(null)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -183,9 +185,15 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
   }
 
   const handleDelete = (id: string) => {
-    if (!confirm('Supprimer cette annonce ?')) return
+    setConfirmDeleteId(id)
+  }
+
+  const executeDelete = () => {
+    if (!confirmDeleteId) return
+    const id = confirmDeleteId
     startTransition(async () => {
       const result = await deleteAnnouncement(id)
+      setConfirmDeleteId(null)
       if (result.error) {
         setError(result.error)
       } else {
@@ -568,6 +576,17 @@ export function AnnouncementsManager({ announcements: initialAnnouncements, clas
         )}
 
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDeleteId !== null}
+        title="Supprimer cette annonce ?"
+        description="L'annonce ne sera plus visible ni dans l'espace parent ni dans l'espace établissement."
+        confirmLabel="Supprimer"
+        variant="danger"
+        isLoading={isPending}
+        onCancel={() => setConfirmDeleteId(null)}
+        onConfirm={executeDelete}
+      />
     </div>
   )
 }
