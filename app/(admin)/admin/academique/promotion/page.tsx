@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react'
 import { PromotionManager } from '@/components/admin/academique/PromotionManager'
 import { sortClasses } from '@/lib/classes'
+import { ADMIN_SPACE_ROLES } from '@/lib/roles'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +18,7 @@ export default async function PromotionFinAnneePage() {
     .from('user_school_roles')
     .select('school_id, role')
     .eq('user_id', user.id)
+    .in('role', [...ADMIN_SPACE_ROLES])
     .limit(1)
     .maybeSingle()
 
@@ -25,33 +27,24 @@ export default async function PromotionFinAnneePage() {
     return <div className="p-8 text-center text-red-500 font-medium">Accès refusé.</div>
   }
 
-  // 1. Classes de l'établissement
-  const { data: rawClasses } = await supabase
-    .from('classes')
-    .select('id, name, level')
-    .eq('school_id', schoolId)
-
-  const classes = sortClasses(rawClasses || [])
-
-  // 2. Élèves de l'établissement
-  const { data: rawStudents } = await supabase
-    .from('students')
-    .select('id, matricule, first_name, last_name, class_id')
-    .eq('school_id', schoolId)
-    .order('last_name', { ascending: true })
-
-  // 3. Notes réelles enregistrées (primaire et secondaire)
+  // Chargement parallèle des classes, élèves, matières et notes réelles (primaire, secondaire, legacy)
   const [
+    { data: rawClasses },
+    { data: rawStudents },
     { data: rawPrimaryGrades },
     { data: rawSecondaryGrades },
     { data: rawSubjects },
     { data: rawLegacyGrades }
   ] = await Promise.all([
+    supabase.from('classes').select('id, name, level').eq('school_id', schoolId),
+    supabase.from('students').select('id, matricule, first_name, last_name, class_id').eq('school_id', schoolId).order('last_name', { ascending: true }),
     supabase.from('primary_grades').select('student_id, score, max_score, month_number').eq('school_id', schoolId).not('score', 'is', null),
     supabase.from('secondary_grades').select('student_id, subject_id, term, class_score, comp_score').eq('school_id', schoolId),
     supabase.from('subjects').select('id, name, coefficient').eq('school_id', schoolId),
     supabase.from('grades').select('student_id, score, coefficient').eq('school_id', schoolId).not('score', 'is', null)
   ])
+
+  const classes = sortClasses(rawClasses || [])
 
   const subjectsMap = new Map((rawSubjects || []).map(s => [s.id, s]))
   const classesMap = new Map((classes || []).map(c => [c.id, c]))

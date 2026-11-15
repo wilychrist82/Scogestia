@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { ActionState } from "./finance";
 import { getPrimarySubjectMaxScore } from "@/lib/academic-curriculum";
 import { getSchoolSubscriptionStatus } from "@/lib/subscription";
-import { ACADEMIC_MANAGEMENT_ROLES } from "@/lib/roles";
+import { ACADEMIC_MANAGEMENT_ROLES, BULLETIN_GENERATION_ROLES } from "@/lib/roles";
 
 async function getActiveSchoolId() {
   const supabase = await createClient();
@@ -937,7 +937,7 @@ export async function publishBulletinPDF(studentId: string, termOrMonth: string,
     const schoolId = await getActiveSchoolId()
     if (!schoolId) return { success: false, error: 'École non trouvée' }
     
-    // 1. Check if user is admin
+    // 1. Check if user belongs to bulletin generation roles
     const { data: userData, error: userError } = await supabase.auth.getUser()
     if (userError || !userData.user) return { success: false, error: 'Non authentifié' }
 
@@ -946,11 +946,24 @@ export async function publishBulletinPDF(studentId: string, termOrMonth: string,
       .select('role')
       .eq('user_id', userData.user.id)
       .eq('school_id', schoolId)
+      .in('role', [...BULLETIN_GENERATION_ROLES])
       .limit(1)
       .maybeSingle()
 
-    if (!roleData || (roleData.role !== 'admin' && roleData.role !== 'super_admin' && roleData.role !== 'comptable')) {
+    if (!roleData) {
       return { success: false, error: 'Seule la direction ou les administrateurs peuvent publier les bulletins officiels.' }
+    }
+
+    // 1b. Vérifier que l'élève appartient bien à cet établissement
+    const { data: studentCheck } = await supabase
+      .from('students')
+      .select('id')
+      .eq('id', studentId)
+      .eq('school_id', schoolId)
+      .maybeSingle()
+
+    if (!studentCheck) {
+      return { success: false, error: "Élève introuvable dans votre établissement." }
     }
     
     // 2. Save to published_bulletins table

@@ -6,7 +6,7 @@ import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 import { createClient } from '@/lib/supabase/client'
 import { sortClasses } from '@/lib/classes'
-import { ShieldCheck, FileDown, GraduationCap, Printer } from 'lucide-react'
+import { ShieldCheck, FileDown, GraduationCap, Printer, Send } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { 
   getCoefficientForSubject, 
@@ -72,6 +72,7 @@ export function BulletinsManager({
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [publishStatus, setPublishStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [isPrintingAllClass, setIsPrintingAllClass] = useState(false)
+  const [isPublishingClass, setIsPublishingClass] = useState(false)
   const [stampText, setStampText] = useState(schoolName.toUpperCase())
 
   useEffect(() => {
@@ -501,78 +502,90 @@ export function BulletinsManager({
     return data
   }
 
+  const saveActiveStudentGrades = async () => {
+    if (!selectedStudent) return
+    if (selectedLevel === 'primaire' || selectedLevel === 'maternelle') {
+      await saveBulletinPrimaryGrades(selectedStudent, localPrimGrades, localPrimRanks, localPrimInfo)
+    } else {
+      await saveBulletinSecondaryGrades(selectedStudent, selectedTerm, localSecGrades)
+    }
+  }
+
+  const callBulletinsApi = async (dataList: ReturnType<typeof buildStudentBulletinData>[], action: 'download' | 'publish') => {
+    const response = await fetch('/api/bulletins/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dataList, action }),
+    })
+
+    if (!response.ok) {
+      let errDetails = 'Erreur de génération API'
+      try {
+        const json = await response.json()
+        errDetails = json.details || json.error || errDetails
+      } catch {}
+      throw new Error(errDetails)
+    }
+
+    return response
+  }
+
   const handlePublishPDF = async () => {
-    if (!selectedStudent) return;
-    
+    if (!selectedStudent) return
+
     try {
       setPublishStatus('loading')
-      
-      // Auto-save currently selected student
-      if (selectedLevel === 'primaire' || selectedLevel === 'maternelle') {
-        await saveBulletinPrimaryGrades(selectedStudent, localPrimGrades, localPrimRanks, localPrimInfo)
-      } else {
-        await saveBulletinSecondaryGrades(selectedStudent, selectedTerm, localSecGrades)
-      }
-
+      await saveActiveStudentGrades()
       const dataList = [buildStudentBulletinData(selectedStudent)]
-      
-      const response = await fetch('/api/bulletins/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dataList, action: 'publish' })
-      })
-      
-      if (!response.ok) {
-        let errDetails = "Erreur de génération API"
-        try {
-          const json = await response.json()
-          errDetails = json.details || json.error || errDetails
-        } catch (e) {}
-        throw new Error(errDetails)
-      }
-      
+      await callBulletinsApi(dataList, 'publish')
+
       setPublishStatus('success')
+      toast.success("Bulletin publié vers l'Espace Parent")
       setTimeout(() => setPublishStatus('idle'), 3000)
     } catch (err: any) {
       console.error(err)
       setPublishStatus('error')
-      toast.error("Erreur: " + err.message)
+      toast.error('Erreur: ' + err.message)
       setTimeout(() => setPublishStatus('idle'), 3000)
     }
   }
 
-  const handleGenerateClassPDF = async () => {
-    if (!selectedClass) return;
+  const handlePublishClassPDF = async () => {
+    if (!selectedClass || availableStudents.length === 0) return
+
     try {
-      setPublishStatus('loading')
-      
-      // Auto-save currently selected student if any
-      if (selectedStudent) {
-        if (selectedLevel === 'primaire' || selectedLevel === 'maternelle') {
-          await saveBulletinPrimaryGrades(selectedStudent, localPrimGrades, localPrimRanks, localPrimInfo)
-        } else {
-          await saveBulletinSecondaryGrades(selectedStudent, selectedTerm, localSecGrades)
-        }
+      setIsPublishingClass(true)
+      await saveActiveStudentGrades()
+
+      const dataList = availableStudents.map((s) => buildStudentBulletinData(s.id)).filter(Boolean)
+      const response = await callBulletinsApi(dataList, 'publish')
+
+      let publishedCount = dataList.length
+      const contentType = response.headers.get('content-type') || ''
+      if (contentType.includes('application/json')) {
+        const result = await response.json()
+        publishedCount = result.publishedCount ?? dataList.length
       }
 
-      const classStudents = students.filter(s => s.class_id === selectedClass)
-      const dataList = classStudents.map(s => buildStudentBulletinData(s.id)).filter(Boolean)
-      
-      const response = await fetch('/api/bulletins/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dataList, action: 'download' })
-      })
-      
-      if (!response.ok) {
-        let errDetails = "Erreur de génération API"
-        try {
-          const json = await response.json()
-          errDetails = json.details || json.error || errDetails
-        } catch (e) {}
-        throw new Error(errDetails)
-      }
-      
+      toast.success(`${publishedCount} bulletin(s) publié(s) vers l'Espace Parent !`)
+    } catch (err: any) {
+      console.error(err)
+      toast.error('Erreur publication classe: ' + err.message)
+    } finally {
+      setIsPublishingClass(false)
+    }
+  }
+
+  const handleGenerateClassPDF = async () => {
+    if (!selectedClass) return
+    try {
+      setPublishStatus('loading')
+      await saveActiveStudentGrades()
+
+      const classStudents = students.filter((s) => s.class_id === selectedClass)
+      const dataList = classStudents.map((s) => buildStudentBulletinData(s.id)).filter(Boolean)
+      const response = await callBulletinsApi(dataList, 'download')
+
       const blob = await response.blob()
       const fileName = `Bulletins_Classe_${cls?.name}_${selectedTerm}.pdf`
       const isNativeMobile = typeof window !== 'undefined' && Boolean((window as any).Capacitor?.isNativePlatform?.())
@@ -591,13 +604,13 @@ export function BulletinsManager({
       a.href = url
       a.download = fileName
       a.click()
-      
+
       setPublishStatus('success')
       setTimeout(() => setPublishStatus('idle'), 3000)
     } catch (err: any) {
       console.error(err)
       setPublishStatus('error')
-      toast.error("Erreur: " + err.message)
+      toast.error('Erreur: ' + err.message)
       setTimeout(() => setPublishStatus('idle'), 3000)
     }
   }
@@ -1567,10 +1580,10 @@ export function BulletinsManager({
             </div>
             
             {selectedClass && (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={handlePrintAllClass}
-                  disabled={availableStudents.length === 0 || isPrintingAllClass}
+                  disabled={availableStudents.length === 0 || isPrintingAllClass || isPublishingClass}
                   className="h-11 px-4 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2 shadow-sm"
                   title="Lancer l'impression directe pour tous les élèves de la classe"
                 >
@@ -1579,11 +1592,20 @@ export function BulletinsManager({
                 </button>
                 <button
                   onClick={handleGenerateClassPDF}
-                  disabled={publishStatus === 'loading' || availableStudents.length === 0}
+                  disabled={publishStatus === 'loading' || isPublishingClass || availableStudents.length === 0}
                   className="h-11 px-5 bg-[#004532] text-white font-bold rounded-lg hover:opacity-90 disabled:opacity-50 transition-colors flex items-center gap-2 shadow-sm"
                 >
                   <FileDown className="w-5 h-5" />
                   {publishStatus === 'loading' ? 'Génération...' : 'Télécharger PDF Classe'}
+                </button>
+                <button
+                  onClick={handlePublishClassPDF}
+                  disabled={isPublishingClass || publishStatus === 'loading' || availableStudents.length === 0}
+                  className="h-11 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2 shadow-sm"
+                  title="Publier les bulletins de toute la classe vers l'Espace Parent"
+                >
+                  <Send className="w-5 h-5" />
+                  {isPublishingClass ? 'Publication...' : 'Publier toute la classe'}
                 </button>
               </div>
             )}
@@ -1646,7 +1668,7 @@ export function BulletinsManager({
           <div className="bg-[var(--color-surface-container-lowest)] p-12 rounded-xl border border-[var(--color-outline-variant)] flex flex-col items-center justify-center text-[var(--color-on-surface-variant)] shadow-sm">
             <GraduationCap className="w-12 h-12 mb-4 opacity-50" />
             <p className="text-lg font-medium">Sélectionnez un niveau, une classe et un élève</p>
-            <p className="text-sm mt-1">Le bulletin s'affichera ici. Vous pouvez également cliquer sur &quot;Imprimer toute la classe&quot; ou &quot;Télécharger PDF Classe&quot;.</p>
+            <p className="text-sm mt-1">Le bulletin s&apos;affichera ici. Vous pouvez également cliquer sur &quot;Imprimer toute la classe&quot;, &quot;Télécharger PDF Classe&quot; ou &quot;Publier toute la classe&quot;.</p>
           </div>
         )}
       </div>

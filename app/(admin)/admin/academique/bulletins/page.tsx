@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import { BulletinsManager } from '@/components/admin/academique/BulletinsManager'
 import { sortClasses } from '@/lib/classes'
 import { DataErrorCard } from '@/components/shared/DataErrorCard'
+import { ADMIN_SPACE_ROLES } from '@/lib/roles'
+import { chunkArray } from '@/lib/collections'
+import { ensureDefaultSubjects } from '@/lib/default-subjects'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,14 +15,21 @@ export default async function BulletinsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/connexion')
 
-  const { data: roleData, error: roleError } = await supabase
+  const { data: roleData } = await supabase
     .from('user_school_roles')
     .select('school_id, role, school:schools(name, logo_url, city, phone, stamp_url, signature_url, director_name)')
     .eq('user_id', user.id)
-    .limit(1).maybeSingle()
+    .in('role', [...ADMIN_SPACE_ROLES, 'enseignant'])
+    .limit(1)
+    .maybeSingle()
 
   if (!roleData?.school_id) {
-    return <DataErrorCard title="Établissement introuvable" message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance." />
+    return (
+      <DataErrorCard
+        title="Établissement introuvable"
+        message="Impossible d'identifier votre établissement. Veuillez vous reconnecter ou contacter l'assistance."
+      />
+    )
   }
 
   if (roleData.role === 'enseignant') {
@@ -27,102 +37,58 @@ export default async function BulletinsPage() {
   }
 
   const schoolId = roleData.school_id
-  const schoolDetails = roleData.school as any
+  const schoolDetails = roleData.school as {
+    name?: string | null
+    logo_url?: string | null
+    city?: string | null
+    phone?: string | null
+    stamp_url?: string | null
+    signature_url?: string | null
+    director_name?: string | null
+  } | null
 
-  const { data: classes } = await supabase.from('classes').select('id, name, level').eq('school_id', schoolId).order('name')
-  const { data: students } = await supabase.from('students').select('id, matricule, last_name, first_name, class_id').eq('school_id', schoolId).order('last_name')
-  let { data: subjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId)
-  
-  if (!subjects || subjects.length === 0) {
-    // Auto-seed from Togolese curriculum (user captures)
-    const seedSubjects = [
-      // Primary
-      { school_id: schoolId, name: 'Je sais écrire les mots (dictée, questions)', cycle: 'primaire', category: 'Français' },
-      { school_id: schoolId, name: 'Je produis un texte (Rédaction)', cycle: 'primaire', category: 'Français' },
-      { school_id: schoolId, name: 'Lecture', cycle: 'primaire', category: 'Français' },
-      { school_id: schoolId, name: 'Étude de texte', cycle: 'primaire', category: 'Français' },
-      { school_id: schoolId, name: 'Je sais parler (langage)', cycle: 'primaire', category: 'Français' },
-      { school_id: schoolId, name: 'Calcul Écrit', cycle: 'primaire', category: 'Mathématiques' },
-      { school_id: schoolId, name: 'Calcul mental', cycle: 'primaire', category: 'Mathématiques' },
-      { school_id: schoolId, name: 'Problème', cycle: 'primaire', category: 'Mathématiques' },
-      { school_id: schoolId, name: 'Sciences Humaines (Histoire-Géographie)', cycle: 'primaire', category: 'Sciences' },
-      { school_id: schoolId, name: 'Education Sociale (ECM)', cycle: 'primaire', category: 'Sciences' },
-      { school_id: schoolId, name: 'Sciences et Technologie (Edusivip)', cycle: 'primaire', category: 'Sciences' },
-      { school_id: schoolId, name: 'Arts plastiques (Dessin)', cycle: 'primaire', category: 'Divers' },
-      { school_id: schoolId, name: 'Chant', cycle: 'primaire', category: 'Divers' },
-      { school_id: schoolId, name: 'Récitation', cycle: 'primaire', category: 'Divers' },
-      { school_id: schoolId, name: 'Anglais', cycle: 'primaire', category: 'Divers' },
-      { school_id: schoolId, name: 'EPS', cycle: 'primaire', category: 'Divers' },
-      
-      // Secondary
-      { school_id: schoolId, name: 'Français', cycle: 'secondaire', coefficient: 2 },
-      { school_id: schoolId, name: 'Rédaction', cycle: 'secondaire', coefficient: 1 },
-      { school_id: schoolId, name: 'Histoire-Géographie', cycle: 'secondaire', coefficient: 2 },
-      { school_id: schoolId, name: 'Anglais', cycle: 'secondaire', coefficient: 2 },
-      { school_id: schoolId, name: 'SVT', cycle: 'secondaire', coefficient: 2 },
-      { school_id: schoolId, name: 'Mathématiques', cycle: 'secondaire', coefficient: 4 },
-      { school_id: schoolId, name: 'Sciences physiques', cycle: 'secondaire', coefficient: 3 },
-      { school_id: schoolId, name: 'ECM', cycle: 'secondaire', coefficient: 1 },
-      { school_id: schoolId, name: 'EPS', cycle: 'secondaire', coefficient: 1 },
-      { school_id: schoolId, name: 'Philosophie', cycle: 'secondaire', coefficient: 2 },
-    ];
-    await supabase.from('subjects').insert(seedSubjects);
-    const { data: newSubjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId);
-    subjects = newSubjects;
-  } else {
-    let hasChanges = false;
-    if (!subjects.some(s => s.name.toLowerCase().includes('philo'))) {
-      await supabase.from('subjects').insert({
-        school_id: schoolId,
-        name: 'Philosophie',
-        cycle: 'secondaire',
-        coefficient: 2
-      });
-      hasChanges = true;
-    }
-    const hasEtude = subjects.some(s => {
-      const n = (s.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
-      return n === 'etude de texte' || n.includes('etude de texte') || n.includes('etude texte')
-    });
-    if (!hasEtude) {
-      await supabase.from('subjects').insert({
-        school_id: schoolId,
-        name: 'Étude de texte',
-        cycle: 'primaire',
-        category: 'Français',
-        coefficient: 1
-      });
-      hasChanges = true;
-    }
-    if (hasChanges) {
-      const { data: updatedSubjects } = await supabase.from('subjects').select('*').eq('school_id', schoolId);
-      if (updatedSubjects) subjects = updatedSubjects;
-    }
-  }
-  
-  // We fetch all grades for the school to compute client side. 
-  // In a huge real-world app, this would be behind a dedicated API route per student/class, but we keep it simple here.
-  const { data: primaryGrades } = await supabase.from('primary_grades').select('*').eq('school_id', schoolId)
-  const { data: secondaryGrades } = await supabase.from('secondary_grades').select('*').eq('school_id', schoolId)
+  const [
+    { data: classes },
+    { data: students },
+    { data: rawSubjects },
+    { data: primaryGrades },
+    { data: secondaryGrades },
+  ] = await Promise.all([
+    supabase.from('classes').select('id, name, level').eq('school_id', schoolId).order('name'),
+    supabase.from('students').select('id, matricule, last_name, first_name, class_id').eq('school_id', schoolId).order('last_name'),
+    supabase.from('subjects').select('*').eq('school_id', schoolId),
+    supabase.from('primary_grades').select('*').eq('school_id', schoolId),
+    supabase.from('secondary_grades').select('*').eq('school_id', schoolId),
+  ])
 
-  // Fetch new metadata fields for primary (we can just fetch all for the school's students, or just ignore errors if table missing)
-  const { data: studentsData } = await supabase.from('students').select('id').eq('school_id', schoolId);
-  const studentIds = studentsData ? studentsData.map(s => s.id) : [];
-  
-  let primaryRanks: any[] = [];
-  let primaryInfo: any[] = [];
-  if (studentIds.length > 0) {
-    const { data: r } = await supabase.from('primary_monthly_ranks').select('*').in('student_id', studentIds);
-    if (r) primaryRanks = r;
-    const { data: i } = await supabase.from('primary_bulletin_info').select('*').in('student_id', studentIds);
-    if (i) primaryInfo = i;
-  }
+  const subjects = await ensureDefaultSubjects(supabase, schoolId, rawSubjects)
+
+  const studentIds = (students ?? []).map((s) => s.id)
+  const studentChunks = chunkArray(studentIds, 200)
+
+  const [rankResponses, infoResponses] = studentChunks.length > 0
+    ? await Promise.all([
+        Promise.all(
+          studentChunks.map((chunk) =>
+            supabase.from('primary_monthly_ranks').select('*').in('student_id', chunk),
+          ),
+        ),
+        Promise.all(
+          studentChunks.map((chunk) =>
+            supabase.from('primary_bulletin_info').select('*').in('student_id', chunk),
+          ),
+        ),
+      ])
+    : [[], []]
+
+  const primaryRanks = rankResponses.flatMap((res) => res.data ?? [])
+  const primaryInfo = infoResponses.flatMap((res) => res.data ?? [])
 
   return (
-    <BulletinsManager 
-      classes={sortClasses(classes || [])} 
-      students={students || []} 
-      subjects={subjects || []}
+    <BulletinsManager
+      classes={sortClasses(classes || [])}
+      students={students || []}
+      subjects={subjects}
       primaryGrades={primaryGrades || []}
       secondaryGrades={secondaryGrades || []}
       primaryRanks={primaryRanks}

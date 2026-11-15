@@ -70,56 +70,21 @@ export function RapportsFinanciers({ school, userFullName, stats, payments, sche
   })
   const derniersMois = Object.entries(parMois).slice(-6)
 
-  // Export Excel direct
+  // Export Excel direct (via ExcelJS)
   const handleExportExcel = async () => {
     setIsExportingExcel(true)
     try {
-      const xlsx = await import('xlsx')
-      const wb = xlsx.utils.book_new()
-      const schoolName = school?.name || 'Scogestia'
-      const academicYear = school?.current_academic_year || '2026-2027'
-      const dateStr = new Date().toLocaleDateString('fr-FR')
-
-      const wsData = [
-        ['RÉPUBLIQUE SCOGESTIA - ÉTABLISSEMENT ' + schoolName.toUpperCase()],
-        ['BILAN ET SYNTHÈSE FINANCIÈRE OFFICIELLE'],
-        [`Année Scolaire : ${academicYear}`, `Date d'exportation : ${dateStr}`],
-        [`Édité par : ${userFullName || 'Direction'}`],
-        [],
-        ['--- SYNTHÈSE GLOBALE ---'],
-        ['Indicateur', 'Montant / Valeur', 'Observations'],
-        ['Total Attendu (Prévisionnel)', stats.totalAttendu, 'Somme globale des échéances'],
-        ['Total Encaissé (Réalisé)', stats.totalEncaisse, 'Montant effectif perçu'],
-        ['Solde Restant à Recouvrer', soldeRestant, 'Créances restantes'],
-        ['Taux de Recouvrement', `${tauxRecouvrement}%`, 'Niveau d\'avancement'],
-        ['Effectif Élèves Actifs', stats.nbEleves, 'Nombre total d\'élèves inscrits'],
-        ['Dossiers en Retard (Impayés)', stats.nbImpayes, 'Dossiers à relancer'],
-        ['Nombre de Règlements Enregistrés', stats.nbPaiements, 'Transactions enregistrées'],
-        [],
-        ['--- RÉPARTITION PAR MODE DE RÈGLEMENT ---'],
-        ['Mode de Règlement', 'Montant Encaissé (FCFA)', 'Part (%)'],
-        ...Object.entries(stats.repartitionMethode).map(([method, amount]) => {
-          const pct = stats.totalEncaisse > 0 ? Math.round((amount / stats.totalEncaisse) * 100) : 0
-          return [METHOD_LABELS[method] || method, amount, `${pct}%`]
-        }),
-        ['TOTAL GÉNÉRAL', stats.totalEncaisse, '100%'],
-      ]
-
-      if (derniersMois.length > 0) {
-        wsData.push([])
-        wsData.push(['--- ENCAISSEMENTS MENSUELS RÉCENTS ---'])
-        wsData.push(['Mois', 'Montant Encaissé (FCFA)'])
-        derniersMois.forEach(([m, amt]) => {
-          wsData.push([m, amt])
-        })
-      }
-
-      const ws = xlsx.utils.aoa_to_sheet(wsData)
-      ws['!cols'] = [{ wch: 35 }, { wch: 25 }, { wch: 35 }]
-      xlsx.utils.book_append_sheet(wb, ws, 'Bilan Financier')
-
-      const sanitizedSchool = schoolName.replace(/[^a-zA-Z0-9]/g, '_')
-      xlsx.writeFile(wb, `Bilan_Financier_${sanitizedSchool}_${new Date().toISOString().slice(0, 10)}.xlsx`)
+      const { exportFinancialBilanExcel } = await import('@/lib/excel-export-utils')
+      await exportFinancialBilanExcel({
+        schoolName: school?.name || 'Scogestia',
+        academicYear: school?.current_academic_year || '2026-2027',
+        userFullName,
+        stats,
+        soldeRestant,
+        tauxRecouvrement,
+        monthlyEntries: derniersMois,
+        methodLabels: METHOD_LABELS,
+      })
     } catch (err) {
       console.error('[Excel Export Error]', err)
     } finally {

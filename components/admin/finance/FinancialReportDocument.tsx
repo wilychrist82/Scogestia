@@ -83,54 +83,23 @@ export function FinancialReportDocument({ school, userFullName, stats, payments,
   })
   const moisEntries = Object.entries(parMois)
 
-  // Export Excel structuré (.xlsx)
+  // Export Excel structuré (.xlsx via ExcelJS)
   const handleExportExcel = async () => {
     setIsExportingExcel(true)
     try {
-      const xlsx = await import('xlsx')
-      const wb = xlsx.utils.book_new()
-
-      // Feuille 1 : Synthèse Générale
-      const wsSyntheseData = [
-        ['RÉPUBLIQUE SCOGESTIA - ÉTABLISSEMENT ' + schoolName.toUpperCase()],
-        ['BILAN ET ÉTAT FINANCIER DE TRÉSORERIE'],
-        [`Année Scolaire : ${academicYear}`, `Date d'arrêté : ${todayStr} à ${nowTime}`],
-        [`Référence : ${reference}`, `Édité par : ${userFullName || 'Direction'}`],
-        [],
-        ['--- SYNTHÈSE DES FLUX FINANCIERS ---'],
-        ['Indicateur', 'Montant / Valeur', 'Observations'],
-        ['Total Prévisionnel Attendu', stats.totalAttendu, 'Somme globale des échéances'],
-        ['Total Réellement Encaissé', stats.totalEncaisse, 'Montant total perçu en caisse'],
-        ['Solde Restant à Recouvrer', soldeRestant, 'Créances restantes à recouvrer'],
-        ['Taux de Recouvrement', `${tauxRecouvrement}%`, 'Niveau d\'avancement des règlements'],
-        ['Élèves Actifs Inscrits', stats.nbEleves, 'Effectif total d\'élèves'],
-        ['Échéances en Souffrance (Retard)', stats.nbImpayes, 'Dossiers nécessitant une relance'],
-        ['Nombre de Règlements Enregistrés', stats.nbPaiements, 'Transactions enregistrées'],
-        [],
-        ['--- VENTILATION PAR MODE DE RÈGLEMENT ---'],
-        ['Mode de Règlement', 'Montant Encaissé (FCFA)', 'Part (%)'],
-        ...Object.entries(stats.repartitionMethode).map(([method, amount]) => {
-          const pct = stats.totalEncaisse > 0 ? Math.round((amount / stats.totalEncaisse) * 100) : 0
-          return [METHOD_LABELS[method] || method, amount, `${pct}%`]
-        }),
-        ['TOTAL GÉNÉRAL', stats.totalEncaisse, '100%'],
-      ]
-
-      if (moisEntries.length > 0) {
-        wsSyntheseData.push([])
-        wsSyntheseData.push(['--- ENCAISSEMENTS MENSUELS ---'])
-        wsSyntheseData.push(['Mois', 'Montant Encaissé (FCFA)'])
-        moisEntries.forEach(([m, amt]) => {
-          wsSyntheseData.push([m, amt])
-        })
-      }
-
-      const ws = xlsx.utils.aoa_to_sheet(wsSyntheseData)
-      ws['!cols'] = [{ wch: 35 }, { wch: 25 }, { wch: 35 }]
-      xlsx.utils.book_append_sheet(wb, ws, 'Bilan Financier')
-
-      const sanitizedSchool = schoolName.replace(/[^a-zA-Z0-9]/g, '_')
-      xlsx.writeFile(wb, `Bilan_Financier_${sanitizedSchool}_${new Date().toISOString().slice(0, 10)}.xlsx`)
+      const { exportFinancialBilanExcel } = await import('@/lib/excel-export-utils')
+      await exportFinancialBilanExcel({
+        schoolName,
+        academicYear,
+        userFullName,
+        reference,
+        dateLabel: `${todayStr} à ${nowTime}`,
+        stats,
+        soldeRestant,
+        tauxRecouvrement,
+        monthlyEntries: moisEntries,
+        methodLabels: METHOD_LABELS,
+      })
     } catch (err) {
       console.error('[Excel Export Error]', err)
     } finally {

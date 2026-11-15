@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { importStudents } from '@/app/actions/students'
 import toast from 'react-hot-toast'
 import Papa from 'papaparse'
-import * as XLSX from 'xlsx'
 import { extractClassFromFilename } from '@/lib/student-import-utils'
 import { FileSpreadsheet, X, Info, Download, Sparkles, CheckCircle2, Loader2, CloudUpload, Upload } from 'lucide-react'
 
@@ -82,6 +81,7 @@ export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClas
         const result = Papa.parse(text, { header: true, skipEmptyLines: true })
         parsedData = result.data as any[]
       } else if (fileExt === 'xlsx' || fileExt === 'xls' || fileExt === 'ods') {
+        const XLSX = await import('xlsx')
         const data = await file.arrayBuffer()
         const workbook = XLSX.read(data, { type: 'array' })
         const firstSheetName = workbook.SheetNames[0]
@@ -128,30 +128,28 @@ export function ImportStudentsModal({ isOpen, onClose, classes = [], initialClas
     }
   }
 
-  const generateTemplate = () => {
-    // Generate an Excel file template with multiple classes example
-    const headers = ['Prénom', 'Nom', 'Sexe', 'Classe', 'Date de Naissance', 'Matricule', 'Téléphone Parent']
-    const data = [
-      { 'Prénom': 'Jean', 'Nom': 'Dupont', 'Sexe': 'M', 'Classe': '2nde A', 'Date de Naissance': '14/05/2009', 'Matricule': '1001', 'Téléphone Parent': '90123456' },
-      { 'Prénom': 'Marie', 'Nom': 'Curie', 'Sexe': 'F', 'Classe': '1ère D', 'Date de Naissance': '22/09/2008', 'Matricule': '1002', 'Téléphone Parent': '91234567' },
-      { 'Prénom': 'Amina', 'Nom': 'Diallo', 'Sexe': 'F', 'Classe': 'Terminale C', 'Date de Naissance': '10/11/2007', 'Matricule': '1003', 'Téléphone Parent': '92345678' },
-      { 'Prénom': 'Koffi', 'Nom': 'Mensah', 'Sexe': 'M', 'Classe': '6ème A', 'Date de Naissance': '03/01/2012', 'Matricule': '1004', 'Téléphone Parent': '93456789' }
-    ]
-    
-    const worksheet = XLSX.utils.json_to_sheet(data, { header: headers })
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Eleves')
-    
-    // Write and trigger download
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
-    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'modele_import_eleves_scogestia.xlsx'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+  const generateTemplate = async () => {
+    try {
+      const { downloadAoaExcel } = await import('@/lib/excel-export-utils')
+      const headers = ['Prénom', 'Nom', 'Sexe', 'Classe', 'Date de Naissance', 'Matricule', 'Téléphone Parent']
+      const rows = [
+        headers,
+        ['Jean', 'Dupont', 'M', '2nde A', '14/05/2009', '1001', '90123456'],
+        ['Marie', 'Curie', 'F', '1ère D', '22/09/2008', '1002', '91234567'],
+        ['Amina', 'Diallo', 'F', 'Terminale C', '10/11/2007', '1003', '92345678'],
+        ['Koffi', 'Mensah', 'M', '6ème A', '03/01/2012', '1004', '93456789'],
+      ]
+
+      await downloadAoaExcel({
+        sheetName: 'Eleves',
+        fileName: 'modele_import_eleves_scogestia.xlsx',
+        rows,
+        colWidths: [16, 16, 8, 16, 18, 14, 18],
+        headerRowIndex: 1,
+      })
+    } catch {
+      toast.error('Impossible de générer le modèle Excel.')
+    }
   }
 
   return (

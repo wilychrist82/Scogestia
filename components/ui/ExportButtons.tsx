@@ -47,11 +47,11 @@ export function ExportButtons({ data, filename, headers, title }: Props) {
     if (isEmpty) return
     setLoading('excel')
     try {
-      const xlsx = await import('xlsx')
+      const { downloadAoaExcel } = await import('@/lib/excel-export-utils')
       const keys = headers ? headers.map(h => h.key) : Object.keys(data[0])
       const columnLabels = headers ? headers.map(h => h.label) : keys
 
-      const wsData = [
+      const rows = [
         columnLabels,
         ...data.map(row => keys.map(k => {
           const v = row[k]
@@ -59,14 +59,13 @@ export function ExportButtons({ data, filename, headers, title }: Props) {
         }))
       ]
 
-      const ws = xlsx.utils.aoa_to_sheet(wsData)
-
-      // Style : largeur auto des colonnes
-      ws['!cols'] = columnLabels.map(() => ({ wch: 22 }))
-
-      const wb = xlsx.utils.book_new()
-      xlsx.utils.book_append_sheet(wb, ws, title || filename)
-      xlsx.writeFile(wb, `${filename}_${today()}.xlsx`)
+      await downloadAoaExcel({
+        sheetName: title || filename,
+        fileName: `${filename}_${today()}.xlsx`,
+        rows,
+        colWidths: columnLabels.map(() => 22),
+        headerRowIndex: 1,
+      })
     } catch (err) {
       console.error('[Excel Export Error]', err)
     } finally {

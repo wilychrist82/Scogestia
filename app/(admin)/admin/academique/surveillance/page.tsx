@@ -5,6 +5,7 @@ import {
   GraduationCap, AlertTriangle, ArrowLeft, ChevronRight,
   TrendingDown, CheckCircle2, User, BookOpen, MessageSquare, Phone
 } from 'lucide-react'
+import { ADMIN_SPACE_ROLES } from '@/lib/roles'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,8 +17,9 @@ export default async function SurveillancePedagogiquePage() {
 
   const { data: roleData } = await supabase
     .from('user_school_roles')
-    .select('school_id')
+    .select('school_id, role')
     .eq('user_id', user.id)
+    .in('role', [...ADMIN_SPACE_ROLES])
     .limit(1)
     .maybeSingle()
 
@@ -26,25 +28,24 @@ export default async function SurveillancePedagogiquePage() {
     return <div className="p-8 text-center text-red-500 font-medium">Accès refusé.</div>
   }
 
-  // Récupération des élèves de l'école
-  const { data: schoolStudents } = await supabase
-    .from('students')
-    .select(`
-      id,
-      first_name,
-      last_name,
-      matricule,
-      classes:classes (id, name),
-      parents:parents (phone_number, full_name)
-    `)
-    .eq('school_id', schoolId)
-
-  // Récupération de toutes les notes : secondaire, primaire et legacy
+  // Récupération parallèle des élèves et des 3 sources de notes
   const [
+    { data: schoolStudents },
     { data: secGrades },
     { data: primGrades },
     { data: legacyGrades }
   ] = await Promise.all([
+    supabase
+      .from('students')
+      .select(`
+        id,
+        first_name,
+        last_name,
+        matricule,
+        classes:classes (id, name),
+        parents:parents (phone_number, full_name)
+      `)
+      .eq('school_id', schoolId),
     supabase
       .from('secondary_grades')
       .select('student_id, class_score, comp_score, subjects(name)')
