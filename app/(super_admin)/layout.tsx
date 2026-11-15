@@ -25,11 +25,13 @@ export default async function SuperAdminLayout({
 
   const userFullName = 'Propriétaire Scogestia'
   const userRoleLabel = 'Super Administrateur SaaS'
+  const userAvatar = user?.user_metadata?.avatar_url || null
 
   return (
     <AdminLayoutWrapper 
       userFullName={userFullName} 
       userRoleLabel={userRoleLabel} 
+      userAvatar={userAvatar}
       navVariant="super_admin"
       isSuperAdmin={true}
     >

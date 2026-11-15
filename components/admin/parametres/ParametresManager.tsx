@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useTransition, FormEvent } from 'react'
-import Link from 'next/link'
-import { Building2, ShieldCheck, CheckCircle2 } from 'lucide-react'
-import { updateSchoolSettings } from '@/app/actions/parametres'
+import { useRouter } from 'next/navigation'
+import { Building2, CheckCircle2, UserCircle, Sparkles } from 'lucide-react'
+import { updateSchoolSettings, updateUserAvatar } from '@/app/actions/parametres'
 import { ImageUpload } from '@/components/shared/ImageUpload'
+import { emitAvatarUpdated } from '@/lib/avatar-sync'
 import { ParametresNavTabs } from './ParametresNavTabs'
 
 type School = {
@@ -26,6 +27,7 @@ type Props = {
 }
 
 export function ParametresManager({ school, userAvatar }: Props) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<boolean>(false)
@@ -33,6 +35,34 @@ export function ParametresManager({ school, userAvatar }: Props) {
   const [logoUrl, setLogoUrl] = useState(school.logo_url || '')
   const [signatureUrl, setSignatureUrl] = useState(school.signature_url || '')
   const [stampUrl, setStampUrl] = useState(school.stamp_url || '')
+  const [profileOverride, setProfileOverride] = useState<{ base: string; value: string } | null>(null)
+  const [avatarSyncing, setAvatarSyncing] = useState(false)
+
+  const baseProfilePhotoUrl = userAvatar || ''
+  const profilePhotoUrl =
+    profileOverride && profileOverride.base === baseProfilePhotoUrl
+      ? profileOverride.value
+      : baseProfilePhotoUrl
+
+  const handleAvatarQuickSave = async (nextUrl: string) => {
+    const clean = nextUrl.trim()
+    setProfileOverride({ base: baseProfilePhotoUrl, value: clean })
+    setError(null)
+    emitAvatarUpdated(clean || null)
+    setAvatarSyncing(true)
+    try {
+      const res = await updateUserAvatar(clean || null)
+      if (res?.error) {
+        setError(res.error)
+      } else {
+        setSuccess(true)
+        router.refresh()
+        setTimeout(() => setSuccess(false), 3000)
+      }
+    } finally {
+      setAvatarSyncing(false)
+    }
+  }
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -45,7 +75,9 @@ export function ParametresManager({ school, userAvatar }: Props) {
       if (result?.error) {
         setError(result.error)
       } else {
+        emitAvatarUpdated(profilePhotoUrl.trim() || null)
         setSuccess(true)
+        router.refresh()
         setTimeout(() => setSuccess(false), 3000)
       }
     })
@@ -154,6 +186,40 @@ export function ParametresManager({ school, userAvatar }: Props) {
                   defaultValue={school.director_name || ''}
                   className="w-full h-12 px-4 border border-[var(--color-outline-variant)] rounded-lg text-base focus:border-[var(--color-primary)] outline-none bg-[var(--color-surface)]"
                   placeholder="Ex: M. Jean DUPONT"
+                />
+              </div>
+
+              <div className="flex flex-col gap-3 md:col-span-2 p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/40">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <label className="text-sm font-bold text-[var(--color-on-surface)] flex items-center gap-2">
+                      <UserCircle className="w-4 h-4 text-emerald-700" />
+                      <span>Photo Administrateur / Image affichée (Menu latéral &amp; En-tête)</span>
+                    </label>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      Uploadez la photo de l&apos;administrateur, de l&apos;école ou toute autre image : elle s&apos;affiche instantanément en haut et en bas à gauche dans la sidebar.
+                    </p>
+                  </div>
+                  {logoUrl && (
+                    <button
+                      type="button"
+                      disabled={avatarSyncing}
+                      onClick={() => handleAvatarQuickSave(logoUrl)}
+                      className="px-3 py-1.5 rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Utiliser le logo de l&apos;école</span>
+                    </button>
+                  )}
+                </div>
+                <ImageUpload
+                  name="profilePhotoUrl"
+                  bucket="avatars"
+                  folder={`admin_${school.id}`}
+                  defaultUrl={profilePhotoUrl || null}
+                  onUploadSuccess={handleAvatarQuickSave}
+                  allowRemove={true}
+                  label={avatarSyncing ? 'Synchronisation...' : "Choisir une photo (Admin, École ou image)"}
                 />
               </div>
 

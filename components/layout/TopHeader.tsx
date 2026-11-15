@@ -45,8 +45,11 @@ export function TopHeader({
   const [notifFilter, setNotifFilter] = useState<'all' | 'unread'>('all')
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
+  const [failedAvatarSrc, setFailedAvatarSrc] = useState<string | null>(null)
   const notifRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
+
+  const showAvatar = Boolean(userAvatar && failedAvatarSrc !== userAvatar)
 
   const isEnseignant = navVariant === 'enseignant'
   const isSuperAdmin = navVariant === 'super_admin'
@@ -367,11 +370,12 @@ export function TopHeader({
             }`}
             aria-label="Menu profil utilisateur"
           >
-            {userAvatar ? (
+            {showAvatar && userAvatar ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img 
                 src={userAvatar} 
                 alt={userFullName} 
+                onError={() => setFailedAvatarSrc(userAvatar)}
                 className="w-8 h-8 rounded-lg object-cover object-top border border-slate-200 shrink-0" 
               />
             ) : (
@@ -398,9 +402,19 @@ export function TopHeader({
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-[0_20px_50px_rgba(15,23,42,0.18)] border border-slate-200/80 z-50 overflow-hidden animate-dropdown">
               <div className="p-4 border-b border-slate-100 bg-slate-50/80 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
-                  {userFullName.charAt(0).toUpperCase()}
-                </div>
+                {showAvatar && userAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={userAvatar}
+                    alt={userFullName}
+                    onError={() => setFailedAvatarSrc(userAvatar)}
+                    className="w-10 h-10 rounded-xl object-cover object-top border border-slate-200 shrink-0 shadow-xs"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
+                    {userFullName.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-slate-900 truncate leading-tight">{userFullName}</p>
                   <p className="text-xs font-semibold text-emerald-700 truncate mt-0.5">{userRoleLabel}</p>

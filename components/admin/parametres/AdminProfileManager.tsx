@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useTransition, FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
 import { ImageUpload } from '@/components/shared/ImageUpload'
-import { updateUserProfile } from '@/app/actions/parametres'
+import { updateUserProfile, updateUserAvatar } from '@/app/actions/parametres'
 import { createClient } from '@/lib/supabase/client'
-import { User, Lock, Mail, Phone, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
+import { emitAvatarUpdated } from '@/lib/avatar-sync'
+import { User, Lock, Phone, CheckCircle, AlertCircle } from 'lucide-react'
 import { ParametresNavTabs } from './ParametresNavTabs'
 
 type Props = {
@@ -18,9 +19,12 @@ type Props = {
 }
 
 export function AdminProfileManager({ userId, fullName, email, phone, role, userAvatar }: Props) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [profileSuccess, setProfileSuccess] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
+  const [avatarOverride, setAvatarOverride] = useState<{ base: string; value: string } | null>(null)
+  const [avatarSyncing, setAvatarSyncing] = useState(false)
 
   // Password state
   const [passwordPending, setPasswordPending] = useState(false)
@@ -28,6 +32,32 @@ export function AdminProfileManager({ userId, fullName, email, phone, role, user
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+
+  const baseAvatarUrl = userAvatar || ''
+  const avatarUrl =
+    avatarOverride && avatarOverride.base === baseAvatarUrl
+      ? avatarOverride.value
+      : baseAvatarUrl
+
+  const handleAvatarQuickSave = async (nextUrl: string) => {
+    const clean = nextUrl.trim()
+    setAvatarOverride({ base: baseAvatarUrl, value: clean })
+    setProfileError(null)
+    emitAvatarUpdated(clean || null)
+    setAvatarSyncing(true)
+    try {
+      const res = await updateUserAvatar(clean || null)
+      if (res?.error) {
+        setProfileError(res.error)
+      } else {
+        setProfileSuccess(true)
+        router.refresh()
+        setTimeout(() => setProfileSuccess(false), 3000)
+      }
+    } finally {
+      setAvatarSyncing(false)
+    }
+  }
 
   const handleProfileSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -40,7 +70,9 @@ export function AdminProfileManager({ userId, fullName, email, phone, role, user
       if (result?.error) {
         setProfileError(result.error)
       } else {
+        emitAvatarUpdated(avatarUrl.trim() || null)
         setProfileSuccess(true)
+        router.refresh()
         setTimeout(() => setProfileSuccess(false), 4000)
       }
     })
@@ -91,9 +123,16 @@ export function AdminProfileManager({ userId, fullName, email, phone, role, user
             <div className="absolute -bottom-20 left-1/3 h-48 w-72 rounded-full bg-sky-400/15 blur-3xl" />
           </div>
           <div className="relative z-10 flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/15 ring-1 ring-white/25 backdrop-blur-md flex items-center justify-center text-white font-extrabold text-xl shrink-0">
-              {fullName ? fullName.charAt(0).toUpperCase() : 'A'}
-            </div>
+            {avatarUrl ? (
+              <div className="w-14 h-14 rounded-2xl overflow-hidden bg-white/15 ring-2 ring-white/30 backdrop-blur-md shrink-0 shadow-md">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover object-top" />
+              </div>
+            ) : (
+              <div className="w-14 h-14 rounded-2xl bg-white/15 ring-1 ring-white/25 backdrop-blur-md flex items-center justify-center text-white font-extrabold text-xl shrink-0">
+                {fullName ? fullName.charAt(0).toUpperCase() : 'A'}
+              </div>
+            )}
             <div>
               <div className="mb-1.5 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-50 ring-1 ring-inset ring-white/25 backdrop-blur-md">
                 <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
@@ -172,17 +211,19 @@ export function AdminProfileManager({ userId, fullName, email, phone, role, user
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Photo de profil (Avatar)
+                Photo de profil (Administrateur, École ou autre image)
               </label>
               <ImageUpload
                 name="profilePhotoUrl"
                 bucket="avatars"
                 folder={`admin_${userId}`}
-                defaultUrl={userAvatar || null}
-                label="Choisir une photo de profil (PNG, JPG)"
+                defaultUrl={avatarUrl || null}
+                onUploadSuccess={handleAvatarQuickSave}
+                allowRemove={true}
+                label={avatarSyncing ? 'Synchronisation...' : 'Choisir une photo (PNG, JPG)'}
               />
               <p className="text-[11px] text-slate-400 mt-1">
-                Cette photo apparaîtra dans l'en-tête et sur les documents administratifs signés.
+                Cette photo apparaît immédiatement dans l&apos;en-tête supérieur et dans le menu latéral gauche (sidebar).
               </p>
             </div>
 

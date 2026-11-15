@@ -44,6 +44,7 @@ export type NavItem = {
 export type SidebarProps = {
   userFullName?: string
   userRoleLabel?: string
+  userAvatar?: string | null
   navVariant?: 'admin' | 'comptable' | 'enseignant' | 'super_admin'
   isOpen?: boolean
   onClose?: () => void
@@ -305,10 +306,12 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
 
 // ── Composant principal Sidebar ──
 
-export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isOpen, onClose, isExpired, isSuperAdmin = false }: SidebarProps) {
+export function Sidebar({ userFullName, userRoleLabel, userAvatar, navVariant = 'admin', isOpen, onClose, isExpired, isSuperAdmin = false }: SidebarProps) {
   const pathname = usePathname()
   const { unreadCount } = useNotifications()
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
+  const [failedAvatarSrc, setFailedAvatarSrc] = useState<string | null>(null)
+  const showAvatar = Boolean(userAvatar && failedAvatarSrc !== userAvatar)
 
   const currentRoleNavItems: NavItem[] = [
     ...(isSuperAdmin ? [{ label: 'Cockpit Super Admin', href: '/super_admin', icon: ShieldCheck }] : []),
@@ -464,21 +467,51 @@ export function Sidebar({ userFullName, userRoleLabel, navVariant = 'admin', isO
 
         {/* ── Footer : Carte Profil + Actions ── */}
         <div className="mt-auto pt-3 flex-shrink-0 relative z-10 border-t border-white/[0.08]">
-          {/* Carte Utilisateur */}
-          {userFullName && (
-            <div className="mx-3 mb-2 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center gap-3 hover:bg-white/[0.07] transition-colors">
-              <div className="relative">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs font-bold text-emerald-300">{initials}</span>
+          {/* Carte Utilisateur (cliquable pour gérer la photo dans Paramètres) */}
+          {userFullName && (() => {
+            const profileHref =
+              navVariant === 'enseignant'
+                ? '/enseignant/parametres'
+                : navVariant === 'super_admin'
+                  ? '/super_admin'
+                  : '/admin/parametres/profil'
+            const cardContent = (
+              <>
+                <div className="relative shrink-0">
+                  {showAvatar && userAvatar ? (
+                    <div className="w-9 h-9 rounded-lg overflow-hidden border border-emerald-400/40 bg-slate-900 shadow-xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={userAvatar}
+                        alt={userFullName}
+                        onError={() => setFailedAvatarSrc(userAvatar)}
+                        className="w-full h-full object-cover object-top"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-bold text-emerald-300">{initials}</span>
+                    </div>
+                  )}
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#070b14]" />
                 </div>
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#070b14]" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-white truncate leading-tight">{userFullName}</p>
-                <p className="text-[10px] text-slate-400 truncate leading-tight mt-0.5">{userRoleLabel || 'Membre école'}</p>
-              </div>
-            </div>
-          )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-white truncate leading-tight">{userFullName}</p>
+                  <p className="text-[10px] text-slate-400 truncate leading-tight mt-0.5">{userRoleLabel || 'Membre école'}</p>
+                </div>
+              </>
+            )
+            return (
+              <Link
+                href={profileHref}
+                onClick={() => onClose && onClose()}
+                title="Gérer votre photo et votre profil dans Paramètres"
+                className="mx-3 mb-2 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center gap-3 hover:bg-white/[0.09] hover:border-emerald-500/30 transition-all group"
+              >
+                {cardContent}
+              </Link>
+            )
+          })()}
 
           {/* Boutons d'action */}
           <div className="px-3 space-y-1 pb-4 md:pb-1">
