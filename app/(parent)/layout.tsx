@@ -50,13 +50,13 @@ export default async function ParentLayout({
   const userAvatar = user?.user_metadata?.avatar_url || null
 
   return (
-    <div className="min-h-screen bg-[#f0f4f3] flex justify-center">
+    <div className="min-h-[100dvh] bg-[#f0f4f3] flex justify-center">
       {/*
         Mobile (< md) : centré, max-w-md, effet "app dans un téléphone"
         Tablet (md-lg) : max-w-2xl, plus d'espace
         Desktop (> lg) : max-w-3xl, layout plus large
       */}
-      <div className="w-full max-w-md md:max-w-2xl lg:max-w-3xl bg-white min-h-screen relative md:shadow-2xl flex flex-col">
+      <div className="w-full max-w-md md:max-w-2xl lg:max-w-3xl bg-white min-h-[100dvh] relative md:shadow-2xl flex flex-col">
         <ParentHeader fullName={roleData.full_name} userAvatar={userAvatar} />
 
         {/* Contenu principal avec padding bottom pour la nav fixe */}

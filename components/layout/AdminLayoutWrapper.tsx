@@ -6,6 +6,7 @@ import { Sidebar } from './Sidebar'
 import { TopHeader } from './TopHeader'
 import { PaywallOverlay } from '@/components/admin/abonnement/PaywallOverlay'
 import { AVATAR_UPDATED_EVENT } from '@/lib/avatar-sync'
+import { CLOSE_TOP_LAYER_EVENT } from '@/components/providers/CapacitorMobileBridge'
 
 import { EnseignantBottomNav } from '@/components/enseignant/EnseignantBottomNav'
 
@@ -40,6 +41,21 @@ export function AdminLayoutWrapper({
   const isAbonnementPage = pathname === '/admin/abonnement'
 
   useEffect(() => {
+    setIsSidebarOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    const handleCloseTopLayer = (event: Event) => {
+      if (isSidebarOpen) {
+        event.preventDefault()
+        setIsSidebarOpen(false)
+      }
+    }
+    window.addEventListener(CLOSE_TOP_LAYER_EVENT, handleCloseTopLayer)
+    return () => window.removeEventListener(CLOSE_TOP_LAYER_EVENT, handleCloseTopLayer)
+  }, [isSidebarOpen])
+
+  useEffect(() => {
     const handleAvatarUpdated = (event: Event) => {
       const custom = event as CustomEvent<{ avatarUrl: string | null }>
       setAvatarOverride({
@@ -72,8 +88,8 @@ export function AdminLayoutWrapper({
         isExpired={isExpired}
         isSuperAdmin={isSuperAdmin}
       />
-      <div className="flex h-screen bg-[var(--color-dashboard-bg)] overflow-hidden w-full relative">
-        <div className="flex-1 ml-0 md:ml-64 flex flex-col h-screen overflow-hidden relative">
+      <div className="flex h-[100dvh] bg-[var(--color-dashboard-bg)] overflow-hidden w-full relative">
+        <div className="flex-1 ml-0 md:ml-64 flex flex-col h-[100dvh] overflow-hidden relative">
           {banner}
           <TopHeader
             userFullName={userFullName}
@@ -84,7 +100,7 @@ export function AdminLayoutWrapper({
             schoolCity={schoolCity}
             navVariant={navVariant}
           />
-          <main className={`flex-1 ${navVariant === 'enseignant' ? 'pb-20 md:pb-8 lg:p-8' : 'p-4 md:p-6 lg:p-8'} overflow-y-auto scrollbar-light relative`}>
+          <main className={`flex-1 ${navVariant === 'enseignant' ? 'pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-8 lg:p-8' : 'p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:p-6 lg:p-8'} overflow-y-auto scrollbar-light relative`}>
             {shouldBlockAccess ? (
               <PaywallOverlay schoolName={schoolName} daysRemaining={daysRemaining} />
             ) : (

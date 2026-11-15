@@ -8,6 +8,7 @@ import { generatePaymentReceipt } from '@/lib/pdf/receipt'
 import { FinanceNavTabs } from './FinanceNavTabs'
 import { FinancePageBanner } from './FinancePageBanner'
 import { formatCFA, getAvatarTone as avatarTone } from '@/lib/format'
+import { saveOrShareBlob } from '@/lib/mobile-file-share'
 
 type PaymentItem = {
   id: string
@@ -134,13 +135,8 @@ export function PaiementsManager({
     const csv = [headers, ...rows].map(r => r.map(esc).join(';')).join('\r\n')
     // BOM UTF-8 + séparateur « ; » : accents et colonnes corrects à l'ouverture dans Excel (FR)
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `paiements_scogestia_${new Date().toISOString().split('T')[0]}.csv`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(link.href)
+    const fileName = `paiements_scogestia_${new Date().toISOString().split('T')[0]}.csv`
+    void saveOrShareBlob({ blob, filename: fileName, title: 'Historique des paiements (CSV)' })
   }
 
   const handleReceipt = (p: PaymentItem) => {

@@ -46,3 +46,4 @@ supabase/functions/send-push-notification/service-account.json
 *.keystore
 *.jks
 *.aab
+android/app/src/main/assets/public/

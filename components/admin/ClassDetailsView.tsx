@@ -15,6 +15,7 @@ import {
   StudentDocumentData,
 } from '@/lib/pdf/student-documents'
 import { SchoolIdCardStudioModal } from '@/components/admin/SchoolIdCardStudioModal'
+import { saveOrShareBlob } from '@/lib/mobile-file-share'
 
 export type ClassStudentItem = {
   id: string
@@ -223,12 +224,8 @@ export function ClassDetailsView({
     ].join('\n')
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.setAttribute('download', `liste_${classInfo.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    const fileName = `liste_${classInfo.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`
+    void saveOrShareBlob({ blob, filename: fileName, title: `Liste — ${classInfo.name}` })
   }
 
   const getLevelBadge = (level: string) => {

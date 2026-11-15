@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { sortClasses } from '@/lib/classes'
 import { ShieldCheck, FileDown, GraduationCap, Printer, Send } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { saveOrShareBlob, triggerPrintOrNotify } from '@/lib/mobile-file-share'
 import {
   getCoefficientForSubject,
   detectClassSeriesKey,
@@ -237,7 +238,7 @@ export function BulletinsManager({
   const handlePrint = () => {
     setIsPrintingAllClass(false)
     setTimeout(() => {
-      window.print()
+      triggerPrintOrNotify((msg) => toast(msg, { icon: '📱' }))
     }, 100)
   }
 
@@ -245,7 +246,7 @@ export function BulletinsManager({
     if (!selectedClass || availableStudents.length === 0) return
     setIsPrintingAllClass(true)
     setTimeout(() => {
-      window.print()
+      triggerPrintOrNotify((msg) => toast(msg, { icon: '📱' }))
       setIsPrintingAllClass(false)
     }, 400)
   }
@@ -406,24 +407,9 @@ export function BulletinsManager({
 
       const blob = await response.blob()
       const fileName = `Bulletins_Classe_${cls?.name}_${selectedTerm}.pdf`
-      const isNativeMobile = typeof window !== 'undefined' && Boolean((window as any).Capacitor?.isNativePlatform?.())
-      if (isNativeMobile && typeof navigator !== 'undefined' && navigator.share) {
-        const pdfFile = new File([blob], fileName, { type: 'application/pdf' })
-        if (!navigator.canShare || navigator.canShare({ files: [pdfFile] })) {
-          await navigator.share({ title: fileName, files: [pdfFile] })
-          setPublishStatus('success')
-          setTimeout(() => setPublishStatus('idle'), 3000)
-          return
-        }
-      }
+      const outcome = await saveOrShareBlob({ blob, filename: fileName, title: fileName })
 
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = fileName
-      a.click()
-
-      setPublishStatus('success')
+      setPublishStatus(outcome === 'cancelled' ? 'idle' : 'success')
       setTimeout(() => setPublishStatus('idle'), 3000)
     } catch (err: any) {
       console.error(err)

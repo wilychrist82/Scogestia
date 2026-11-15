@@ -3,24 +3,24 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { 
-  LayoutDashboard, 
-  Users, 
-  Presentation, 
-  UserCircle, 
-  CircleDollarSign, 
-  BookOpen, 
-  MessageSquare, 
-  FileText, 
-  Settings, 
-  GraduationCap, 
-  Headset, 
-  ChevronDown, 
-  ShieldCheck, 
-  X, 
-  LogOut, 
-  Calendar, 
-  CreditCard, 
+import {
+  LayoutDashboard,
+  Users,
+  Presentation,
+  UserCircle,
+  CircleDollarSign,
+  BookOpen,
+  MessageSquare,
+  FileText,
+  Settings,
+  GraduationCap,
+  Headset,
+  ChevronDown,
+  ShieldCheck,
+  X,
+  LogOut,
+  Calendar,
+  CreditCard,
   Lock,
   Activity,
   UserCheck,
@@ -59,10 +59,10 @@ const mainNavItems: NavItem[] = [
   { label: 'Classes', href: '/admin/classes', icon: Presentation },
   { label: 'Élèves', href: '/admin/eleves', icon: Users },
   { label: 'Personnel', href: '/admin/personnel', icon: UserCircle },
-  { 
-    label: 'Finance', 
-    href: '/admin/finance', 
-    icon: CircleDollarSign, 
+  {
+    label: 'Finance',
+    href: '/admin/finance',
+    icon: CircleDollarSign,
     hasDropdown: true,
     subItems: [
       { label: 'Tableau de bord', href: '/admin/finance' },
@@ -75,10 +75,10 @@ const mainNavItems: NavItem[] = [
       { label: 'Rapports financiers', href: '/admin/finance/rapports' },
     ]
   },
-  { 
-    label: 'Académique', 
-    href: '/admin/academique', 
-    icon: BookOpen, 
+  {
+    label: 'Académique',
+    href: '/admin/academique',
+    icon: BookOpen,
     hasDropdown: true,
     subItems: [
       { label: 'Surveillance des notes', href: '/admin/academique/surveillance' },
@@ -92,9 +92,9 @@ const mainNavItems: NavItem[] = [
       { label: 'Promotion fin d\'année', href: '/admin/academique/promotion' },
     ]
   },
-  { 
-    label: 'Communication', 
-    href: '/admin/communication', 
+  {
+    label: 'Communication',
+    href: '/admin/communication',
     icon: MessageSquare,
     hasDropdown: true,
     subItems: [
@@ -103,9 +103,9 @@ const mainNavItems: NavItem[] = [
       { label: 'Journal des envois', href: '/admin/communication/historique' },
     ]
   },
-  { 
-    label: 'Rapports', 
-    href: '/admin/rapports', 
+  {
+    label: 'Rapports',
+    href: '/admin/rapports',
     icon: FileText,
     hasDropdown: true,
     subItems: [
@@ -185,20 +185,18 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
                   <button
                     type="button"
                     onClick={() => onToggleDropdown(item.href)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 text-left group ${
-                      isActive 
-                        ? 'bg-emerald-500/15 text-emerald-300 font-semibold border border-emerald-500/30 shadow-[0_2px_12px_rgba(5,150,105,0.15)]' 
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 text-left group ${isActive
+                        ? 'bg-emerald-500/15 text-emerald-300 font-semibold border border-emerald-500/30 shadow-[0_2px_12px_rgba(5,150,105,0.15)]'
                         : isLocked
                           ? 'text-slate-400 opacity-60 hover:bg-white/[0.04]'
                           : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className={`p-1.5 rounded-lg transition-colors ${
-                        isActive 
-                          ? 'bg-emerald-500/20 text-emerald-300' 
+                      <div className={`p-1.5 rounded-lg transition-colors ${isActive
+                          ? 'bg-emerald-500/20 text-emerald-300'
                           : 'text-slate-400 group-hover:text-white group-hover:bg-white/[0.08]'
-                      }`}>
+                        }`}>
                         <Icon size={17} className="flex-shrink-0" />
                       </div>
                       <span className="text-sm font-medium tracking-tight truncate">{item.label}</span>
@@ -228,20 +226,18 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
                             href={subItem.href}
                             prefetch={true}
                             onClick={onClose}
-                            className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 group ${
-                              isSubActive
+                            className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 group ${isSubActive
                                 ? 'text-white bg-white/[0.12] font-semibold shadow-xs'
                                 : isLocked
                                   ? 'text-slate-400 opacity-60 hover:text-slate-200'
                                   : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
-                            }`}
+                              }`}
                           >
                             <div className="flex items-center gap-2 min-w-0">
-                              <span className={`w-1.5 h-1.5 rounded-full transition-all flex-shrink-0 ${
-                                isSubActive 
-                                  ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] scale-110' 
+                              <span className={`w-1.5 h-1.5 rounded-full transition-all flex-shrink-0 ${isSubActive
+                                  ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)] scale-110'
                                   : 'bg-slate-600 group-hover:bg-slate-400'
-                              }`} />
+                                }`} />
                               <span className="truncate">{subItem.label}</span>
                             </div>
                             {isLocked && <Lock size={10} className="text-amber-400/80 shrink-0 ml-1" />}
@@ -252,28 +248,26 @@ function NavGroup({ title, items, pathname, openDropdowns, onToggleDropdown, onC
                   )}
                 </div>
               ) : (
-                <Link 
+                <Link
                   href={item.href}
                   prefetch={true}
                   onClick={onClose}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group ${
-                    isActive 
-                      ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold shadow-[0_4px_18px_rgba(5,150,105,0.35)]' 
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group ${isActive
+                      ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold shadow-[0_4px_18px_rgba(5,150,105,0.35)]'
                       : isAbonnement && isExpired
                         ? 'bg-rose-500/20 text-rose-200 border border-rose-500/40 hover:bg-rose-500/30'
                         : isLocked
                           ? 'text-slate-400 opacity-60 hover:bg-white/[0.04]'
                           : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={`p-1.5 rounded-lg transition-colors ${
-                      isActive 
-                        ? 'bg-white/20 text-white' 
-                        : isAbonnement && isExpired 
-                          ? 'text-rose-400' 
+                    <div className={`p-1.5 rounded-lg transition-colors ${isActive
+                        ? 'bg-white/20 text-white'
+                        : isAbonnement && isExpired
+                          ? 'text-rose-400'
                           : 'text-slate-400 group-hover:text-white group-hover:bg-white/[0.08]'
-                    }`}>
+                      }`}>
                       <Icon size={17} className="flex-shrink-0" />
                     </div>
                     <span className="text-sm font-medium tracking-tight truncate">{item.label}</span>
@@ -359,7 +353,7 @@ export function Sidebar({ userFullName, userRoleLabel, userAvatar, navVariant = 
     <>
       {/* Overlay mobile */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/70 z-40 md:hidden backdrop-blur-sm transition-opacity"
           onClick={onClose}
           aria-hidden="true"
@@ -367,13 +361,16 @@ export function Sidebar({ userFullName, userRoleLabel, userAvatar, navVariant = 
       )}
 
       <aside
-        className={`bg-[#070b14] h-screen w-64 fixed left-0 top-0 flex flex-col py-4 z-50 border-r border-white/[0.08] shadow-[0_0_35px_rgba(0,0,0,0.5)] overflow-hidden transition-transform duration-300 ease-in-out md:translate-x-0 ${isOpen ? 'translate-x-0' : 'max-md:-translate-x-full'}`}
-        style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}
+        className={`bg-[#070b14] h-[100dvh] w-64 fixed left-0 top-0 flex flex-col py-4 z-50 border-r border-white/[0.08] shadow-[0_0_35px_rgba(0,0,0,0.5)] overflow-hidden transition-transform duration-300 ease-in-out md:translate-x-0 ${isOpen ? 'translate-x-0' : 'max-md:-translate-x-full'}`}
+        style={{
+          paddingTop: 'max(1rem, env(safe-area-inset-top))',
+          paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+        }}
       >
-        
+
         {/* Glow ambient subtil en fond */}
         <div className="pointer-events-none absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-emerald-500/10 via-transparent to-transparent" />
-        
+
         {/* ── Logo & En-tête de marque ── */}
         <div className="mb-4 px-5 flex items-center justify-between flex-shrink-0 relative z-10">
           <Link href={navVariant === 'super_admin' ? '/super_admin' : navVariant === 'enseignant' ? '/enseignant' : navVariant === 'comptable' ? '/admin/finance' : '/admin'} className="flex items-center gap-3 group">
@@ -394,8 +391,8 @@ export function Sidebar({ userFullName, userRoleLabel, userAvatar, navVariant = 
             </div>
           </Link>
 
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="md:hidden text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
             aria-label="Fermer le menu"
           >
@@ -406,8 +403,8 @@ export function Sidebar({ userFullName, userRoleLabel, userAvatar, navVariant = 
         {/* ── Navigation avec défilement ultra-fluide ── */}
         <div className="flex-1 relative z-10 overflow-y-auto custom-scrollbar pb-3 px-1">
           {navVariant === 'super_admin' ? (
-            <NavGroup 
-              title="Menu Super Admin" 
+            <NavGroup
+              title="Menu Super Admin"
               items={superAdminNavItems}
               pathname={pathname}
               openDropdowns={openDropdowns}
@@ -416,8 +413,8 @@ export function Sidebar({ userFullName, userRoleLabel, userAvatar, navVariant = 
               unreadCount={unreadCount}
             />
           ) : navVariant === 'enseignant' ? (
-            <NavGroup 
-              title="Menu Enseignant" 
+            <NavGroup
+              title="Menu Enseignant"
               items={enseignantNavItems}
               pathname={pathname}
               openDropdowns={openDropdowns}
@@ -427,8 +424,8 @@ export function Sidebar({ userFullName, userRoleLabel, userAvatar, navVariant = 
               unreadCount={unreadCount}
             />
           ) : navVariant === 'comptable' ? (
-            <NavGroup 
-              title="Espace Comptabilité" 
+            <NavGroup
+              title="Espace Comptabilité"
               items={comptableNavItems}
               pathname={pathname}
               openDropdowns={openDropdowns}
@@ -439,8 +436,8 @@ export function Sidebar({ userFullName, userRoleLabel, userAvatar, navVariant = 
             />
           ) : (
             <>
-              <NavGroup 
-                title="Menu Principal" 
+              <NavGroup
+                title="Menu Principal"
                 items={mainNavItems}
                 pathname={pathname}
                 openDropdowns={openDropdowns}
@@ -450,8 +447,8 @@ export function Sidebar({ userFullName, userRoleLabel, userAvatar, navVariant = 
                 unreadCount={unreadCount}
               />
               {isSuperAdmin && (
-                <NavGroup 
-                  title="Espaces connectés" 
+                <NavGroup
+                  title="Espaces connectés"
                   items={currentRoleNavItems}
                   pathname={pathname}
                   openDropdowns={openDropdowns}
@@ -515,7 +512,7 @@ export function Sidebar({ userFullName, userRoleLabel, userAvatar, navVariant = 
 
           {/* Boutons d'action */}
           <div className="px-3 space-y-1 pb-4 md:pb-1">
-            <button 
+            <button
               type="button"
               onClick={() => setIsSupportModalOpen(true)}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 transition-all duration-200 text-xs font-medium group"
@@ -525,8 +522,8 @@ export function Sidebar({ userFullName, userRoleLabel, userAvatar, navVariant = 
             </button>
 
             <form action={logout}>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-400/80 hover:text-rose-300 hover:bg-rose-500/10 transition-all duration-200 text-xs font-medium group"
               >
                 <LogOut size={15} className="flex-shrink-0 group-hover:scale-110 transition-transform" />
@@ -534,14 +531,14 @@ export function Sidebar({ userFullName, userRoleLabel, userAvatar, navVariant = 
               </button>
             </form>
           </div>
-          
+
           <div className="h-4 md:hidden" />
         </div>
       </aside>
-    
-      <ContactSupportModal 
-        isOpen={isSupportModalOpen} 
-        onClose={() => setIsSupportModalOpen(false)} 
+
+      <ContactSupportModal
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
       />
     </>
   )

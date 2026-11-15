@@ -2,7 +2,9 @@
 
 import { useRef, useState } from 'react'
 import { Printer, FileSpreadsheet, X, Download, ShieldCheck, CheckCircle2, Building2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { formatCFA, PAYMENT_METHOD_LABELS as METHOD_LABELS } from '@/lib/format'
+import { triggerPrintOrNotify } from '@/lib/mobile-file-share'
 
 export type SchoolInfo = {
   id?: string
@@ -96,7 +98,7 @@ export function FinancialReportDocument({ school, userFullName, stats, payments,
   }
 
   const handlePrint = () => {
-    window.print()
+    triggerPrintOrNotify((msg) => toast(msg, { icon: '📱' }))
   }
 
   return (
@@ -462,7 +464,8 @@ export function FinancialReportDocument({ school, userFullName, stats, payments,
       </div>
 
       {/* Style d'impression injecté */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @media print {
           body * {
             visibility: hidden;

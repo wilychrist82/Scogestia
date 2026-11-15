@@ -4,6 +4,7 @@ import "./globals.css";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
 import { CookieBanner } from "@/components/layout/CookieBanner";
 import { PwaRegister } from "@/components/providers/PwaRegister";
+import { CapacitorMobileBridge } from "@/components/providers/CapacitorMobileBridge";
 import { Toaster } from "react-hot-toast";
 
 const plusJakartaSans = Plus_Jakarta_Sans({ 
@@ -26,6 +27,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: 'cover',
+  interactiveWidget: 'resizes-content',
 }
 
 export const metadata: Metadata = {
@@ -265,6 +267,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <NotificationProvider>
           <PwaRegister />
+          <CapacitorMobileBridge />
           {children}
           <CookieBanner />
           <Toaster

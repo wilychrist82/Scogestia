@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf'
+import { saveOrSharePdf as shareOrSavePdf } from '@/lib/mobile-file-share'
 
 export type CardFontFamily =
   | 'times'
@@ -300,30 +301,7 @@ export function detectOfficialExamLabel(className?: string | null, classLevel?: 
 }
 
 function saveOrSharePdf(doc: jsPDF, filename: string, title: string) {
-  try {
-    const isNativeMobile =
-      typeof window !== 'undefined' &&
-      Boolean((window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.())
-    if (isNativeMobile && typeof navigator !== 'undefined' && navigator.share) {
-      const pdfBlob = doc.output('blob')
-      const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' })
-      if (!navigator.canShare || navigator.canShare({ files: [pdfFile] })) {
-        navigator
-          .share({
-            title,
-            text: title,
-            files: [pdfFile],
-          })
-          .catch(() => {
-            doc.save(filename)
-          })
-        return
-      }
-    }
-  } catch {
-    // Fallback sur doc.save
-  }
-  doc.save(filename)
+  void shareOrSavePdf(doc, filename, title, title)
 }
 
 /**

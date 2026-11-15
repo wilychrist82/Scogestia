@@ -23,6 +23,7 @@ import {
   Presentation,
   FileText
 } from 'lucide-react'
+import { saveOrShareBlob } from '@/lib/mobile-file-share'
 import { deleteStudent } from '@/app/actions/students'
 import { ImportStudentsModal } from './ImportStudentsModal'
 import { KpiCard } from './KpiCard'
@@ -126,13 +127,8 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
 
     // BOM UTF-8 + séparateur « ; » pour compatibilité Excel
     const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `eleves_scogestia_${new Date().toISOString().split('T')[0]}.csv`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(link.href)
+    const fileName = `eleves_scogestia_${new Date().toISOString().split('T')[0]}.csv`
+    void saveOrShareBlob({ blob, filename: fileName, title: 'Liste des élèves (CSV)' })
   }
 
   const handleFilterChange = useCallback((key: string, value: string) => {

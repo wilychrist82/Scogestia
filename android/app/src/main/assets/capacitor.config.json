@@ -4,7 +4,7 @@
 	"webDir": "public",
 	"server": {
 		"url": "https://scogestia.vercel.app",
-		"cleartext": true
+		"cleartext": false
 	},
 	"plugins": {
 		"PushNotifications": {

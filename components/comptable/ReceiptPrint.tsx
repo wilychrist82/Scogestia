@@ -2,6 +2,8 @@
 
 import { useRef } from 'react'
 import { MessageCircle, Printer, X } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { triggerPrintOrNotify } from '@/lib/mobile-file-share'
 
 type ReceiptData = {
   receiptNumber: string
@@ -23,7 +25,7 @@ export function ReceiptPrint({ data, onClose }: { data: ReceiptData, onClose: ()
   const printRef = useRef<HTMLDivElement>(null)
 
   const handlePrint = () => {
-    window.print()
+    triggerPrintOrNotify((msg) => toast(msg, { icon: '📱' }))
   }
 
   const handleShareWhatsApp = () => {

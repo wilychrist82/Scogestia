@@ -23,6 +23,7 @@ import {
 import toast from 'react-hot-toast'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { generateExpenseVoucherPDF } from '@/lib/pdf/student-documents'
+import { saveOrShareBlob } from '@/lib/mobile-file-share'
 
 export interface SchoolExpenseItem {
   id: string
@@ -144,12 +145,8 @@ export function DepensesManager({ expenses, totalCollected, schoolInfo = null }:
     ].join('\n')
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.setAttribute('download', `depenses_ecole_${new Date().toISOString().split('T')[0]}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    const fileName = `depenses_ecole_${new Date().toISOString().split('T')[0]}.csv`
+    void saveOrShareBlob({ blob, filename: fileName, title: 'Dépenses École (CSV)' })
   }
 
   return (

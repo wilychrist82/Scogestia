@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import type { TimetableSlot } from '@/app/actions/timetable'
 import { createTimetableSlot, updateTimetableSlot, deleteTimetableSlot } from '@/app/actions/timetable'
+import { triggerPrintOrNotify } from '@/lib/mobile-file-share'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const DAYS = [
@@ -141,7 +142,7 @@ export function TimetableGrid({ classId, className, initialSlots, readOnly = fal
           </p>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => window.print()}
+              onClick={() => triggerPrintOrNotify((msg) => showToast(msg, false))}
               className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-[var(--color-outline-variant)] rounded-lg text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container)] transition-colors"
             >
               <Printer className="w-3.5 h-3.5" />

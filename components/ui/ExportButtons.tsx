@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FileSpreadsheet, FileText, Printer, Download, Loader2, ChevronDown } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { saveOrShareBlob, triggerPrintOrNotify } from '@/lib/mobile-file-share'
 
 type Props = {
   data: any[]
@@ -35,7 +37,7 @@ export function ExportButtons({ data, filename, headers, title }: Props) {
         csvContent += rowData.join(';') + '\n'
       })
       const blob = new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), csvContent], { type: 'text/csv;charset=utf-8;' })
-      triggerDownload(blob, `${filename}_${today()}.csv`)
+      await saveOrShareBlob({ blob, filename: `${filename}_${today()}.csv`, title: title ?? filename })
     } finally {
       setLoading(null)
       setMenuOpen(false)
@@ -78,7 +80,7 @@ export function ExportButtons({ data, filename, headers, title }: Props) {
   const handlePrint = () => {
     setLoading('print')
     setTimeout(() => {
-      window.print()
+      triggerPrintOrNotify((msg) => toast(msg, { icon: '📱' }))
       setLoading(null)
       setMenuOpen(false)
     }, 150)
@@ -225,15 +227,4 @@ function ExportMenuItem({
 
 function today() {
   return new Date().toISOString().split('T')[0]
-}
-
-function triggerDownload(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = name
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
 }

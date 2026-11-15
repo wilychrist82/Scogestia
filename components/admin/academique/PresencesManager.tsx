@@ -4,7 +4,10 @@ import { useState, useTransition, useEffect } from 'react'
 import { fetchMonthlyAttendance, saveMonthlyAttendanceGrid } from '@/app/actions/academique'
 import Link from 'next/link'
 import { sortClasses } from '@/lib/classes'
+import toast from 'react-hot-toast'
+import { triggerPrintOrNotify } from '@/lib/mobile-file-share'
 import { 
+  ChevronLeft,
   ChevronRight, 
   School, 
   Calendar, 
@@ -20,7 +23,11 @@ import {
   WifiOff,
   CloudUpload,
   RefreshCw,
-  MessageCircle
+  MessageCircle,
+  Smartphone,
+  Clock,
+  UserX,
+  CheckCheck
 } from 'lucide-react'
 
 type ClassItem = { id: string; name: string }
@@ -58,11 +65,21 @@ export function PresencesManager({ classes, students }: Props) {
   const [gridData, setGridData] = useState<Record<string, string>>({})
   const [modifiedCells, setModifiedCells] = useState<Set<string>>(new Set())
 
+  // Mode d'affichage : Appel du jour (idéal mobile/tablette) ou Grille mensuelle
+  const [viewMode, setViewMode] = useState<'daily' | 'monthly'>('monthly')
+  const [selectedDayStr, setSelectedDayStr] = useState<string>('')
+
   // State pour la période active et la modale de récapitulation
   const [periodStart, setPeriodStart] = useState<string>('')
   const [periodEnd, setPeriodEnd] = useState<string>('')
   const [onlyShowPeriodDays, setOnlyShowPeriodDays] = useState<boolean>(false)
   const [isRecapOpen, setIsRecapOpen] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setViewMode('daily')
+    }
+  }, [])
 
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -201,6 +218,27 @@ export function PresencesManager({ classes, students }: Props) {
   // Jours affichés dans le tableau (tout le mois ou uniquement la période)
   const displayedDays = onlyShowPeriodDays ? days.filter(d => d.isWithinPeriod) : days
 
+  // Maintenir un jour actif cohérent pour l'appel du jour lorsque le mois/période change
+  const eligibleSchoolDays = days.filter(d => !d.isWeekend && d.isWithinPeriod)
+  useEffect(() => {
+    const stillValid = days.some(d => d.dateStr === selectedDayStr)
+    if (stillValid) return
+
+    const now = new Date()
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    const todayMatch = eligibleSchoolDays.find(d => d.dateStr === todayStr)
+    if (todayMatch) {
+      setSelectedDayStr(todayMatch.dateStr)
+    } else if (eligibleSchoolDays.length > 0) {
+      const nearestPastOrFirst = [...eligibleSchoolDays].reverse().find(d => d.dateStr <= todayStr)
+      setSelectedDayStr((nearestPastOrFirst ?? eligibleSchoolDays[0]).dateStr)
+    } else if (days.length > 0) {
+      setSelectedDayStr(days[0].dateStr)
+    } else {
+      setSelectedDayStr('')
+    }
+  }, [selectedYear, selectedMonth, periodStart, periodEnd, selectedDayStr, days.length])
+
   // Chargement des données quand classe/année/mois change
   useEffect(() => {
     if (!selectedClass) return
@@ -273,6 +311,41 @@ export function PresencesManager({ classes, students }: Props) {
       const newSet = new Set(prev)
       newSet.add(key)
       return newSet
+    })
+  }
+
+  const handleSetDayStatus = (
+    studentId: string,
+    dateStr: string,
+    newStatus: 'present' | 'retard' | 'absent',
+    isWeekend: boolean,
+    isWithinPeriod: boolean,
+  ) => {
+    if (isWeekend || !isWithinPeriod) return
+    const key = `${studentId}_${dateStr}`
+    setGridData(prev => ({ ...prev, [key]: newStatus }))
+    setModifiedCells(prev => {
+      const newSet = new Set(prev)
+      newSet.add(key)
+      return newSet
+    })
+  }
+
+  const handleMarkAllPresentForDay = (dateStr: string, isWeekend: boolean, isWithinPeriod: boolean) => {
+    if (isWeekend || !isWithinPeriod || filteredStudents.length === 0) return
+    setGridData(prev => {
+      const next = { ...prev }
+      filteredStudents.forEach(s => {
+        next[`${s.id}_${dateStr}`] = 'present'
+      })
+      return next
+    })
+    setModifiedCells(prev => {
+      const next = new Set(prev)
+      filteredStudents.forEach(s => {
+        next.add(`${s.id}_${dateStr}`)
+      })
+      return next
     })
   }
 
@@ -619,51 +692,77 @@ export function PresencesManager({ classes, students }: Props) {
                   {isLoadingData && <span className="w-4 h-4 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></span>}
                 </h3>
 
-                {/* Filter toggle button */}
-                <div className="inline-flex rounded-lg border border-gray-300 p-0.5 bg-gray-100 text-xs font-medium">
+                {/* Sélecteur de vue : Appel du jour (Mobile) vs Grille mensuelle */}
+                <div className="inline-flex rounded-lg border border-indigo-200 p-0.5 bg-indigo-50/70 text-xs font-semibold">
                   <button
                     type="button"
-                    onClick={() => setOnlyShowPeriodDays(false)}
-                    className={`px-2.5 py-1 rounded-md transition-all ${!onlyShowPeriodDays ? 'bg-white text-gray-900 shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'}`}
+                    onClick={() => setViewMode('daily')}
+                    className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 ${viewMode === 'daily' ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-900/70 hover:text-indigo-950'}`}
                   >
-                    Vue mois entier ({daysInMonth}j)
+                    <Smartphone className="w-3.5 h-3.5" />
+                    <span>Appel du jour</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setOnlyShowPeriodDays(true)}
-                    className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${onlyShowPeriodDays ? 'bg-white text-blue-700 shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'}`}
+                    onClick={() => setViewMode('monthly')}
+                    className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 ${viewMode === 'monthly' ? 'bg-white text-gray-900 shadow-sm' : 'text-indigo-900/70 hover:text-indigo-950'}`}
                   >
-                    <span>Période seule</span>
-                    <span className="px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold">
-                      {days.filter(d => d.isWithinPeriod).length}j
-                    </span>
+                    <Table className="w-3.5 h-3.5" />
+                    <span>Grille mensuelle</span>
                   </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    const today = new Date()
-                    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-                    const el = document.getElementById(`day-col-${todayStr}`)
-                    if (el) {
-                      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
-                    }
-                  }}
-                  className="px-2.5 py-1 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors"
-                  title="Faire défiler jusqu'au jour d'aujourd'hui"
-                >
-                  <Calendar className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Aujourd'hui</span>
-                </button>
+                {viewMode === 'monthly' && (
+                  <>
+                    {/* Filter toggle button */}
+                    <div className="inline-flex rounded-lg border border-gray-300 p-0.5 bg-gray-100 text-xs font-medium">
+                      <button
+                        type="button"
+                        onClick={() => setOnlyShowPeriodDays(false)}
+                        className={`px-2.5 py-1 rounded-md transition-all ${!onlyShowPeriodDays ? 'bg-white text-gray-900 shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'}`}
+                      >
+                        Vue mois entier ({daysInMonth}j)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOnlyShowPeriodDays(true)}
+                        className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${onlyShowPeriodDays ? 'bg-white text-blue-700 shadow-sm font-semibold' : 'text-gray-600 hover:text-gray-900'}`}
+                      >
+                        <span>Période seule</span>
+                        <span className="px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold">
+                          {days.filter(d => d.isWithinPeriod).length}j
+                        </span>
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const today = new Date()
+                        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+                        const el = document.getElementById(`day-col-${todayStr}`)
+                        if (el) {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+                        }
+                      }}
+                      className="px-2.5 py-1 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors"
+                      title="Faire défiler jusqu'au jour d'aujourd'hui"
+                    >
+                      <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Aujourd'hui</span>
+                    </button>
+                  </>
+                )}
               </div>
               
               <div className="flex items-center gap-4 flex-wrap">
-                <div className="flex flex-wrap gap-3 text-xs font-medium text-gray-500">
-                  <div className="flex items-center gap-1"><span className="w-4 h-4 flex items-center justify-center bg-gray-100 rounded text-gray-800 font-bold border border-gray-200">-</span> Absent Matin</div>
-                  <div className="flex items-center gap-1"><span className="w-4 h-4 flex items-center justify-center bg-gray-100 rounded text-gray-800 font-bold border border-gray-200">+</span> Absent Journée</div>
-                  <div className="flex items-center gap-1"><span className="w-4 h-4 flex items-center justify-center bg-gray-200/80 rounded text-gray-400 font-bold border border-gray-300">/</span> Hors période</div>
-                </div>
+                {viewMode === 'monthly' && (
+                  <div className="flex flex-wrap gap-3 text-xs font-medium text-gray-500">
+                    <div className="flex items-center gap-1"><span className="w-4 h-4 flex items-center justify-center bg-gray-100 rounded text-gray-800 font-bold border border-gray-200">-</span> Absent Matin</div>
+                    <div className="flex items-center gap-1"><span className="w-4 h-4 flex items-center justify-center bg-gray-100 rounded text-gray-800 font-bold border border-gray-200">+</span> Absent Journée</div>
+                    <div className="flex items-center gap-1"><span className="w-4 h-4 flex items-center justify-center bg-gray-200/80 rounded text-gray-400 font-bold border border-gray-300">/</span> Hors période</div>
+                  </div>
+                )}
                 
                 <button 
                   onClick={handleSave}
@@ -684,8 +783,233 @@ export function PresencesManager({ classes, students }: Props) {
               </div>
             </div>
 
-            {/* Data Grid Table */}
-            <div className="overflow-x-auto max-h-[70vh] custom-scrollbar relative">
+            {viewMode === 'daily' ? (() => {
+              const activeDay = days.find(d => d.dateStr === selectedDayStr) || eligibleSchoolDays[0] || days[0]
+              const activeDayIndex = activeDay ? days.findIndex(d => d.dateStr === activeDay.dateStr) : -1
+              const prevDay = activeDayIndex > 0 ? days[activeDayIndex - 1] : null
+              const nextDay = activeDayIndex >= 0 && activeDayIndex < days.length - 1 ? days[activeDayIndex + 1] : null
+
+              const now = new Date()
+              const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+              const todayInMonth = days.find(d => d.dateStr === todayStr)
+
+              let presentCount = 0
+              let retardCount = 0
+              let absentCount = 0
+              if (activeDay) {
+                filteredStudents.forEach(s => {
+                  const st = gridData[`${s.id}_${activeDay.dateStr}`] || 'present'
+                  if (st === 'absent') absentCount++
+                  else if (st === 'retard') retardCount++
+                  else presentCount++
+                })
+              }
+
+              return (
+                <div className="p-3 sm:p-5 space-y-4 bg-slate-50/40">
+                  {/* Navigateur de date rapide */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                    <div className="flex items-center gap-1.5 flex-1 min-w-[220px]">
+                      <button
+                        type="button"
+                        disabled={!prevDay}
+                        onClick={() => prevDay && setSelectedDayStr(prevDay.dateStr)}
+                        aria-label="Jour précédent"
+                        className="h-10 w-10 shrink-0 flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+
+                      <select
+                        value={activeDay?.dateStr || ''}
+                        onChange={(e) => setSelectedDayStr(e.target.value)}
+                        aria-label="Sélectionner le jour d'appel"
+                        className="flex-1 h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-900 focus:border-indigo-500 outline-none"
+                      >
+                        {days.map(d => {
+                          const labelDate = new Date(selectedYear, selectedMonth - 1, d.dayNum).toLocaleDateString('fr-FR', {
+                            weekday: 'short',
+                            day: '2-digit',
+                            month: 'short',
+                          })
+                          const tag = !d.isWithinPeriod ? ' (Hors période)' : d.isWeekend ? ' (Week-end)' : ''
+                          return (
+                            <option key={d.dateStr} value={d.dateStr}>
+                              {labelDate}{tag}
+                            </option>
+                          )
+                        })}
+                      </select>
+
+                      <button
+                        type="button"
+                        disabled={!nextDay}
+                        onClick={() => nextDay && setSelectedDayStr(nextDay.dateStr)}
+                        aria-label="Jour suivant"
+                        className="h-10 w-10 shrink-0 flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {todayInMonth && activeDay?.dateStr !== todayInMonth.dateStr && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDayStr(todayInMonth.dateStr)}
+                          className="h-10 px-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 text-xs font-bold hover:bg-blue-100 flex items-center gap-1.5"
+                        >
+                          <Calendar className="w-3.5 h-3.5" />
+                          Aujourd'hui
+                        </button>
+                      )}
+
+                      {activeDay && !activeDay.isWeekend && activeDay.isWithinPeriod && filteredStudents.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => handleMarkAllPresentForDay(activeDay.dateStr, activeDay.isWeekend, activeDay.isWithinPeriod)}
+                          className="h-10 px-3 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-bold hover:bg-emerald-100 flex items-center gap-1.5"
+                        >
+                          <CheckCheck className="w-4 h-4" />
+                          Tout Présent
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Compteurs du jour */}
+                  {activeDay && (
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                      <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/70 px-3 py-2 text-center">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Présents</p>
+                        <p className="text-lg font-extrabold text-emerald-900">{presentCount}</p>
+                      </div>
+                      <div className="rounded-xl border border-amber-200/80 bg-amber-50/70 px-3 py-2 text-center">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700">Retard (-)</p>
+                        <p className="text-lg font-extrabold text-amber-900">{retardCount}</p>
+                      </div>
+                      <div className="rounded-xl border border-rose-200/80 bg-rose-50/70 px-3 py-2 text-center">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-rose-700">Absents (+)</p>
+                        <p className="text-lg font-extrabold text-rose-900">{absentCount}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Liste tactile d'appel */}
+                  {!activeDay || activeDay.isWeekend || !activeDay.isWithinPeriod ? (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-6 text-center space-y-3">
+                      <p className="text-sm font-bold text-amber-900">
+                        {!activeDay?.isWithinPeriod
+                          ? 'Ce jour est en dehors de la période scolaire sélectionnée.'
+                          : 'Week-end : aucune saisie d\'absence pour ce jour.'}
+                      </p>
+                      {eligibleSchoolDays.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDayStr(eligibleSchoolDays[0].dateStr)}
+                          className="px-4 py-2 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition-colors"
+                        >
+                          Aller à un jour ouvré ({eligibleSchoolDays[0].dayNum}/{String(selectedMonth).padStart(2, '0')})
+                        </button>
+                      )}
+                    </div>
+                  ) : filteredStudents.length === 0 ? (
+                    <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+                      Aucun élève inscrit dans cette classe.
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5 max-h-[62vh] overflow-y-auto pr-0.5 custom-scrollbar">
+                      {filteredStudents.map((student, index) => {
+                        const key = `${student.id}_${activeDay.dateStr}`
+                        const currentStatus = (gridData[key] || 'present') as 'present' | 'retard' | 'absent'
+                        const isModified = modifiedCells.has(key)
+                        const isFille = student.gender?.toLowerCase().startsWith('f')
+                        const totalAbs = getTotalAbsences(student.id)
+                        const rawPhone = student.parent_phone || ''
+                        const digits = rawPhone.replace(/[^0-9]/g, '')
+                        const waPhone = digits.length === 8 ? `228${digits}` : digits.startsWith('00') ? digits.slice(2) : digits
+                        const monthLabel = MONTHS.find(m => m.value === selectedMonth)?.label || ''
+                        const waMsg = `Bonjour cher parent, l'établissement vous informe que votre enfant ${student.first_name} ${student.last_name} comptabilise ${totalAbs} demi-journée(s) d'absence sur le mois de ${monthLabel} ${selectedYear}. Merci de contacter la direction ou de soumettre un justificatif sur votre espace parent Scogestia.`
+
+                        return (
+                          <div
+                            key={student.id}
+                            className={`rounded-xl border p-3 bg-white transition-all flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ${isModified ? 'border-indigo-300 ring-1 ring-indigo-200 bg-indigo-50/20' : 'border-slate-200'}`}
+                          >
+                            <div className="flex items-center justify-between gap-2 min-w-0">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="w-7 h-7 shrink-0 rounded-lg bg-slate-100 text-slate-700 text-xs font-extrabold flex items-center justify-center">
+                                  {String(index + 1).padStart(2, '0')}
+                                </span>
+                                <div className="min-w-0">
+                                  <p className={`text-sm font-bold truncate ${isFille ? 'text-rose-700' : 'text-slate-900'}`}>
+                                    {student.last_name} {student.first_name}
+                                  </p>
+                                  <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                                    <span>{isFille ? 'Fille' : 'Garçon'}</span>
+                                    <span>·</span>
+                                    <span className={totalAbs > 0 ? 'font-bold text-rose-600' : ''}>
+                                      {totalAbs} abs. mois
+                                    </span>
+                                    {isModified && (
+                                      <span className="px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-700 font-bold text-[10px]">
+                                        Modifié
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {totalAbs > 0 && waPhone && (
+                                <a
+                                  href={`https://wa.me/${waPhone}?text=${encodeURIComponent(waMsg)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title={`Alerter le parent sur WhatsApp (${rawPhone})`}
+                                  className="h-9 w-9 shrink-0 rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-colors"
+                                >
+                                  <MessageCircle className="w-4 h-4" />
+                                </a>
+                              )}
+                            </div>
+
+                            {/* 3 boutons tactiles larges */}
+                            <div className="grid grid-cols-3 gap-1.5 sm:w-[300px] shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleSetDayStatus(student.id, activeDay.dateStr, 'present', activeDay.isWeekend, activeDay.isWithinPeriod)}
+                                className={`min-h-[42px] px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all active:scale-95 ${currentStatus === 'present' ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                                <span>Présent</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSetDayStatus(student.id, activeDay.dateStr, 'retard', activeDay.isWeekend, activeDay.isWithinPeriod)}
+                                className={`min-h-[42px] px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all active:scale-95 ${currentStatus === 'retard' ? 'bg-amber-500 text-white border-amber-500 shadow-xs' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+                              >
+                                <Clock className="w-3.5 h-3.5 shrink-0" />
+                                <span>Retard</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSetDayStatus(student.id, activeDay.dateStr, 'absent', activeDay.isWeekend, activeDay.isWithinPeriod)}
+                                className={`min-h-[42px] px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all active:scale-95 ${currentStatus === 'absent' ? 'bg-rose-600 text-white border-rose-600 shadow-xs' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+                              >
+                                <UserX className="w-3.5 h-3.5 shrink-0" />
+                                <span>Absent</span>
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })() : (
+              /* Data Grid Table */
+              <div className="overflow-x-auto max-h-[70vh] custom-scrollbar relative">
               <table className="w-full text-left border-collapse border-spacing-0 select-none bg-white">
                 <thead className="sticky top-0 z-30">
                   {/* First header row: Indication des absences */}
@@ -814,6 +1138,7 @@ export function PresencesManager({ classes, students }: Props) {
                 </tbody>
               </table>
             </div>
+            )}
 
             {/* Barre d'action mobile fixe en bas */}
             <div className="p-3 border-t border-gray-200 bg-white/95 backdrop-blur-xs flex md:hidden items-center justify-between gap-2 sticky bottom-0 z-30 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
@@ -1007,7 +1332,7 @@ export function PresencesManager({ classes, students }: Props) {
               </button>
               {/* Optional: un bouton pour imprimer le PDF */}
               <button 
-                onClick={() => window.print()}
+                onClick={() => triggerPrintOrNotify((msg) => toast(msg, { icon: '📱' }))}
                 className="px-6 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm flex items-center gap-2"
               >
                 <Printer className="w-4 h-4" />

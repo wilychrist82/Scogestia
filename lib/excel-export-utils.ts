@@ -1,4 +1,5 @@
 import type { Workbook } from 'exceljs'
+import { saveOrShareBlob } from '@/lib/mobile-file-share'
 
 export interface ExcelAoaOptions {
   sheetName: string
@@ -82,14 +83,7 @@ export async function downloadAoaExcel(
     ? options.fileName
     : `${options.fileName}.xlsx`
 
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = safeFileName
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
+  await saveOrShareBlob({ blob, filename: safeFileName, title: safeFileName })
 }
 
 export async function exportFinancialBilanExcel(params: FinancialBilanExportParams): Promise<void> {

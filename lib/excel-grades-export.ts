@@ -1,5 +1,6 @@
 import type { Workbook, Worksheet, Border, Fill, Font } from 'exceljs'
 import { ClassResultsReport, ComputedStudentRow } from '@/lib/grades-export'
+import { saveOrShareBlob } from '@/lib/mobile-file-share'
 
 function colLetter(colNumber: number): string {
   let letter = ''
@@ -552,26 +553,7 @@ async function triggerExcelDownload(wb: Workbook, fileName: string): Promise<voi
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   })
 
-  const isNativeMobile =
-    typeof window !== 'undefined' &&
-    Boolean((window as any).Capacitor?.isNativePlatform?.())
-
-  if (isNativeMobile && typeof navigator !== 'undefined' && navigator.share) {
-    const file = new File([blob], fileName, { type: blob.type })
-    if (!navigator.canShare || navigator.canShare({ files: [file] })) {
-      await navigator.share({ title: fileName, files: [file] })
-      return
-    }
-  }
-
-  const url = window.URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = fileName
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  window.URL.revokeObjectURL(url)
+  await saveOrShareBlob({ blob, filename: fileName, title: fileName })
 }
 
 /**
