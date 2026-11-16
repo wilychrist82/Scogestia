@@ -4,38 +4,40 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, CheckCircle2, Clock, AlertTriangle } from 'lucide-react'
+import { resolveChariowReturnSaleId } from '@/lib/chariow/api'
 
 export default function AbonnementSuccessPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const saleId = searchParams.get('sale_id')
+  const saleId = resolveChariowReturnSaleId(searchParams)
 
   const [status, setStatus] = useState<'verifying' | 'success' | 'failed' | 'pending'>('verifying')
   const [attempts, setAttempts] = useState(0)
 
   useEffect(() => {
-    if (!saleId) {
-      setStatus('failed')
-      return
-    }
+    let active = true
+    let timer: ReturnType<typeof setTimeout> | undefined
 
     const verifyPayment = async () => {
       try {
         const res = await fetch('/api/chariow/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sale_id: saleId })
+          body: JSON.stringify({ sale_id: saleId || '' })
         })
         
         const data = await res.json()
+        if (!active) return
 
         if (data.status === 'succeeded') {
           setStatus('success')
           router.refresh()
+        } else if (!saleId && res.status >= 400) {
+          setStatus('failed')
         } else {
           // Si c'est toujours en pending, on retry max 10 fois (toutes les 3s)
           if (attempts < 10) {
-            setTimeout(() => {
+            timer = setTimeout(() => {
               setAttempts(prev => prev + 1)
             }, 3000)
           } else {
@@ -44,11 +46,15 @@ export default function AbonnementSuccessPage() {
         }
       } catch (error) {
         console.error(error)
-        setStatus('failed')
+        if (active) setStatus('failed')
       }
     }
 
     verifyPayment()
+    return () => {
+      active = false
+      if (timer) clearTimeout(timer)
+    }
   }, [saleId, attempts, router])
 
   return (

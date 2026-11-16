@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { reconcileChariowPayment } from '@/lib/chariow/reconcile';
+import { resolveChariowReturnSaleId } from '@/lib/chariow/api';
 
 const { mockGetChariowSaleStatus } = vi.hoisted(() => ({
   mockGetChariowSaleStatus: vi.fn(),
@@ -119,5 +120,53 @@ describe('reconcileChariowPayment', () => {
     const paymentUpdate = updates.find((u) => u.table === 'saas_payments');
     expect(paymentUpdate?.payload.status).toBe('failed');
     expect(updates.find((u) => u.table === 'schools')).toBeUndefined();
+  });
+
+  it('transitions trial school to active on live Chariow completed payload and resolves purchase param', async () => {
+    const urlParams = new URLSearchParams('sale_id=%7Bsale_id%7D&purchase=SALETN59SU89E7RKEOF');
+    expect(resolveChariowReturnSaleId(urlParams)).toBe('SALETN59SU89E7RKEOF');
+
+    mockGetChariowSaleStatus.mockResolvedValue({
+      id: 'SALETN59SU89E7RKEOF',
+      status: 'completed',
+      amount: { value: 599, currency: 'XOF' },
+      payment: { status: 'success', amount: { value: 599, currency: 'XOF' } },
+    });
+
+    const futureTrialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    const { client, updates } = buildFakeSupabase({
+      payment: {
+        id: 'pay-live-1',
+        school_id: 'school-cannan',
+        provider_sale_id: 'SALETN59SU89E7RKEOF',
+        amount: 599,
+        status: 'pending',
+        plan_name: 'SCOGESTIA - Plan Standard',
+      },
+      subscription: {
+        id: 'sub-cannan',
+        school_id: 'school-cannan',
+        status: 'trial',
+        plan_name: 'Essai Gratuit',
+        current_period_end: futureTrialEnd,
+      },
+    });
+
+    const ok = await reconcileChariowPayment('SALETN59SU89E7RKEOF', client);
+    expect(ok).toBe(true);
+
+    const paymentUpdate = updates.find((u) => u.table === 'saas_payments');
+    expect(paymentUpdate?.payload.status).toBe('succeeded');
+
+    const subUpdate = updates.find((u) => u.table === 'saas_subscriptions');
+    expect(subUpdate?.payload.status).toBe('active');
+    expect(subUpdate?.payload.plan_name).toBe('SCOGESTIA - Plan Standard');
+
+    const schoolUpdate = updates.find((u) => u.table === 'schools');
+    expect(schoolUpdate?.payload).toMatchObject({
+      subscription_status: 'active',
+      subscription_plan: 'starter',
+      max_students: 200,
+    });
   });
 });

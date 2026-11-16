@@ -40,9 +40,19 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-    const { sale_id } = body
+    const rawSaleId = typeof body?.sale_id === 'string' ? body.sale_id.trim() : ''
+    const cookieStore = await cookies()
+    const pendingToken = verifyPendingCheckoutToken(
+      cookieStore.get(PENDING_CHECKOUT_COOKIE)?.value,
+    )
 
-    if (!sale_id || typeof sale_id !== 'string') {
+    // Si Chariow a laissé le placeholder littéral "{sale_id}" ou omis le paramètre, utiliser le jeton HMAC serveur
+    const saleId =
+      rawSaleId && !/^\{.*\}$/.test(rawSaleId)
+        ? rawSaleId
+        : pendingToken?.saleId || ''
+
+    if (!saleId) {
       return NextResponse.json({ error: 'Sale ID requis' }, { status: 400 })
     }
 
@@ -51,7 +61,7 @@ export async function POST(req: Request) {
     const { data: payment, error: paymentErr } = await supabaseAdmin
       .from('saas_payments')
       .select('school_id')
-      .eq('provider_sale_id', sale_id)
+      .eq('provider_sale_id', saleId)
       .limit(1)
       .maybeSingle()
 
@@ -61,7 +71,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Accès interdit pour cette transaction' }, { status: 403 })
       }
 
-      const isSuccess = await reconcileChariowPayment(sale_id, supabaseAdmin)
+      const isSuccess = await reconcileChariowPayment(saleId, supabaseAdmin)
       const res = NextResponse.json({ status: isSuccess ? 'succeeded' : 'pending' })
       if (isSuccess) {
         res.cookies.delete(PENDING_CHECKOUT_COOKIE)
@@ -70,12 +80,7 @@ export async function POST(req: Request) {
     }
 
     // Fallback sécurisé si la ligne saas_payments n'a pas pu être écrite (ex: droits SQL 42501 en attente)
-    const cookieStore = await cookies()
-    const pendingToken = verifyPendingCheckoutToken(
-      cookieStore.get(PENDING_CHECKOUT_COOKIE)?.value,
-    )
-
-    if (!pendingToken || pendingToken.saleId !== sale_id) {
+    if (!pendingToken || pendingToken.saleId !== saleId) {
       return NextResponse.json({ error: 'Transaction introuvable' }, { status: 404 })
     }
 
@@ -85,7 +90,7 @@ export async function POST(req: Request) {
     }
 
     const isSuccess = await reconcilePendingCheckoutToken(supabaseAdmin, {
-      saleId: sale_id,
+      saleId,
       schoolId: pendingToken.schoolId,
       planName: pendingToken.planName,
       expectedAmount: pendingToken.expectedAmount,

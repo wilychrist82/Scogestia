@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       first_name: firstName,
       last_name: lastName,
       phone: resolvedPhone,
-      redirect_url: `${baseUrl}/admin/abonnement/success?sale_id={sale_id}`,
+      redirect_url: `${baseUrl}/admin/abonnement/success`,
       custom_metadata: {
         school_id: roleData.school_id,
       },

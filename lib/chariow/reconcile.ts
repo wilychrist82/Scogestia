@@ -106,7 +106,11 @@ export async function reconcileChariowPayment(providerSaleId: string, client?: S
   }
 
   // 3. Lire la vente chez Chariow (Source de Vérité)
-  let sale: { status: string; amount?: { value?: number | string } }
+  let sale: {
+    status?: string
+    amount?: { value?: number | string; currency?: string } | number
+    payment?: { status?: string; amount?: { value?: number | string; currency?: string } }
+  }
   try {
     sale = await getChariowSaleStatus(providerSaleId)
   } catch (err) {
@@ -115,11 +119,12 @@ export async function reconcileChariowPayment(providerSaleId: string, client?: S
     return false
   }
 
-  const normalizedStatus = mapChariowStatus(sale.status)
+  const normalizedStatus = mapChariowStatus(sale.status || sale.payment?.status || '')
 
   // 4. Si c'est réussi, on procède à la validation
   if (normalizedStatus === 'succeeded') {
-    const paidAmount = Number(sale.amount?.value || 0)
+    const rawSaleAmount = typeof sale.amount === 'object' ? sale.amount?.value : sale.amount
+    const paidAmount = Number(rawSaleAmount ?? sale.payment?.amount?.value ?? 0)
     const expectedAmount = Number(payment.amount)
 
     if (paidAmount < expectedAmount) {
@@ -173,7 +178,11 @@ export async function reconcilePendingCheckoutToken(
 ): Promise<boolean> {
   const { saleId, schoolId, planName, expectedAmount } = params
 
-  let sale: { status: string; amount?: { value?: number | string; currency?: string } }
+  let sale: {
+    status?: string
+    amount?: { value?: number | string; currency?: string } | number
+    payment?: { status?: string; amount?: { value?: number | string; currency?: string } }
+  }
   try {
     sale = await getChariowSaleStatus(saleId)
   } catch (err) {
@@ -182,17 +191,22 @@ export async function reconcilePendingCheckoutToken(
     return false
   }
 
-  if (mapChariowStatus(sale.status) !== 'succeeded') {
+  if (mapChariowStatus(sale.status || sale.payment?.status || '') !== 'succeeded') {
     return false
   }
 
-  const paidAmount = Number(sale.amount?.value || 0)
+  const rawSaleAmount = typeof sale.amount === 'object' ? sale.amount?.value : sale.amount
+  const paidAmount = Number(rawSaleAmount ?? sale.payment?.amount?.value ?? 0)
   if (paidAmount < expectedAmount) {
     console.error(`[Anti-fraude fallback] Montant insuffisant. Attendu: ${expectedAmount}, Reçu: ${paidAmount}`)
     return false
   }
 
   const now = new Date()
+  const saleCurrency =
+    (typeof sale.amount === 'object' ? sale.amount?.currency : undefined) ||
+    sale.payment?.amount?.currency ||
+    'XOF'
 
   // Enregistrement best-effort dans saas_payments si les droits ont entre-temps été accordés
   const { error: upsertErr } = await supabase.from('saas_payments').upsert(
@@ -200,7 +214,7 @@ export async function reconcilePendingCheckoutToken(
       school_id: schoolId,
       provider_sale_id: saleId,
       amount: paidAmount || expectedAmount,
-      currency: sale.amount?.currency || 'XOF',
+      currency: saleCurrency,
       status: 'succeeded',
       plan_name: planName,
       updated_at: now.toISOString(),

@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service'
 import { redirect } from 'next/navigation'
 import { getChariowProducts, partitionChariowProducts } from '@/lib/chariow/api'
+import { reconcileChariowPayment } from '@/lib/chariow/reconcile'
 import { AbonnementManager } from '@/components/admin/abonnement/AbonnementManager'
 import { isBillingTestEmail } from '@/lib/owner'
 
@@ -25,12 +27,39 @@ export default async function AbonnementPage() {
       return <div className="p-8 text-[var(--color-status-retard-text)]">Accès refusé. Réservé à l'administration.</div>
     }
 
+    // Réconcilier automatiquement les paiements Chariow encore "En attente" pour cette école
+    try {
+      const serviceClient = createServiceRoleClient()
+      const { data: pendingPayments } = await serviceClient
+        .from('saas_payments')
+        .select('provider_sale_id')
+        .eq('school_id', roleData.school_id)
+        .eq('status', 'pending')
+        .not('provider_sale_id', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+      if (pendingPayments && pendingPayments.length > 0) {
+        await Promise.all(
+          pendingPayments.map((p) =>
+            p.provider_sale_id
+              ? reconcileChariowPayment(String(p.provider_sale_id), serviceClient).catch(() => false)
+              : Promise.resolve(false),
+          ),
+        )
+      }
+    } catch {
+      // Ne bloque jamais l'affichage si la vérification automatique rencontre un aléa réseau
+    }
+
     // Récupérer le statut réel de l'abonnement (saas_subscriptions + repli schools)
     const [{ data: subscription, error: subError }, { data: schoolRow }, { data: saasPayments }] = await Promise.all([
       supabase
         .from('saas_subscriptions')
         .select('*')
         .eq('school_id', roleData.school_id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .maybeSingle(),
       supabase
         .from('schools')

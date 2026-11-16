@@ -51,6 +51,26 @@ export function partitionChariowProducts(
   return { publicPlans, testPlan }
 }
 
+/**
+ * Extrait l'identifiant réel d'une vente depuis les paramètres de redirection Chariow
+ * (en ignorant les placeholders non remplacés comme `{sale_id}` et en lisant `purchase`).
+ */
+export function resolveChariowReturnSaleId(params: { get: (key: string) => string | null }): string | null {
+  const candidates = [
+    params.get('purchase'),
+    params.get('sale'),
+    params.get('sale_id'),
+    params.get('transaction_id'),
+  ]
+  for (const raw of candidates) {
+    const trimmed = raw?.trim()
+    if (trimmed && !/^\{.*\}$/.test(trimmed)) {
+      return trimmed
+    }
+  }
+  return null
+}
+
 export type ChariowCheckoutParams = {
   product_id: string
   email: string

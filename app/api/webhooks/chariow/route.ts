@@ -6,7 +6,13 @@ import { webhookRateLimit, checkRateLimit } from '@/lib/ratelimit'
 
 export const dynamic = 'force-dynamic'
 
-const SUCCESS_EVENTS = ['successful.sale', 'settled.sale', 'completed.sale']
+const SUCCESS_EVENTS = [
+  'successful.sale',
+  'settled.sale',
+  'completed.sale',
+  'sale.completed',
+  'purchase.completed',
+]
 
 function verifyWebhookSecret(req: Request, rawBody: string, secret: string): boolean {
   const headerSecret =
@@ -52,21 +58,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Signature invalide' }, { status: 401 })
     }
 
-    let body: { event?: string; data?: { sale?: { id?: string }; purchase?: { id?: string }; id?: string } } | null = null
+    type ChariowWebhookPayload = {
+      event?: string
+      id?: string
+      sale?: { id?: string }
+      purchase?: { id?: string }
+      data?: { id?: string; sale?: { id?: string }; purchase?: { id?: string } }
+    }
+
+    let body: ChariowWebhookPayload | null = null
     try {
-      body = JSON.parse(rawBody)
+      body = JSON.parse(rawBody) as ChariowWebhookPayload
     } catch {
       return NextResponse.json({ error: 'JSON invalide' }, { status: 400 })
     }
 
-    const { event, data } = body ?? {}
+    const event = (body?.event || req.headers.get('x-pulse-event') || '').trim().toLowerCase()
+    const payloadData = body?.data ?? body
 
-    if (!event || !data) {
+    if (!event || !payloadData) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
     }
 
     if (SUCCESS_EVENTS.includes(event)) {
-      const saleId = data.sale?.id || data.purchase?.id || data.id
+      const saleId = payloadData.sale?.id || payloadData.purchase?.id || payloadData.id
 
       if (!saleId) {
         return NextResponse.json({ error: 'No sale ID found' }, { status: 400 })
