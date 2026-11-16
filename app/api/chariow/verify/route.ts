@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service'
@@ -74,6 +75,8 @@ export async function POST(req: Request) {
       const isSuccess = await reconcileChariowPayment(saleId, supabaseAdmin)
       const res = NextResponse.json({ status: isSuccess ? 'succeeded' : 'pending' })
       if (isSuccess) {
+        revalidatePath('/admin', 'layout')
+        revalidatePath('/admin/abonnement')
         res.cookies.delete(PENDING_CHECKOUT_COOKIE)
       }
       return res
@@ -98,6 +101,8 @@ export async function POST(req: Request) {
 
     const res = NextResponse.json({ status: isSuccess ? 'succeeded' : 'pending' })
     if (isSuccess) {
+      revalidatePath('/admin', 'layout')
+      revalidatePath('/admin/abonnement')
       res.cookies.delete(PENDING_CHECKOUT_COOKIE)
     }
     return res

@@ -61,6 +61,57 @@ export function inferPlanDetails(planName?: string | null): PlanDetails {
   }
 }
 
+export type PlanTierKey = 'trial' | 'standard' | 'pro' | 'annuel'
+
+/**
+ * Identifie la formule canonique d'un abonnement pour l'interface et la facturation.
+ */
+export function getPlanTierKey(planName?: string | null, status?: string | null): PlanTierKey {
+  const normalized = (planName || '').toLowerCase()
+  if (status === 'trial' || (status !== 'active' && /\b(essai|trial)\b/.test(normalized))) {
+    return 'trial'
+  }
+  const details = inferPlanDetails(planName)
+  if (details.monthsToAdd >= 12 || normalized.includes('annuel') || normalized.includes('annual')) {
+    return 'annuel'
+  }
+  if (details.subscriptionPlan === 'pro' || details.subscriptionPlan === 'premium') {
+    return 'pro'
+  }
+  return 'standard'
+}
+
+/**
+ * Libellé officiel propre affiché dans les tableaux de bord et l'historique de facturation.
+ */
+export function formatSubscriptionPlanLabel(planName?: string | null, status?: string | null): string {
+  const tier = getPlanTierKey(planName, status)
+  switch (tier) {
+    case 'trial':
+      return 'Essai Gratuit'
+    case 'annuel':
+      return 'Plan Annuel'
+    case 'pro':
+      return 'Plan Pro'
+    case 'standard':
+    default:
+      return 'Plan Standard'
+  }
+}
+
+/**
+ * Ajoute un nombre de mois en évitant les débordements de fin de mois (ex: 31 janv -> 28/29 févr).
+ */
+export function addMonthsSafe(baseDate: Date, months: number): Date {
+  const target = new Date(baseDate.getTime())
+  const day = target.getDate()
+  target.setDate(1)
+  target.setMonth(target.getMonth() + months)
+  const maxDayInMonth = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate()
+  target.setDate(Math.min(day, maxDayInMonth))
+  return target
+}
+
 /**
  * Récupère le statut complet d'abonnement d'un établissement en réconciliant
  * `schools` (statut administratif) et `saas_subscriptions` (période de validité réelle).

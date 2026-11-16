@@ -160,7 +160,7 @@ describe('reconcileChariowPayment', () => {
 
     const subUpdate = updates.find((u) => u.table === 'saas_subscriptions');
     expect(subUpdate?.payload.status).toBe('active');
-    expect(subUpdate?.payload.plan_name).toBe('SCOGESTIA - Plan Standard');
+    expect(subUpdate?.payload.plan_name).toBe('Plan Standard');
 
     const schoolUpdate = updates.find((u) => u.table === 'schools');
     expect(schoolUpdate?.payload).toMatchObject({

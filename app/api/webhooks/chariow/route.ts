@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
 import { createServiceRoleClient } from '@/lib/supabase/service'
 import { reconcileChariowPayment } from '@/lib/chariow/reconcile'
@@ -93,6 +94,10 @@ export async function POST(req: Request) {
       // On relit la vente chez Chariow (source de vérité), on contrôle le montant
       // et on synchronise saas_payments, saas_subscriptions et schools.
       const ok = await reconcileChariowPayment(String(saleId), supabaseAdmin)
+      if (ok) {
+        revalidatePath('/admin', 'layout')
+        revalidatePath('/admin/abonnement')
+      }
       console.log(`[Chariow Webhook] Sale ${saleId} reconcile => ${ok}`)
     }
 

@@ -19,20 +19,3 @@ export function isOwnerEmail(email?: string | null): boolean {
   if (allowList.length === 0) return false
   return allowList.includes(email.trim().toLowerCase())
 }
-
-const DEFAULT_BILLING_TEST_EMAILS = ['alicisme30@gmail.com']
-
-/**
- * Comptes autorisés à tester le produit Chariow de recette (à coût réduit, ex: 600 FCFA).
- * N'accorde aucun privilège Super Admin ni contournement d'expiration d'abonnement.
- */
-export function isBillingTestEmail(email?: string | null): boolean {
-  if (!email) return false
-  const clean = email.trim().toLowerCase()
-  if (isOwnerEmail(clean)) return true
-  const extra = (process.env.CHARIOW_TEST_EMAILS || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean)
-  return extra.includes(clean) || DEFAULT_BILLING_TEST_EMAILS.includes(clean)
-}

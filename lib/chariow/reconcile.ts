@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getChariowSaleStatus, mapChariowStatus } from './api'
-import { inferPlanDetails } from '@/lib/subscription'
+import { addMonthsSafe, formatSubscriptionPlanLabel, inferPlanDetails } from '@/lib/subscription'
 
 async function applySchoolAndSubscriptionActivation(
   supabase: SupabaseClient,
@@ -10,8 +10,9 @@ async function applySchoolAndSubscriptionActivation(
   const { schoolId, planName, now } = params
   const nowIso = now.toISOString()
   const planMeta = inferPlanDetails(planName)
+  const canonicalPlanName = formatSubscriptionPlanLabel(planName, 'active')
 
-  // 1. Mise à jour de l'abonnement (ajouter 1 mois ou 12 mois selon la formule)
+  // 1. Mise à jour de l'abonnement (ajouter 1 mois ou 12 mois sans débordement de fin de mois)
   const { data: sub, error: subSelectErr } = await supabase
     .from('saas_subscriptions')
     .select('*')
@@ -22,14 +23,14 @@ async function applySchoolAndSubscriptionActivation(
   if (subSelectErr) {
     console.warn('Lecture saas_subscriptions ignorée:', subSelectErr.message)
   } else {
-    let nextDate = new Date(now)
+    let baseDate = new Date(now)
     if (sub && sub.current_period_end) {
       const currentEnd = new Date(sub.current_period_end)
-      if (currentEnd > nextDate) {
-        nextDate = currentEnd
+      if (currentEnd > baseDate) {
+        baseDate = currentEnd
       }
     }
-    nextDate.setMonth(nextDate.getMonth() + planMeta.monthsToAdd)
+    const nextDate = addMonthsSafe(baseDate, planMeta.monthsToAdd)
 
     if (sub) {
       const { error: subUpdateErr } = await supabase
@@ -37,7 +38,7 @@ async function applySchoolAndSubscriptionActivation(
         .update({
           status: 'active',
           current_period_end: nextDate.toISOString(),
-          plan_name: planName,
+          plan_name: canonicalPlanName,
           updated_at: nowIso,
         })
         .eq('id', sub.id)
@@ -49,7 +50,7 @@ async function applySchoolAndSubscriptionActivation(
           school_id: schoolId,
           status: 'active',
           current_period_end: nextDate.toISOString(),
-          plan_name: planName,
+          plan_name: canonicalPlanName,
         })
       if (subInsertErr) console.error('Erreur insertion saas_subscriptions:', subInsertErr)
     }
@@ -158,6 +159,15 @@ export async function reconcileChariowPayment(providerSaleId: string, client?: S
       .update({ status: normalizedStatus, updated_at: new Date().toISOString() })
       .eq('id', payment.id)
     return false
+  } else if (normalizedStatus === 'pending' && payment.created_at) {
+    // Clôturer proprement les sessions Chariow abandonnées depuis plus de 2 heures
+    const ageMs = Date.now() - new Date(payment.created_at).getTime()
+    if (Number.isFinite(ageMs) && ageMs > 2 * 60 * 60 * 1000) {
+      await supabase
+        .from('saas_payments')
+        .update({ status: 'abandoned', updated_at: new Date().toISOString() })
+        .eq('id', payment.id)
+    }
   }
 
   return false

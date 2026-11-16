@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service'
 import { createChariowCheckout, isTestChariowProduct, resolveChariowPhone } from '@/lib/chariow/api'
-import { isBillingTestEmail } from '@/lib/owner'
 import {
   PENDING_CHECKOUT_COOKIE,
   signPendingCheckoutToken,
@@ -36,20 +35,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Produit et téléphone requis' }, { status: 400 })
     }
 
-    const isTestCheckout = isTestChariowProduct(
-      {
-        id: String(product_id),
-        name: String(plan_name || ''),
-        price: Number(body.amount) || 0,
-      },
-      process.env.CHARIOW_TEST_PRODUCT_ID,
-    )
+    const isTestCheckout = isTestChariowProduct({
+      id: String(product_id),
+      name: String(plan_name || ''),
+      price: Number(body.amount) || 0,
+    })
 
     if (isTestCheckout) {
-      const { data: isSuperAdmin } = await supabase.rpc('is_super_admin')
-      if (!isBillingTestEmail(user.email) && !isSuperAdmin) {
-        return NextResponse.json({ error: 'Offre de test réservée aux comptes de recette autorisés.' }, { status: 403 })
-      }
+      return NextResponse.json({ error: 'Cette formule n\'est pas disponible à la souscription.' }, { status: 403 })
     }
 
     const rawName = (roleData.full_name || (user.user_metadata?.full_name as string) || '').trim()

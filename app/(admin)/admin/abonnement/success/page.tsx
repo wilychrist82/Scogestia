@@ -17,6 +17,7 @@ export default function AbonnementSuccessPage() {
   useEffect(() => {
     let active = true
     let timer: ReturnType<typeof setTimeout> | undefined
+    let redirectTimer: ReturnType<typeof setTimeout> | undefined
 
     const verifyPayment = async () => {
       try {
@@ -32,6 +33,10 @@ export default function AbonnementSuccessPage() {
         if (data.status === 'succeeded') {
           setStatus('success')
           router.refresh()
+          redirectTimer = setTimeout(() => {
+            router.push('/admin/abonnement')
+            router.refresh()
+          }, 2200)
         } else if (!saleId && res.status >= 400) {
           setStatus('failed')
         } else {
@@ -54,6 +59,7 @@ export default function AbonnementSuccessPage() {
     return () => {
       active = false
       if (timer) clearTimeout(timer)
+      if (redirectTimer) clearTimeout(redirectTimer)
     }
   }, [saleId, attempts, router])
 
@@ -78,16 +84,20 @@ export default function AbonnementSuccessPage() {
             <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 text-emerald-600">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h2 className="text-2xl font-bold text-[var(--color-on-surface)] mb-2">Paiement Réussi !</h2>
+            <h2 className="text-2xl font-bold text-[var(--color-on-surface)] mb-2">Paiement Confirmé !</h2>
             <p className="text-[var(--color-on-surface-variant)] text-sm mb-8">
-              Merci pour votre confiance. Votre abonnement Scogestia a été prolongé avec succès.
+              Votre abonnement Scogestia est maintenant actif. Redirection automatique vers votre espace abonnement…
             </p>
-            <Link 
-              href="/admin/abonnement"
-              className="bg-[var(--color-primary)] text-white px-8 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity w-full block"
+            <button
+              type="button"
+              onClick={() => {
+                router.push('/admin/abonnement')
+                router.refresh()
+              }}
+              className="bg-[var(--color-primary)] text-white px-8 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity w-full block cursor-pointer"
             >
-              Retourner au tableau de bord
-            </Link>
+              Voir mon abonnement
+            </button>
           </div>
         )}
 

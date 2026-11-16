@@ -1,6 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
-import { getSchoolSubscriptionStatus, assertActiveSubscription, inferPlanDetails } from '../lib/subscription';
-import { isBillingTestEmail, isOwnerEmail } from '../lib/owner';
+import {
+  getSchoolSubscriptionStatus,
+  assertActiveSubscription,
+  inferPlanDetails,
+  formatSubscriptionPlanLabel,
+  getPlanTierKey,
+  addMonthsSafe,
+} from '../lib/subscription';
+import { isOwnerEmail } from '../lib/owner';
 import { isTestChariowProduct, partitionChariowProducts } from '../lib/chariow/api';
 
 function createTableMock(tables: Record<string, any>) {
@@ -188,9 +195,30 @@ describe('SaaS Subscription & Multi-Tenant Entitlements', () => {
     expect(forTester.testPlan?.id).toBe('low-ann');
   });
 
-  it('authorizes configured billing test email without granting owner privileges', () => {
-    expect(isBillingTestEmail('alicisme30@gmail.com')).toBe(true);
-    expect(isOwnerEmail('alicisme30@gmail.com')).toBe(false);
-    expect(isBillingTestEmail('autre-ecole@exemple.com')).toBe(false);
+  it('normalizes plan labels and tier keys for UI and billing automation', () => {
+    expect(formatSubscriptionPlanLabel('SCOGESTIA-Pan Standard', 'active')).toBe('Plan Standard');
+    expect(formatSubscriptionPlanLabel('SCOGESTIA-Pan pro', 'active')).toBe('Plan Pro');
+    expect(formatSubscriptionPlanLabel('SCOGESTIA-Plan Annuel (copy)', 'active')).toBe('Plan Annuel');
+    expect(formatSubscriptionPlanLabel('Essai Gratuit', 'trial')).toBe('Essai Gratuit');
+
+    expect(getPlanTierKey('Essai Gratuit', 'trial')).toBe('trial');
+    expect(getPlanTierKey('SCOGESTIA-Plan Standard', 'active')).toBe('standard');
+    expect(getPlanTierKey('SCOGESTIA-Plan Pro', 'active')).toBe('pro');
+    expect(getPlanTierKey('SCOGESTIA-Plan Annuel', 'active')).toBe('annuel');
+    expect(isOwnerEmail('autre-ecole@exemple.com')).toBe(false);
+  });
+
+  it('adds months safely without end-of-month rollover overflow', () => {
+    const jan31 = new Date(2026, 0, 31);
+    const feb = addMonthsSafe(jan31, 1);
+    expect(feb.getFullYear()).toBe(2026);
+    expect(feb.getMonth()).toBe(1);
+    expect(feb.getDate()).toBe(28);
+
+    const nov30 = new Date(2026, 10, 30);
+    const nextYear = addMonthsSafe(nov30, 12);
+    expect(nextYear.getFullYear()).toBe(2027);
+    expect(nextYear.getMonth()).toBe(10);
+    expect(nextYear.getDate()).toBe(30);
   });
 });
