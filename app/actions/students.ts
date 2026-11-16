@@ -290,217 +290,240 @@ export async function updateStudent(prevState: ActionState, formData: FormData):
 }
 
 import {
-  normalizeText,
-  detectClassLevel,
-  getRowField,
-  extractNameParts,
   extractClassFromFilename,
-  parseFlexibleDate,
-  parseGender
+  analyzeStudentImportRows,
+  type ExistingClassRef,
+  type StudentImportAnalysis,
 } from '@/lib/student-import-utils'
+import { getDynamicAcademicYear } from '@/lib/academic-year'
+import { chunkArray } from '@/lib/collections'
+
+export type ImportPreviewResponse = {
+  error?: string
+  analysis?: StudentImportAnalysis
+  existingClasses?: ExistingClassRef[]
+}
+
+async function loadSchoolImportContext(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  school_id: string,
+  defaultClassId?: string,
+  fileName?: string,
+  studentsList: Record<string, unknown>[] = [],
+  classOverrides?: Record<string, string>,
+) {
+  const [{ data: classesData, error: classesError }, { data: schoolRow }, { data: existingStudents, error: studentsError }] =
+    await Promise.all([
+      supabase.from('classes').select('id, name, level').eq('school_id', school_id),
+      supabase.from('schools').select('current_academic_year').eq('id', school_id).maybeSingle(),
+      supabase
+        .from('students')
+        .select('id, matricule, first_name, last_name, class_id, date_of_birth')
+        .eq('school_id', school_id)
+        .range(0, 4999),
+    ])
+
+  if (classesError) throw new Error('Erreur de récupération des classes.')
+  if (studentsError) throw new Error('Erreur lors de la vérification des doublons existants.')
+
+  const existingClasses: ExistingClassRef[] = classesData || []
+
+  let fallbackClassName: string | undefined
+  if (defaultClassId) {
+    const found = existingClasses.find((c) => c.id === defaultClassId)
+    if (found) fallbackClassName = found.name
+  }
+  if (!fallbackClassName && fileName) {
+    fallbackClassName = extractClassFromFilename(fileName, existingClasses)
+  }
+
+  const analysis = analyzeStudentImportRows(studentsList, existingClasses, existingStudents || [], {
+    fallbackClassName,
+    classOverrides,
+  })
+
+  return {
+    existingClasses,
+    existingStudents: existingStudents || [],
+    academicYear: schoolRow?.current_academic_year?.trim() || getDynamicAcademicYear('-'),
+    analysis,
+  }
+}
+
+export async function previewImportStudents(
+  studentsList: Record<string, unknown>[],
+  defaultClassId?: string,
+  fileName?: string,
+  classOverrides?: Record<string, string>,
+): Promise<ImportPreviewResponse> {
+  try {
+    const school_id = await getActiveSchoolId()
+    const supabase = await createClient()
+    const { existingClasses, analysis } = await loadSchoolImportContext(
+      supabase,
+      school_id,
+      defaultClassId,
+      fileName,
+      studentsList,
+      classOverrides,
+    )
+
+    if (analysis.rows.length === 0) {
+      return { error: 'Aucun élève valide détecté dans ce fichier.' }
+    }
+
+    return {
+      analysis,
+      existingClasses,
+    }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur d'analyse du fichier."
+    return { error: message }
+  }
+}
 
 export async function importStudents(
-  studentsList: any[],
+  studentsList: Record<string, unknown>[],
   defaultClassId?: string,
-  fileName?: string
-): Promise<ActionState & { count?: number; createdClassesCount?: number; createdClassesNames?: string[] }> {
+  fileName?: string,
+  classOverrides?: Record<string, string>,
+): Promise<
+  ActionState & {
+    count?: number
+    skippedDuplicatesCount?: number
+    createdClassesCount?: number
+    createdClassesNames?: string[]
+  }
+> {
   try {
-    const school_id = await getActiveSchoolId();
-    const supabase = await createClient();
+    const school_id = await getActiveSchoolId()
+    const supabase = await createClient()
 
-    // 1. Récupérer toutes les classes existantes pour cette école
-    const { data: classesData, error: classesError } = await supabase
-      .from('classes')
-      .select('id, name')
-      .eq('school_id', school_id);
+    const { existingStudents, academicYear, analysis } = await loadSchoolImportContext(
+      supabase,
+      school_id,
+      defaultClassId,
+      fileName,
+      studentsList,
+      classOverrides,
+    )
 
-    if (classesError) throw new Error('Erreur de récupération des classes.');
-    
-    // Map Nom de classe normalisé -> ID
-    const classMap = new Map<string, string>();
-    if (classesData) {
-      classesData.forEach((c) => {
-        classMap.set(normalizeText(c.name), c.id);
-      });
+    if (analysis.rows.length === 0) {
+      return { error: 'Aucun élève valide trouvé dans le fichier à importer.' }
     }
 
-    // Déterminer une classe par défaut (sélectionnée ou déduite du nom de fichier)
-    let fallbackClassName: string | undefined = undefined;
-    if (defaultClassId) {
-      const found = classesData?.find(c => c.id === defaultClassId);
-      if (found) fallbackClassName = found.name;
-    }
-    if (!fallbackClassName && fileName) {
-      fallbackClassName = extractClassFromFilename(fileName, classesData || []);
-    }
-
-    // 2. Détecter si le fichier contient des classes inexistantes
-    const missingClasses = new Map<string, string>(); // normalized -> raw original name
-    for (const student of studentsList) {
-      let rawClass = getRowField(student, ['classe', 'class', 'niveau', 'salle', 'cours', 'division', 'groupe', 'section']);
-      if (!rawClass && fallbackClassName) {
-        rawClass = fallbackClassName;
-      }
-      if (rawClass) {
-        const normClass = normalizeText(rawClass);
-        if (!classMap.has(normClass) && !missingClasses.has(normClass)) {
-          missingClasses.set(normClass, rawClass.trim());
-        }
+    if (analysis.newRows.length === 0) {
+      return {
+        error: `Aucun nouvel élève à importer : les ${analysis.duplicateRows.length} élève(s) du fichier existent déjà sans doublons dans vos classes.`,
       }
     }
 
-    // Créer automatiquement les classes manquantes
-    const createdClassesNames: string[] = [];
-    if (missingClasses.size > 0) {
-      const newClassesToInsert = Array.from(missingClasses.values()).map((rawName) => ({
+    // Vérifier le quota uniquement sur les nouveaux élèves réellement ajoutés
+    await checkStudentLimit(supabase, school_id, analysis.newRows.length)
+
+    // Créer automatiquement les classes absentes (sans doublons d'orthographe)
+    const createdClassIdByKey = new Map<string, string>()
+    const createdClassesNames: string[] = []
+
+    if (analysis.missingClassesToCreate.length > 0) {
+      const newClassesToInsert = analysis.missingClassesToCreate.map((cls) => ({
         school_id,
-        name: rawName,
-        level: detectClassLevel(rawName),
-        academic_year: '2026-2027',
-        capacity: 60
-      }));
+        name: cls.name,
+        level: cls.level,
+        academic_year: academicYear,
+        capacity: 60,
+      }))
 
       const { data: createdClasses, error: createError } = await supabase
         .from('classes')
         .insert(newClassesToInsert)
-        .select('id, name');
+        .select('id, name')
 
       if (createError) {
-        throw new Error(`Erreur lors de la création automatique des classes : ${createError.message}`);
+        throw new Error(`Erreur lors de la création automatique des classes : ${createError.message}`)
       }
 
       if (createdClasses) {
-        createdClasses.forEach((c) => {
-          classMap.set(normalizeText(c.name), c.id);
-          createdClassesNames.push(c.name);
-        });
-      }
-    }
-
-    // 3. Récupérer tous les matricules existants pour éviter les collisions
-    const { data: existingStudents } = await supabase
-      .from('students')
-      .select('matricule')
-      .eq('school_id', school_id);
-    
-    const usedMatricules = new Set<string>();
-    let maxMatriculeNum = 999;
-
-    if (existingStudents) {
-      existingStudents.forEach((s: any) => {
-        if (s.matricule) {
-          usedMatricules.add(s.matricule.toString().trim().toLowerCase());
-          const num = parseInt(s.matricule, 10);
-          if (!isNaN(num) && num > maxMatriculeNum) {
-            maxMatriculeNum = num;
+        analysis.missingClassesToCreate.forEach((clsMeta, idx) => {
+          const matchedCreated =
+            createdClasses.find((c) => c.name === clsMeta.name) ?? createdClasses[idx]
+          if (matchedCreated) {
+            createdClassIdByKey.set(`new:${clsMeta.canonicalKey}`, matchedCreated.id)
+            createdClassesNames.push(matchedCreated.name)
           }
-        }
-      });
+        })
+      }
     }
 
-    // 4. Préparer les données élèves
-    const insertData = [];
-
-    for (let index = 0; index < studentsList.length; index++) {
-      const student = studentsList[index];
-      
-      const nameParts = extractNameParts(student);
-      const firstName = nameParts?.firstName;
-      const lastName = nameParts?.lastName;
-      let className = getRowField(student, ['classe', 'class', 'niveau', 'salle', 'cours', 'division', 'groupe', 'section']);
-      
-      // Si la ligne n'a pas de colonne classe explicite, utiliser le fallback
-      if (!className && fallbackClassName) {
-        className = fallbackClassName;
-      }
-
-      // Sauter les lignes totalement vides
-      if (!firstName && !lastName && !className) {
-        continue;
-      }
-
-      if (!firstName || !lastName) {
-        throw new Error(`Ligne ${index + 2} : Impossible de déterminer le Nom et le Prénom de l'élève.`);
-      }
-
-      if (!className) {
-        throw new Error(`Ligne ${index + 2} : L'élève "${firstName} ${lastName}" n'a pas de classe spécifiée. Veuillez sélectionner une classe de destination ou ajouter une colonne "Classe" dans votre fichier Excel.`);
-      }
-
-      // Associer la classe
-      const classId = classMap.get(normalizeText(className));
-      if (!classId) {
-        throw new Error(`Impossible de trouver ou créer la classe "${className}" pour l'élève ${firstName} ${lastName}.`);
-      }
-
-      // Gestion du matricule unique
-      let matricule = getRowField(student, ['matricule', 'id', 'numero matricule', 'num_matricule']);
-      if (matricule) {
-        matricule = matricule.trim();
-        // Si le matricule existe déjà dans la base ou dans ce lot, on le rend unique
-        if (usedMatricules.has(matricule.toLowerCase())) {
-          maxMatriculeNum++;
-          matricule = `${matricule}-${maxMatriculeNum}`;
+    // Calcul du prochain matricule disponible pour les élèves sans matricule dans le fichier
+    const usedMatricules = new Set<string>()
+    let maxMatriculeNum = 999
+    existingStudents.forEach((s) => {
+      if (s.matricule) {
+        usedMatricules.add(s.matricule.toString().trim().toLowerCase())
+        const num = parseInt(String(s.matricule), 10)
+        if (!isNaN(num) && num > maxMatriculeNum) {
+          maxMatriculeNum = num
         }
-      } else {
-        maxMatriculeNum++;
-        matricule = maxMatriculeNum.toString();
       }
-      usedMatricules.add(matricule.toLowerCase());
+    })
 
-      // Date de naissance
-      const rawDate = getRowField(student, ['date de naissance', 'date naissance', 'ddn', 'birth date', 'date_de_naissance', 'date_naissance', 'birthdate']);
-      const date_of_birth = parseFlexibleDate(rawDate);
+    const touchedClassIds = new Set<string>()
+    const insertData = analysis.newRows.map((row) => {
+      const targetClassId = row.resolvedClassId ?? createdClassIdByKey.get(row.resolvedClassKey)
+      if (!targetClassId) {
+        throw new Error(
+          `Impossible d'associer la classe "${row.resolvedClassName}" pour l'élève ${row.firstName} ${row.lastName}.`,
+        )
+      }
+      touchedClassIds.add(targetClassId)
 
-      // Genre / Sexe
-      const rawGender = getRowField(student, ['sexe', 'genre', 'gender', 'sex']);
-      const gender = parseGender(rawGender);
+      let matricule = row.matricule
+      if (!matricule || usedMatricules.has(matricule.toLowerCase())) {
+        do {
+          maxMatriculeNum++
+          matricule = maxMatriculeNum.toString()
+        } while (usedMatricules.has(matricule.toLowerCase()))
+      }
+      usedMatricules.add(matricule.toLowerCase())
 
-      // Téléphone parent
-      const parent_phone = getRowField(student, ['telephone parent', 'telephone', 'contact parent', 'parent phone', 'contact', 'telephone_parent', 'tel parent', 'tel']) || null;
-
-      insertData.push({
+      return {
         school_id,
-        first_name: firstName,
-        last_name: lastName,
+        first_name: row.firstName,
+        last_name: row.lastName,
         matricule,
-        class_id: classId,
-        date_of_birth,
-        gender,
-        parent_phone,
-        status: 'actif'
-      });
-    }
-
-    if (insertData.length === 0) {
-      return { error: 'Aucun élève valide trouvé dans le fichier à importer.' };
-    }
-
-    await checkStudentLimit(supabase, school_id, insertData.length);
-    
-    // 5. Insertion en masse des élèves
-    const { error: insertError } = await supabase
-      .from('students')
-      .insert(insertData);
-
-    if (insertError) {
-      if (insertError.code === '23505') {
-        return { error: 'Un ou plusieurs élèves ont un matricule qui existe déjà dans cette école.' };
+        class_id: targetClassId,
+        date_of_birth: row.dateOfBirth,
+        gender: row.gender,
+        parent_phone: row.parentPhone,
+        status: 'actif',
       }
-      throw insertError;
+    })
+
+    // Insertion par paquets de 100 pour supporter sereinement 100-500+ élèves multi-classes
+    for (const batch of chunkArray(insertData, 100)) {
+      const { error: insertError } = await supabase.from('students').insert(batch)
+      if (insertError) {
+        if (insertError.code === '23505') {
+          return { error: 'Un ou plusieurs élèves ont un matricule qui existe déjà dans cette école.' }
+        }
+        throw insertError
+      }
     }
 
-    revalidatePath('/admin/eleves');
-    revalidatePath('/admin/classes');
+    revalidatePath('/admin/eleves')
+    revalidatePath('/admin/classes')
+    touchedClassIds.forEach((cid) => revalidatePath(`/admin/classes/${cid}`))
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       count: insertData.length,
+      skippedDuplicatesCount: analysis.duplicateRows.length,
       createdClassesCount: createdClassesNames.length,
-      createdClassesNames
-    };
-
-  } catch (err: any) {
-    return { error: err.message };
+      createdClassesNames,
+    }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur lors de l'importation."
+    return { error: message }
   }
 }

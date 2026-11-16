@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service'
 import { createChariowCheckout, resolveChariowPhone } from '@/lib/chariow/api'
+import { isOwnerEmail } from '@/lib/owner'
 import {
   PENDING_CHECKOUT_COOKIE,
   signPendingCheckoutToken,
@@ -33,6 +34,17 @@ export async function POST(req: Request) {
 
     if (!product_id || !phone) {
       return NextResponse.json({ error: 'Produit et téléphone requis' }, { status: 400 })
+    }
+
+    const isTestCheckout =
+      (process.env.CHARIOW_TEST_PRODUCT_ID && product_id === process.env.CHARIOW_TEST_PRODUCT_ID) ||
+      /\b(test|sandbox|essai)\b/i.test(String(plan_name || ''))
+
+    if (isTestCheckout) {
+      const { data: isSuperAdmin } = await supabase.rpc('is_super_admin')
+      if (!isOwnerEmail(user.email) && !isSuperAdmin) {
+        return NextResponse.json({ error: 'Offre de test réservée au propriétaire.' }, { status: 403 })
+      }
     }
 
     const rawName = (roleData.full_name || (user.user_metadata?.full_name as string) || '').trim()

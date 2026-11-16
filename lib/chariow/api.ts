@@ -99,7 +99,7 @@ export async function getChariowProducts(): Promise<ChariowProduct[]> {
         'Authorization': `Bearer ${CHARIOW_API_KEY}`,
         'Content-Type': 'application/json'
       },
-      next: { revalidate: 3600 } // Cache pendant 1h
+      next: { revalidate: 60 } // Rafraîchit le catalogue toutes les minutes
     })
 
     if (!res.ok) {

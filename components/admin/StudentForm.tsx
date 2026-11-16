@@ -15,6 +15,7 @@ type Props = {
 export function StudentForm({ classes }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [submittingAction, setSubmittingAction] = useState<'save' | 'stay' | null>(null)
   const [error, setError] = useState<string | null>(null)
   
   const [bDay, setBDay] = useState('')
@@ -31,28 +32,36 @@ export function StudentForm({ classes }: Props) {
   ]
   const days = Array.from({length: 31}, (_, i) => (i + 1).toString().padStart(2, '0'))
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
-    const formData = new FormData(e.currentTarget)
-    const submitter = e.nativeEvent.submitter;
-    if (submitter && submitter.name === 'stay_on_page') {
-      formData.append('stay_on_page', 'true');
+    const form = e.currentTarget
+    const formData = new FormData(form)
+    const nativeEvt = e.nativeEvent as SubmitEvent | undefined
+    const submitter = nativeEvt?.submitter as HTMLButtonElement | null
+    const isStay = submitter?.name === 'stay_on_page'
+    if (isStay) {
+      formData.append('stay_on_page', 'true')
     }
-    
+    setSubmittingAction(isStay ? 'stay' : 'save')
+
     startTransition(async () => {
-      const result = await createStudent(null, formData)
-      if (result?.error) {
-        setError(result.error)
-        toast.error(result.error)
-      } else {
-        toast.success("Élève inscrit avec succès !")
-        if (submitter && submitter.name === 'stay_on_page') {
-          e.target.reset();
-          setBDay('');
-          setBMonth('');
-          setBYear('');
+      try {
+        const result = await createStudent(null, formData)
+        if (result?.error) {
+          setError(result.error)
+          toast.error(result.error)
+        } else {
+          toast.success("Élève inscrit avec succès !")
+          if (isStay) {
+            form.reset()
+            setBDay('')
+            setBMonth('')
+            setBYear('')
+          }
         }
+      } finally {
+        setSubmittingAction(null)
       }
     })
   }
@@ -310,16 +319,24 @@ export function StudentForm({ classes }: Props) {
             className="w-full sm:w-auto h-[48px] px-6 rounded-lg bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] font-semibold text-sm hover:bg-[var(--color-surface-container-highest)] transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 border border-[var(--color-outline-variant)]" 
             type="submit"
           >
-            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            Enregistrer et Nouveau
+            {isPending && submittingAction === 'stay' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+            {isPending && submittingAction === 'stay' ? 'Enregistrement...' : 'Enregistrer et Nouveau'}
           </button>
           <button 
             disabled={isPending}
             className="w-full sm:w-auto h-[48px] px-6 rounded-lg bg-[var(--color-primary)] text-white font-semibold text-sm hover:opacity-90 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-50" 
             type="submit"
           >
-            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {isPending ? 'Enregistrement...' : "Enregistrer l'élève"}
+            {isPending && submittingAction === 'save' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            {isPending && submittingAction === 'save' ? 'Enregistrement...' : "Enregistrer l'élève"}
           </button>
         </div>
       </form>

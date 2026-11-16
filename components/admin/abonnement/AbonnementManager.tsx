@@ -3,14 +3,16 @@
 import { useState } from 'react'
 import { ChariowProduct } from '@/lib/chariow/api'
 import { ChariowCheckout } from './ChariowCheckout'
-import { CheckCircle2, PackageX } from 'lucide-react'
+import { CheckCircle2, PackageX, FlaskConical } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 type Props = {
   plans: ChariowProduct[]
+  testPlan?: ChariowProduct | null
+  isOwnerTester?: boolean
 }
 
-export function AbonnementManager({ plans }: Props) {
+export function AbonnementManager({ plans, testPlan = null, isOwnerTester = false }: Props) {
   const [selectedPlan, setSelectedPlan] = useState<ChariowProduct | null>(null)
 
   // S'il n'y a pas de plans retournés par l'API (ex: clé non configurée)
@@ -146,6 +148,46 @@ export function AbonnementManager({ plans }: Props) {
         </div>
 
       </div>
+
+      {/* Espace Recette réservé exclusivement au Propriétaire / Super Admin */}
+      {isOwnerTester && (
+        <div className="mt-8 max-w-5xl mx-auto rounded-2xl border border-dashed border-amber-300 bg-amber-50/70 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+              <FlaskConical className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-sm font-bold text-amber-950">
+                  Mode Recette Paiement (Propriétaire uniquement)
+                </h4>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-200/80 text-amber-900">
+                  Invisible pour les écoles
+                </span>
+              </div>
+              {testPlan ? (
+                <p className="text-xs text-amber-900/90 mt-1">
+                  Produit Chariow détecté : <strong>{testPlan.name}</strong> ({Number(testPlan.price).toLocaleString('fr-FR')} {testPlan.currency || 'FCFA'}). Teste tout le tunnel Mobile Money réel jusqu&apos;à l&apos;activation à coût réduit.
+                </p>
+              ) : (
+                <p className="text-xs text-amber-900/90 mt-1">
+                  Pour tester à moindre coût (ex. <strong>100 FCFA</strong>) sans frais élevés : crée un produit actif nommé <strong>« Plan Test SCOGESTIA »</strong> à 100 FCFA dans ton dashboard Chariow — il apparaîtra ici automatiquement sous 1 minute pour toi seul.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {testPlan && (
+            <button
+              type="button"
+              onClick={() => setSelectedPlan(testPlan)}
+              className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition-colors shrink-0 cursor-pointer"
+            >
+              Tester ({Number(testPlan.price).toLocaleString('fr-FR')} {testPlan.currency || 'FCFA'})
+            </button>
+          )}
+        </div>
+      )}
 
       {selectedPlan && (
         <ChariowCheckout
