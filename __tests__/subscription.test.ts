@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { getSchoolSubscriptionStatus, assertActiveSubscription, inferPlanDetails } from '../lib/subscription';
+import { isBillingTestEmail, isOwnerEmail } from '../lib/owner';
+import { isTestChariowProduct, partitionChariowProducts } from '../lib/chariow/api';
 
 function createTableMock(tables: Record<string, any>) {
   return {
@@ -165,5 +167,30 @@ describe('SaaS Subscription & Multi-Tenant Entitlements', () => {
       monthsToAdd: 12,
       isPro: true,
     });
+  });
+
+  it('keeps low-price or test Chariow products hidden from schools and out of Plan Annuel', () => {
+    const products = [
+      { id: 'std', name: 'SCOGESTIA - Plan Standard', price: 7000, currency: 'FCFA', status: 'active' },
+      { id: 'pro', name: 'SCOGESTIA - Plan Pro', price: 9900, currency: 'FCFA', status: 'active' },
+      { id: 'low-ann', name: 'SCOGESTIA - Plan Annuel', price: 599, currency: 'FCFA', status: 'active' },
+    ];
+
+    expect(isTestChariowProduct(products[2])).toBe(true);
+    expect(isTestChariowProduct(products[0])).toBe(false);
+
+    const forNormalSchool = partitionChariowProducts(products, { canUseTestPlan: false });
+    expect(forNormalSchool.publicPlans.map((p) => p.id)).toEqual(['std', 'pro']);
+    expect(forNormalSchool.testPlan).toBeNull();
+
+    const forTester = partitionChariowProducts(products, { canUseTestPlan: true });
+    expect(forTester.publicPlans.map((p) => p.id)).toEqual(['std', 'pro']);
+    expect(forTester.testPlan?.id).toBe('low-ann');
+  });
+
+  it('authorizes configured billing test email without granting owner privileges', () => {
+    expect(isBillingTestEmail('alicisme30@gmail.com')).toBe(true);
+    expect(isOwnerEmail('alicisme30@gmail.com')).toBe(false);
+    expect(isBillingTestEmail('autre-ecole@exemple.com')).toBe(false);
   });
 });

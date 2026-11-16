@@ -15,6 +15,42 @@ export type ChariowProduct = {
   status: string
 }
 
+/**
+ * Détermine si un produit Chariow est un produit de test/recette (nom explicite ou prix <= 1 500 FCFA).
+ * Empêche qu'un produit de test (ex: 600 FCFA) ne remplace les vrais plans publics (Standard / Pro / Annuel).
+ */
+export function isTestChariowProduct(
+  product: Pick<ChariowProduct, 'id' | 'name' | 'price'>,
+  testProductId?: string | null,
+): boolean {
+  if (testProductId && product.id === testProductId) return true
+  const name = (product.name || '').trim()
+  if (/\b(test|sandbox|essai|demo)\b/i.test(name)) return true
+  return Number(product.price) > 0 && Number(product.price) <= 1500
+}
+
+/**
+ * Sépare les plans publics des éventuels produits de recette Chariow.
+ */
+export function partitionChariowProducts(
+  products: ChariowProduct[],
+  options: { canUseTestPlan: boolean; testProductId?: string | null },
+): { publicPlans: ChariowProduct[]; testPlan: ChariowProduct | null } {
+  const list = Array.isArray(products) ? products : []
+
+  const publicPlans = list.filter((p) => {
+    if (isTestChariowProduct(p, options.testProductId)) return false
+    const lower = (p?.name || '').toLowerCase()
+    return lower.includes('scogestia') || lower.includes('plan')
+  })
+
+  const testPlan = options.canUseTestPlan
+    ? list.find((p) => isTestChariowProduct(p, options.testProductId)) ?? null
+    : null
+
+  return { publicPlans, testPlan }
+}
+
 export type ChariowCheckoutParams = {
   product_id: string
   email: string

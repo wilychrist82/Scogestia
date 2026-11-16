@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service'
-import { createChariowCheckout, resolveChariowPhone } from '@/lib/chariow/api'
-import { isOwnerEmail } from '@/lib/owner'
+import { createChariowCheckout, isTestChariowProduct, resolveChariowPhone } from '@/lib/chariow/api'
+import { isBillingTestEmail } from '@/lib/owner'
 import {
   PENDING_CHECKOUT_COOKIE,
   signPendingCheckoutToken,
@@ -36,14 +36,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Produit et téléphone requis' }, { status: 400 })
     }
 
-    const isTestCheckout =
-      (process.env.CHARIOW_TEST_PRODUCT_ID && product_id === process.env.CHARIOW_TEST_PRODUCT_ID) ||
-      /\b(test|sandbox|essai)\b/i.test(String(plan_name || ''))
+    const isTestCheckout = isTestChariowProduct(
+      {
+        id: String(product_id),
+        name: String(plan_name || ''),
+        price: Number(body.amount) || 0,
+      },
+      process.env.CHARIOW_TEST_PRODUCT_ID,
+    )
 
     if (isTestCheckout) {
       const { data: isSuperAdmin } = await supabase.rpc('is_super_admin')
-      if (!isOwnerEmail(user.email) && !isSuperAdmin) {
-        return NextResponse.json({ error: 'Offre de test réservée au propriétaire.' }, { status: 403 })
+      if (!isBillingTestEmail(user.email) && !isSuperAdmin) {
+        return NextResponse.json({ error: 'Offre de test réservée aux comptes de recette autorisés.' }, { status: 403 })
       }
     }
 

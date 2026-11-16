@@ -149,7 +149,7 @@ export function AbonnementManager({ plans, testPlan = null, isOwnerTester = fals
 
       </div>
 
-      {/* Espace Recette réservé exclusivement au Propriétaire / Super Admin */}
+      {/* Espace Recette réservé exclusivement aux comptes de test / Propriétaire */}
       {isOwnerTester && (
         <div className="mt-8 max-w-5xl mx-auto rounded-2xl border border-dashed border-amber-300 bg-amber-50/70 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
@@ -159,19 +159,19 @@ export function AbonnementManager({ plans, testPlan = null, isOwnerTester = fals
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="text-sm font-bold text-amber-950">
-                  Mode Recette Paiement (Propriétaire uniquement)
+                  Mode Recette Paiement (Compte test autorisé)
                 </h4>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-200/80 text-amber-900">
-                  Invisible pour les écoles
+                  Invisible pour les autres écoles
                 </span>
               </div>
               {testPlan ? (
                 <p className="text-xs text-amber-900/90 mt-1">
-                  Produit Chariow détecté : <strong>{testPlan.name}</strong> ({Number(testPlan.price).toLocaleString('fr-FR')} {testPlan.currency || 'FCFA'}). Teste tout le tunnel Mobile Money réel jusqu&apos;à l&apos;activation à coût réduit.
+                  Produit Chariow de test détecté : <strong>{testPlan.name}</strong> ({Number(testPlan.price).toLocaleString('fr-FR')} {testPlan.currency || 'FCFA'}). Valide le paiement réel sur ce compte école pour vérifier le passage de « Essai Gratuit » à « Actif ».
                 </p>
               ) : (
                 <p className="text-xs text-amber-900/90 mt-1">
-                  Pour tester à moindre coût (ex. <strong>100 FCFA</strong>) sans frais élevés : crée un produit actif nommé <strong>« Plan Test SCOGESTIA »</strong> à 100 FCFA dans ton dashboard Chariow — il apparaîtra ici automatiquement sous 1 minute pour toi seul.
+                  Crée un produit distinct actif nommé <strong>« Plan Test SCOGESTIA »</strong> à <strong>600 FCFA</strong> dans ton dashboard Chariow (et veille à laisser le Plan Annuel à 80 900 FCFA) — il apparaîtra ici sous 1 minute pour tes comptes de test uniquement.
                 </p>
               )}
             </div>

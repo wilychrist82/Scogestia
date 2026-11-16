@@ -31,6 +31,7 @@ export default function AbonnementSuccessPage() {
 
         if (data.status === 'succeeded') {
           setStatus('success')
+          router.refresh()
         } else {
           // Si c'est toujours en pending, on retry max 10 fois (toutes les 3s)
           if (attempts < 10) {
@@ -48,7 +49,7 @@ export default function AbonnementSuccessPage() {
     }
 
     verifyPayment()
-  }, [saleId, attempts])
+  }, [saleId, attempts, router])
 
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)] flex items-center justify-center min-h-[calc(100vh-80px)]">

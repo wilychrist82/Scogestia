@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getChariowProducts } from '@/lib/chariow/api'
+import { getChariowProducts, partitionChariowProducts } from '@/lib/chariow/api'
 import { AbonnementManager } from '@/components/admin/abonnement/AbonnementManager'
-import { isOwnerEmail } from '@/lib/owner'
+import { isBillingTestEmail } from '@/lib/owner'
 
 export const dynamic = 'force-dynamic'
 
@@ -61,27 +61,13 @@ export default async function AbonnementPage() {
       supabase.rpc('is_super_admin'),
       getChariowProducts(),
     ])
-    const canUseTestPlan = isOwnerEmail(user.email) || Boolean(isSuperAdmin)
+    const canUseTestPlan = isBillingTestEmail(user.email) || Boolean(isSuperAdmin)
     const testProductId = process.env.CHARIOW_TEST_PRODUCT_ID
 
-    // Filtrer les plans officiels (en excluant tout produit de test du catalogue public)
-    const plans = Array.isArray(chariowProducts)
-      ? chariowProducts.filter((p) => {
-          const name = (p?.name || '').toLowerCase()
-          const isTest = (testProductId && p.id === testProductId) || /\b(test|sandbox|essai)\b/i.test(name)
-          return !isTest && (name.includes('scogestia') || name.includes('plan'))
-        })
-      : []
-
-    // Plan de recette à coût réduit (ex: 100 FCFA), visible STRICTEMENT par le propriétaire / Super Admin
-    const testPlan =
-      canUseTestPlan && Array.isArray(chariowProducts)
-        ? chariowProducts.find((p) => {
-            if (testProductId && p.id === testProductId) return true
-            const name = p?.name || ''
-            return /\b(test|sandbox|essai)\b/i.test(name)
-          }) ?? null
-        : null
+    const { publicPlans: plans, testPlan } = partitionChariowProducts(chariowProducts, {
+      canUseTestPlan,
+      testProductId,
+    })
 
     return (
       <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-[var(--color-surface)]">
