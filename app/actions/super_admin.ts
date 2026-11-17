@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { isOwnerEmail } from '@/lib/owner'
-import { inferPlanDetails } from '@/lib/subscription'
+import { formatSubscriptionPlanLabel, inferPlanDetails } from '@/lib/subscription'
 
 export type ActionState = {
   error?: string
@@ -47,8 +47,9 @@ export async function getSaaSDashboardMetrics() {
     let mrr = 0
     schools?.forEach(s => {
       if (s.subscription_status === 'active') {
-        if (s.subscription_plan === 'pro') mrr += 15000
-        if (s.subscription_plan === 'premium') mrr += 30000
+        if (s.subscription_plan === 'starter') mrr += 7000
+        else if (s.subscription_plan === 'pro') mrr += 9900
+        else if (s.subscription_plan === 'premium') mrr += Math.round(80900 / 12)
       }
     })
 
@@ -176,7 +177,9 @@ export async function reactivateOrExtendSchool(schoolId: string, days: number = 
 
     revalidatePath('/super_admin/ecoles')
     revalidatePath('/super_admin')
-    revalidatePath('/admin')
+    revalidatePath('/admin', 'layout')
+    revalidatePath('/admin/abonnement')
+    revalidatePath('/admin/eleves')
     revalidatePath('/enseignant')
     revalidatePath('/parent')
     return { success: true }
@@ -191,20 +194,68 @@ export async function updateSchoolPlan(schoolId: string, newPlan: string): Promi
     await verifySuperAdmin(supabase)
 
     const admin = createAdminClient()
-    const { maxStudents } = inferPlanDetails(newPlan)
+    const now = new Date()
+    const isResetToTrial = newPlan === 'trial'
+    const planDetails = inferPlanDetails(isResetToTrial ? 'starter' : newPlan)
+    const nextPlanName = isResetToTrial
+      ? 'Essai Gratuit'
+      : formatSubscriptionPlanLabel(newPlan, 'active')
+    const nextSubStatus = isResetToTrial ? 'trial' : 'active'
 
     const { error } = await admin
       .from('schools')
       .update({
-        subscription_plan: newPlan,
-        max_students: maxStudents,
-        updated_at: new Date().toISOString(),
+        subscription_status: 'active',
+        subscription_plan: planDetails.subscriptionPlan,
+        max_students: planDetails.maxStudents,
+        updated_at: now.toISOString(),
       })
       .eq('id', schoolId)
 
     if (error) throw new Error(`Erreur lors de la mise à jour: ${error.message}`)
 
+    // Synchroniser saas_subscriptions pour que quotas, durée et libellé soient alignés des deux côtés
+    try {
+      const { data: existingSub } = await admin
+        .from('saas_subscriptions')
+        .select('id, current_period_end')
+        .eq('school_id', schoolId)
+        .limit(1)
+        .maybeSingle()
+
+      const targetEndDate = isResetToTrial
+        ? new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
+        : new Date(
+            now.getTime() + (planDetails.monthsToAdd >= 12 ? 365 : 30) * 24 * 60 * 60 * 1000,
+          )
+
+      if (existingSub?.id) {
+        await admin
+          .from('saas_subscriptions')
+          .update({
+            status: nextSubStatus,
+            plan_name: nextPlanName,
+            current_period_end: targetEndDate.toISOString(),
+            updated_at: now.toISOString(),
+          })
+          .eq('id', existingSub.id)
+      } else {
+        await admin.from('saas_subscriptions').insert({
+          school_id: schoolId,
+          status: nextSubStatus,
+          plan_name: nextPlanName,
+          current_period_end: targetEndDate.toISOString(),
+        })
+      }
+    } catch {
+      // Non bloquant
+    }
+
     revalidatePath('/super_admin/ecoles')
+    revalidatePath('/super_admin')
+    revalidatePath('/admin', 'layout')
+    revalidatePath('/admin/abonnement')
+    revalidatePath('/admin/eleves')
     return { success: true }
   } catch (err: any) {
     return { error: err.message }

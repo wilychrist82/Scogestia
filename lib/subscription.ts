@@ -169,8 +169,13 @@ export async function getSchoolSubscriptionStatus(supabase: SupabaseClient | any
     if (isSubscriptionRecord && sub) {
       const resolvedPlanName = sub.plan_name || plan
       const resolvedPlanMeta = inferPlanDetails(resolvedPlanName)
-      const resolvedIsPro = isPro || resolvedPlanMeta.isPro
-      const resolvedMaxStudents = Math.max(maxStudents, resolvedPlanMeta.maxStudents)
+      const hasExplicitSubPlan = Boolean(sub.plan_name && sub.plan_name.trim())
+      const resolvedIsPro = hasExplicitSubPlan
+        ? resolvedPlanMeta.isPro
+        : isPro || resolvedPlanMeta.isPro
+      const resolvedMaxStudents = hasExplicitSubPlan
+        ? resolvedPlanMeta.maxStudents
+        : Math.max(maxStudents, resolvedPlanMeta.maxStudents)
 
       if (sub.status === 'expired') {
         return {

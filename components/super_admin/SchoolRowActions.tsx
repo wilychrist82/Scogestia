@@ -12,7 +12,8 @@ type Props = {
 }
 
 export function SchoolRowActions({ schoolId, currentPlan, currentStatus }: Props) {
-  const [plan, setPlan] = useState(currentPlan || 'starter')
+  const initialPlan = currentPlan === 'premium' ? 'annuel' : (currentPlan || 'starter')
+  const [plan, setPlan] = useState(initialPlan)
   const [status, setStatus] = useState(currentStatus || 'active')
   const [isPending, startTransition] = useTransition()
   const [actionType, setActionType] = useState<string | null>(null)
@@ -68,9 +69,10 @@ export function SchoolRowActions({ schoolId, currentPlan, currentStatus }: Props
         disabled={isPending}
         className="text-xs border border-gray-300 rounded-md py-1 px-2 bg-white focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] shadow-sm"
       >
-        <option value="starter">Starter</option>
-        <option value="pro">Pro</option>
-        <option value="premium">Premium</option>
+        <option value="trial">Essai Gratuit (14j)</option>
+        <option value="starter">Standard (200 · 1 mois)</option>
+        <option value="pro">Pro (400 · 1 mois)</option>
+        <option value="annuel">Annuel (Illimité · 1 an)</option>
       </select>
 
       {/* Bouton Sauvegarder le Plan */}

@@ -221,4 +221,28 @@ describe('SaaS Subscription & Multi-Tenant Entitlements', () => {
     expect(nextYear.getMonth()).toBe(10);
     expect(nextYear.getDate()).toBe(30);
   });
+
+  it('respects explicit plan switches including downgrade from Annuel to Standard quota', async () => {
+    const inThirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const mockSupabase = createTableMock({
+      schools: {
+        id: 'school-switch',
+        name: 'École Switch',
+        subscription_status: 'active',
+        subscription_plan: 'premium',
+        max_students: 999999,
+      },
+      saas_subscriptions: {
+        status: 'active',
+        plan_name: 'Plan Standard',
+        current_period_end: inThirtyDays,
+      },
+    });
+
+    const status = await getSchoolSubscriptionStatus(mockSupabase, 'school-switch');
+    expect(status.status).toBe('active');
+    expect(status.planName).toBe('Plan Standard');
+    expect(status.isPro).toBe(false);
+    expect(status.maxStudents).toBe(200);
+  });
 });

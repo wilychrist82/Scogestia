@@ -24,6 +24,7 @@ import {
   FileText
 } from 'lucide-react'
 import { saveOrShareBlob } from '@/lib/mobile-file-share'
+import { formatSubscriptionPlanLabel } from '@/lib/subscription'
 import { deleteStudent } from '@/app/actions/students'
 import { ImportStudentsModal } from './ImportStudentsModal'
 import { KpiCard } from './KpiCard'
@@ -252,11 +253,19 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
                       ? 'bg-emerald-50 text-emerald-800 ring-emerald-300'
                       : 'bg-slate-100 text-slate-800 ring-slate-300'
                   }`}>
-                    Plan {studentQuota.planName}
+                    {formatSubscriptionPlanLabel(studentQuota.planName)}
                   </span>
                 </div>
                 <p className="mt-0.5 text-xs font-medium text-slate-700">
-                  <strong className="font-extrabold text-slate-900">{studentQuota.current}</strong> sur <strong className="font-extrabold text-slate-900">{studentQuota.max}</strong> élèves inscrits ({Math.round((studentQuota.current / studentQuota.max) * 100)}%)
+                  {studentQuota.max >= 999999 ? (
+                    <>
+                      <strong className="font-extrabold text-slate-900">{studentQuota.current}</strong> élève{studentQuota.current > 1 ? 's' : ''} inscrit{studentQuota.current > 1 ? 's' : ''} · <strong className="font-extrabold text-emerald-700">Capacité illimitée</strong>
+                    </>
+                  ) : (
+                    <>
+                      <strong className="font-extrabold text-slate-900">{studentQuota.current}</strong> sur <strong className="font-extrabold text-slate-900">{studentQuota.max}</strong> élèves inscrits ({Math.round((studentQuota.current / studentQuota.max) * 100)}%)
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -272,29 +281,33 @@ export function StudentList({ students, classes, totalCount, currentPage, itemsP
               </Link>
             ) : (
               <span className="self-start rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 ring-1 ring-inset ring-emerald-300 sm:self-auto">
-                ✓ Quota Pro actif (400 max)
+                {studentQuota.max >= 999999
+                  ? '✓ Accès Illimité actif'
+                  : `✓ Quota Pro actif (${studentQuota.max} max)`}
               </span>
             )}
           </div>
 
           {/* Progress bar */}
-          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                (studentQuota.current / studentQuota.max) >= 0.95
-                  ? 'bg-rose-500'
-                  : (studentQuota.current / studentQuota.max) >= 0.75
-                    ? 'bg-amber-500'
-                    : 'bg-emerald-600'
-              }`}
-              style={{ width: `${Math.min(100, Math.round((studentQuota.current / studentQuota.max) * 100))}%` }}
-            />
-          </div>
+          {studentQuota.max < 999999 && (
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  (studentQuota.current / studentQuota.max) >= 0.95
+                    ? 'bg-rose-500'
+                    : (studentQuota.current / studentQuota.max) >= 0.75
+                      ? 'bg-amber-500'
+                      : 'bg-emerald-600'
+                }`}
+                style={{ width: `${Math.min(100, Math.round((studentQuota.current / studentQuota.max) * 100))}%` }}
+              />
+            </div>
+          )}
 
-          {studentQuota.current >= studentQuota.max && (
+          {studentQuota.max < 999999 && studentQuota.current >= studentQuota.max && (
             <p className="mt-2 flex items-center gap-1 text-xs font-bold text-rose-700">
               <AlertCircle size={13} />
-              Capacité maximale atteinte. Passez au Plan Pro pour continuer à inscrire des élèves.
+              Capacité maximale atteinte. Passez au Plan Pro ou Annuel pour continuer à inscrire des élèves.
             </p>
           )}
         </div>

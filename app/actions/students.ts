@@ -49,7 +49,7 @@ async function generateUniqueMatricule(supabase: any, school_id: string): Promis
   return (maxMatricule + 1).toString();
 }
 
-import { getSchoolSubscriptionStatus } from '@/lib/subscription';
+import { formatSubscriptionPlanLabel, getSchoolSubscriptionStatus } from '@/lib/subscription';
 
 async function checkStudentLimit(supabase: any, school_id: string, incomingCount: number = 1): Promise<void> {
   const subStatus = await getSchoolSubscriptionStatus(supabase, school_id);
@@ -59,6 +59,7 @@ async function checkStudentLimit(supabase: any, school_id: string, incomingCount
   }
 
   const limit = subStatus.maxStudents;
+  const planLabel = formatSubscriptionPlanLabel(subStatus.planName, subStatus.status);
 
   const { count, error } = await supabase
     .from('students')
@@ -70,9 +71,9 @@ async function checkStudentLimit(supabase: any, school_id: string, incomingCount
   const currentCount = count || 0;
   if (currentCount + incomingCount > limit) {
     if (incomingCount === 1) {
-       throw new Error(`Limite atteinte : Votre ${subStatus.isPro ? 'Plan Pro' : 'Plan Standard'} vous limite à ${limit} élèves. ${!subStatus.isPro ? 'Passez au Plan Pro pour accueillir jusqu\'à 400 élèves.' : 'Contactez le support pour une extension sur-mesure.'}`);
+       throw new Error(`Limite atteinte : Votre ${planLabel} vous limite à ${limit} élèves. ${!subStatus.isPro ? 'Passez au Plan Pro (400 élèves) ou Annuel (illimité).' : 'Passez au Plan Annuel pour un effectif illimité.'}`);
     } else {
-       throw new Error(`Limite atteinte : Vous essayez d'ajouter ${incomingCount} élèves, mais il ne vous reste que ${Math.max(0, limit - currentCount)} place(s) disponible(s) sur votre ${subStatus.isPro ? 'Plan Pro' : 'Plan Standard'} (${limit} max). ${!subStatus.isPro ? 'Passez au Plan Pro pour accueillir jusqu\'à 400 élèves.' : ''}`);
+       throw new Error(`Limite atteinte : Vous essayez d'ajouter ${incomingCount} élèves, mais il ne vous reste que ${Math.max(0, limit - currentCount)} place(s) disponible(s) sur votre ${planLabel} (${limit} max).`);
     }
   }
 }
