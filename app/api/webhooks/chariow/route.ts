@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
-import crypto from 'crypto'
 import { createServiceRoleClient } from '@/lib/supabase/service'
 import { reconcileChariowPayment } from '@/lib/chariow/reconcile'
+import { verifyChariowWebhookRequest } from '@/lib/chariow/webhook'
 import { webhookRateLimit, checkRateLimit } from '@/lib/ratelimit'
 
 export const dynamic = 'force-dynamic'
@@ -15,35 +15,6 @@ const SUCCESS_EVENTS = [
   'purchase.completed',
 ]
 
-function verifyWebhookSecret(req: Request, rawBody: string, secret: string): boolean {
-  const headerSecret =
-    req.headers.get('x-chariow-secret') ||
-    req.headers.get('x-webhook-secret')
-
-  if (headerSecret) {
-    const a = Buffer.from(headerSecret)
-    const b = Buffer.from(secret)
-    return a.length === b.length && crypto.timingSafeEqual(a, b)
-  }
-
-  const signature =
-    req.headers.get('x-chariow-signature') ||
-    req.headers.get('x-webhook-signature')
-
-  if (signature) {
-    const cleanSig = signature.replace(/^sha256=/i, '').trim()
-    const expectedHmac = crypto
-      .createHmac('sha256', secret)
-      .update(rawBody)
-      .digest('hex')
-    const a = Buffer.from(cleanSig)
-    const b = Buffer.from(expectedHmac)
-    return a.length === b.length && crypto.timingSafeEqual(a, b)
-  }
-
-  return false
-}
-
 export async function POST(req: Request) {
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1'
@@ -53,8 +24,15 @@ export async function POST(req: Request) {
     }
 
     const rawBody = await req.text()
-    const webhookSecret = process.env.CHARIOW_WEBHOOK_SECRET
-    if (webhookSecret && !verifyWebhookSecret(req, rawBody, webhookSecret)) {
+    const configuredSecrets = [
+      process.env.CHARIOW_WEBHOOK_SECRET || '',
+      process.env.CHARIOW_PULSE_SIGNING_SECRET || '',
+    ].filter(Boolean)
+
+    if (
+      configuredSecrets.length > 0 &&
+      !verifyChariowWebhookRequest(req, rawBody, configuredSecrets)
+    ) {
       console.warn('[Chariow Webhook] Signature ou secret invalide depuis', ip)
       return NextResponse.json({ error: 'Signature invalide' }, { status: 401 })
     }
@@ -69,7 +47,7 @@ export async function POST(req: Request) {
 
     let body: ChariowWebhookPayload | null = null
     try {
-      body = JSON.parse(rawBody) as ChariowWebhookPayload
+      body = rawBody ? (JSON.parse(rawBody) as ChariowWebhookPayload) : {}
     } catch {
       return NextResponse.json({ error: 'JSON invalide' }, { status: 400 })
     }
@@ -77,15 +55,16 @@ export async function POST(req: Request) {
     const event = (body?.event || req.headers.get('x-pulse-event') || '').trim().toLowerCase()
     const payloadData = body?.data ?? body
 
+    // Accepter proprement les pings / tests Chariow sans erreur 400
     if (!event || !payloadData) {
-      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+      return NextResponse.json({ received: true, ignored: true }, { status: 200 })
     }
 
     if (SUCCESS_EVENTS.includes(event)) {
       const saleId = payloadData.sale?.id || payloadData.purchase?.id || payloadData.id
 
-      if (!saleId) {
-        return NextResponse.json({ error: 'No sale ID found' }, { status: 400 })
+      if (!saleId || String(saleId).startsWith('test_')) {
+        return NextResponse.json({ received: true, test: true }, { status: 200 })
       }
 
       const supabaseAdmin = createServiceRoleClient()
