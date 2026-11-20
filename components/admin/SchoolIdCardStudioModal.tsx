@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { SchoolIdCardTogoPreview } from '@/components/admin/SchoolIdCardTogoPreview'
+import type { CardTemplateId } from '@/lib/pdf/togo-iepp-card'
 import {
   X,
   Camera,
@@ -569,6 +571,11 @@ export function SchoolIdCardStudioModal({
     toast.success('Polices, tailles et couleurs réinitialisées au modèle officiel !')
   }
 
+  // Modèle sélectionné ('classic' = Thèmes Studio MEPST, 'togo_iepp' = Modèle Officiel IEPP / Centre d'écrit)
+  const [cardTemplate, setCardTemplate] = useState<CardTemplateId>('classic')
+  const [showTogoStampAuto, setShowTogoStampAuto] = useState<boolean>(true)
+  const photoInputRef = useRef<HTMLInputElement | null>(null)
+
   // Champs 100% modifiables de la carte (si un champ est vidé, il reste blanc sur la carte)
   const [ministryAcronym, setMinistryAcronym] = useState('MEPST')
   const [republicTitle, setRepublicTitle] = useState('REPUBLIQUE TOGOLAISE')
@@ -891,6 +898,12 @@ export function SchoolIdCardStudioModal({
       const saved = window.localStorage.getItem(STORAGE_KEY)
       if (saved) {
         const parsed = JSON.parse(saved)
+        if (parsed.cardTemplate === 'togo_iepp' || parsed.cardTemplate === 'classic') {
+          setCardTemplate(parsed.cardTemplate)
+        }
+        if (typeof parsed.showTogoStampAuto === 'boolean') {
+          setShowTogoStampAuto(parsed.showTogoStampAuto)
+        }
         if (parsed.ministryAcronym !== undefined) setMinistryAcronym(parsed.ministryAcronym)
         if (parsed.republicTitle !== undefined) setRepublicTitle(parsed.republicTitle)
         if (parsed.republicMotto !== undefined) setRepublicMotto(parsed.republicMotto)
@@ -919,6 +932,8 @@ export function SchoolIdCardStudioModal({
   }, [])
 
   const persistHeaderConfig = (overrides?: {
+    cardTemplate?: CardTemplateId
+    showTogoStampAuto?: boolean
     logoUrl?: string
     stampUrl?: string
     signatureUrl?: string
@@ -928,6 +943,12 @@ export function SchoolIdCardStudioModal({
       window.localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({
+          cardTemplate:
+            overrides?.cardTemplate !== undefined ? overrides.cardTemplate : cardTemplate,
+          showTogoStampAuto:
+            overrides?.showTogoStampAuto !== undefined
+              ? overrides.showTogoStampAuto
+              : showTogoStampAuto,
           ministryAcronym,
           republicTitle,
           republicMotto,
@@ -1302,9 +1323,11 @@ export function SchoolIdCardStudioModal({
     republicMotto: republicMotto.trim(),
     cardBannerTitle: cardBannerTitle.trim(),
     hideFallbackEmblem: !showVectorEmblemIfNoLogo,
-    hideFallbackStamp: !showVectorStampIfNoStamp,
+    hideFallbackStamp:
+      cardTemplate === 'togo_iepp' ? !showTogoStampAuto : !showVectorStampIfNoStamp,
     themeBackgroundUrl: activeTheme?.url || null,
     typography: typographyConfig,
+    cardTemplate,
   })
 
   // Génère soit tous les lots de 10 (ex: 47 élèves -> 10, 10, 10, 10, 7), soit un lot spécifique de 10 (ou le reste)
@@ -1421,6 +1444,137 @@ export function SchoolIdCardStudioModal({
 
         {/* Contenu Principal Défilant */}
         <div className={mode === 'embedded' ? 'p-4 sm:p-5 space-y-5 bg-slate-50/70' : 'flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 bg-slate-50/70'}>
+          {/* SÉLECTEUR DU MODÈLE DE CARTE SCOLAIRE (AU MOINS 2 MODÈLES AU CHOIX) */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div>
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
+                  <IdCard className="h-4 w-4 text-indigo-600" />
+                  Choix du modèle de carte scolaire
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Choisissez le modèle souhaité puis complétez l&apos;IEPP, le centre d&apos;écrit et la photo de chaque élève.
+                </p>
+              </div>
+              <span className="text-[10.5px] font-bold text-indigo-800 bg-indigo-50 border border-indigo-200/80 px-2.5 py-1 rounded-full">
+                2 modèles disponibles
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Modèle 1 : Classique Studio MEPST */}
+              <button
+                type="button"
+                onClick={() => {
+                  setCardTemplate('classic')
+                  persistHeaderConfig({ cardTemplate: 'classic' })
+                  toast.success('Modèle 1 (Classique Studio / Thèmes) sélectionné !')
+                }}
+                className={`text-left rounded-xl border p-3 transition-all flex items-center gap-3.5 ${
+                  cardTemplate === 'classic'
+                    ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-600/20 shadow-xs'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                }`}
+              >
+                {/* Miniature visuelle Modèle 1 */}
+                <div className="w-20 h-12 shrink-0 rounded-md p-[2px] bg-[#007A33] shadow-2xs overflow-hidden">
+                  <div className="h-full w-full rounded-[2px] border-[1.5px] border-[#FFCE00] bg-[#EEF4FA] p-1 flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="h-2 w-2 rounded-full bg-emerald-700" />
+                      <span className="h-1.5 w-9 rounded-full bg-red-600" />
+                      <span className="h-1.5 w-3 rounded-[1px] bg-amber-500" />
+                    </div>
+                    <div className="h-2 w-full rounded-xs bg-[#FDE0C6] border border-slate-300" />
+                    <div className="flex gap-1 items-center">
+                      <span className="h-3.5 w-3 rounded-[1px] bg-slate-300" />
+                      <div className="flex-1 space-y-0.5">
+                        <span className="block h-1 w-10 bg-slate-700 rounded-full" />
+                        <span className="block h-1 w-7 bg-slate-400 rounded-full" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-extrabold text-slate-900">
+                      Modèle 1 : Classique Studio
+                    </span>
+                    <span
+                      className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 ${
+                        cardTemplate === 'classic'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {cardTemplate === 'classic' ? 'Sélectionné' : 'Choisir'}
+                    </span>
+                  </div>
+                  <p className="text-[10.5px] text-slate-600 mt-1 line-clamp-2">
+                    Cadre Togo vert/or, en-tête MEPST/DRE personnalisable et fonds multi-thèmes.
+                  </p>
+                </div>
+              </button>
+
+              {/* Modèle 2 : Officiel IEPP / Centre d'écrit Togo */}
+              <button
+                type="button"
+                onClick={() => {
+                  setCardTemplate('togo_iepp')
+                  persistHeaderConfig({ cardTemplate: 'togo_iepp' })
+                  toast.success("Modèle 2 (Officiel IEPP / Centre d'écrit) sélectionné !")
+                }}
+                className={`text-left rounded-xl border p-3 transition-all flex items-center gap-3.5 ${
+                  cardTemplate === 'togo_iepp'
+                    ? 'border-[#9E053F] bg-rose-50/40 ring-2 ring-[#9E053F]/20 shadow-xs'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                }`}
+              >
+                {/* Miniature visuelle Modèle 2 */}
+                <div className="w-20 h-12 shrink-0 rounded-md border border-slate-300 bg-[#FFFDF9] p-1 shadow-2xs relative overflow-hidden flex flex-col justify-between">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
+                    <div className="flex-1 flex flex-col items-center gap-[1.5px]">
+                      <span className="h-1 w-6 rounded-full bg-[#0E1B52]" />
+                      <span className="h-1.5 w-10 rounded-full bg-[#9E053F]" />
+                      <span className="h-1 w-8 rounded-full bg-amber-200 border border-amber-500" />
+                    </div>
+                    <span className="h-2.5 w-3.5 rounded-[1px] bg-gradient-to-b from-[#006C3E] via-[#FACC15] to-[#006C3E]" />
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-[#071E58] border border-amber-400" />
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="h-3.5 w-3 rounded-[2px] border border-[#9E053F] bg-slate-200" />
+                    <div className="flex-1 space-y-0.5">
+                      <span className="block h-1 w-9 bg-[#0E1B52] rounded-full" />
+                      <span className="block h-1 w-7 bg-slate-400 rounded-full" />
+                    </div>
+                    <span className="h-4 w-2 rounded-xs bg-rose-200 border border-rose-400" />
+                  </div>
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-extrabold text-slate-900">
+                      Modèle 2 : Officiel IEPP (Togo)
+                    </span>
+                    <span
+                      className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 ${
+                        cardTemplate === 'togo_iepp'
+                          ? 'bg-[#9E053F] text-white'
+                          : 'bg-amber-100 text-amber-900'
+                      }`}
+                    >
+                      {cardTemplate === 'togo_iepp' ? 'Sélectionné' : 'Nouveau'}
+                    </span>
+                  </div>
+                  <p className="text-[10.5px] text-slate-600 mt-1 line-clamp-2">
+                    IEPP au choix (Lacs-Ouest, Lacs-Est...), Centre d&apos;écrit, Matricule, cases Sexe auto &amp; QR Code.
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
+
           {/* SECTION 1 : Personnalisation Intégrale de la Carte + Aperçu en Direct + Édition Élève par Élève */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
             {/* COLONNE GAUCHE (5 cols) : Paramètres Globaux de la Carte + Cachet / Signature / Logo */}
@@ -1437,54 +1591,97 @@ export function SchoolIdCardStudioModal({
 
               {/* Grille des textes modifiables de la carte */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Sigle Ministère (Haut Gauche)
-                  </label>
-                  <input
-                    type="text"
-                    value={ministryAcronym}
-                    onChange={(e) => setMinistryAcronym(e.target.value)}
-                    placeholder="Ex: MEPST (ou laisser vide)"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-extrabold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
-                  />
-                </div>
+                {cardTemplate === 'classic' && (
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Sigle Ministère (Haut Gauche)
+                    </label>
+                    <input
+                      type="text"
+                      value={ministryAcronym}
+                      onChange={(e) => setMinistryAcronym(e.target.value)}
+                      placeholder="Ex: MEPST (ou laisser vide)"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-extrabold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
+                    />
+                  </div>
+                )}
 
-                <div>
+                <div className={cardTemplate === 'togo_iepp' ? 'sm:col-span-2' : ''}>
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Inspection / DRE / IEPP
+                    IEPP / Inspection / DRE
                   </label>
                   <input
                     type="text"
                     value={inspectionName}
                     onChange={(e) => setInspectionName(e.target.value)}
-                    placeholder="Ex: IEPP LACS-OUEST (ou vide)"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-indigo-950 focus:border-indigo-600 focus:bg-white outline-none"
+                    placeholder="Ex: IEPP LACS-OUEST, IEPP LACS-EST..."
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-extrabold text-[#0E1B52] focus:border-indigo-600 focus:bg-white outline-none"
                   />
+                  {cardTemplate === 'togo_iepp' && (
+                    <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                      <span className="text-[10px] text-slate-500 font-semibold mr-0.5">
+                        Exemples :
+                      </span>
+                      {[
+                        'IEPP LACS-OUEST',
+                        'IEPP LACS-EST',
+                        'IEPP LACS-SUD',
+                        'IEPP LOMÉ-GOLFE',
+                        'IEPP',
+                      ].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setInspectionName(preset)}
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
+                            inspectionName.trim().toUpperCase() === preset
+                              ? 'bg-[#0E1B52] text-white border-[#0E1B52]'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="sm:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Nom de l&apos;Établissement (en rouge au centre)
+                    {cardTemplate === 'togo_iepp'
+                      ? "Nom de l'Établissement (mis en valeur sur bandeau bordeaux)"
+                      : "Nom de l'Établissement (en rouge au centre)"}
                   </label>
                   <input
                     type="text"
                     value={schoolNameOverride}
                     onChange={(e) => setSchoolNameOverride(e.target.value)}
                     placeholder="Ex: EPP AGBODANKOPE / EPL LE ROI"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-extrabold uppercase text-red-700 focus:border-indigo-600 focus:bg-white outline-none"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-extrabold uppercase text-[#9E053F] focus:border-indigo-600 focus:bg-white outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Centre d&apos;Écrit (ou vide)
-                  </label>
+                  <div className="flex items-center justify-between gap-1 mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700">
+                      Centre d&apos;Écrit (à compléter)
+                    </label>
+                    {cardTemplate === 'togo_iepp' && examCenter.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => setExamCenter('')}
+                        className="text-[10px] font-bold text-amber-700 hover:underline"
+                        title="Vider pour afficher des pointillés à compléter plus tard"
+                      >
+                        Pointillés
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="text"
                     value={examCenter}
                     onChange={(e) => setExamCenter(e.target.value)}
-                    placeholder="Ex: Agbodankopé (ou laisser vide)"
+                    placeholder="Laisser vide = ....... (à compléter)"
                     className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-blue-900 focus:border-indigo-600 focus:bg-white outline-none"
                   />
                 </div>
@@ -1497,14 +1694,16 @@ export function SchoolIdCardStudioModal({
                     type="text"
                     value={cardAcademicYear}
                     onChange={(e) => setCardAcademicYear(e.target.value)}
-                    placeholder="Ex: 2025-2026"
+                    placeholder="Ex: 2026-2027"
                     className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-red-800 focus:border-indigo-600 focus:bg-white outline-none"
                   />
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Nom du Directeur (Bas Droite)
+                    {cardTemplate === 'togo_iepp'
+                      ? "Nom du Chef d'établissement"
+                      : 'Nom du Directeur (Bas Droite)'}
                   </label>
                   <input
                     type="text"
@@ -1523,36 +1722,40 @@ export function SchoolIdCardStudioModal({
                     type="text"
                     value={cardBannerTitle}
                     onChange={(e) => setCardBannerTitle(e.target.value)}
-                    placeholder="CARTE D'IDENTITE SCOLAIRE"
+                    placeholder="CARTE D'IDENTITÉ SCOLAIRE"
                     className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-blue-900 focus:border-indigo-600 focus:bg-white outline-none"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Mention République (Haut Droite)
-                  </label>
-                  <input
-                    type="text"
-                    value={republicTitle}
-                    onChange={(e) => setRepublicTitle(e.target.value)}
-                    placeholder="REPUBLIQUE TOGOLAISE"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
-                  />
-                </div>
+                {cardTemplate === 'classic' && (
+                  <>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Mention République (Haut Droite)
+                      </label>
+                      <input
+                        type="text"
+                        value={republicTitle}
+                        onChange={(e) => setRepublicTitle(e.target.value)}
+                        placeholder="REPUBLIQUE TOGOLAISE"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Devise Nationale (Haut Droite)
-                  </label>
-                  <input
-                    type="text"
-                    value={republicMotto}
-                    onChange={(e) => setRepublicMotto(e.target.value)}
-                    placeholder="Travail-Liberté-Patrie"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
-                  />
-                </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Devise Nationale (Haut Droite)
+                      </label>
+                      <input
+                        type="text"
+                        value={republicMotto}
+                        onChange={(e) => setRepublicMotto(e.target.value)}
+                        placeholder="Travail-Liberté-Patrie"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Bloc Logo, Cachet du Directeur & Signature (Synchronisés avec Paramètres + Import direct) */}
@@ -1665,9 +1868,13 @@ export function SchoolIdCardStudioModal({
                           type="button"
                           onClick={() => {
                             setStampUrl('')
-                            persistHeaderConfig({ stampUrl: '' })
+                            persistHeaderConfig({
+                              stampUrl: '',
+                              showTogoStampAuto: false,
+                            })
                             updateSchoolAssetUrl('stamp', null)
                             setShowVectorStampIfNoStamp(false)
+                            setShowTogoStampAuto(false)
                           }}
                           className="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
                           title="Retirer le cachet (laisser blanc)"
@@ -1680,8 +1887,20 @@ export function SchoolIdCardStudioModal({
                       <label className="mt-1 flex items-center gap-1 text-[9.5px] text-slate-600 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={showVectorStampIfNoStamp}
-                          onChange={(e) => setShowVectorStampIfNoStamp(e.target.checked)}
+                          checked={
+                            cardTemplate === 'togo_iepp'
+                              ? showTogoStampAuto
+                              : showVectorStampIfNoStamp
+                          }
+                          onChange={(e) => {
+                            const checked = e.target.checked
+                            if (cardTemplate === 'togo_iepp') {
+                              setShowTogoStampAuto(checked)
+                              persistHeaderConfig({ showTogoStampAuto: checked })
+                            } else {
+                              setShowVectorStampIfNoStamp(checked)
+                            }
+                          }}
                         />
                         Cachet auto
                       </label>
@@ -2235,6 +2454,40 @@ export function SchoolIdCardStudioModal({
                 </div>
               </div>
 
+              {cardTemplate === 'togo_iepp' ? (
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-rose-200/80 bg-rose-50/50 px-3.5 py-2 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-[#9E053F]" />
+                      <span className="text-xs font-extrabold text-[#0E1B52]">
+                        Modèle 2 : Officiel IEPP / Centre d&apos;écrit
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-semibold text-rose-900/90">
+                      Cliquez sur &laquo; PHOTO DE L&apos;ÉLÈVE &raquo; ou le bouton ci-dessous pour compléter la photo
+                    </span>
+                  </div>
+
+                  <SchoolIdCardTogoPreview
+                    student={activeStudent}
+                    inspectionName={inspectionName}
+                    schoolName={schoolNameOverride}
+                    examCenter={examCenter}
+                    cardBannerTitle={cardBannerTitle}
+                    academicYear={cardAcademicYear}
+                    className={classNameOverride || className}
+                    directorName={directorName}
+                    logoUrl={logoUrl}
+                    stampUrl={stampUrl}
+                    signatureUrl={signatureUrl}
+                    showVectorEmblemIfNoLogo={showVectorEmblemIfNoLogo}
+                    showVectorStampIfNoStamp={showTogoStampAuto}
+                    typography={typographyConfig}
+                    onPhotoTrigger={() => photoInputRef.current?.click()}
+                  />
+                </div>
+              ) : (
+                <>
               {/* NAVIGATION DU THÈME (UNIQUEMENT PAR FLÈCHES PRÉCÉDENT / SUIVANT — SANS BOUCLER AU DÉBUT) */}
               <div className="rounded-xl border border-slate-200/90 bg-slate-50/70 px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -2657,6 +2910,8 @@ export function SchoolIdCardStudioModal({
                   </div>
                 </div>
               </div>
+              </>
+              )}
 
               {/* FORMULAIRE DE SAISIE RAPIDE DE L'ÉLÈVE ACTIF + BOUTONS « ENREGISTRER » & « SUIVANT » */}
               <div className="rounded-xl border border-indigo-200/80 bg-indigo-50/40 p-3.5 space-y-3">
@@ -2673,6 +2928,7 @@ export function SchoolIdCardStudioModal({
 
                   <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl bg-white border border-indigo-200 px-3 py-1.5 text-xs font-extrabold text-indigo-800 hover:bg-indigo-50 shadow-2xs transition-colors">
                     <input
+                      ref={photoInputRef}
                       type="file"
                       accept="image/*"
                       className="hidden"

@@ -1,5 +1,8 @@
 import jsPDF from 'jspdf'
 import { saveOrSharePdf as shareOrSavePdf } from '@/lib/mobile-file-share'
+import { drawTogoIeppIdCardRecto, type CardTemplateId } from '@/lib/pdf/togo-iepp-card'
+
+export type { CardTemplateId }
 
 export type CardFontFamily =
   | 'times'
@@ -125,6 +128,7 @@ export interface StudentDocumentData {
   hideFallbackStamp?: boolean
   themeBackgroundUrl?: string | null
   typography?: CardTypographyConfig | null
+  cardTemplate?: CardTemplateId
 }
 
 /**
@@ -477,8 +481,7 @@ export async function generateSchoolCertificatePDF(data: StudentDocumentData) {
     ['N° Matricule :', data.matricule],
     [
       'Date et lieu de naissance :',
-      `${data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString('fr-FR') : 'Non renseignée'}${
-        data.birthPlace ? ` à ${data.birthPlace}` : ''
+      `${data.dateOfBirth ? new Date(data.dateOfBirth).toLocaleDateString('fr-FR') : 'Non renseignée'}${data.birthPlace ? ` à ${data.birthPlace}` : ''
       }`,
     ],
     ['Sexe :', data.gender === 'F' ? 'Féminin' : data.gender === 'M' ? 'Masculin' : 'Non renseigné'],
@@ -768,6 +771,16 @@ function drawStudentIdCardRecto(
     themeDataUrl?: string | null
   }
 ) {
+  if (data.cardTemplate === 'togo_iepp') {
+    drawTogoIeppIdCardRecto(doc, data, cardX, cardY, cardW, cardH, {
+      photoDataUrl: assets.photoDataUrl,
+      logoDataUrl: assets.logoDataUrl,
+      stampDataUrl: assets.stampDataUrl,
+      signatureDataUrl: assets.signatureDataUrl,
+    })
+    return
+  }
+
   const typo: CardTypographyConfig = {
     ...DEFAULT_CARD_TYPOGRAPHY,
     ...(data.typography || {}),
@@ -1617,10 +1630,10 @@ function drawHonorRollPage(
       avg >= 16
         ? 'Mention : Très Bien'
         : avg >= 14
-        ? 'Mention : Bien'
-        : avg >= 12
-        ? 'Mention : Assez Bien'
-        : 'Mérite Scolaire'
+          ? 'Mention : Bien'
+          : avg >= 12
+            ? 'Mention : Assez Bien'
+            : 'Mérite Scolaire'
 
     doc.setFillColor(254, 249, 195)
     doc.setDrawColor(201, 162, 39)
@@ -1826,7 +1839,7 @@ export async function generateOfficialExamCandidatesPDF(
     doc.setTextColor(71, 85, 105)
     doc.text(
       [first.schoolCity, first.schoolPhone ? `Tél: ${first.schoolPhone}` : null].filter(Boolean).join(' • ') ||
-        'Établissement Scolaire Officiel',
+      'Établissement Scolaire Officiel',
       196,
       18,
       { align: 'right' }
@@ -1902,8 +1915,8 @@ export async function generateOfficialExamCandidatesPDF(
       const genderCode = (st.gender || '').toUpperCase().startsWith('F')
         ? 'F'
         : (st.gender || '').toUpperCase().startsWith('M')
-        ? 'M'
-        : '—'
+          ? 'M'
+          : '—'
       doc.text(genderCode, 124, y + 4.8, { align: 'center' })
 
       doc.setFont('helvetica', 'normal')
