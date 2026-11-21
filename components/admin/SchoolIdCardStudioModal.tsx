@@ -3,7 +3,73 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { SchoolIdCardTogoPreview } from '@/components/admin/SchoolIdCardTogoPreview'
 import { SchoolIdCardRibbon } from '@/components/admin/SchoolIdCardRibbon'
-import { sanitizeIeppText, type CardTemplateId } from '@/lib/pdf/togo-iepp-card'
+import {
+  FALLBACK_TOGO_TYPOGRAPHY,
+  sanitizeIeppText,
+  TOGO_DEFAULT_ZONE_COLORS,
+  type CardTemplateId,
+} from '@/lib/pdf/togo-iepp-card'
+
+function syncColorsForTemplate(
+  tpl: CardTemplateId,
+  prev: CardTypographyConfig
+): CardTypographyConfig {
+  const baseExam = prev.examCenter || FALLBACK_TOGO_TYPOGRAPHY.examCenter!
+  if (tpl === 'togo_iepp') {
+    return {
+      ...prev,
+      schoolName:
+        prev.schoolName.color.toUpperCase() === '#B41218'
+          ? { ...prev.schoolName, color: TOGO_DEFAULT_ZONE_COLORS.schoolName }
+          : prev.schoolName,
+      headerOfficial:
+        prev.headerOfficial.color.toUpperCase() === '#0F1D5F'
+          ? { ...prev.headerOfficial, uppercase: true, color: TOGO_DEFAULT_ZONE_COLORS.headerOfficial }
+          : prev.headerOfficial,
+      examCenter: baseExam,
+      bannerTitle:
+        prev.bannerTitle.color.toUpperCase() === '#122AB9'
+          ? {
+              ...prev.bannerTitle,
+              italic: false,
+              underline: false,
+              color: TOGO_DEFAULT_ZONE_COLORS.bannerTitle,
+            }
+          : prev.bannerTitle,
+      studentName:
+        prev.studentName.color.toUpperCase() === '#99121C'
+          ? { ...prev.studentName, color: TOGO_DEFAULT_ZONE_COLORS.studentName }
+          : prev.studentName,
+      footerInfo:
+        prev.footerInfo.color.toUpperCase() === '#A5181C'
+          ? { ...prev.footerInfo, italic: false, color: TOGO_DEFAULT_ZONE_COLORS.footerInfo }
+          : prev.footerInfo,
+    }
+  }
+  return {
+    ...prev,
+    schoolName:
+      prev.schoolName.color.toUpperCase() === TOGO_DEFAULT_ZONE_COLORS.schoolName
+        ? { ...prev.schoolName, color: '#B41218' }
+        : prev.schoolName,
+    headerOfficial:
+      prev.headerOfficial.color.toUpperCase() === TOGO_DEFAULT_ZONE_COLORS.headerOfficial
+        ? { ...prev.headerOfficial, uppercase: false, color: '#0F1D5F' }
+        : prev.headerOfficial,
+    bannerTitle:
+      prev.bannerTitle.color.toUpperCase() === TOGO_DEFAULT_ZONE_COLORS.bannerTitle
+        ? { ...prev.bannerTitle, italic: true, underline: true, color: '#122AB9' }
+        : prev.bannerTitle,
+    studentName:
+      prev.studentName.color.toUpperCase() === TOGO_DEFAULT_ZONE_COLORS.studentName
+        ? { ...prev.studentName, color: '#99121C' }
+        : prev.studentName,
+    footerInfo:
+      prev.footerInfo.color.toUpperCase() === TOGO_DEFAULT_ZONE_COLORS.footerInfo
+        ? { ...prev.footerInfo, italic: true, color: '#A5181C' }
+        : prev.footerInfo,
+  }
+}
 import {
   X,
   Camera,
@@ -214,6 +280,7 @@ const STORAGE_KEY = 'scogestia_idcard_studio_config_v3'
 type TypographyZoneKey =
   | 'schoolName'
   | 'headerOfficial'
+  | 'examCenter'
   | 'bannerTitle'
   | 'studentName'
   | 'studentDetails'
@@ -222,6 +289,7 @@ type TypographyZoneKey =
 const TYPOGRAPHY_ZONE_TABS: { key: TypographyZoneKey; label: string; basePt: number }[] = [
   { key: 'schoolName', label: "Nom de l'École", basePt: 9.5 },
   { key: 'headerOfficial', label: 'En-tête (MEPST, IEPP...)', basePt: 6.8 },
+  { key: 'examCenter', label: "Centre d'Écrit", basePt: 6.4 },
   { key: 'bannerTitle', label: 'Titre Bandeau', basePt: 7.1 },
   { key: 'studentName', label: 'Nom & Prénoms Élève', basePt: 7.8 },
   { key: 'studentDetails', label: 'Infos (Né le, Sexe)', basePt: 7.5 },
@@ -238,7 +306,9 @@ const FONT_FAMILY_OPTIONS: { value: CardFontFamily; label: string; cssFont: stri
 ]
 
 const QUICK_COLOR_PALETTE = [
+  { hex: '#006B38', name: 'Vert Impérial' },
   { hex: '#0F172A', name: 'Noir Officiel' },
+  { hex: '#FFFFFF', name: 'Blanc Pur' },
   { hex: '#B41218', name: 'Rouge École' },
   { hex: '#99121C', name: 'Bordeaux Élève' },
   { hex: '#122AB9', name: 'Bleu Royal' },
@@ -545,13 +615,16 @@ export function SchoolIdCardStudioModal({
     zoneKey: TypographyZoneKey,
     patch: Partial<CardZoneTextStyle>
   ) => {
-    setTypographyConfig((prev) => ({
-      ...prev,
-      [zoneKey]: {
-        ...prev[zoneKey],
-        ...patch,
-      },
-    }))
+    setTypographyConfig((prev) => {
+      const baseZone = prev[zoneKey] || FALLBACK_TOGO_TYPOGRAPHY[zoneKey]!
+      return {
+        ...prev,
+        [zoneKey]: {
+          ...baseZone,
+          ...patch,
+        },
+      }
+    })
   }
 
   const applyFontFamilyToAllZones = (fontFamily: CardFontFamily) => {
@@ -559,6 +632,10 @@ export function SchoolIdCardStudioModal({
       ...prev,
       schoolName: { ...prev.schoolName, fontFamily },
       headerOfficial: { ...prev.headerOfficial, fontFamily },
+      examCenter: {
+        ...(prev.examCenter || FALLBACK_TOGO_TYPOGRAPHY.examCenter!),
+        fontFamily,
+      },
       bannerTitle: { ...prev.bannerTitle, fontFamily },
       studentName: { ...prev.studentName, fontFamily },
       studentDetails: { ...prev.studentDetails, fontFamily },
@@ -568,7 +645,7 @@ export function SchoolIdCardStudioModal({
   }
 
   const resetTypographyToDefault = () => {
-    setTypographyConfig(DEFAULT_CARD_TYPOGRAPHY)
+    setTypographyConfig(syncColorsForTemplate(cardTemplate, DEFAULT_CARD_TYPOGRAPHY))
     toast.success('Polices, tailles et couleurs réinitialisées au modèle officiel !')
   }
 
@@ -642,6 +719,9 @@ export function SchoolIdCardStudioModal({
   const getFieldDefaultColor = (fieldKey: LetterColorFieldKey): string => {
     if (fieldKey === 'schoolName') return typographyConfig.schoolName.color
     if (fieldKey === 'bannerTitle') return typographyConfig.bannerTitle.color
+    if (fieldKey === 'examCenter') {
+      return typographyConfig.examCenter?.color || TOGO_DEFAULT_ZONE_COLORS.examCenter
+    }
     if (fieldKey === 'republicTitle') return '#0F172A'
     return typographyConfig.headerOfficial.color
   }
@@ -938,10 +1018,24 @@ export function SchoolIdCardStudioModal({
           setCustomThemes(parsed.customThemes)
         }
         if (parsed.typographyConfig) {
-          setTypographyConfig({
+          const mergedTypo: CardTypographyConfig = {
             ...DEFAULT_CARD_TYPOGRAPHY,
             ...parsed.typographyConfig,
-          })
+            examCenter: {
+              ...FALLBACK_TOGO_TYPOGRAPHY.examCenter!,
+              ...(parsed.typographyConfig.examCenter || {}),
+            },
+          }
+          setTypographyConfig(
+            parsed.cardTemplate === 'togo_iepp'
+              ? syncColorsForTemplate('togo_iepp', mergedTypo)
+              : mergedTypo
+          )
+        } else if (parsed.cardTemplate === 'togo_iepp') {
+          setTypographyConfig((prev) => syncColorsForTemplate('togo_iepp', prev))
+        }
+        if (parsed.cardTemplate === 'togo_iepp') {
+          setLetterColorField('bannerTitle')
         }
       }
     } catch {
@@ -1411,10 +1505,6 @@ export function SchoolIdCardStudioModal({
   const remainderOnLastPage =
     selectedCount === 0 ? 0 : selectedCount % 10 === 0 ? 10 : selectedCount % 10
 
-  const currentZoneMeta =
-    TYPOGRAPHY_ZONE_TABS.find((t) => t.key === activeTypoZone) || TYPOGRAPHY_ZONE_TABS[0]
-  const currentZoneStyle = typographyConfig[activeTypoZone]
-
   const wrapperClass =
     mode === 'embedded'
       ? 'w-full'
@@ -1485,6 +1575,12 @@ export function SchoolIdCardStudioModal({
             cardTemplate={cardTemplate}
             onSelectTemplate={(tpl) => {
               setCardTemplate(tpl)
+              setTypographyConfig((prev) => syncColorsForTemplate(tpl, prev))
+              if (tpl === 'togo_iepp' && letterColorField === 'ministryAcronym') {
+                setLetterColorField('bannerTitle')
+              } else if (tpl === 'classic' && letterColorField === 'bannerTitle') {
+                setLetterColorField('ministryAcronym')
+              }
               persistHeaderConfig({ cardTemplate: tpl })
               toast.success(
                 tpl === 'togo_iepp'

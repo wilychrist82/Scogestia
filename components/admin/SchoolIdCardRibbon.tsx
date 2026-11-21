@@ -40,6 +40,7 @@ export type StudioRibbonTab = 'accueil' | 'typo' | 'couleurs' | 'medias'
 export type RibbonTypographyZoneKey =
   | 'schoolName'
   | 'headerOfficial'
+  | 'examCenter'
   | 'bannerTitle'
   | 'studentName'
   | 'studentDetails'
@@ -222,7 +223,15 @@ export function SchoolIdCardRibbon({
   onUploadCustomTheme,
 }: Props) {
   const currentZoneMeta = zoneTabs.find((z) => z.key === activeTypoZone) || zoneTabs[0]
-  const currentZoneStyle = typographyConfig[activeTypoZone]
+  const currentZoneStyle: CardZoneTextStyle = typographyConfig[activeTypoZone] || {
+    fontFamily: 'helvetica',
+    sizeScale: 1,
+    bold: true,
+    italic: false,
+    underline: false,
+    uppercase: false,
+    color: '#0E1B52',
+  }
 
   const safeSelectedIdx = Math.min(
     Math.max(0, selectedLetterIndex),
@@ -395,11 +404,23 @@ export function SchoolIdCardRibbon({
               <div className="xl:col-span-4 xl:border-r xl:border-slate-200/80 xl:pr-3 flex flex-col justify-between">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[10.5px] font-bold text-slate-700 mb-0.5">
-                      {cardTemplate === 'togo_iepp'
-                        ? "Nom de l'IEPP (à compléter)"
-                        : 'Inspection / IEPP'}
-                    </label>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <label className="block text-[10.5px] font-bold text-slate-700">
+                        {cardTemplate === 'togo_iepp'
+                          ? "Nom de l'IEPP (à compléter)"
+                          : 'Inspection / IEPP'}
+                      </label>
+                      {inspectionName.trim() && (
+                        <button
+                          type="button"
+                          onClick={() => onInspectionNameChange('')}
+                          className="text-[9.5px] font-bold text-slate-500 hover:text-red-600"
+                          title="Effacer pour laisser vierge / à compléter"
+                        >
+                          Effacer
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="text"
                       value={inspectionName}

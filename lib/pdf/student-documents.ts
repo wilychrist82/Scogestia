@@ -25,6 +25,7 @@ export interface CardZoneTextStyle {
 export interface CardTypographyConfig {
   schoolName: CardZoneTextStyle
   headerOfficial: CardZoneTextStyle
+  examCenter?: CardZoneTextStyle
   bannerTitle: CardZoneTextStyle
   bannerBgColor: string
   studentName: CardZoneTextStyle
@@ -51,6 +52,15 @@ export const DEFAULT_CARD_TYPOGRAPHY: CardTypographyConfig = {
     underline: false,
     uppercase: false,
     color: '#0F1D5F',
+  },
+  examCenter: {
+    fontFamily: 'helvetica',
+    sizeScale: 1,
+    bold: true,
+    italic: false,
+    underline: false,
+    uppercase: false,
+    color: '#0E1B52',
   },
   bannerTitle: {
     fontFamily: 'times',

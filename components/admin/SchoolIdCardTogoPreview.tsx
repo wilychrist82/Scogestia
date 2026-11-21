@@ -9,6 +9,7 @@ import {
 } from '@/lib/pdf/student-documents'
 import {
   buildStudentQrPayload,
+  FALLBACK_TOGO_TYPOGRAPHY,
   formatAcademicYearLabel,
   formatCardDateFr,
   formatIeppHeaderDisplay,
@@ -62,16 +63,37 @@ function getCssFontFamily(fontFamily: CardFontFamily): string {
   }
 }
 
-function buildTextCss(zone: CardZoneTextStyle, basePx: number, overrideColor?: string): React.CSSProperties {
+function buildTextCss(zone: CardZoneTextStyle, basePx: number, forceFont?: string): React.CSSProperties {
   const scale = Math.max(0.75, Math.min(1.4, zone.sizeScale || 1))
   return {
-    fontFamily: getCssFontFamily(zone.fontFamily),
+    fontFamily: forceFont || getCssFontFamily(zone.fontFamily),
     fontSize: `${(basePx * scale).toFixed(1)}px`,
     fontWeight: zone.bold ? 800 : 500,
     fontStyle: zone.italic ? 'italic' : 'normal',
     textDecoration: zone.underline ? 'underline' : 'none',
-    color: overrideColor || zone.color,
+    color: zone.color,
   }
+}
+
+function renderWithOptionalLetterColors(
+  text: string,
+  letterColors: string[] | undefined,
+  fallbackColor: string
+) {
+  const hasCustom =
+    Array.isArray(letterColors) && letterColors.some((c) => Boolean(c && c.trim()))
+  if (!hasCustom) {
+    return <>{text}</>
+  }
+  return (
+    <>
+      {Array.from(text).map((ch, idx) => (
+        <span key={idx} style={{ color: letterColors[idx] || fallbackColor }}>
+          {ch}
+        </span>
+      ))}
+    </>
+  )
 }
 
 export function SchoolIdCardTogoPreview({
@@ -103,6 +125,10 @@ export function SchoolIdCardTogoPreview({
   const typo: CardTypographyConfig = {
     ...DEFAULT_CARD_TYPOGRAPHY,
     ...typography,
+    examCenter: {
+      ...FALLBACK_TOGO_TYPOGRAPHY.examCenter!,
+      ...(typography?.examCenter || {}),
+    },
   }
 
   const displayIepp = formatIeppHeaderDisplay(inspectionName, typo.headerOfficial.uppercase)
@@ -119,16 +145,21 @@ export function SchoolIdCardTogoPreview({
         ? 10.2
         : 11.4
 
+  const examStyle = typo.examCenter || FALLBACK_TOGO_TYPOGRAPHY.examCenter!
   const cleanExamCenter = examCenter.trim()
-  const displayExamCenter = cleanExamCenter
-    ? `Centre d'écrit : ${cleanExamCenter}`
+  const formattedExamValue = examStyle.uppercase
+    ? cleanExamCenter.toUpperCase()
+    : cleanExamCenter
+  const displayExamCenter = formattedExamValue
+    ? `Centre d'écrit : ${formattedExamValue}`
     : "Centre d'écrit : ........................"
 
   const rawBanner = cardBannerTitle.trim()
-  const displayBannerTitle =
+  const bannerBase =
     !rawBanner || rawBanner.toUpperCase() === "CARTE D'IDENTITE SCOLAIRE"
       ? "CARTE D'IDENTITÉ SCOLAIRE"
-      : rawBanner.toUpperCase()
+      : rawBanner
+  const displayBannerTitle = typo.bannerTitle.uppercase ? bannerBase.toUpperCase() : bannerBase
 
   const formattedDob = formatCardDateFr(student.date_of_birth)
   const birthPlaceText = (student.birth_place || '').trim()
@@ -149,20 +180,28 @@ export function SchoolIdCardTogoPreview({
           matricule: student.matricule || 'N/A',
           lastName: student.last_name,
           firstName: student.first_name,
+          dateOfBirth: student.date_of_birth,
+          birthPlace: student.birth_place,
+          gender: student.gender,
           className,
           schoolName: (schoolName || 'ÉTABLISSEMENT SCOLAIRE').trim(),
           academicYear,
           inspectionName: sanitizeIeppText(inspectionName),
+          examCenter,
         })
       ),
     [
       student.matricule,
       student.last_name,
       student.first_name,
+      student.date_of_birth,
+      student.birth_place,
+      student.gender,
       className,
       schoolName,
       academicYear,
       inspectionName,
+      examCenter,
     ]
   )
 
@@ -293,8 +332,8 @@ export function SchoolIdCardTogoPreview({
         <rect x="8" y="6" width="212" height="105" fill={`url(#${flagShadeId})`} />
       </svg>
 
-      {/* QR CODE POSITIONNÉ À DROITE DEVANT LA CARTE DU TOGO (AU NIVEAU DE CLASSE VERS LE HAUT, TOUCHANT LÉGÈREMENT LE TOGO) */}
-      <div className="absolute right-[18.2%] bottom-[29.2%] w-[10.2%] aspect-square rounded-[4px] bg-white border border-slate-300 p-[2px] shadow-2xs z-20">
+      {/* QR CODE À DROITE DEVANT LA CARTE DU TOGO (NIVEAU CLASSE VERS LE HAUT, TOUCHANT LÉGÈREMENT LE TOGO) */}
+      <div className="absolute right-[18.2%] bottom-[30%] w-[10.2%] aspect-square rounded-[4px] bg-white border border-slate-300 p-[2px] shadow-2xs z-20">
         <svg
           viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}
           className="h-full w-full"
@@ -367,34 +406,49 @@ export function SchoolIdCardTogoPreview({
               )}
             </div>
 
-            {/* Bloc central : IEPP bien visible + Bannière adaptative Nom École + Centre d'écrit agrandi */}
+            {/* Bloc central : IEPP + Bannière École + Centre d'écrit (tous réactifs aux couleurs/styles) */}
             <div className="flex-1 min-w-0 flex flex-col items-center pt-0.5">
-              {/* IEPP très lisible, sans DRE */}
+              {/* IEPP */}
               <div className="w-full flex items-center justify-center gap-1.5 min-h-[16px]">
                 <span className="h-[1.8px] flex-1 bg-gradient-to-r from-transparent to-[#A80C46]" />
                 <span
                   className="font-black tracking-[0.06em] text-center leading-none whitespace-nowrap"
-                  style={buildTextCss(typo.headerOfficial, 13.0, '#0A1950')}
+                  style={buildTextCss(typo.headerOfficial, 13.0)}
                 >
-                  {displayIepp}
+                  {renderWithOptionalLetterColors(
+                    displayIepp,
+                    typo.letterColors?.inspectionName,
+                    typo.headerOfficial.color
+                  )}
                 </span>
                 <span className="h-[1.8px] flex-1 bg-gradient-to-l from-transparent to-[#A80C46]" />
               </div>
 
-              {/* Pilule bordeaux dynamique (s'élargit si le nom est long, rétrécit si le nom est court) */}
+              {/* Pilule bordeaux dynamique (s'élargit / rétrécit) */}
               <div className="mt-[2px] inline-flex items-center justify-center w-fit max-w-full rounded-full bg-gradient-to-b from-[#BA074D] via-[#9E053F] to-[#7D0331] border border-[#6E022A] px-3.5 py-[2.5px] shadow-[0_2px_6px_-2px_rgba(140,3,56,0.5)]">
                 <span
                   className="text-center font-black tracking-wide leading-tight whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]"
-                  style={buildTextCss(typo.schoolName, schoolBasePx, '#FFFFFF')}
+                  style={buildTextCss(typo.schoolName, schoolBasePx)}
                 >
-                  {displaySchoolName}
+                  {renderWithOptionalLetterColors(
+                    displaySchoolName,
+                    typo.letterColors?.schoolName,
+                    typo.schoolName.color
+                  )}
                 </span>
               </div>
 
-              {/* Centre d'écrit — police agrandie */}
+              {/* Centre d'écrit — police agrandie & couleurs dynamiques */}
               <div className="mt-[2.5px] inline-flex items-center justify-center w-fit max-w-full rounded-full bg-gradient-to-r from-[#FFFDF2] via-[#FFF8DB] to-[#FFFDF2] border border-[#D49B1A] px-4 py-[2px]">
-                <span className="text-[11.5px] font-extrabold text-[#0E1B52] whitespace-nowrap leading-tight">
-                  {displayExamCenter}
+                <span
+                  className="whitespace-nowrap leading-tight"
+                  style={buildTextCss(examStyle, 11.5)}
+                >
+                  {renderWithOptionalLetterColors(
+                    displayExamCenter,
+                    typo.letterColors?.examCenter,
+                    examStyle.color
+                  )}
                 </span>
               </div>
             </div>
@@ -403,29 +457,39 @@ export function SchoolIdCardTogoPreview({
             <div className="w-[19%] shrink-0" />
           </div>
 
-          {/* Titre "CARTE D'IDENTITÉ SCOLAIRE" SANS cadre arrondi, plus gros & police designer */}
+          {/* Titre "CARTE D'IDENTITÉ SCOLAIRE" prestige éditorial + couleur distinctive (#006B38 par défaut) */}
           <div className="mt-[2px] flex flex-col items-center justify-center">
             <span
-              className="font-black tracking-[0.09em] leading-none text-center whitespace-nowrap"
+              className="font-black tracking-[0.1em] leading-none text-center whitespace-nowrap"
               style={{
-                fontFamily:
-                  typo.bannerTitle.fontFamily === 'courier'
-                    ? '"Courier New", Courier, monospace'
-                    : 'Georgia, "Palatino Linotype", "Times New Roman", serif',
-                fontSize: `${(14.6 * Math.max(0.85, Math.min(1.25, typo.bannerTitle.sizeScale || 1))).toFixed(1)}px`,
-                color: '#081B58',
-                textShadow: '0.8px 0.8px 0 rgba(214, 175, 86, 0.55)',
+                ...buildTextCss(
+                  typo.bannerTitle,
+                  14.8,
+                  typo.bannerTitle.fontFamily === 'helvetica' || typo.bannerTitle.fontFamily === 'verdana'
+                    ? undefined
+                    : 'Georgia, "Palatino Linotype", "Times New Roman", serif'
+                ),
+                fontStyle: typo.bannerTitle.italic ? 'italic' : 'normal',
+                textShadow: '0.8px 0.8px 0 rgba(218, 175, 76, 0.55)',
               }}
             >
-              {displayBannerTitle}
+              {renderWithOptionalLetterColors(
+                displayBannerTitle,
+                typo.letterColors?.bannerTitle,
+                typo.bannerTitle.color
+              )}
             </span>
-            <span className="mt-[2px] h-[1.5px] w-[58%] bg-gradient-to-r from-transparent via-[#C6941E] to-transparent" />
+            <div className="mt-[2.5px] flex items-center justify-center gap-1 w-[62%]">
+              <span className="h-[1.5px] w-1.5 rounded-full bg-[#C6941E]" />
+              <span className="h-[1.6px] flex-1 bg-gradient-to-r from-[#C6941E]/30 via-[#C6941E] to-[#C6941E]/30" />
+              <span className="h-[1.5px] w-1.5 rounded-full bg-[#C6941E]" />
+            </div>
           </div>
         </div>
 
-        {/* 2. CORPS DE LA CARTE : PHOTO PLEINE SURFACE + ANNÉE SCOLAIRE & INFOS ÉLÈVE */}
+        {/* 2. CORPS DE LA CARTE */}
         <div className="flex gap-[2.8%] items-start flex-1 pt-[1px]">
-          {/* Colonne gauche : Cadre Photo 100% photo (tête + épaules + poitrine) + Année Scolaire */}
+          {/* Colonne gauche : Cadre Photo 100% + Année Scolaire */}
           <div className="w-[21.2%] shrink-0 flex flex-col items-center gap-[3px]">
             <button
               type="button"
@@ -453,19 +517,21 @@ export function SchoolIdCardTogoPreview({
               )}
             </button>
 
-            {/* Pilule Année Scolaire */}
             <div className="w-full rounded-lg bg-gradient-to-b from-[#FFFDF2] to-[#FEF0B8] border border-[#D49B1A] py-[2px] px-1 text-center leading-tight shadow-2xs">
               <div className="text-[7px] font-extrabold text-[#0E1B52]">Année Scolaire</div>
               <div className="text-[9.2px] font-black text-[#A60744]">{formattedYear}</div>
             </div>
           </div>
 
-          {/* Colonne centrale : Informations automatiques (marge droite réservée pour le QR code et la carte du Togo) */}
+          {/* Colonne centrale : Infos élève */}
           <div className="flex-1 min-w-0 pr-[29.5%] flex flex-col gap-[2px] pt-[1px]">
             <div className="flex items-baseline gap-1 min-w-0">
               <span className="text-[10px] font-extrabold text-[#0E1B52] shrink-0">Matricule :</span>
               {student.matricule?.trim() ? (
-                <span className="text-[10px] font-bold text-slate-900 truncate leading-tight">
+                <span
+                  className="truncate leading-tight"
+                  style={buildTextCss(typo.studentDetails, 10)}
+                >
                   {student.matricule}
                 </span>
               ) : (
@@ -508,7 +574,7 @@ export function SchoolIdCardTogoPreview({
               {formattedDob ? (
                 <span
                   className="truncate leading-tight"
-                  style={buildTextCss(typo.studentDetails, 9.6, '#0F172A')}
+                  style={buildTextCss(typo.studentDetails, 9.6)}
                 >
                   {formattedDob}
                 </span>
@@ -524,7 +590,7 @@ export function SchoolIdCardTogoPreview({
               {birthPlaceText ? (
                 <span
                   className="truncate leading-tight"
-                  style={buildTextCss(typo.studentDetails, 9.6, '#0F172A')}
+                  style={buildTextCss(typo.studentDetails, 9.6)}
                 >
                   {birthPlaceText}
                 </span>
@@ -538,7 +604,7 @@ export function SchoolIdCardTogoPreview({
               {sexDisplay ? (
                 <span
                   className="truncate leading-tight"
-                  style={buildTextCss(typo.studentDetails, 10, '#0F172A')}
+                  style={buildTextCss(typo.studentDetails, 10)}
                 >
                   {sexDisplay}
                 </span>
@@ -552,7 +618,7 @@ export function SchoolIdCardTogoPreview({
               {className.trim() ? (
                 <span
                   className="truncate leading-tight"
-                  style={buildTextCss(typo.studentName, 10, '#0E1B52')}
+                  style={buildTextCss(typo.studentName, 10)}
                 >
                   {className}
                 </span>
@@ -563,23 +629,21 @@ export function SchoolIdCardTogoPreview({
           </div>
         </div>
 
-        {/* 3. PIED DE CARTE : DIRECTEUR REMONTÉ AU-DESSUS DE LA BANDE + SIGNATURE + GRAND CACHET À DROITE */}
-        <div className="flex items-center justify-end gap-2 pt-0 pb-3.5 pl-[24%] pr-0.5">
-          {/* Nom du Chef d'établissement bien remonté au-dessus de la bande basse */}
+        {/* 3. PIED DE CARTE : DIRECTEUR + SIGNATURE + GRAND CACHET REMONTÉ (JAMAIS COUPÉ À L'IMPRESSION) */}
+        <div className="flex items-center justify-end gap-2 pt-0 pb-3 pl-[24%] pr-1">
           <div className="flex-1 min-w-0 flex items-center justify-center">
             {directorName.trim() && (
               <span
-                className="truncate font-bold text-[#0E1B52] leading-tight text-center"
-                style={buildTextCss(typo.footerInfo, 10.4, '#0E1B52')}
+                className="truncate font-bold leading-tight text-center"
+                style={buildTextCss(typo.footerInfo, 10.4)}
               >
                 {directorName.trim()}
               </span>
             )}
           </div>
 
-          {/* Signature du Chef d'établissement (sans cadre ni libellé) + Grand Cachet circulaire */}
-          <div className="flex items-center justify-end gap-0.5 shrink-0">
-            <div className="h-9 w-20 flex items-center justify-center overflow-hidden">
+          <div className="flex items-center justify-end gap-1 shrink-0">
+            <div className="h-9 w-20 -mt-1 flex items-center justify-center overflow-hidden">
               {signatureUrl ? (
                 <img
                   src={signatureUrl}
@@ -589,15 +653,15 @@ export function SchoolIdCardTogoPreview({
               ) : null}
             </div>
 
-            <div className="h-[68px] w-[68px] shrink-0 -ml-2 -my-2 z-20 flex items-center justify-center">
+            <div className="h-[60px] w-[60px] shrink-0 -ml-2 -mt-5 mb-2 z-20 flex items-center justify-center">
               {stampUrl ? (
                 <img
                   src={stampUrl}
                   alt="Cachet officiel"
-                  className="h-[68px] w-[68px] object-contain"
+                  className="h-[60px] w-[60px] object-contain"
                 />
               ) : showVectorStampIfNoStamp ? (
-                <svg viewBox="0 0 100 100" className="h-[66px] w-[66px] drop-shadow-2xs">
+                <svg viewBox="0 0 100 100" className="h-[60px] w-[60px] drop-shadow-2xs">
                   <circle cx="50" cy="50" r="46" fill="#FFFFFF" stroke="#10329E" strokeWidth="3.5" />
                   <circle cx="50" cy="50" r="41" fill="none" stroke="#10329E" strokeWidth="1.4" />
                   <circle cx="50" cy="50" r="28" fill="none" stroke="#10329E" strokeWidth="1.8" />

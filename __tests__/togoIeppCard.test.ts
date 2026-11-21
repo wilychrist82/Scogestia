@@ -66,12 +66,26 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
       matricule: 'SCO-2026-0042',
       lastName: 'Agbodjan',
       firstName: 'Koffi',
+      dateOfBirth: '2015-03-09',
+      birthPlace: 'Aného',
+      gender: 'M',
       className: 'CM2',
       schoolName: 'EPM CANNAN',
       academicYear: '2026-2027',
       inspectionName: 'IEPP / DRE TONE-EST',
+      examCenter: 'LYCEE DE DAPAONG',
     })
-    expect(payload).toContain('SCOGESTIA|SCO-2026-0042|AGBODJAN Koffi|CM2|IEPP TONE-EST')
+    expect(payload).toContain("CARTE D'IDENTITE SCOLAIRE")
+    expect(payload).toContain('Matricule: SCO-2026-0042')
+    expect(payload).toContain('Nom: AGBODJAN')
+    expect(payload).toContain('Prenoms: Koffi')
+    expect(payload).toContain('Ne(e): 09/03/2015 a Aného')
+    expect(payload).toContain('Sexe: Masculin')
+    expect(payload).toContain('Classe: CM2')
+    expect(payload).toContain('Ecole: EPM CANNAN')
+    expect(payload).toContain('IEPP: IEPP TONE-EST')
+    expect(payload).toContain("Centre d'ecrit: LYCEE DE DAPAONG")
+    expect(payload).toContain('Annee: 2026 - 2027')
 
     const matrix = generateQrMatrix(payload)
     expect(matrix.length).toBeGreaterThanOrEqual(21)
@@ -126,7 +140,14 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
     const qrRect = roundedRectSpy.mock.calls.find((args) => args[2] === 9.0 && args[3] === 9.0)
     expect(qrRect).toBeTruthy()
     expect(qrRect?.[0]).toBeCloseTo(8.5 + 67.8, 1)
-    expect(qrRect?.[1]).toBeCloseTo(10 + 28.0, 1)
+    expect(qrRect?.[1]).toBeCloseTo(10 + 27.6, 1)
+
+    // Cachet circulaire grand format remonté avec marge sûre anti-découpe (y_bottom <= cardY + 48.0 < 53.5mm)
+    const stampFillCircle = circleSpy.mock.calls.find((args) => args[2] === 6.5)
+    expect(stampFillCircle).toBeTruthy()
+    const stampCy = stampFillCircle![1] as number
+    const stampR = stampFillCircle![2] as number
+    expect(stampCy + stampR).toBeLessThanOrEqual(10 + 48.5)
 
     // Aucune mention textuelle superflue sur la photo, le chef ni la signature
     expect(printedStrings).not.toContain('PHOTO')
@@ -137,6 +158,46 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
     // Aucun pointillé sous les champs déjà remplis
     const smallDotCircles = circleSpy.mock.calls.filter((args) => args[2] === 0.11)
     expect(smallDotCircles.length).toBe(0)
+  })
+
+  it('applique exactement les couleurs personnalisées de zone et lettre-par-lettre sur le PDF Modèle 2', () => {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+    const colorSpy = vi.spyOn(doc, 'setTextColor')
+
+    drawTogoIeppIdCardRecto(
+      doc,
+      makeSampleStudent({
+        inspectionName: 'IEPP KOZAH',
+        schoolName: 'EPL LE ROI',
+        examCenter: 'KARA',
+        typography: {
+          schoolName: { fontFamily: 'helvetica', sizeScale: 1, bold: true, italic: false, underline: false, uppercase: true, color: '#FEF08A' },
+          headerOfficial: { fontFamily: 'helvetica', sizeScale: 1, bold: true, italic: false, underline: false, uppercase: true, color: '#DC2626' },
+          examCenter: { fontFamily: 'helvetica', sizeScale: 1, bold: true, italic: false, underline: false, uppercase: false, color: '#1D4ED8' },
+          bannerTitle: { fontFamily: 'times', sizeScale: 1, bold: true, italic: false, underline: false, uppercase: true, color: '#7C3AED' },
+          bannerBgColor: '#FFFFFF',
+          studentName: { fontFamily: 'helvetica', sizeScale: 1, bold: true, italic: false, underline: false, uppercase: true, color: '#0E1B52' },
+          studentDetails: { fontFamily: 'helvetica', sizeScale: 1, bold: true, italic: false, underline: false, uppercase: false, color: '#0F172A' },
+          footerInfo: { fontFamily: 'helvetica', sizeScale: 1, bold: true, italic: false, underline: false, uppercase: false, color: '#0E1B52' },
+        },
+      }),
+      8.5,
+      10,
+      94,
+      53.5,
+      {
+        photoDataUrl: null,
+        logoDataUrl: null,
+        stampDataUrl: null,
+        signatureDataUrl: null,
+      }
+    )
+
+    const rgbCalls = colorSpy.mock.calls.map((c) => `${c[0]},${c[1]},${c[2]}`)
+    expect(rgbCalls).toContain('220,38,38') // #DC2626 IEPP
+    expect(rgbCalls).toContain('254,240,138') // #FEF08A Nom Établissement
+    expect(rgbCalls).toContain('29,78,216') // #1D4ED8 Centre d'écrit
+    expect(rgbCalls).toContain('124,58,237') // #7C3AED Titre Carte
   })
 
   it('génère un PDF individuel en modèle togo_iepp et une planche 10 cartes/page A4 pour 12 élèves', async () => {
