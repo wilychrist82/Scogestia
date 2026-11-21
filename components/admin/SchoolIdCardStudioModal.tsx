@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { SchoolIdCardTogoPreview } from '@/components/admin/SchoolIdCardTogoPreview'
-import type { CardTemplateId } from '@/lib/pdf/togo-iepp-card'
+import { sanitizeIeppText, type CardTemplateId } from '@/lib/pdf/togo-iepp-card'
 import {
   X,
   Camera,
@@ -581,7 +581,7 @@ export function SchoolIdCardStudioModal({
   const [republicTitle, setRepublicTitle] = useState('REPUBLIQUE TOGOLAISE')
   const [republicMotto, setRepublicMotto] = useState('Travail-Liberté-Patrie')
   const [inspectionName, setInspectionName] = useState(
-    schoolInfo?.city ? `IEPP / DRE ${schoolInfo.city.toUpperCase()}` : 'IEPP LACS-OUEST'
+    schoolInfo?.city ? `IEPP ${schoolInfo.city.toUpperCase()}` : 'IEPP LACS-OUEST'
   )
   const [schoolNameOverride, setSchoolNameOverride] = useState(
     schoolInfo?.name || 'ÉTABLISSEMENT SCOLAIRE'
@@ -837,10 +837,14 @@ export function SchoolIdCardStudioModal({
     if (localSaved.stampUrl) setStampUrl(localSaved.stampUrl)
     else if (schoolInfo?.stamp_url) setStampUrl(schoolInfo.stamp_url)
 
-    if (localSaved.signatureUrl) setSignatureUrl(localSaved.signature_url)
+    if (localSaved.signatureUrl) setSignatureUrl(localSaved.signatureUrl)
     else if (schoolInfo?.signature_url) setSignatureUrl(schoolInfo.signature_url)
 
-    if (schoolInfo?.director_name) setDirectorName(schoolInfo.director_name)
+    if (typeof localSaved.directorName === 'string' && localSaved.directorName.trim()) {
+      setDirectorName(localSaved.directorName)
+    } else if (schoolInfo?.director_name) {
+      setDirectorName(schoolInfo.director_name)
+    }
     if (schoolInfo?.name) setSchoolNameOverride(schoolInfo.name)
 
     // Requête directe vers `user_school_roles` + `schools` pour récupérer les paramètres de l'école
@@ -877,7 +881,12 @@ export function SchoolIdCardStudioModal({
           if (!localSaved.signatureUrl && schoolRow.signature_url) {
             setSignatureUrl(schoolRow.signature_url)
           }
-          if (schoolRow.director_name) setDirectorName(schoolRow.director_name)
+          if (
+            schoolRow.director_name &&
+            !(typeof localSaved.directorName === 'string' && localSaved.directorName.trim())
+          ) {
+            setDirectorName(schoolRow.director_name)
+          }
           if (schoolRow.name) setSchoolNameOverride(schoolRow.name)
           if (schoolRow.current_academic_year) {
             setCardAcademicYear(schoolRow.current_academic_year)
@@ -907,9 +916,14 @@ export function SchoolIdCardStudioModal({
         if (parsed.ministryAcronym !== undefined) setMinistryAcronym(parsed.ministryAcronym)
         if (parsed.republicTitle !== undefined) setRepublicTitle(parsed.republicTitle)
         if (parsed.republicMotto !== undefined) setRepublicMotto(parsed.republicMotto)
-        if (parsed.inspectionName !== undefined) setInspectionName(parsed.inspectionName)
+        if (parsed.inspectionName !== undefined) {
+          setInspectionName(sanitizeIeppText(parsed.inspectionName))
+        }
         if (parsed.examCenter !== undefined) setExamCenter(parsed.examCenter)
         if (parsed.cardBannerTitle !== undefined) setCardBannerTitle(parsed.cardBannerTitle)
+        if (typeof parsed.directorName === 'string' && parsed.directorName.trim()) {
+          setDirectorName(parsed.directorName)
+        }
         if (parsed.logoUrl) setLogoUrl(parsed.logoUrl)
         if (parsed.stampUrl) setStampUrl(parsed.stampUrl)
         if (parsed.signatureUrl) setSignatureUrl(parsed.signatureUrl)
@@ -934,6 +948,7 @@ export function SchoolIdCardStudioModal({
   const persistHeaderConfig = (overrides?: {
     cardTemplate?: CardTemplateId
     showTogoStampAuto?: boolean
+    directorName?: string
     logoUrl?: string
     stampUrl?: string
     signatureUrl?: string
@@ -955,6 +970,8 @@ export function SchoolIdCardStudioModal({
           inspectionName,
           examCenter,
           cardBannerTitle,
+          directorName:
+            overrides?.directorName !== undefined ? overrides.directorName : directorName,
           activeThemeIndex,
           customThemes,
           typographyConfig,
@@ -1520,6 +1537,8 @@ export function SchoolIdCardStudioModal({
               <button
                 type="button"
                 onClick={() => {
+                  const cleanedIepp = sanitizeIeppText(inspectionName) || 'IEPP LACS-OUEST'
+                  setInspectionName(cleanedIepp)
                   setCardTemplate('togo_iepp')
                   persistHeaderConfig({ cardTemplate: 'togo_iepp' })
                   toast.success("Modèle 2 (Officiel IEPP / Centre d'écrit) sélectionné !")
@@ -1535,20 +1554,20 @@ export function SchoolIdCardStudioModal({
                   <div className="flex items-center justify-between gap-1">
                     <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
                     <div className="flex-1 flex flex-col items-center gap-[1.5px]">
-                      <span className="h-1 w-6 rounded-full bg-[#0E1B52]" />
-                      <span className="h-1.5 w-10 rounded-full bg-[#9E053F]" />
-                      <span className="h-1 w-8 rounded-full bg-amber-200 border border-amber-500" />
+                      <span className="h-1 w-7 rounded-full bg-[#0A1950]" />
+                      <span className="h-1.5 w-8 rounded-full bg-[#9E053F]" />
+                      <span className="h-1 w-7 rounded-full bg-amber-200 border border-amber-500" />
                     </div>
                     <span className="h-2.5 w-3.5 rounded-[1px] bg-gradient-to-b from-[#006C3E] via-[#FACC15] to-[#006C3E]" />
                   </div>
-                  <div className="h-1.5 w-full rounded-full bg-[#071E58] border border-amber-400" />
+                  <div className="h-[2px] w-14 mx-auto rounded-full bg-[#081B58]" />
                   <div className="flex items-center justify-between gap-1">
-                    <span className="h-3.5 w-3 rounded-[2px] border border-[#9E053F] bg-slate-200" />
+                    <span className="h-4 w-3 rounded-[2px] border border-[#9E053F] bg-slate-200" />
                     <div className="flex-1 space-y-0.5">
                       <span className="block h-1 w-9 bg-[#0E1B52] rounded-full" />
                       <span className="block h-1 w-7 bg-slate-400 rounded-full" />
                     </div>
-                    <span className="h-4 w-2 rounded-xs bg-rose-200 border border-rose-400" />
+                    <span className="h-4 w-2 rounded-xs bg-rose-200/40" />
                   </div>
                 </div>
 
@@ -1568,7 +1587,7 @@ export function SchoolIdCardStudioModal({
                     </span>
                   </div>
                   <p className="text-[10.5px] text-slate-600 mt-1 line-clamp-2">
-                    IEPP au choix (Lacs-Ouest, Lacs-Est...), Centre d&apos;écrit, Matricule, cases Sexe auto &amp; QR Code.
+                    IEPP au choix (Lacs-Ouest, Lacs-Est...), Centre d&apos;écrit, Matricule, Sexe auto &amp; QR Code.
                   </p>
                 </div>
               </button>
@@ -1608,7 +1627,9 @@ export function SchoolIdCardStudioModal({
 
                 <div className={cardTemplate === 'togo_iepp' ? 'sm:col-span-2' : ''}>
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    IEPP / Inspection / DRE
+                    {cardTemplate === 'togo_iepp'
+                      ? 'IEPP (Ex: IEPP LACS-OUEST, IEPP LACS-EST)'
+                      : 'Inspection / IEPP'}
                   </label>
                   <input
                     type="text"
@@ -1649,7 +1670,7 @@ export function SchoolIdCardStudioModal({
                 <div className="sm:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-700 mb-1">
                     {cardTemplate === 'togo_iepp'
-                      ? "Nom de l'Établissement (mis en valeur sur bandeau bordeaux)"
+                      ? "Nom de l'Établissement (bannière adaptative bordeaux)"
                       : "Nom de l'Établissement (en rouge au centre)"}
                   </label>
                   <input
@@ -2464,7 +2485,7 @@ export function SchoolIdCardStudioModal({
                       </span>
                     </div>
                     <span className="text-[11px] font-semibold text-rose-900/90">
-                      Cliquez sur &laquo; PHOTO DE L&apos;ÉLÈVE &raquo; ou le bouton ci-dessous pour compléter la photo
+                      Cliquez directement sur le cadre photo ou le bouton ci-dessous pour ajouter la photo
                     </span>
                   </div>
 
