@@ -19,6 +19,7 @@ import {
   drawTogoIeppIdCardRecto,
   formatAcademicYearLabel,
   formatCardDateFr,
+  formatIeppHeaderDisplay,
   generateQrMatrix,
   sanitizeIeppText,
 } from '@/lib/pdf/togo-iepp-card'
@@ -36,8 +37,8 @@ function makeSampleStudent(overrides?: Partial<StudentDocumentData>): StudentDoc
     schoolName: 'EPM CANNAN',
     academicYear: '2026-2027',
     directorName: 'M. GNAMAVO Kodjo',
-    inspectionName: 'IEPP LACS-OUEST',
-    examCenter: 'CEG LACS-OUEST',
+    inspectionName: 'IEPP MON-INSPECTION',
+    examCenter: 'AGBAVI',
     cardTemplate: 'togo_iepp',
     ...overrides,
   }
@@ -48,9 +49,11 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
     mockSaveOrSharePdf.mockReset()
   })
 
-  it('supprime toute mention DRE du champ IEPP et formate dates / années', () => {
+  it('reste neutre sans inspection imposée par défaut et supprime DRE', () => {
+    expect(formatIeppHeaderDisplay('')).toBe('IEPP : .........................')
+    expect(formatIeppHeaderDisplay('IEPP')).toBe('IEPP : .........................')
+    expect(formatIeppHeaderDisplay('IEPP Kozah')).toBe('IEPP KOZAH')
     expect(sanitizeIeppText('IEPP / DRE ANÉHO')).toBe('IEPP ANÉHO')
-    expect(sanitizeIeppText('IEPP LACS-OUEST')).toBe('IEPP LACS-OUEST')
     expect(formatCardDateFr('2015-03-09')).toBe('09/03/2015')
     expect(formatCardDateFr('2012-12-31T00:00:00Z')).toBe('31/12/2012')
     expect(formatCardDateFr('')).toBe('')
@@ -66,9 +69,9 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
       className: 'CM2',
       schoolName: 'EPM CANNAN',
       academicYear: '2026-2027',
-      inspectionName: 'IEPP / DRE LACS-EST',
+      inspectionName: 'IEPP / DRE TONE-EST',
     })
-    expect(payload).toContain('SCOGESTIA|SCO-2026-0042|AGBODJAN Koffi|CM2|IEPP LACS-EST')
+    expect(payload).toContain('SCOGESTIA|SCO-2026-0042|AGBODJAN Koffi|CM2|IEPP TONE-EST')
 
     const matrix = generateQrMatrix(payload)
     expect(matrix.length).toBeGreaterThanOrEqual(21)
@@ -78,15 +81,16 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
     expect(matrix[6][0]).toBe(true)
   })
 
-  it("rend le recto Togo IEPP avec Centre d'écrit, sexe unique, sans DRE ni étiquettes photo/chef/signature", () => {
+  it("rend le recto Togo IEPP avec QR Code à droite, Centre d'écrit agrandi, sexe unique, directeur remonté et sans étiquettes", () => {
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
     const textSpy = vi.spyOn(doc, 'text')
     const circleSpy = vi.spyOn(doc, 'circle')
+    const roundedRectSpy = vi.spyOn(doc, 'roundedRect')
 
     drawTogoIeppIdCardRecto(
       doc,
       makeSampleStudent({
-        inspectionName: 'IEPP / DRE LACS-EST',
+        inspectionName: '',
         examCenter: '',
         gender: 'F',
       }),
@@ -103,7 +107,7 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
     )
 
     const printedStrings = textSpy.mock.calls.map((c) => String(c[0]))
-    expect(printedStrings).toContain('IEPP LACS-EST')
+    expect(printedStrings).toContain('IEPP : .........................')
     expect(printedStrings.some((s) => /\bDRE\b/i.test(s))).toBe(false)
     expect(printedStrings).toContain('EPM CANNAN')
     expect(printedStrings).toContain("CARTE D'IDENTITÉ SCOLAIRE")
@@ -113,12 +117,24 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
     expect(printedStrings).not.toContain('Masculin')
     expect(printedStrings.some((s) => s.startsWith("Centre d'écrit : ......."))).toBe(true)
     expect(printedStrings).toContain('M. GNAMAVO Kodjo')
+
+    // Nom du directeur bien remonté (y = 10 + 44 = 54 <= 54.5, bien au-dessus du bas de la carte 63.5)
+    const dirCall = textSpy.mock.calls.find((c) => String(c[0]) === 'M. GNAMAVO Kodjo')
+    expect(dirCall?.[2]).toBeLessThanOrEqual(55)
+
+    // QR Code positionné à droite devant la carte du Togo (cardX 8.5 + 67.8 = 76.3mm) au niveau de la classe vers le haut
+    const qrRect = roundedRectSpy.mock.calls.find((args) => args[2] === 9.0 && args[3] === 9.0)
+    expect(qrRect).toBeTruthy()
+    expect(qrRect?.[0]).toBeCloseTo(8.5 + 67.8, 1)
+    expect(qrRect?.[1]).toBeCloseTo(10 + 28.0, 1)
+
     // Aucune mention textuelle superflue sur la photo, le chef ni la signature
     expect(printedStrings).not.toContain('PHOTO')
     expect(printedStrings).not.toContain("DE L'ÉLÈVE")
     expect(printedStrings).not.toContain("Nom du Chef d'établissement")
     expect(printedStrings).not.toContain('Signature du Directeur')
-    // Aucun pointillé sous les champs déjà remplis (ex: Nom: AGBODJAN) — uniquement cachet / fallback photo
+
+    // Aucun pointillé sous les champs déjà remplis
     const smallDotCircles = circleSpy.mock.calls.filter((args) => args[2] === 0.11)
     expect(smallDotCircles.length).toBe(0)
   })

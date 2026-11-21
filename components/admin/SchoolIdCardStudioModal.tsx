@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { SchoolIdCardTogoPreview } from '@/components/admin/SchoolIdCardTogoPreview'
+import { SchoolIdCardRibbon } from '@/components/admin/SchoolIdCardRibbon'
 import { sanitizeIeppText, type CardTemplateId } from '@/lib/pdf/togo-iepp-card'
 import {
   X,
@@ -574,15 +575,18 @@ export function SchoolIdCardStudioModal({
   // Modèle sélectionné ('classic' = Thèmes Studio MEPST, 'togo_iepp' = Modèle Officiel IEPP / Centre d'écrit)
   const [cardTemplate, setCardTemplate] = useState<CardTemplateId>('classic')
   const [showTogoStampAuto, setShowTogoStampAuto] = useState<boolean>(true)
+  const [activeRibbonTab, setActiveRibbonTab] = useState<
+    'accueil' | 'typo' | 'couleurs' | 'medias'
+  >('accueil')
+  const [ribbonCollapsed, setRibbonCollapsed] = useState<boolean>(false)
+  const [previewZoom, setPreviewZoom] = useState<number>(1)
   const photoInputRef = useRef<HTMLInputElement | null>(null)
 
-  // Champs 100% modifiables de la carte (si un champ est vidé, il reste blanc sur la carte)
+  // Champs 100% modifiables de la carte (aucune inspection imposée par défaut : chaque IEPP complète la sienne)
   const [ministryAcronym, setMinistryAcronym] = useState('MEPST')
   const [republicTitle, setRepublicTitle] = useState('REPUBLIQUE TOGOLAISE')
   const [republicMotto, setRepublicMotto] = useState('Travail-Liberté-Patrie')
-  const [inspectionName, setInspectionName] = useState(
-    schoolInfo?.city ? `IEPP ${schoolInfo.city.toUpperCase()}` : 'IEPP LACS-OUEST'
-  )
+  const [inspectionName, setInspectionName] = useState('')
   const [schoolNameOverride, setSchoolNameOverride] = useState(
     schoolInfo?.name || 'ÉTABLISSEMENT SCOLAIRE'
   )
@@ -1461,980 +1465,141 @@ export function SchoolIdCardStudioModal({
 
         {/* Contenu Principal Défilant */}
         <div className={mode === 'embedded' ? 'p-4 sm:p-5 space-y-5 bg-slate-50/70' : 'flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 bg-slate-50/70'}>
-          {/* SÉLECTEUR DU MODÈLE DE CARTE SCOLAIRE (AU MOINS 2 MODÈLES AU CHOIX) */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <div>
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
-                  <IdCard className="h-4 w-4 text-indigo-600" />
-                  Choix du modèle de carte scolaire
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Choisissez le modèle souhaité puis complétez l&apos;IEPP, le centre d&apos;écrit et la photo de chaque élève.
-                </p>
-              </div>
-              <span className="text-[10.5px] font-bold text-indigo-800 bg-indigo-50 border border-indigo-200/80 px-2.5 py-1 rounded-full">
-                2 modèles disponibles
-              </span>
-            </div>
+          {/* RUBAN INFOGRAPHIQUE PRO (STYLE MICROSOFT WORD — ONGLETS & GROUPES DE TÂCHES) */}
+          <SchoolIdCardRibbon
+            activeTab={activeRibbonTab}
+            onTabChange={setActiveRibbonTab}
+            collapsed={ribbonCollapsed}
+            onToggleCollapse={() => setRibbonCollapsed((c) => !c)}
+            previewZoom={previewZoom}
+            onZoomChange={setPreviewZoom}
+            onQuickExportSingle={() =>
+              handleGenerateSheets(
+                [activeStudent],
+                `${activeStudent.last_name}_${activeStudent.first_name}`
+              )
+            }
+            onQuickExportBatch={() => handleGenerateSheets(selectedStudentsOrdered)}
+            isGenerating={isGenerating}
+            selectedCount={selectedCount}
+            cardTemplate={cardTemplate}
+            onSelectTemplate={(tpl) => {
+              setCardTemplate(tpl)
+              persistHeaderConfig({ cardTemplate: tpl })
+              toast.success(
+                tpl === 'togo_iepp'
+                  ? "Modèle 2 (Officiel IEPP / Centre d'écrit) sélectionné !"
+                  : 'Modèle 1 (Classique Studio / Thèmes) sélectionné !'
+              )
+            }}
+            ministryAcronym={ministryAcronym}
+            onMinistryAcronymChange={setMinistryAcronym}
+            inspectionName={inspectionName}
+            onInspectionNameChange={setInspectionName}
+            schoolName={schoolNameOverride}
+            onSchoolNameChange={setSchoolNameOverride}
+            examCenter={examCenter}
+            onExamCenterChange={setExamCenter}
+            academicYear={cardAcademicYear}
+            onAcademicYearChange={setCardAcademicYear}
+            directorName={directorName}
+            onDirectorNameChange={setDirectorName}
+            cardBannerTitle={cardBannerTitle}
+            onCardBannerTitleChange={setCardBannerTitle}
+            republicTitle={republicTitle}
+            onRepublicTitleChange={setRepublicTitle}
+            republicMotto={republicMotto}
+            onRepublicMottoChange={setRepublicMotto}
+            typographyConfig={typographyConfig}
+            activeTypoZone={activeTypoZone}
+            onActiveTypoZoneChange={setActiveTypoZone}
+            zoneTabs={TYPOGRAPHY_ZONE_TABS}
+            fontOptions={FONT_FAMILY_OPTIONS}
+            quickColorPalette={QUICK_COLOR_PALETTE}
+            bannerBgPalette={BANNER_BG_PALETTE}
+            onUpdateZoneTypography={updateZoneTypography}
+            onApplyFontFamilyToAll={applyFontFamilyToAllZones}
+            onSetBannerBgColor={(hex) =>
+              setTypographyConfig((prev) => ({
+                ...prev,
+                bannerBgColor: hex,
+              }))
+            }
+            onResetTypography={resetTypographyToDefault}
+            letterColorField={letterColorField}
+            onLetterColorFieldChange={setLetterColorField}
+            selectedLetterIndex={selectedLetterIndex}
+            onSelectLetterIndex={setSelectedLetterIndex}
+            activeLetterText={getFieldRawText(letterColorField)}
+            activeLetterColors={getFieldLetterColors(
+              letterColorField,
+              getFieldRawText(letterColorField)
+            )}
+            letterFallbackColor={getFieldDefaultColor(letterColorField)}
+            onSetLetterColor={handleSetLetterColor}
+            onResetFieldLetterColors={handleResetFieldLetterColors}
+            logoUrl={logoUrl}
+            stampUrl={stampUrl}
+            signatureUrl={signatureUrl}
+            uploadingAssetType={uploadingAssetType}
+            showVectorEmblemIfNoLogo={showVectorEmblemIfNoLogo}
+            onToggleVectorEmblem={setShowVectorEmblemIfNoLogo}
+            showVectorStampAuto={
+              cardTemplate === 'togo_iepp' ? showTogoStampAuto : showVectorStampIfNoStamp
+            }
+            onToggleVectorStampAuto={(checked) => {
+              if (cardTemplate === 'togo_iepp') {
+                setShowTogoStampAuto(checked)
+                persistHeaderConfig({ showTogoStampAuto: checked })
+              } else {
+                setShowVectorStampIfNoStamp(checked)
+              }
+            }}
+            onUploadAsset={handleSchoolAssetUpload}
+            onClearAsset={(type) => {
+              if (type === 'logo') {
+                setLogoUrl('')
+                persistHeaderConfig({ logoUrl: '' })
+                updateSchoolAssetUrl('logo', null)
+                setShowVectorEmblemIfNoLogo(false)
+              } else if (type === 'stamp') {
+                setStampUrl('')
+                persistHeaderConfig({ stampUrl: '', showTogoStampAuto: false })
+                updateSchoolAssetUrl('stamp', null)
+                setShowVectorStampIfNoStamp(false)
+                setShowTogoStampAuto(false)
+              } else {
+                setSignatureUrl('')
+                persistHeaderConfig({ signatureUrl: '' })
+                updateSchoolAssetUrl('signature', null)
+              }
+            }}
+            activeThemeIndex={activeThemeIndex}
+            allThemes={allThemes}
+            onPrevTheme={handlePrevTheme}
+            onNextTheme={handleNextTheme}
+            onUploadCustomTheme={handleUploadCustomTheme}
+          />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Modèle 1 : Classique Studio MEPST */}
-              <button
-                type="button"
-                onClick={() => {
-                  setCardTemplate('classic')
-                  persistHeaderConfig({ cardTemplate: 'classic' })
-                  toast.success('Modèle 1 (Classique Studio / Thèmes) sélectionné !')
-                }}
-                className={`text-left rounded-xl border p-3 transition-all flex items-center gap-3.5 ${
-                  cardTemplate === 'classic'
-                    ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-600/20 shadow-xs'
-                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
-                }`}
-              >
-                {/* Miniature visuelle Modèle 1 */}
-                <div className="w-20 h-12 shrink-0 rounded-md p-[2px] bg-[#007A33] shadow-2xs overflow-hidden">
-                  <div className="h-full w-full rounded-[2px] border-[1.5px] border-[#FFCE00] bg-[#EEF4FA] p-1 flex flex-col justify-between">
-                    <div className="flex items-center justify-between">
-                      <span className="h-2 w-2 rounded-full bg-emerald-700" />
-                      <span className="h-1.5 w-9 rounded-full bg-red-600" />
-                      <span className="h-1.5 w-3 rounded-[1px] bg-amber-500" />
-                    </div>
-                    <div className="h-2 w-full rounded-xs bg-[#FDE0C6] border border-slate-300" />
-                    <div className="flex gap-1 items-center">
-                      <span className="h-3.5 w-3 rounded-[1px] bg-slate-300" />
-                      <div className="flex-1 space-y-0.5">
-                        <span className="block h-1 w-10 bg-slate-700 rounded-full" />
-                        <span className="block h-1 w-7 bg-slate-400 rounded-full" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-extrabold text-slate-900">
-                      Modèle 1 : Classique Studio
-                    </span>
-                    <span
-                      className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 ${
-                        cardTemplate === 'classic'
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      {cardTemplate === 'classic' ? 'Sélectionné' : 'Choisir'}
-                    </span>
-                  </div>
-                  <p className="text-[10.5px] text-slate-600 mt-1 line-clamp-2">
-                    Cadre Togo vert/or, en-tête MEPST/DRE personnalisable et fonds multi-thèmes.
-                  </p>
-                </div>
-              </button>
-
-              {/* Modèle 2 : Officiel IEPP / Centre d'écrit Togo */}
-              <button
-                type="button"
-                onClick={() => {
-                  const cleanedIepp = sanitizeIeppText(inspectionName) || 'IEPP LACS-OUEST'
-                  setInspectionName(cleanedIepp)
-                  setCardTemplate('togo_iepp')
-                  persistHeaderConfig({ cardTemplate: 'togo_iepp' })
-                  toast.success("Modèle 2 (Officiel IEPP / Centre d'écrit) sélectionné !")
-                }}
-                className={`text-left rounded-xl border p-3 transition-all flex items-center gap-3.5 ${
-                  cardTemplate === 'togo_iepp'
-                    ? 'border-[#9E053F] bg-rose-50/40 ring-2 ring-[#9E053F]/20 shadow-xs'
-                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
-                }`}
-              >
-                {/* Miniature visuelle Modèle 2 */}
-                <div className="w-20 h-12 shrink-0 rounded-md border border-slate-300 bg-[#FFFDF9] p-1 shadow-2xs relative overflow-hidden flex flex-col justify-between">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
-                    <div className="flex-1 flex flex-col items-center gap-[1.5px]">
-                      <span className="h-1 w-7 rounded-full bg-[#0A1950]" />
-                      <span className="h-1.5 w-8 rounded-full bg-[#9E053F]" />
-                      <span className="h-1 w-7 rounded-full bg-amber-200 border border-amber-500" />
-                    </div>
-                    <span className="h-2.5 w-3.5 rounded-[1px] bg-gradient-to-b from-[#006C3E] via-[#FACC15] to-[#006C3E]" />
-                  </div>
-                  <div className="h-[2px] w-14 mx-auto rounded-full bg-[#081B58]" />
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="h-4 w-3 rounded-[2px] border border-[#9E053F] bg-slate-200" />
-                    <div className="flex-1 space-y-0.5">
-                      <span className="block h-1 w-9 bg-[#0E1B52] rounded-full" />
-                      <span className="block h-1 w-7 bg-slate-400 rounded-full" />
-                    </div>
-                    <span className="h-4 w-2 rounded-xs bg-rose-200/40" />
-                  </div>
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-extrabold text-slate-900">
-                      Modèle 2 : Officiel IEPP (Togo)
-                    </span>
-                    <span
-                      className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 ${
-                        cardTemplate === 'togo_iepp'
-                          ? 'bg-[#9E053F] text-white'
-                          : 'bg-amber-100 text-amber-900'
-                      }`}
-                    >
-                      {cardTemplate === 'togo_iepp' ? 'Sélectionné' : 'Nouveau'}
-                    </span>
-                  </div>
-                  <p className="text-[10.5px] text-slate-600 mt-1 line-clamp-2">
-                    IEPP au choix (Lacs-Ouest, Lacs-Est...), Centre d&apos;écrit, Matricule, Sexe auto &amp; QR Code.
-                  </p>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* SECTION 1 : Personnalisation Intégrale de la Carte + Aperçu en Direct + Édition Élève par Élève */}
+          {/* ESPACE DE TRAVAIL INFOGRAPHIQUE : CANVAS HAUTE PRÉCISION (GAUCHE) + FICHE ÉLÈVE ACTIF (DROITE) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-            {/* COLONNE GAUCHE (5 cols) : Paramètres Globaux de la Carte + Cachet / Signature / Logo */}
-            <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] space-y-5">
-              <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
-                  <Building2 className="h-4 w-4 text-indigo-600" />
-                  1. Textes, Logo, Cachet & Signature de la Carte
-                </h3>
-                <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                  Champ vidé = Reste blanc
-                </span>
-              </div>
-
-              {/* Grille des textes modifiables de la carte */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {cardTemplate === 'classic' && (
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      Sigle Ministère (Haut Gauche)
-                    </label>
-                    <input
-                      type="text"
-                      value={ministryAcronym}
-                      onChange={(e) => setMinistryAcronym(e.target.value)}
-                      placeholder="Ex: MEPST (ou laisser vide)"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-extrabold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
-                    />
-                  </div>
-                )}
-
-                <div className={cardTemplate === 'togo_iepp' ? 'sm:col-span-2' : ''}>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    {cardTemplate === 'togo_iepp'
-                      ? 'IEPP (Ex: IEPP LACS-OUEST, IEPP LACS-EST)'
-                      : 'Inspection / IEPP'}
-                  </label>
-                  <input
-                    type="text"
-                    value={inspectionName}
-                    onChange={(e) => setInspectionName(e.target.value)}
-                    placeholder="Ex: IEPP LACS-OUEST, IEPP LACS-EST..."
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-extrabold text-[#0E1B52] focus:border-indigo-600 focus:bg-white outline-none"
-                  />
-                  {cardTemplate === 'togo_iepp' && (
-                    <div className="flex flex-wrap items-center gap-1 mt-1.5">
-                      <span className="text-[10px] text-slate-500 font-semibold mr-0.5">
-                        Exemples :
-                      </span>
-                      {[
-                        'IEPP LACS-OUEST',
-                        'IEPP LACS-EST',
-                        'IEPP LACS-SUD',
-                        'IEPP LOMÉ-GOLFE',
-                        'IEPP',
-                      ].map((preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          onClick={() => setInspectionName(preset)}
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
-                            inspectionName.trim().toUpperCase() === preset
-                              ? 'bg-[#0E1B52] text-white border-[#0E1B52]'
-                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          {preset}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    {cardTemplate === 'togo_iepp'
-                      ? "Nom de l'Établissement (bannière adaptative bordeaux)"
-                      : "Nom de l'Établissement (en rouge au centre)"}
-                  </label>
-                  <input
-                    type="text"
-                    value={schoolNameOverride}
-                    onChange={(e) => setSchoolNameOverride(e.target.value)}
-                    placeholder="Ex: EPP AGBODANKOPE / EPL LE ROI"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-extrabold uppercase text-[#9E053F] focus:border-indigo-600 focus:bg-white outline-none"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between gap-1 mb-1">
-                    <label className="block text-[11px] font-bold text-slate-700">
-                      Centre d&apos;Écrit (à compléter)
-                    </label>
-                    {cardTemplate === 'togo_iepp' && examCenter.trim() && (
-                      <button
-                        type="button"
-                        onClick={() => setExamCenter('')}
-                        className="text-[10px] font-bold text-amber-700 hover:underline"
-                        title="Vider pour afficher des pointillés à compléter plus tard"
-                      >
-                        Pointillés
-                      </button>
-                    )}
-                  </div>
-                  <input
-                    type="text"
-                    value={examCenter}
-                    onChange={(e) => setExamCenter(e.target.value)}
-                    placeholder="Laisser vide = ....... (à compléter)"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-blue-900 focus:border-indigo-600 focus:bg-white outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Année Scolaire
-                  </label>
-                  <input
-                    type="text"
-                    value={cardAcademicYear}
-                    onChange={(e) => setCardAcademicYear(e.target.value)}
-                    placeholder="Ex: 2026-2027"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-red-800 focus:border-indigo-600 focus:bg-white outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    {cardTemplate === 'togo_iepp'
-                      ? "Nom du Chef d'établissement"
-                      : 'Nom du Directeur (Bas Droite)'}
-                  </label>
-                  <input
-                    type="text"
-                    value={directorName}
-                    onChange={(e) => setDirectorName(e.target.value)}
-                    placeholder="Ex: GNAMAVO Kodjo (ou vide)"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Titre de la Carte (Bandeau)
-                  </label>
-                  <input
-                    type="text"
-                    value={cardBannerTitle}
-                    onChange={(e) => setCardBannerTitle(e.target.value)}
-                    placeholder="CARTE D'IDENTITÉ SCOLAIRE"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-blue-900 focus:border-indigo-600 focus:bg-white outline-none"
-                  />
-                </div>
-
-                {cardTemplate === 'classic' && (
-                  <>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                        Mention République (Haut Droite)
-                      </label>
-                      <input
-                        type="text"
-                        value={republicTitle}
-                        onChange={(e) => setRepublicTitle(e.target.value)}
-                        placeholder="REPUBLIQUE TOGOLAISE"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                        Devise Nationale (Haut Droite)
-                      </label>
-                      <input
-                        type="text"
-                        value={republicMotto}
-                        onChange={(e) => setRepublicMotto(e.target.value)}
-                        placeholder="Travail-Liberté-Patrie"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-600 focus:bg-white outline-none"
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Bloc Logo, Cachet du Directeur & Signature (Synchronisés avec Paramètres + Import direct) */}
-              <div className="pt-2 border-t border-slate-100 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-950">
-                    Logo, Cachet & Signature (Synchronisés avec Paramètres)
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  {/* 1. LOGO ÉCOLE */}
-                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2 flex flex-col items-center text-center justify-between">
-                    <span className="text-[10px] font-extrabold text-slate-700 mb-1">
-                      Logo École
-                    </span>
-                    <div className="h-11 w-11 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden mb-1.5">
-                      {logoUrl ? (
-                        <img src={logoUrl} alt="Logo" className="h-full w-full object-contain" />
-                      ) : (
-                        <ImageIcon className="h-4 w-4 text-slate-400" />
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 w-full">
-                      <label className="flex-1 cursor-pointer rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-1.5 py-1 text-[10px] font-bold text-indigo-800 flex items-center justify-center gap-1">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={uploadingAssetType === 'logo'}
-                          onChange={(e) => {
-                            const f = e.target.files?.[0]
-                            e.currentTarget.value = ''
-                            handleSchoolAssetUpload('logo', f)
-                          }}
-                        />
-                        {uploadingAssetType === 'logo' ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Upload className="h-3 w-3" />
-                        )}
-                        {logoUrl ? 'Changer' : 'Importer'}
-                      </label>
-                      {logoUrl && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setLogoUrl('')
-                            persistHeaderConfig({ logoUrl: '' })
-                            updateSchoolAssetUrl('logo', null)
-                            setShowVectorEmblemIfNoLogo(false)
-                          }}
-                          className="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
-                          title="Retirer le logo (laisser blanc)"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      )}
-                    </div>
-                    {!logoUrl && (
-                      <label className="mt-1 flex items-center gap-1 text-[9.5px] text-slate-600 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={showVectorEmblemIfNoLogo}
-                          onChange={(e) => setShowVectorEmblemIfNoLogo(e.target.checked)}
-                        />
-                        Emblème RT
-                      </label>
-                    )}
-                  </div>
-
-                  {/* 2. CACHET DU DIRECTEUR */}
-                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2 flex flex-col items-center text-center justify-between">
-                    <span className="text-[10px] font-extrabold text-slate-700 mb-1">
-                      Cachet École
-                    </span>
-                    <div className="h-11 w-11 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden mb-1.5">
-                      {stampUrl ? (
-                        <img
-                          src={stampUrl}
-                          alt="Cachet"
-                          className="h-full w-full object-contain"
-                        />
-                      ) : (
-                        <Stamp className="h-4 w-4 text-slate-400" />
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 w-full">
-                      <label className="flex-1 cursor-pointer rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-1.5 py-1 text-[10px] font-bold text-indigo-800 flex items-center justify-center gap-1">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={uploadingAssetType === 'stamp'}
-                          onChange={(e) => {
-                            const f = e.target.files?.[0]
-                            e.currentTarget.value = ''
-                            handleSchoolAssetUpload('stamp', f)
-                          }}
-                        />
-                        {uploadingAssetType === 'stamp' ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Upload className="h-3 w-3" />
-                        )}
-                        {stampUrl ? 'Changer' : 'Importer'}
-                      </label>
-                      {stampUrl && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setStampUrl('')
-                            persistHeaderConfig({
-                              stampUrl: '',
-                              showTogoStampAuto: false,
-                            })
-                            updateSchoolAssetUrl('stamp', null)
-                            setShowVectorStampIfNoStamp(false)
-                            setShowTogoStampAuto(false)
-                          }}
-                          className="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
-                          title="Retirer le cachet (laisser blanc)"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      )}
-                    </div>
-                    {!stampUrl && (
-                      <label className="mt-1 flex items-center gap-1 text-[9.5px] text-slate-600 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={
-                            cardTemplate === 'togo_iepp'
-                              ? showTogoStampAuto
-                              : showVectorStampIfNoStamp
-                          }
-                          onChange={(e) => {
-                            const checked = e.target.checked
-                            if (cardTemplate === 'togo_iepp') {
-                              setShowTogoStampAuto(checked)
-                              persistHeaderConfig({ showTogoStampAuto: checked })
-                            } else {
-                              setShowVectorStampIfNoStamp(checked)
-                            }
-                          }}
-                        />
-                        Cachet auto
-                      </label>
-                    )}
-                  </div>
-
-                  {/* 3. SIGNATURE DU DIRECTEUR */}
-                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-2 flex flex-col items-center text-center justify-between">
-                    <span className="text-[10px] font-extrabold text-slate-700 mb-1">
-                      Signature
-                    </span>
-                    <div className="h-11 w-11 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden mb-1.5">
-                      {signatureUrl ? (
-                        <img
-                          src={signatureUrl}
-                          alt="Signature"
-                          className="h-full w-full object-contain"
-                        />
-                      ) : (
-                        <PenTool className="h-4 w-4 text-slate-400" />
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 w-full">
-                      <label className="flex-1 cursor-pointer rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-1.5 py-1 text-[10px] font-bold text-indigo-800 flex items-center justify-center gap-1">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={uploadingAssetType === 'signature'}
-                          onChange={(e) => {
-                            const f = e.target.files?.[0]
-                            e.currentTarget.value = ''
-                            handleSchoolAssetUpload('signature', f)
-                          }}
-                        />
-                        {uploadingAssetType === 'signature' ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Upload className="h-3 w-3" />
-                        )}
-                        {signatureUrl ? 'Changer' : 'Importer'}
-                      </label>
-                      {signatureUrl && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSignatureUrl('')
-                            persistHeaderConfig({ signatureUrl: '' })
-                            updateSchoolAssetUrl('signature', null)
-                          }}
-                          className="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
-                          title="Retirer la signature (laisser blanc)"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      )}
-                    </div>
-                    {!signatureUrl && (
-                      <span className="mt-1 text-[9.5px] text-slate-400">
-                        Vide = Blanc
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* BLOC TYPOGRAPHIE : Polices, Styles (Gras, Italique, Souligné, Majuscules), Tailles & Couleurs */}
-              <div className="pt-3 border-t border-slate-100 space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
-                    <Type className="h-3.5 w-3.5 text-indigo-600" />
-                    Polices, Style, Taille, Gras, Italique, Souligné & Couleurs
-                  </span>
-                  <button
-                    type="button"
-                    onClick={resetTypographyToDefault}
-                    className="inline-flex items-center gap-1 rounded-lg bg-slate-100 hover:bg-slate-200 px-2 py-1 text-[10px] font-bold text-slate-700 transition-colors"
-                    title="Réinitialiser toutes les polices, tailles et couleurs au modèle officiel"
-                  >
-                    <RotateCcw className="h-3 w-3" />
-                    Par défaut
-                  </button>
-                </div>
-
-                {/* Changement rapide de la police sur toute la carte d'un seul clic */}
-                <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-2.5 space-y-1.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10.5px] font-bold text-indigo-950">
-                      Police globale (Appliquer à toute la carte) :
-                    </span>
-                    <select
-                      value={currentZoneStyle.fontFamily}
-                      onChange={(e) =>
-                        applyFontFamilyToAllZones(e.target.value as CardFontFamily)
-                      }
-                      className="rounded-lg border border-indigo-200 bg-white px-2 py-1 text-[11px] font-extrabold text-indigo-950 outline-none focus:border-indigo-600"
-                    >
-                      {FONT_FAMILY_OPTIONS.map((f) => (
-                        <option key={f.value} value={f.value}>
-                          {f.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Sélecteur de Zone à personnaliser */}
-                <div>
-                  <label className="block text-[10.5px] font-bold text-slate-600 mb-1.5">
-                    Choisir l&apos;élément de la carte à personnaliser :
-                  </label>
-                  <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100/80 p-1">
-                    {TYPOGRAPHY_ZONE_TABS.map((tab) => {
-                      const isTabActive = activeTypoZone === tab.key
-                      return (
-                        <button
-                          key={tab.key}
-                          type="button"
-                          onClick={() => setActiveTypoZone(tab.key)}
-                          className={`px-2.5 py-1 rounded-lg text-[10.5px] font-semibold whitespace-nowrap transition-all duration-150 ${
-                            isTabActive
-                              ? 'bg-white text-indigo-700 shadow-[0_1px_2px_rgba(15,23,42,0.12)] ring-1 ring-slate-200'
-                              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                          }`}
-                        >
-                          {tab.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Barre d'outils de la zone active : Police + Taille + Gras / Italique / Souligné / Majuscules + Couleur */}
-                <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
-                    {/* Police de la zone */}
-                    <div className="sm:col-span-7">
-                      <label className="block text-[10px] font-bold text-slate-500 mb-0.5">
-                        Police ({currentZoneMeta.label})
-                      </label>
-                      <select
-                        value={currentZoneStyle.fontFamily}
-                        onChange={(e) =>
-                          updateZoneTypography(activeTypoZone, {
-                            fontFamily: e.target.value as CardFontFamily,
-                          })
-                        }
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-900 outline-none focus:border-indigo-600"
-                      >
-                        {FONT_FAMILY_OPTIONS.map((f) => (
-                          <option key={f.value} value={f.value}>
-                            {f.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Taille de police (- / +) */}
-                    <div className="sm:col-span-5">
-                      <label className="block text-[10px] font-bold text-slate-500 mb-0.5">
-                        Taille ({(currentZoneMeta.basePt * currentZoneStyle.sizeScale).toFixed(1)} pt •{' '}
-                        {Math.round(currentZoneStyle.sizeScale * 100)}%)
-                      </label>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateZoneTypography(activeTypoZone, {
-                              sizeScale: Math.max(
-                                0.7,
-                                Number((currentZoneStyle.sizeScale - 0.08).toFixed(2))
-                              ),
-                            })
-                          }
-                          className="h-7 w-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-700"
-                          title="Réduire la taille"
-                        >
-                          <Minus className="h-3.5 w-3.5" />
-                        </button>
-                        <input
-                          type="range"
-                          min={0.7}
-                          max={1.45}
-                          step={0.05}
-                          value={currentZoneStyle.sizeScale}
-                          onChange={(e) =>
-                            updateZoneTypography(activeTypoZone, {
-                              sizeScale: parseFloat(e.target.value),
-                            })
-                          }
-                          className="flex-1 accent-indigo-600 cursor-pointer"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateZoneTypography(activeTypoZone, {
-                              sizeScale: Math.min(
-                                1.45,
-                                Number((currentZoneStyle.sizeScale + 0.08).toFixed(2))
-                              ),
-                            })
-                          }
-                          className="h-7 w-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-700"
-                          title="Augmenter la taille"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Boutons Style : Gras (B), Italique (I), Souligné (U), Majuscules (AA) */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                    <div className="flex items-center gap-0.5 rounded-lg bg-white p-0.5 ring-1 ring-slate-200 [&>button]:!border-transparent [&>button]:!shadow-none [&>button]:!rounded-md">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateZoneTypography(activeTypoZone, {
-                            bold: !currentZoneStyle.bold,
-                          })
-                        }
-                        className={`px-2.5 py-1.5 rounded-lg border text-xs font-black flex items-center gap-1 transition-all ${
-                          currentZoneStyle.bold
-                            ? 'bg-indigo-950 text-white border-indigo-950 shadow-2xs'
-                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                        }`}
-                        title="Gras (Bold)"
-                      >
-                        <Bold className="h-3.5 w-3.5" />
-                        Gras
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateZoneTypography(activeTypoZone, {
-                            italic: !currentZoneStyle.italic,
-                          })
-                        }
-                        className={`px-2.5 py-1.5 rounded-lg border text-xs italic font-bold flex items-center gap-1 transition-all ${
-                          currentZoneStyle.italic
-                            ? 'bg-indigo-950 text-white border-indigo-950 shadow-2xs'
-                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                        }`}
-                        title="Italique"
-                      >
-                        <Italic className="h-3.5 w-3.5" />
-                        Italique
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateZoneTypography(activeTypoZone, {
-                            underline: !currentZoneStyle.underline,
-                          })
-                        }
-                        className={`px-2.5 py-1.5 rounded-lg border text-xs underline font-bold flex items-center gap-1 transition-all ${
-                          currentZoneStyle.underline
-                            ? 'bg-indigo-950 text-white border-indigo-950 shadow-2xs'
-                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                        }`}
-                        title="Souligné"
-                      >
-                        <Underline className="h-3.5 w-3.5" />
-                        Souligné
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateZoneTypography(activeTypoZone, {
-                            uppercase: !currentZoneStyle.uppercase,
-                          })
-                        }
-                        className={`px-2 py-1.5 rounded-lg border text-[11px] font-extrabold transition-all ${
-                          currentZoneStyle.uppercase
-                            ? 'bg-indigo-950 text-white border-indigo-950 shadow-2xs'
-                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                        }`}
-                        title="Forcer en MAJUSCULES"
-                      >
-                        AA
-                      </button>
-                    </div>
-
-                    {/* Sélecteur de couleur libre */}
-                    <label
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 cursor-pointer"
-                      title="Choisir une couleur personnalisée"
-                    >
-                      <input
-                        type="color"
-                        value={currentZoneStyle.color}
-                        onChange={(e) =>
-                          updateZoneTypography(activeTypoZone, { color: e.target.value })
-                        }
-                        className="h-5 w-5 rounded border-0 cursor-pointer bg-transparent"
-                      />
-                      <span className="text-[10.5px] font-mono font-bold text-slate-700 uppercase">
-                        {currentZoneStyle.color}
-                      </span>
-                    </label>
-                  </div>
-
-                  {/* Pastilles de couleurs rapides */}
-                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                    <span className="text-[10px] font-bold text-slate-500 mr-1">Couleur :</span>
-                    {QUICK_COLOR_PALETTE.map((c) => (
-                      <button
-                        key={c.hex}
-                        type="button"
-                        onClick={() => updateZoneTypography(activeTypoZone, { color: c.hex })}
-                        className={`h-5 w-5 rounded-full border transition-transform ${
-                          currentZoneStyle.color.toUpperCase() === c.hex.toUpperCase()
-                            ? 'scale-125 ring-2 ring-indigo-500 border-white'
-                            : 'border-slate-300 hover:scale-110'
-                        }`}
-                        style={{ backgroundColor: c.hex }}
-                        title={c.name}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Si la zone active est le Bandeau Titre, proposer aussi la couleur de fond du bandeau */}
-                  {activeTypoZone === 'bannerTitle' && (
-                    <div className="flex items-center gap-1.5 flex-wrap pt-1.5 border-t border-slate-200/80">
-                      <span className="text-[10px] font-bold text-slate-600 mr-1">
-                        Fond du bandeau :
-                      </span>
-                      {BANNER_BG_PALETTE.map((bg) => (
-                        <button
-                          key={bg.hex}
-                          type="button"
-                          onClick={() =>
-                            setTypographyConfig((prev) => ({
-                              ...prev,
-                              bannerBgColor: bg.hex,
-                            }))
-                          }
-                          className={`h-5 px-2 rounded-md border text-[9.5px] font-bold transition-all ${
-                            typographyConfig.bannerBgColor.toUpperCase() === bg.hex.toUpperCase()
-                              ? 'ring-2 ring-indigo-600 border-indigo-600 text-slate-900'
-                              : 'border-slate-300 text-slate-700'
-                          }`}
-                          style={{ backgroundColor: bg.hex }}
-                        >
-                          {bg.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* PERSONNALISATION COULEUR LETTRE PAR LETTRE (EX: M-E-P-S-T, NOM ÉCOLE, BANDEAU...) */}
-                  {(() => {
-                    const activeLetterText = getFieldRawText(letterColorField)
-                    const activeLetterColors = getFieldLetterColors(
-                      letterColorField,
-                      activeLetterText
-                    )
-                    const safeSelectedIdx = Math.min(
-                      Math.max(0, selectedLetterIndex),
-                      Math.max(0, activeLetterText.length - 1)
-                    )
-                    const selectedChar = activeLetterText[safeSelectedIdx] || ''
-                    const selectedCharColor =
-                      activeLetterColors[safeSelectedIdx] || getFieldDefaultColor(letterColorField)
-
-                    return (
-                      <div className="pt-2.5 mt-1 border-t border-slate-200/90 space-y-2">
-                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-indigo-950 flex items-center gap-1">
-                            <Palette className="h-3.5 w-3.5 text-indigo-600" />
-                            Couleur Lettre par Lettre (Ex: M-E-P-S-T)
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleResetFieldLetterColors(letterColorField)}
-                            className="text-[10px] font-bold text-slate-500 hover:text-indigo-700 px-1.5 py-0.5 rounded bg-white border border-slate-200"
-                            title="Réinitialiser les couleurs des lettres de ce texte"
-                          >
-                            Réinitialiser lettres
-                          </button>
-                        </div>
-
-                        {/* Choix du texte à colorer lettre par lettre */}
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-semibold text-slate-600 shrink-0">
-                            Texte :
-                          </span>
-                          <select
-                            value={letterColorField}
-                            onChange={(e) => {
-                              setLetterColorField(e.target.value as typeof letterColorField)
-                              setSelectedLetterIndex(0)
-                            }}
-                            className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-900 outline-none focus:border-indigo-600"
-                          >
-                            <option value="ministryAcronym">
-                              Sigle Ministère ({ministryAcronym || 'MEPST'})
-                            </option>
-                            <option value="schoolName">
-                              Nom de l&apos;École ({schoolNameOverride.slice(0, 18)})
-                            </option>
-                            <option value="inspectionName">
-                              Inspection / IEPP ({inspectionName.slice(0, 18)})
-                            </option>
-                            <option value="bannerTitle">
-                              Titre Bandeau ({cardBannerTitle.slice(0, 18)})
-                            </option>
-                            <option value="examCenter">
-                              Centre d&apos;Écrit ({examCenter.slice(0, 18)})
-                            </option>
-                            <option value="republicTitle">
-                              Mention République ({republicTitle.slice(0, 18)})
-                            </option>
-                          </select>
-                        </div>
-
-                        {/* Cases cliquables pour chaque lettre du mot (ex: M | E | P | S | T) */}
-                        {activeLetterText.length > 0 ? (
-                          <>
-                            <div className="flex items-center gap-1 flex-wrap bg-white p-2 rounded-xl border border-slate-200/90">
-                              {Array.from(activeLetterText).map((ch, idx) => {
-                                const isSel = idx === safeSelectedIdx
-                                const charColor = activeLetterColors[idx] || '#0F172A'
-                                return (
-                                  <button
-                                    key={idx}
-                                    type="button"
-                                    onClick={() => setSelectedLetterIndex(idx)}
-                                    className={`min-w-[26px] h-7 px-1.5 rounded-lg border text-xs font-black transition-all flex items-center justify-center ${
-                                      isSel
-                                        ? 'ring-2 ring-indigo-600 border-indigo-600 bg-indigo-50/70 scale-110 shadow-2xs'
-                                        : 'border-slate-200 bg-slate-50/60 hover:bg-slate-100'
-                                    }`}
-                                    style={{ color: charColor }}
-                                    title={`Cliquez pour sélectionner la lettre "${ch}" (position ${idx + 1})`}
-                                  >
-                                    {ch === ' ' ? '␣' : ch}
-                                  </button>
-                                )
-                              })}
-                            </div>
-
-                            {/* Palette de couleur dédiée à la lettre sélectionnée */}
-                            <div className="flex items-center justify-between gap-2 flex-wrap bg-indigo-50/50 px-2.5 py-1.5 rounded-xl border border-indigo-100">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-[10px] font-extrabold text-indigo-950">
-                                  Lettre « {selectedChar === ' ' ? 'Espace' : selectedChar} » :
-                                </span>
-                                {[
-                                  { hex: '#0F172A', name: 'Noir' },
-                                  { hex: '#DC2626', name: 'Rouge' },
-                                  { hex: '#F59E0B', name: 'Jaune / Or' },
-                                  { hex: '#1D4ED8', name: 'Bleu Royal' },
-                                  { hex: '#007A33', name: 'Vert Togo' },
-                                  { hex: '#99121C', name: 'Bordeaux' },
-                                  { hex: '#7C3AED', name: 'Violet' },
-                                  { hex: '#EA580C', name: 'Orange' },
-                                  { hex: '#0284C7', name: 'Bleu Ciel' },
-                                ].map((c) => (
-                                  <button
-                                    key={c.hex}
-                                    type="button"
-                                    onClick={() => handleSetLetterColor(c.hex)}
-                                    className={`h-4 w-4 rounded-full border transition-transform ${
-                                      selectedCharColor.toUpperCase() === c.hex.toUpperCase()
-                                        ? 'scale-125 ring-2 ring-indigo-600 border-white'
-                                        : 'border-slate-300 hover:scale-110'
-                                    }`}
-                                    style={{ backgroundColor: c.hex }}
-                                    title={`Mettre la lettre "${selectedChar}" en ${c.name}`}
-                                  />
-                                ))}
-                              </div>
-
-                              <label
-                                className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 cursor-pointer"
-                                title="Autre couleur au choix pour cette lettre"
-                              >
-                                <input
-                                  type="color"
-                                  value={selectedCharColor}
-                                  onChange={(e) => handleSetLetterColor(e.target.value)}
-                                  className="h-4 w-4 rounded border-0 cursor-pointer bg-transparent"
-                                />
-                                <span className="text-[9.5px] font-mono font-bold text-slate-700">
-                                  Autre
-                                </span>
-                              </label>
-                            </div>
-                          </>
-                        ) : (
-                          <p className="text-[10.5px] text-slate-400 italic">
-                            Saisissez d&apos;abord un texte dans ce champ pour colorer ses lettres.
-                          </p>
-                        )}
-                      </div>
-                    )
-                  })()}
-                </div>
-              </div>
-            </div>
-
-            {/* COLONNE DROITE (7 cols) : Aperçu Temps Réel + Saisie Élève par Élève (Enregistrer -> Suivant) */}
-            <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.08)] space-y-5">
-              {/* Barre de navigation Alphabétique Élève par Élève (Toujours visible — Sans retour au début sur Suivant) */}
+            {/* ZONE GAUCHE (7 cols) : Atelier Canvas avec Aperçu Temps Réel */}
+            <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-[0_1px_3px_rgba(15,23,42,0.05),0_10px_28px_-14px_rgba(15,23,42,0.1)] space-y-4">
+              {/* Barre supérieure de l'atelier Canvas + Navigation Élève A-Z */}
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Eye className="h-4 w-4 text-indigo-600" />
                   <span className="text-xs font-extrabold uppercase tracking-wider text-indigo-950">
-                    2. Aperçu &amp; Saisie Carte par Carte ({activeIndex + 1} / {localStudents.length})
+                    Atelier Canvas ({activeIndex + 1} / {localStudents.length})
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                      cardTemplate === 'togo_iepp'
+                        ? 'bg-rose-100 text-[#9E053F]'
+                        : 'bg-indigo-100 text-indigo-800'
+                    }`}
+                  >
+                    {cardTemplate === 'togo_iepp' ? 'Modèle 2 : Officiel IEPP' : 'Modèle 1 : Classique'}
                   </span>
                 </div>
 
@@ -2475,20 +1640,17 @@ export function SchoolIdCardStudioModal({
                 </div>
               </div>
 
+              {/* Surface de travail Infographie (grille micro-points + zoom fluide) */}
+              <div className="rounded-2xl border border-slate-200/90 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] bg-slate-100/75 p-4 sm:p-6 overflow-x-auto flex items-center justify-center min-h-[330px]">
+                <div
+                  className="w-full transition-transform duration-200"
+                  style={{
+                    transform: `scale(${previewZoom})`,
+                    transformOrigin: 'center center',
+                  }}
+                >
               {cardTemplate === 'togo_iepp' ? (
                 <div className="space-y-3">
-                  <div className="rounded-xl border border-rose-200/80 bg-rose-50/50 px-3.5 py-2 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-[#9E053F]" />
-                      <span className="text-xs font-extrabold text-[#0E1B52]">
-                        Modèle 2 : Officiel IEPP / Centre d&apos;écrit
-                      </span>
-                    </div>
-                    <span className="text-[11px] font-semibold text-rose-900/90">
-                      Cliquez directement sur le cadre photo ou le bouton ci-dessous pour ajouter la photo
-                    </span>
-                  </div>
-
                   <SchoolIdCardTogoPreview
                     student={activeStudent}
                     inspectionName={inspectionName}
@@ -2933,7 +2095,27 @@ export function SchoolIdCardStudioModal({
               </div>
               </>
               )}
+                </div>
+              </div>
 
+              {/* Pied du Canvas Atelier */}
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 pt-0.5">
+                <span>Format PVC Standard / Planche 10 cartes A4 (94 × 53,5 mm)</span>
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  className="font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-1"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  {activeStudent.avatar_url
+                    ? "Changer la photo de l'élève"
+                    : "Ajouter la photo de l'élève"}
+                </button>
+              </div>
+            </div>
+
+            {/* ZONE DROITE (5 cols) : Fiche Rapide Élève Actif & Boutons Enregistrer */}
+            <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-[0_1px_3px_rgba(15,23,42,0.05),0_10px_28px_-14px_rgba(15,23,42,0.1)] space-y-4">
               {/* FORMULAIRE DE SAISIE RAPIDE DE L'ÉLÈVE ACTIF + BOUTONS « ENREGISTRER » & « SUIVANT » */}
               <div className="rounded-xl border border-indigo-200/80 bg-indigo-50/40 p-3.5 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">

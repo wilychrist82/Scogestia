@@ -11,6 +11,7 @@ import {
   buildStudentQrPayload,
   formatAcademicYearLabel,
   formatCardDateFr,
+  formatIeppHeaderDisplay,
   generateQrMatrix,
   sanitizeIeppText,
 } from '@/lib/pdf/togo-iepp-card'
@@ -104,20 +105,13 @@ export function SchoolIdCardTogoPreview({
     ...typography,
   }
 
-  const cleanIepp = sanitizeIeppText(inspectionName)
-  const displayIepp =
-    cleanIepp.toUpperCase() === 'IEPP'
-      ? 'I  E  P  P'
-      : typo.headerOfficial.uppercase
-        ? cleanIepp.toUpperCase()
-        : cleanIepp
+  const displayIepp = formatIeppHeaderDisplay(inspectionName, typo.headerOfficial.uppercase)
 
   const cleanSchoolName = (schoolName || 'ÉTABLISSEMENT SCOLAIRE').trim()
   const displaySchoolName = typo.schoolName.uppercase
     ? cleanSchoolName.toUpperCase()
     : cleanSchoolName
 
-  // Ajustement proportionnel de la police uniquement pour très longs noms tout en étirant/rétrécissant la pilule
   const schoolBasePx =
     displaySchoolName.length > 34
       ? 9.2
@@ -128,7 +122,7 @@ export function SchoolIdCardTogoPreview({
   const cleanExamCenter = examCenter.trim()
   const displayExamCenter = cleanExamCenter
     ? `Centre d'écrit : ${cleanExamCenter}`
-    : "Centre d'écrit : .............................."
+    : "Centre d'écrit : ........................"
 
   const rawBanner = cardBannerTitle.trim()
   const displayBannerTitle =
@@ -173,7 +167,7 @@ export function SchoolIdCardTogoPreview({
   )
 
   return (
-    <div className="mx-auto w-full max-w-[495px] aspect-[94/53.5] relative rounded-xl overflow-hidden bg-[#FFFDF9] border border-slate-300 shadow-[0_12px_32px_-12px_rgba(15,23,42,0.28)] select-none text-slate-900">
+    <div className="mx-auto w-full max-w-[500px] aspect-[94/53.5] relative rounded-xl overflow-hidden bg-[#FFFDF9] border border-slate-300 shadow-[0_14px_36px_-12px_rgba(15,23,42,0.3)] select-none text-slate-900">
       {/* COUCHE ARRIÈRE-PLAN : Voile lumineux + Bâtiment scolaire filigrane + Carte Togo floutée + Ruban bas */}
       <svg
         viewBox="0 0 940 535"
@@ -210,7 +204,7 @@ export function SchoolIdCardTogoPreview({
         <rect x="0" y="0" width="940" height="535" fill={`url(#${glowId})`} />
 
         {/* Feuillage discret */}
-        <g opacity="0.2" fill="#4D7C46">
+        <g opacity="0.18" fill="#4D7C46">
           <ellipse cx="26" cy="145" rx="22" ry="9" transform="rotate(-24 26 145)" />
           <ellipse cx="44" cy="128" rx="18" ry="8" transform="rotate(-40 44 128)" />
           <ellipse cx="912" cy="182" rx="20" ry="8" transform="rotate(28 912 182)" />
@@ -218,7 +212,7 @@ export function SchoolIdCardTogoPreview({
         </g>
 
         {/* Bâtiment scolaire pastel très discret */}
-        <g opacity="0.22">
+        <g opacity="0.2">
           <polygon points="480,255 645,212 805,255" fill="#E8B9B9" />
           <rect x="492" y="255" width="302" height="122" fill="#F2DCDC" />
           <rect x="486" y="255" width="314" height="10" fill="#DFB6B6" />
@@ -231,7 +225,7 @@ export function SchoolIdCardTogoPreview({
         </g>
 
         {/* Carte du Togo à droite légèrement floue / opacité réduite façon filigrane */}
-        <g transform="translate(752, 145)" opacity="0.34" filter={`url(#${mapBlurId})`}>
+        <g transform="translate(756, 145)" opacity="0.34" filter={`url(#${mapBlurId})`}>
           <path
             d="M28,6 L64,4 L76,18 L92,24 L82,45 L108,58 L114,82 L130,104 L136,134 L148,162 L158,194 L146,218 L108,224 L85,208 L81,180 L68,160 L74,132 L58,108 L65,80 L40,56 L32,30 Z"
             fill="#F9CEE0"
@@ -259,15 +253,15 @@ export function SchoolIdCardTogoPreview({
 
         {/* Vague tricolore fine tout en bas */}
         <path
-          d="M0,365 C18,465 82,505 225,515 C420,528 675,506 940,519 L940,535 L0,535 Z"
+          d="M0,382 C18,472 86,508 230,517 C425,529 675,512 940,522 L940,535 L0,535 Z"
           fill={`url(#${greenId})`}
         />
         <path
-          d="M0,405 C24,484 102,512 260,520 C465,531 700,512 940,524 L940,535 L0,535 Z"
+          d="M0,418 C24,490 104,515 265,522 C470,532 700,516 940,526 L940,535 L0,535 Z"
           fill={`url(#${goldId})`}
         />
         <path
-          d="M0,452 C38,505 130,521 305,526 C515,532 740,520 940,529 L940,535 L0,535 Z"
+          d="M0,460 C38,508 130,522 308,527 C518,533 740,522 940,530 L940,535 L0,535 Z"
           fill={`url(#${redId})`}
         />
       </svg>
@@ -299,19 +293,44 @@ export function SchoolIdCardTogoPreview({
         <rect x="8" y="6" width="212" height="105" fill={`url(#${flagShadeId})`} />
       </svg>
 
+      {/* QR CODE POSITIONNÉ À DROITE DEVANT LA CARTE DU TOGO (AU NIVEAU DE CLASSE VERS LE HAUT, TOUCHANT LÉGÈREMENT LE TOGO) */}
+      <div className="absolute right-[18.2%] bottom-[29.2%] w-[10.2%] aspect-square rounded-[4px] bg-white border border-slate-300 p-[2px] shadow-2xs z-20">
+        <svg
+          viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}
+          className="h-full w-full"
+          shapeRendering="crispEdges"
+        >
+          <rect width={qrMatrix.length} height={qrMatrix.length} fill="#FFFFFF" />
+          {qrMatrix.map((row, rIdx) =>
+            row.map((cell, cIdx) =>
+              cell ? (
+                <rect
+                  key={`${rIdx}-${cIdx}`}
+                  x={cIdx}
+                  y={rIdx}
+                  width={1}
+                  height={1}
+                  fill="#0F172A"
+                />
+              ) : null
+            )
+          )}
+        </svg>
+      </div>
+
       {/* CONTENU STRUCTURÉ DE LA CARTE */}
-      <div className="relative z-10 h-full w-full flex flex-col justify-between px-[3.6%] pt-[1.4%] pb-[1.6%]">
+      <div className="relative z-10 h-full w-full flex flex-col justify-between px-[3.5%] pt-[1.2%] pb-[1.5%]">
         {/* 1. EN-TÊTE */}
         <div className="flex flex-col">
           <div className="flex items-start gap-1.5">
-            {/* Emblème gauche */}
-            <div className="w-[14.5%] shrink-0 flex items-center justify-center pt-0.5">
+            {/* Logo agrandi en haut à gauche */}
+            <div className="w-[15%] shrink-0 flex items-center justify-center pt-0.5">
               {logoUrl ? (
-                <div className="h-10 w-10 rounded-full bg-white/95 border border-amber-300 shadow-2xs p-0.5 flex items-center justify-center overflow-hidden">
+                <div className="h-[54px] w-[54px] rounded-full bg-white/95 border border-amber-300 shadow-xs p-0.5 flex items-center justify-center overflow-hidden">
                   <img src={logoUrl} alt="Logo école" className="h-full w-full object-contain" />
                 </div>
               ) : showVectorEmblemIfNoLogo ? (
-                <svg viewBox="0 0 100 84" className="w-11 h-9.5 drop-shadow-2xs">
+                <svg viewBox="0 0 100 84" className="w-13 h-11 drop-shadow-2xs">
                   <g fill="#D6A524">
                     <ellipse cx="22" cy="54" rx="7" ry="3.5" transform="rotate(-35 22 54)" />
                     <ellipse cx="16" cy="43" rx="7" ry="3.5" transform="rotate(-12 16 43)" />
@@ -344,26 +363,22 @@ export function SchoolIdCardTogoPreview({
                   <path d="M31,70 Q50,81 69,70 L66,75 Q50,85 34,75 Z" fill="#CE112E" />
                 </svg>
               ) : (
-                <div className="h-9 w-9" />
+                <div className="h-12 w-12" />
               )}
             </div>
 
-            {/* Bloc central : IEPP bien visible + Bannière adaptative Nom École + Centre d'écrit */}
+            {/* Bloc central : IEPP bien visible + Bannière adaptative Nom École + Centre d'écrit agrandi */}
             <div className="flex-1 min-w-0 flex flex-col items-center pt-0.5">
               {/* IEPP très lisible, sans DRE */}
               <div className="w-full flex items-center justify-center gap-1.5 min-h-[16px]">
-                {displayIepp && (
-                  <>
-                    <span className="h-[1.8px] flex-1 bg-gradient-to-r from-transparent to-[#A80C46]" />
-                    <span
-                      className="font-black tracking-[0.06em] text-center leading-none whitespace-nowrap"
-                      style={buildTextCss(typo.headerOfficial, 13.0, '#0A1950')}
-                    >
-                      {displayIepp}
-                    </span>
-                    <span className="h-[1.8px] flex-1 bg-gradient-to-l from-transparent to-[#A80C46]" />
-                  </>
-                )}
+                <span className="h-[1.8px] flex-1 bg-gradient-to-r from-transparent to-[#A80C46]" />
+                <span
+                  className="font-black tracking-[0.06em] text-center leading-none whitespace-nowrap"
+                  style={buildTextCss(typo.headerOfficial, 13.0, '#0A1950')}
+                >
+                  {displayIepp}
+                </span>
+                <span className="h-[1.8px] flex-1 bg-gradient-to-l from-transparent to-[#A80C46]" />
               </div>
 
               {/* Pilule bordeaux dynamique (s'élargit si le nom est long, rétrécit si le nom est court) */}
@@ -376,20 +391,20 @@ export function SchoolIdCardTogoPreview({
                 </span>
               </div>
 
-              {/* Centre d'écrit (pilule crème adaptée) */}
-              <div className="mt-[2.5px] inline-flex items-center justify-center w-fit max-w-full rounded-full bg-gradient-to-r from-[#FFFDF2] via-[#FFF8DB] to-[#FFFDF2] border border-[#D49B1A] px-3 py-[1px]">
-                <span className="text-[9.5px] font-extrabold text-[#0E1B52] whitespace-nowrap leading-tight">
+              {/* Centre d'écrit — police agrandie */}
+              <div className="mt-[2.5px] inline-flex items-center justify-center w-fit max-w-full rounded-full bg-gradient-to-r from-[#FFFDF2] via-[#FFF8DB] to-[#FFFDF2] border border-[#D49B1A] px-4 py-[2px]">
+                <span className="text-[11.5px] font-extrabold text-[#0E1B52] whitespace-nowrap leading-tight">
                   {displayExamCenter}
                 </span>
               </div>
             </div>
 
             {/* Espace réservé sous le drapeau flottant */}
-            <div className="w-[20%] shrink-0" />
+            <div className="w-[19%] shrink-0" />
           </div>
 
-          {/* Titre "CARTE D'IDENTITÉ SCOLAIRE" SANS cadre arrondi, plus gros & police designer éditoriale */}
-          <div className="mt-[3px] flex flex-col items-center justify-center">
+          {/* Titre "CARTE D'IDENTITÉ SCOLAIRE" SANS cadre arrondi, plus gros & police designer */}
+          <div className="mt-[2px] flex flex-col items-center justify-center">
             <span
               className="font-black tracking-[0.09em] leading-none text-center whitespace-nowrap"
               style={{
@@ -397,7 +412,7 @@ export function SchoolIdCardTogoPreview({
                   typo.bannerTitle.fontFamily === 'courier'
                     ? '"Courier New", Courier, monospace'
                     : 'Georgia, "Palatino Linotype", "Times New Roman", serif',
-                fontSize: `${(14.8 * Math.max(0.85, Math.min(1.25, typo.bannerTitle.sizeScale || 1))).toFixed(1)}px`,
+                fontSize: `${(14.6 * Math.max(0.85, Math.min(1.25, typo.bannerTitle.sizeScale || 1))).toFixed(1)}px`,
                 color: '#081B58',
                 textShadow: '0.8px 0.8px 0 rgba(214, 175, 86, 0.55)',
               }}
@@ -408,10 +423,10 @@ export function SchoolIdCardTogoPreview({
           </div>
         </div>
 
-        {/* 2. CORPS DE LA CARTE : PHOTO PLEINE SURFACE (SANS TEXTE) + ANNÉE SCOLAIRE & INFOS ÉLÈVE */}
-        <div className="flex gap-[2.8%] items-start flex-1 pt-[2px]">
+        {/* 2. CORPS DE LA CARTE : PHOTO PLEINE SURFACE + ANNÉE SCOLAIRE & INFOS ÉLÈVE */}
+        <div className="flex gap-[2.8%] items-start flex-1 pt-[1px]">
           {/* Colonne gauche : Cadre Photo 100% photo (tête + épaules + poitrine) + Année Scolaire */}
-          <div className="w-[21.5%] shrink-0 flex flex-col items-center gap-[3px]">
+          <div className="w-[21.2%] shrink-0 flex flex-col items-center gap-[3px]">
             <button
               type="button"
               onClick={onPhotoTrigger}
@@ -420,7 +435,7 @@ export function SchoolIdCardTogoPreview({
                   ? "Cliquez pour changer la photo de l'élève"
                   : "Cliquez pour ajouter la photo de l'élève"
               }
-              className="w-full aspect-[19.2/21.6] rounded-[6px] bg-white border-[2px] border-[#A80744] p-[2px] overflow-hidden shadow-2xs cursor-pointer hover:ring-2 hover:ring-[#A80744]/40 transition-all flex items-center justify-center"
+              className="w-full aspect-[19.0/21.4] rounded-[6px] bg-white border-[2px] border-[#A80744] p-[2px] overflow-hidden shadow-2xs cursor-pointer hover:ring-2 hover:ring-[#A80744]/40 transition-all flex items-center justify-center"
             >
               {student.avatar_url ? (
                 <img
@@ -445,8 +460,8 @@ export function SchoolIdCardTogoPreview({
             </div>
           </div>
 
-          {/* Colonne centrale : Informations automatiques sans pointillés quand renseigné, Sexe unique, Classe remontée */}
-          <div className="flex-1 min-w-0 pr-[11.5%] flex flex-col gap-[2.5px] pt-[1px]">
+          {/* Colonne centrale : Informations automatiques (marge droite réservée pour le QR code et la carte du Togo) */}
+          <div className="flex-1 min-w-0 pr-[29.5%] flex flex-col gap-[2px] pt-[1px]">
             <div className="flex items-baseline gap-1 min-w-0">
               <span className="text-[10px] font-extrabold text-[#0E1B52] shrink-0">Matricule :</span>
               {student.matricule?.trim() ? (
@@ -463,7 +478,7 @@ export function SchoolIdCardTogoPreview({
               {student.last_name?.trim() ? (
                 <span
                   className="uppercase truncate leading-tight"
-                  style={buildTextCss(typo.studentName, 10.6)}
+                  style={buildTextCss(typo.studentName, 10.5)}
                 >
                   {student.last_name}
                 </span>
@@ -487,13 +502,13 @@ export function SchoolIdCardTogoPreview({
             </div>
 
             <div className="flex items-baseline gap-1 min-w-0">
-              <span className="text-[9.8px] font-extrabold text-[#0E1B52] shrink-0">
+              <span className="text-[9.6px] font-extrabold text-[#0E1B52] shrink-0">
                 Date de naissance :
               </span>
               {formattedDob ? (
                 <span
                   className="truncate leading-tight"
-                  style={buildTextCss(typo.studentDetails, 9.8, '#0F172A')}
+                  style={buildTextCss(typo.studentDetails, 9.6, '#0F172A')}
                 >
                   {formattedDob}
                 </span>
@@ -503,13 +518,13 @@ export function SchoolIdCardTogoPreview({
             </div>
 
             <div className="flex items-baseline gap-1 min-w-0">
-              <span className="text-[9.8px] font-extrabold text-[#0E1B52] shrink-0">
+              <span className="text-[9.6px] font-extrabold text-[#0E1B52] shrink-0">
                 Lieu de naissance :
               </span>
               {birthPlaceText ? (
                 <span
                   className="truncate leading-tight"
-                  style={buildTextCss(typo.studentDetails, 9.8, '#0F172A')}
+                  style={buildTextCss(typo.studentDetails, 9.6, '#0F172A')}
                 >
                   {birthPlaceText}
                 </span>
@@ -548,48 +563,23 @@ export function SchoolIdCardTogoPreview({
           </div>
         </div>
 
-        {/* 3. PIED DE CARTE : QR CODE + DIRECTEUR (SANS CADRE NI TEXTE « NOM DU CHEF ») + SIGNATURE & CACHET */}
-        <div className="flex items-end justify-between gap-[2%] pt-[1px] pb-[2px]">
-          {/* QR Code scannable */}
-          <div className="w-[10.4%] aspect-square rounded-[4px] bg-white border border-slate-300 p-[2px] shadow-2xs shrink-0">
-            <svg
-              viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}
-              className="h-full w-full"
-              shapeRendering="crispEdges"
-            >
-              <rect width={qrMatrix.length} height={qrMatrix.length} fill="#FFFFFF" />
-              {qrMatrix.map((row, rIdx) =>
-                row.map((cell, cIdx) =>
-                  cell ? (
-                    <rect
-                      key={`${rIdx}-${cIdx}`}
-                      x={cIdx}
-                      y={rIdx}
-                      width={1}
-                      height={1}
-                      fill="#0F172A"
-                    />
-                  ) : null
-                )
-              )}
-            </svg>
-          </div>
-
-          {/* Nom du Chef d'établissement (affiché directement, sans cadre ni étiquette ni pointillé) */}
-          <div className="flex-1 min-w-0 flex items-center justify-center pb-1.5">
+        {/* 3. PIED DE CARTE : DIRECTEUR REMONTÉ AU-DESSUS DE LA BANDE + SIGNATURE + GRAND CACHET À DROITE */}
+        <div className="flex items-center justify-end gap-2 pt-0 pb-3.5 pl-[24%] pr-0.5">
+          {/* Nom du Chef d'établissement bien remonté au-dessus de la bande basse */}
+          <div className="flex-1 min-w-0 flex items-center justify-center">
             {directorName.trim() && (
               <span
                 className="truncate font-bold text-[#0E1B52] leading-tight text-center"
-                style={buildTextCss(typo.footerInfo, 10.2, '#0E1B52')}
+                style={buildTextCss(typo.footerInfo, 10.4, '#0E1B52')}
               >
                 {directorName.trim()}
               </span>
             )}
           </div>
 
-          {/* Signature du Chef d'établissement (directement depuis Paramètres, sans cadre ni mot "Signature") + Cachet */}
-          <div className="flex items-center justify-end gap-0.5 shrink-0 pb-0.5">
-            <div className="h-8 w-20 flex items-center justify-center overflow-hidden">
+          {/* Signature du Chef d'établissement (sans cadre ni libellé) + Grand Cachet circulaire */}
+          <div className="flex items-center justify-end gap-0.5 shrink-0">
+            <div className="h-9 w-20 flex items-center justify-center overflow-hidden">
               {signatureUrl ? (
                 <img
                   src={signatureUrl}
@@ -599,15 +589,15 @@ export function SchoolIdCardTogoPreview({
               ) : null}
             </div>
 
-            <div className="h-11 w-11 shrink-0 -ml-2 z-10 flex items-center justify-center">
+            <div className="h-[68px] w-[68px] shrink-0 -ml-2 -my-2 z-20 flex items-center justify-center">
               {stampUrl ? (
                 <img
                   src={stampUrl}
                   alt="Cachet officiel"
-                  className="h-11 w-11 object-contain"
+                  className="h-[68px] w-[68px] object-contain"
                 />
               ) : showVectorStampIfNoStamp ? (
-                <svg viewBox="0 0 100 100" className="h-11 w-11 drop-shadow-2xs">
+                <svg viewBox="0 0 100 100" className="h-[66px] w-[66px] drop-shadow-2xs">
                   <circle cx="50" cy="50" r="46" fill="#FFFFFF" stroke="#10329E" strokeWidth="3.5" />
                   <circle cx="50" cy="50" r="41" fill="none" stroke="#10329E" strokeWidth="1.4" />
                   <circle cx="50" cy="50" r="28" fill="none" stroke="#10329E" strokeWidth="1.8" />

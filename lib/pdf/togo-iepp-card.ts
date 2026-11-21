@@ -87,6 +87,17 @@ export function sanitizeIeppText(raw?: string | null): string {
 }
 
 /**
+ * Formate l'affichage de l'IEPP sur la carte (invite à compléter si non défini par l'utilisateur).
+ */
+export function formatIeppHeaderDisplay(raw?: string | null, uppercase = true): string {
+  const clean = sanitizeIeppText(raw)
+  if (!clean || clean.toUpperCase() === 'IEPP') {
+    return 'IEPP : .........................'
+  }
+  return uppercase ? clean.toUpperCase() : clean
+}
+
+/**
  * Formate une date ISO (YYYY-MM-DD ou ISO timestamp) en JJ/MM/AAAA sans décalage de fuseau horaire.
  */
 export function formatCardDateFr(dateStr?: string | null): string {
@@ -341,7 +352,6 @@ function drawTogoSoftWatermarkMap(doc: jsPDF, x: number, y: number, w: number, h
   const cx = x + w * 0.56
   const cy = y + h * 0.52
 
-  // Remplissage rose très pâle façon filigrane discret
   doc.setFillColor(253, 238, 244)
   for (let i = 0; i < absPts.length; i++) {
     const p1 = absPts[i]
@@ -376,9 +386,9 @@ function drawBottomNationalRibbon(doc: jsPDF, cardX: number, cardY: number, card
     const t0 = i / segments
     const x0 = cardX + t0 * cardW
     const leftLift = Math.max(0, 1 - t0 * 5.2)
-    const greenH = 1.4 + leftLift * 12.0 + Math.sin(t0 * Math.PI * 2.1) * 0.4
-    const yellowH = 1.05 + leftLift * 7.8 + Math.cos(t0 * Math.PI * 1.8) * 0.35
-    const redH = 0.7 + leftLift * 3.8 + Math.sin(t0 * Math.PI * 2.4) * 0.25
+    const greenH = 1.2 + leftLift * 10.5 + Math.sin(t0 * Math.PI * 2.1) * 0.35
+    const yellowH = 0.9 + leftLift * 6.8 + Math.cos(t0 * Math.PI * 1.8) * 0.3
+    const redH = 0.6 + leftLift * 3.4 + Math.sin(t0 * Math.PI * 2.4) * 0.2
 
     doc.setFillColor(0, 108, 62)
     doc.rect(x0, bottomY - greenH, segW + 0.15, greenH, 'F')
@@ -392,7 +402,7 @@ function drawBottomNationalRibbon(doc: jsPDF, cardX: number, cardY: number, card
 }
 
 /**
- * Cachet circulaire bleu officiel du modèle IEPP ("ÉTABLISSEMENT SCOLAIRE · TOGO" + livre ouvert).
+ * Cachet circulaire bleu officiel agrandi ("ÉTABLISSEMENT SCOLAIRE · TOGO" + livre ouvert).
  */
 function drawTogoIeppCircularStamp(doc: jsPDF, cx: number, cy: number, radius: number) {
   const r = 16
@@ -403,25 +413,25 @@ function drawTogoIeppCircularStamp(doc: jsPDF, cx: number, cy: number, radius: n
   doc.circle(cx, cy, radius, 'F')
 
   doc.setDrawColor(r, g, b)
-  doc.setLineWidth(0.36)
+  doc.setLineWidth(0.42)
   doc.circle(cx, cy, radius, 'S')
-  doc.setLineWidth(0.16)
-  doc.circle(cx, cy, radius - 0.5, 'S')
-  doc.setLineWidth(0.2)
+  doc.setLineWidth(0.18)
+  doc.circle(cx, cy, radius - 0.65, 'S')
+  doc.setLineWidth(0.24)
   doc.circle(cx, cy, radius * 0.62, 'S')
 
   doc.setFillColor(26, 70, 194)
-  doc.roundedRect(cx - radius * 0.36, cy - radius * 0.22, radius * 0.34, radius * 0.42, 0.2, 0.2, 'F')
-  doc.roundedRect(cx + radius * 0.02, cy - radius * 0.22, radius * 0.34, radius * 0.42, 0.2, 0.2, 'F')
+  doc.roundedRect(cx - radius * 0.36, cy - radius * 0.22, radius * 0.34, radius * 0.42, 0.22, 0.22, 'F')
+  doc.roundedRect(cx + radius * 0.02, cy - radius * 0.22, radius * 0.34, radius * 0.42, 0.22, 0.22, 'F')
 
-  drawStarPolygon(doc, cx - radius * 0.77, cy + 0.65, 0.42, 0.16, [r, g, b])
-  drawStarPolygon(doc, cx + radius * 0.77, cy + 0.65, 0.42, 0.16, [r, g, b])
+  drawStarPolygon(doc, cx - radius * 0.77, cy + 0.65, 0.52, 0.2, [r, g, b])
+  drawStarPolygon(doc, cx + radius * 0.77, cy + 0.65, 0.52, 0.2, [r, g, b])
 
   doc.setTextColor(r, g, b)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(3.0)
-  doc.text('ETABLISSEMENT SCOLAIRE', cx, cy - radius * 0.69, { align: 'center' })
-  doc.setFontSize(3.4)
+  doc.setFontSize(3.6)
+  doc.text('ETABLISSEMENT SCOLAIRE', cx, cy - radius * 0.68, { align: 'center' })
+  doc.setFontSize(4.2)
   doc.text('TOGO', cx, cy + radius * 0.85, { align: 'center' })
 }
 
@@ -470,7 +480,7 @@ export function drawTogoIeppIdCardRecto(
 
   // Filigrane bâtiment scolaire très discret & carte Togo floutée à droite
   drawSubtleSchoolBuildingBackdrop(doc, cardX, cardY)
-  drawTogoSoftWatermarkMap(doc, cardX + 75.5, cardY + 14.5, 16.5, 25.5)
+  drawTogoSoftWatermarkMap(doc, cardX + 76.0, cardY + 14.5, 16.5, 25.5)
 
   // Ruban national ondulé tout en bas
   drawBottomNationalRibbon(doc, cardX, cardY, cardW, cardH)
@@ -480,59 +490,53 @@ export function drawTogoIeppIdCardRecto(
   doc.setLineWidth(0.16)
   doc.rect(cardX, cardY, cardW, cardH, 'S')
 
-  // 2. En-tête : Emblème gauche + Drapeau flottant droite + Bloc central IEPP / École / Centre d'écrit
+  // 2. En-tête : Logo agrandi gauche + Drapeau flottant droite + Bloc central IEPP / École / Centre d'écrit
   if (assets.logoDataUrl) {
     try {
       doc.setFillColor(255, 255, 255)
-      doc.circle(cardX + 11.8, cardY + 5.8, 5.1, 'F')
-      doc.addImage(assets.logoDataUrl, 'PNG', cardX + 7.2, cardY + 1.2, 9.2, 9.2)
+      doc.circle(cardX + 11.4, cardY + 6.4, 6.0, 'F')
+      doc.addImage(assets.logoDataUrl, 'PNG', cardX + 5.7, cardY + 0.7, 11.4, 11.4)
     } catch {
       if (!data.hideFallbackEmblem) {
-        drawIeppLaurelBookEmblem(doc, cardX + 11.8, cardY + 5.8, 0.96)
+        drawIeppLaurelBookEmblem(doc, cardX + 11.4, cardY + 6.4, 1.1)
       }
     }
   } else if (!data.hideFallbackEmblem) {
-    drawIeppLaurelBookEmblem(doc, cardX + 11.8, cardY + 5.8, 0.96)
+    drawIeppLaurelBookEmblem(doc, cardX + 11.4, cardY + 6.4, 1.1)
   }
 
   // Drapeau Togolais flottant en haut à droite
   drawWavingTogoFlagTopRight(doc, cardX + 72.2, cardY + 0.4, 21.4, 10.6)
 
-  const headerCenterX = cardX + 46.5
+  const headerCenterX = cardX + 46.8
 
-  // Ligne 1 : IEPP (sans DRE, écriture très visible et nette)
-  const cleanIepp = sanitizeIeppText(data.inspectionName)
-  const ieppText =
-    cleanIepp.toUpperCase() === 'IEPP'
-      ? 'I  E  P  P'
-      : typo.headerOfficial.uppercase
-        ? cleanIepp.toUpperCase()
-        : cleanIepp
+  // Ligne 1 : IEPP (sans DRE, neutre si vide pour que chaque IEPP puisse compléter)
+  const ieppDisplayText = formatIeppHeaderDisplay(
+    data.inspectionName,
+    typo.headerOfficial.uppercase
+  )
+  doc.setFont(mapFontFamily(typo.headerOfficial.fontFamily), 'bold')
+  const fittedIeppPt = fitTextSize(doc, ieppDisplayText, 47, 9.3, 6.0)
+  doc.setFontSize(fittedIeppPt)
+  doc.setTextColor(10, 25, 80)
+  doc.text(ieppDisplayText, headerCenterX, cardY + 3.35, { align: 'center' })
 
-  if (ieppText) {
-    doc.setFont(mapFontFamily(typo.headerOfficial.fontFamily), 'bold')
-    const fittedIeppPt = fitTextSize(doc, ieppText, 48, 9.3, 6.0)
-    doc.setFontSize(fittedIeppPt)
-    doc.setTextColor(10, 25, 80)
-    doc.text(ieppText, headerCenterX, cardY + 3.35, { align: 'center' })
-
-    const textW = doc.getTextWidth(ieppText)
-    const ruleGap = 1.6
-    const leftEdge = cardX + 19.5
-    const rightEdge = cardX + 70.5
-    const leftRuleEnd = headerCenterX - textW / 2 - ruleGap
-    const rightRuleStart = headerCenterX + textW / 2 + ruleGap
-    doc.setDrawColor(168, 12, 70)
-    doc.setLineWidth(0.28)
-    if (leftRuleEnd - leftEdge > 2.0) {
-      doc.line(leftEdge, cardY + 2.5, leftRuleEnd, cardY + 2.5)
-    }
-    if (rightEdge - rightRuleStart > 2.0) {
-      doc.line(rightRuleStart, cardY + 2.5, rightEdge, cardY + 2.5)
-    }
+  const ieppTextW = doc.getTextWidth(ieppDisplayText)
+  const ruleGap = 1.6
+  const leftEdge = cardX + 19.5
+  const rightEdge = cardX + 70.5
+  const leftRuleEnd = headerCenterX - ieppTextW / 2 - ruleGap
+  const rightRuleStart = headerCenterX + ieppTextW / 2 + ruleGap
+  doc.setDrawColor(168, 12, 70)
+  doc.setLineWidth(0.28)
+  if (leftRuleEnd - leftEdge > 2.0) {
+    doc.line(leftEdge, cardY + 2.5, leftRuleEnd, cardY + 2.5)
+  }
+  if (rightEdge - rightRuleStart > 2.0) {
+    doc.line(rightRuleStart, cardY + 2.5, rightEdge, cardY + 2.5)
   }
 
-  // Ligne 2 : Bannière arrondie auto-adaptative au Nom de l'établissement (s'étend si long, se rétrécit si court)
+  // Ligne 2 : Bannière arrondie auto-adaptative au Nom de l'établissement
   const rawSchoolName = (data.schoolName || 'ÉTABLISSEMENT SCOLAIRE').trim()
   const displaySchoolName = typo.schoolName.uppercase
     ? rawSchoolName.toUpperCase()
@@ -558,29 +562,29 @@ export function drawTogoIeppIdCardRecto(
   doc.setTextColor(255, 255, 255)
   doc.text(displaySchoolName, headerCenterX, schoolPillY + 2.48, { align: 'center' })
 
-  // Ligne 3 : Centre d'écrit (texte "Centre d'écrit : ...", pilule adaptée)
+  // Ligne 3 : Centre d'écrit (police agrandie)
   const cleanExamCenter = (data.examCenter || '').trim()
   const centerDisplayText = cleanExamCenter
     ? `Centre d'écrit : ${cleanExamCenter}`
-    : "Centre d'écrit : .............................."
+    : "Centre d'écrit : ........................"
   doc.setFont('helvetica', 'bold')
-  const maxCenterPillW = 48.0
-  fitTextSize(doc, centerDisplayText, maxCenterPillW - 5.2, 5.3, 4.0)
+  const maxCenterPillW = 49.5
+  fitTextSize(doc, centerDisplayText, maxCenterPillW - 5.2, 6.4, 4.6)
   const measuredCenterW = doc.getTextWidth(centerDisplayText)
-  const centerPillW = Math.min(maxCenterPillW, Math.max(24.0, measuredCenterW + 5.6))
+  const centerPillW = Math.min(maxCenterPillW, Math.max(26.0, measuredCenterW + 6.0))
   const centerPillX = headerCenterX - centerPillW / 2
-  const centerPillY = cardY + 7.95
-  const centerPillH = 2.65
+  const centerPillY = cardY + 7.9
+  const centerPillH = 3.05
 
   doc.setFillColor(255, 251, 232)
   doc.setDrawColor(214, 155, 26)
   doc.setLineWidth(0.22)
-  doc.roundedRect(centerPillX, centerPillY, centerPillW, centerPillH, 1.3, 1.3, 'FD')
+  doc.roundedRect(centerPillX, centerPillY, centerPillW, centerPillH, 1.5, 1.5, 'FD')
 
   doc.setTextColor(14, 27, 82)
-  doc.text(centerDisplayText, headerCenterX, centerPillY + 1.85, { align: 'center' })
+  doc.text(centerDisplayText, headerCenterX, centerPillY + 2.15, { align: 'center' })
 
-  // Ligne 4 : Titre "CARTE D'IDENTITÉ SCOLAIRE" SANS bannière arrondie, plus gros et police designer éditoriale
+  // Ligne 4 : Titre "CARTE D'IDENTITÉ SCOLAIRE" SANS bannière arrondie, plus gros & police designer
   const rawBanner = (data.cardBannerTitle || '').trim()
   const bannerText =
     !rawBanner || rawBanner.toUpperCase() === "CARTE D'IDENTITE SCOLAIRE"
@@ -590,26 +594,24 @@ export function drawTogoIeppIdCardRecto(
   const bannerFontFamily = typo.bannerTitle.fontFamily === 'courier' ? 'courier' : 'times'
   doc.setFont(bannerFontFamily, 'bold')
   fitTextSize(doc, bannerText, 64, 9.6, 7.0)
-  const bannerY = cardY + 13.75
+  const bannerY = cardY + 14.0
 
-  // Ombre légère dorée/argentée + texte principal royal navy pour un rendu professionnel
   doc.setTextColor(214, 175, 86)
   doc.text(bannerText, headerCenterX + 0.16, bannerY + 0.16, { align: 'center' })
   doc.setTextColor(8, 27, 88)
   doc.text(bannerText, headerCenterX, bannerY, { align: 'center' })
 
-  // Lignes ornementales fines symétriques sous le titre (pas de bloc fermé)
   const bannerTextW = doc.getTextWidth(bannerText)
   const accentHalfW = Math.min(34, bannerTextW / 2 + 2)
   doc.setDrawColor(198, 148, 30)
   doc.setLineWidth(0.32)
-  doc.line(headerCenterX - accentHalfW, bannerY + 0.65, headerCenterX + accentHalfW, bannerY + 0.65)
+  doc.line(headerCenterX - accentHalfW, bannerY + 0.62, headerCenterX + accentHalfW, bannerY + 0.62)
 
-  // 3. Colonne Gauche : Cadre Photo 100% occupé par la photo (tête + poitrine, sans texte) + Année Scolaire + QR Code
-  const photoFrameX = cardX + 3.8
+  // 3. Colonne Gauche : Cadre Photo 100% photo (tête + poitrine) + Année Scolaire
+  const photoFrameX = cardX + 3.6
   const photoFrameY = cardY + 15.1
-  const photoFrameW = 19.2
-  const photoFrameH = 21.6
+  const photoFrameW = 19.0
+  const photoFrameH = 21.4
 
   doc.setFillColor(255, 255, 255)
   doc.setDrawColor(168, 7, 68)
@@ -632,10 +634,10 @@ export function drawTogoIeppIdCardRecto(
   }
 
   // Pilule Année Scolaire sous la photo
-  const yearBoxX = cardX + 3.8
-  const yearBoxY = cardY + 37.35
-  const yearBoxW = 19.2
-  const yearBoxH = 4.75
+  const yearBoxX = cardX + 3.6
+  const yearBoxY = cardY + 37.25
+  const yearBoxW = 19.0
+  const yearBoxH = 4.7
   doc.setFillColor(255, 250, 224)
   doc.setDrawColor(214, 155, 26)
   doc.setLineWidth(0.3)
@@ -649,12 +651,76 @@ export function drawTogoIeppIdCardRecto(
   const formattedYear = formatAcademicYearLabel(data.academicYear)
   doc.setFontSize(6.1)
   doc.setTextColor(166, 7, 68)
-  doc.text(formattedYear, yearBoxX + yearBoxW / 2, yearBoxY + 3.95, { align: 'center' })
+  doc.text(formattedYear, yearBoxX + yearBoxW / 2, yearBoxY + 3.9, { align: 'center' })
 
-  // QR Code en bas à gauche
+  // 4. Colonne Centrale : Infos élève (PAS de pointillés quand l'info est renseignée ; Classe bien remontée)
+  const fieldStartX = cardX + 24.4
+  const fieldEndX = cardX + 66.8
+  const rowStartY = cardY + 17.6
+  const rowStep = 3.22
+
+  const dobText = formatCardDateFr(data.dateOfBirth)
+  const birthPlaceText = (data.birthPlace || '').trim()
+  const [studentR, studentG, studentB] = parseHexRgb(typo.studentName.color, [15, 23, 42])
+
+  const drawFieldRow = (
+    rowIndex: number,
+    label: string,
+    value: string,
+    isProminentName = false
+  ) => {
+    const ry = rowStartY + rowIndex * rowStep
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(6.55)
+    doc.setTextColor(14, 27, 82)
+    doc.text(label, fieldStartX, ry)
+
+    const labelW = doc.getTextWidth(label)
+    const valStartX = fieldStartX + labelW + 1.4
+    const maxValW = fieldEndX - valStartX
+
+    const trimmedVal = value.trim()
+    if (trimmedVal) {
+      doc.setFont(
+        mapFontFamily(isProminentName ? typo.studentName.fontFamily : typo.studentDetails.fontFamily),
+        isProminentName ? 'bold' : mapFontStyle(typo.studentDetails)
+      )
+      fitTextSize(doc, trimmedVal, maxValW, isProminentName ? 6.85 : 6.4, 4.7)
+      if (isProminentName) {
+        doc.setTextColor(studentR, studentG, studentB)
+      } else {
+        doc.setTextColor(15, 23, 42)
+      }
+      doc.text(trimmedVal, valStartX, ry)
+    } else {
+      doc.setDrawColor(148, 163, 184)
+      doc.setLineWidth(0.18)
+      for (let dx = valStartX; dx < fieldEndX; dx += 1.1) {
+        doc.circle(dx, ry + 0.25, 0.11, 'F')
+      }
+    }
+  }
+
+  drawFieldRow(0, 'Matricule :', data.matricule || '')
+  drawFieldRow(1, 'Nom :', (data.lastName || '').toUpperCase(), true)
+  drawFieldRow(2, 'Prénoms :', data.firstName || '', true)
+  drawFieldRow(3, 'Date de naissance :', dobText)
+  drawFieldRow(4, 'Lieu de naissance :', birthPlaceText)
+
+  const genderCode = (data.gender || '').trim().toUpperCase()
+  const sexDisplay =
+    genderCode === 'M' || genderCode.startsWith('MASC')
+      ? 'Masculin'
+      : genderCode === 'F' || genderCode.startsWith('FEM')
+        ? 'Féminin'
+        : ''
+  drawFieldRow(5, 'Sexe :', sexDisplay)
+  drawFieldRow(6, 'Classe :', data.className || '', true)
+
+  // 5. QR Code déplacé à droite devant la carte du Togo (au niveau de Classe vers le haut, touchant légèrement le Togo)
   const qrSize = 9.0
-  const qrBoxX = cardX + 4.3
-  const qrBoxY = cardY + 42.65
+  const qrBoxX = cardX + 67.8
+  const qrBoxY = cardY + 28.0
   doc.setFillColor(255, 255, 255)
   doc.setDrawColor(148, 163, 184)
   doc.setLineWidth(0.22)
@@ -668,7 +734,7 @@ export function drawTogoIeppIdCardRecto(
       className: data.className,
       schoolName: rawSchoolName,
       academicYear: data.academicYear,
-      inspectionName: cleanIepp,
+      inspectionName: sanitizeIeppText(data.inspectionName),
     })
   )
   const qrPad = 0.65
@@ -689,96 +755,27 @@ export function drawTogoIeppIdCardRecto(
     }
   }
 
-  // 4. Colonne Centrale : Infos élève (PAS de pointillés quand l'info est renseignée ; Classe bien remontée)
-  const fieldStartX = cardX + 25.0
-  const fieldEndX = cardX + 75.5
-  const rowStartY = cardY + 17.5
-  const rowStep = 3.22
-
-  const dobText = formatCardDateFr(data.dateOfBirth)
-  const birthPlaceText = (data.birthPlace || '').trim()
-  const [studentR, studentG, studentB] = parseHexRgb(typo.studentName.color, [15, 23, 42])
-
-  const drawFieldRow = (
-    rowIndex: number,
-    label: string,
-    value: string,
-    isProminentName = false
-  ) => {
-    const ry = rowStartY + rowIndex * rowStep
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(6.6)
-    doc.setTextColor(14, 27, 82)
-    doc.text(label, fieldStartX, ry)
-
-    const labelW = doc.getTextWidth(label)
-    const valStartX = fieldStartX + labelW + 1.5
-    const maxValW = fieldEndX - valStartX
-
-    const trimmedVal = value.trim()
-    if (trimmedVal) {
-      // Information renseignée : aucun pointillé dessous ni devant
-      doc.setFont(
-        mapFontFamily(isProminentName ? typo.studentName.fontFamily : typo.studentDetails.fontFamily),
-        isProminentName ? 'bold' : mapFontStyle(typo.studentDetails)
-      )
-      fitTextSize(doc, trimmedVal, maxValW, isProminentName ? 6.9 : 6.45, 4.8)
-      if (isProminentName) {
-        doc.setTextColor(studentR, studentG, studentB)
-      } else {
-        doc.setTextColor(15, 23, 42)
-      }
-      doc.text(trimmedVal, valStartX, ry)
-    } else {
-      // Uniquement si le champ est vide : pointillés pour compléter manuellement
-      doc.setDrawColor(148, 163, 184)
-      doc.setLineWidth(0.18)
-      for (let dx = valStartX; dx < fieldEndX; dx += 1.1) {
-        doc.circle(dx, ry + 0.25, 0.11, 'F')
-      }
-    }
-  }
-
-  drawFieldRow(0, 'Matricule :', data.matricule || '')
-  drawFieldRow(1, 'Nom :', (data.lastName || '').toUpperCase(), true)
-  drawFieldRow(2, 'Prénoms :', data.firstName || '', true)
-  drawFieldRow(3, 'Date de naissance :', dobText)
-  drawFieldRow(4, 'Lieu de naissance :', birthPlaceText)
-
-  // Sexe : afficher automatiquement UNIQUEMENT "Masculin" ou "Féminin" (pas les 2 à la fois)
-  const genderCode = (data.gender || '').trim().toUpperCase()
-  const sexDisplay =
-    genderCode === 'M' || genderCode.startsWith('MASC')
-      ? 'Masculin'
-      : genderCode === 'F' || genderCode.startsWith('FEM')
-        ? 'Féminin'
-        : ''
-  drawFieldRow(5, 'Sexe :', sexDisplay)
-
-  // Classe remontée bien au-dessus de la zone basse (y ≈ 36.8mm, jamais sur le ruban du bas)
-  drawFieldRow(6, 'Classe :', data.className || '', true)
-
-  // 5. Pied de carte : Directement le Nom du directeur & Signature des paramètres (SANS libellés ni petits cadres/pointillés)
+  // 6. Pied de carte : Nom du directeur remonté au-dessus de la bande basse + Signature + Grand Cachet à droite
   const directorText = (data.directorName || '').trim()
   if (directorText) {
     doc.setFont(mapFontFamily(typo.footerInfo.fontFamily), 'bold')
-    fitTextSize(doc, directorText, 31, 6.4, 4.6)
+    fitTextSize(doc, directorText, 32, 6.45, 4.6)
     doc.setTextColor(14, 27, 82)
-    doc.text(directorText, cardX + 38.5, cardY + 46.8, { align: 'center' })
+    doc.text(directorText, cardX + 41.0, cardY + 44.0, { align: 'center' })
   }
 
   if (assets.signatureDataUrl) {
     try {
-      doc.addImage(assets.signatureDataUrl, 'PNG', cardX + 56.5, cardY + 41.2, 20.5, 7.6)
+      doc.addImage(assets.signatureDataUrl, 'PNG', cardX + 56.5, cardY + 39.2, 18.5, 7.0)
     } catch {
       // Ignorer si l'image de signature est invalide
     }
   }
 
-  // Cachet circulaire à droite
-  const stampCx = cardX + 85.0
-  const stampCy = cardY + 45.6
-  const stampR = 5.4
+  // Cachet circulaire nettement agrandi en bas à droite
+  const stampCx = cardX + 83.2
+  const stampCy = cardY + 43.8
+  const stampR = 7.6
   if (assets.stampDataUrl) {
     try {
       doc.addImage(assets.stampDataUrl, 'PNG', stampCx - stampR, stampCy - stampR, stampR * 2, stampR * 2)
