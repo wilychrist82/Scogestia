@@ -37,6 +37,8 @@ interface Props {
   academicYear: string
   className: string
   directorName: string
+  schoolPhone?: string | null
+  directorPhone?: string | null
   logoUrl?: string
   stampUrl?: string
   signatureUrl?: string
@@ -105,6 +107,8 @@ export function SchoolIdCardTogoPreview({
   academicYear,
   className,
   directorName,
+  schoolPhone,
+  directorPhone,
   logoUrl,
   stampUrl,
   signatureUrl,
@@ -129,6 +133,14 @@ export function SchoolIdCardTogoPreview({
       ...FALLBACK_TOGO_TYPOGRAPHY.examCenter!,
       ...(typography?.examCenter || {}),
     },
+    studentMatricule: {
+      ...FALLBACK_TOGO_TYPOGRAPHY.studentMatricule!,
+      ...(typography?.studentMatricule || {}),
+    },
+    studentClass: {
+      ...FALLBACK_TOGO_TYPOGRAPHY.studentClass!,
+      ...(typography?.studentClass || {}),
+    },
   }
 
   const displayIepp = formatIeppHeaderDisplay(inspectionName, typo.headerOfficial.uppercase)
@@ -146,6 +158,9 @@ export function SchoolIdCardTogoPreview({
         : 11.4
 
   const examStyle = typo.examCenter || FALLBACK_TOGO_TYPOGRAPHY.examCenter!
+  const matriculeStyle = typo.studentMatricule || FALLBACK_TOGO_TYPOGRAPHY.studentMatricule!
+  const classStyle = typo.studentClass || FALLBACK_TOGO_TYPOGRAPHY.studentClass!
+
   const cleanExamCenter = examCenter.trim()
   const formattedExamValue = examStyle.uppercase
     ? cleanExamCenter.toUpperCase()
@@ -188,6 +203,8 @@ export function SchoolIdCardTogoPreview({
           academicYear,
           inspectionName: sanitizeIeppText(inspectionName),
           examCenter,
+          schoolPhone,
+          directorPhone,
         })
       ),
     [
@@ -202,6 +219,8 @@ export function SchoolIdCardTogoPreview({
       academicYear,
       inspectionName,
       examCenter,
+      schoolPhone,
+      directorPhone,
     ]
   )
 
@@ -332,7 +351,7 @@ export function SchoolIdCardTogoPreview({
         <rect x="8" y="6" width="212" height="105" fill={`url(#${flagShadeId})`} />
       </svg>
 
-      {/* QR CODE À DROITE DEVANT LA CARTE DU TOGO (NIVEAU CLASSE VERS LE HAUT, TOUCHANT LÉGÈREMENT LE TOGO) */}
+      {/* QR CODE À DROITE DEVANT LA CARTE DU TOGO */}
       <div className="absolute right-[18.2%] bottom-[30%] w-[10.2%] aspect-square rounded-[4px] bg-white border border-slate-300 p-[2px] shadow-2xs z-20">
         <svg
           viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}
@@ -406,9 +425,8 @@ export function SchoolIdCardTogoPreview({
               )}
             </div>
 
-            {/* Bloc central : IEPP + Bannière École + Centre d'écrit (tous réactifs aux couleurs/styles) */}
+            {/* Bloc central : IEPP + Bannière École + Centre d'écrit */}
             <div className="flex-1 min-w-0 flex flex-col items-center pt-0.5">
-              {/* IEPP */}
               <div className="w-full flex items-center justify-center gap-1.5 min-h-[16px]">
                 <span className="h-[1.8px] flex-1 bg-gradient-to-r from-transparent to-[#A80C46]" />
                 <span
@@ -424,7 +442,6 @@ export function SchoolIdCardTogoPreview({
                 <span className="h-[1.8px] flex-1 bg-gradient-to-l from-transparent to-[#A80C46]" />
               </div>
 
-              {/* Pilule bordeaux dynamique (s'élargit / rétrécit) */}
               <div className="mt-[2px] inline-flex items-center justify-center w-fit max-w-full rounded-full bg-gradient-to-b from-[#BA074D] via-[#9E053F] to-[#7D0331] border border-[#6E022A] px-3.5 py-[2.5px] shadow-[0_2px_6px_-2px_rgba(140,3,56,0.5)]">
                 <span
                   className="text-center font-black tracking-wide leading-tight whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]"
@@ -438,7 +455,6 @@ export function SchoolIdCardTogoPreview({
                 </span>
               </div>
 
-              {/* Centre d'écrit — police agrandie & couleurs dynamiques */}
               <div className="mt-[2.5px] inline-flex items-center justify-center w-fit max-w-full rounded-full bg-gradient-to-r from-[#FFFDF2] via-[#FFF8DB] to-[#FFFDF2] border border-[#D49B1A] px-4 py-[2px]">
                 <span
                   className="whitespace-nowrap leading-tight"
@@ -453,11 +469,10 @@ export function SchoolIdCardTogoPreview({
               </div>
             </div>
 
-            {/* Espace réservé sous le drapeau flottant */}
             <div className="w-[19%] shrink-0" />
           </div>
 
-          {/* Titre "CARTE D'IDENTITÉ SCOLAIRE" prestige éditorial + couleur distinctive (#006B38 par défaut) */}
+          {/* Titre "CARTE D'IDENTITÉ SCOLAIRE" */}
           <div className="mt-[2px] flex flex-col items-center justify-center">
             <span
               className="font-black tracking-[0.1em] leading-none text-center whitespace-nowrap"
@@ -487,9 +502,9 @@ export function SchoolIdCardTogoPreview({
           </div>
         </div>
 
-        {/* 2. CORPS DE LA CARTE */}
+        {/* 2. CORPS DE LA CARTE : Couleurs par défaut dédiées (Matricule=Bleu, Nom/Prénoms=Rouge, Détails=Noir, Classe=Vert) */}
         <div className="flex gap-[2.8%] items-start flex-1 pt-[1px]">
-          {/* Colonne gauche : Cadre Photo 100% + Année Scolaire */}
+          {/* Photo + Année Scolaire */}
           <div className="w-[21.2%] shrink-0 flex flex-col items-center gap-[3px]">
             <button
               type="button"
@@ -530,9 +545,9 @@ export function SchoolIdCardTogoPreview({
               {student.matricule?.trim() ? (
                 <span
                   className="truncate leading-tight"
-                  style={buildTextCss(typo.studentDetails, 10)}
+                  style={buildTextCss(matriculeStyle, 10.2)}
                 >
-                  {student.matricule}
+                  {matriculeStyle.uppercase ? student.matricule.toUpperCase() : student.matricule}
                 </span>
               ) : (
                 <span className="flex-1 border-b border-dotted border-slate-400 h-2.5" />
@@ -544,7 +559,7 @@ export function SchoolIdCardTogoPreview({
               {student.last_name?.trim() ? (
                 <span
                   className="uppercase truncate leading-tight"
-                  style={buildTextCss(typo.studentName, 10.5)}
+                  style={buildTextCss(typo.studentName, 10.6)}
                 >
                   {student.last_name}
                 </span>
@@ -558,7 +573,7 @@ export function SchoolIdCardTogoPreview({
               {student.first_name?.trim() ? (
                 <span
                   className="truncate leading-tight"
-                  style={buildTextCss(typo.studentName, 10)}
+                  style={buildTextCss(typo.studentName, 10.2)}
                 >
                   {student.first_name}
                 </span>
@@ -618,9 +633,9 @@ export function SchoolIdCardTogoPreview({
               {className.trim() ? (
                 <span
                   className="truncate leading-tight"
-                  style={buildTextCss(typo.studentName, 10)}
+                  style={buildTextCss(classStyle, 10.4)}
                 >
-                  {className}
+                  {classStyle.uppercase ? className.toUpperCase() : className}
                 </span>
               ) : (
                 <span className="flex-1 border-b border-dotted border-slate-400 h-2.5" />
@@ -629,7 +644,7 @@ export function SchoolIdCardTogoPreview({
           </div>
         </div>
 
-        {/* 3. PIED DE CARTE : DIRECTEUR + SIGNATURE + GRAND CACHET REMONTÉ (JAMAIS COUPÉ À L'IMPRESSION) */}
+        {/* 3. PIED DE CARTE : DIRECTEUR + SIGNATURE + GRAND CACHET */}
         <div className="flex items-center justify-end gap-2 pt-0 pb-3 pl-[24%] pr-1">
           <div className="flex-1 min-w-0 flex items-center justify-center">
             {directorName.trim() && (

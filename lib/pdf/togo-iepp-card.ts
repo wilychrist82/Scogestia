@@ -14,8 +14,10 @@ export const TOGO_DEFAULT_ZONE_COLORS = {
   headerOfficial: '#0A1950',
   examCenter: '#0E1B52',
   bannerTitle: '#006B38',
-  studentName: '#0E1B52',
+  studentMatricule: '#1D4ED8',
+  studentName: '#C8102E',
   studentDetails: '#0F172A',
+  studentClass: '#007A33',
   footerInfo: '#0E1B52',
 } as const
 
@@ -57,6 +59,15 @@ export const FALLBACK_TOGO_TYPOGRAPHY: CardTypographyConfig = {
     color: TOGO_DEFAULT_ZONE_COLORS.bannerTitle,
   },
   bannerBgColor: '#FFFFFF',
+  studentMatricule: {
+    fontFamily: 'helvetica',
+    sizeScale: 1,
+    bold: true,
+    italic: false,
+    underline: false,
+    uppercase: false,
+    color: TOGO_DEFAULT_ZONE_COLORS.studentMatricule,
+  },
   studentName: {
     fontFamily: 'helvetica',
     sizeScale: 1,
@@ -74,6 +85,15 @@ export const FALLBACK_TOGO_TYPOGRAPHY: CardTypographyConfig = {
     underline: false,
     uppercase: false,
     color: TOGO_DEFAULT_ZONE_COLORS.studentDetails,
+  },
+  studentClass: {
+    fontFamily: 'helvetica',
+    sizeScale: 1,
+    bold: true,
+    italic: false,
+    underline: false,
+    uppercase: false,
+    color: TOGO_DEFAULT_ZONE_COLORS.studentClass,
   },
   footerInfo: {
     fontFamily: 'helvetica',
@@ -145,7 +165,7 @@ export function formatAcademicYearLabel(academicYear?: string | null): string {
 }
 
 /**
- * Construit le contenu lisible affiché lorsqu'on scanne le QR Code d'un élève.
+ * Construit le contenu lisible affiché lorsqu'on scanne le QR Code d'un élève (inclut les contacts si disponibles).
  */
 export function buildStudentQrPayload(data: {
   matricule: string
@@ -159,6 +179,8 @@ export function buildStudentQrPayload(data: {
   academicYear: string
   inspectionName?: string | null
   examCenter?: string | null
+  schoolPhone?: string | null
+  directorPhone?: string | null
 }): string {
   const clean = (v?: string | null) => (v || '').trim().replace(/\r?\n/g, ' ')
   const dob = formatCardDateFr(data.dateOfBirth)
@@ -173,6 +195,8 @@ export function buildStudentQrPayload(data: {
         : ''
   const iepp = sanitizeIeppText(data.inspectionName)
   const center = clean(data.examCenter)
+  const sPhone = clean(data.schoolPhone)
+  const dPhone = clean(data.directorPhone)
 
   return [
     "CARTE D'IDENTITE SCOLAIRE",
@@ -185,6 +209,8 @@ export function buildStudentQrPayload(data: {
     `Ecole: ${clean(data.schoolName)}`,
     iepp && iepp.toUpperCase() !== 'IEPP' ? `IEPP: ${iepp}` : '',
     center ? `Centre d'ecrit: ${center}` : '',
+    sPhone ? `Tel Ecole: ${sPhone}` : '',
+    dPhone && dPhone !== sPhone ? `Tel Directeur: ${dPhone}` : '',
     `Annee: ${formatAcademicYearLabel(data.academicYear)}`,
   ]
     .filter(Boolean)
@@ -544,6 +570,14 @@ export function drawTogoIeppIdCardRecto(
       ...FALLBACK_TOGO_TYPOGRAPHY.examCenter!,
       ...(data.typography?.examCenter || {}),
     },
+    studentMatricule: {
+      ...FALLBACK_TOGO_TYPOGRAPHY.studentMatricule!,
+      ...(data.typography?.studentMatricule || {}),
+    },
+    studentClass: {
+      ...FALLBACK_TOGO_TYPOGRAPHY.studentClass!,
+      ...(data.typography?.studentClass || {}),
+    },
   }
 
   // 1. Fond principal blanc-crème + teinte douce
@@ -651,7 +685,7 @@ export function drawTogoIeppIdCardRecto(
     typo.letterColors?.schoolName
   )
 
-  // Ligne 3 : Centre d'écrit (police agrandie, réactive aux couleurs/styles du ruban)
+  // Ligne 3 : Centre d'écrit
   const examStyle = typo.examCenter || FALLBACK_TOGO_TYPOGRAPHY.examCenter!
   const cleanExamCenter = (data.examCenter || '').trim()
   const centerValue = examStyle.uppercase ? cleanExamCenter.toUpperCase() : cleanExamCenter
@@ -702,7 +736,6 @@ export function drawTogoIeppIdCardRecto(
   fitTextSize(doc, bannerText, 64, bannerStartPt, 6.8)
   const bannerY = cardY + 14.0
 
-  // Légère ombre dorée gravée + texte principal couleur impériale/choisie
   doc.setTextColor(218, 175, 76)
   doc.text(bannerText, headerCenterX + 0.16, bannerY + 0.16, { align: 'center' })
   drawCenteredTextWithOptionalLetters(
@@ -715,7 +748,6 @@ export function drawTogoIeppIdCardRecto(
     typo.letterColors?.bannerTitle
   )
 
-  // Ornements latéraux dorés + filet fin sous le titre
   const bannerTextW = doc.getTextWidth(bannerText)
   const accentHalfW = Math.min(34, bannerTextW / 2 + 2.5)
   doc.setDrawColor(198, 148, 30)
@@ -725,7 +757,7 @@ export function drawTogoIeppIdCardRecto(
   doc.circle(headerCenterX - accentHalfW - 0.8, bannerY + 0.62, 0.28, 'F')
   doc.circle(headerCenterX + accentHalfW + 0.8, bannerY + 0.62, 0.28, 'F')
 
-  // 3. Colonne Gauche : Cadre Photo 100% photo (tête + poitrine) + Année Scolaire
+  // 3. Colonne Gauche : Cadre Photo 100% photo + Année Scolaire
   const photoFrameX = cardX + 3.6
   const photoFrameY = cardY + 15.1
   const photoFrameW = 19.0
@@ -751,7 +783,6 @@ export function drawTogoIeppIdCardRecto(
     drawPhotoSilhouetteFallback(doc, imgX, imgY, imgW, imgH)
   }
 
-  // Pilule Année Scolaire sous la photo
   const yearBoxX = cardX + 3.6
   const yearBoxY = cardY + 37.25
   const yearBoxW = 19.0
@@ -771,7 +802,9 @@ export function drawTogoIeppIdCardRecto(
   doc.setTextColor(166, 7, 68)
   doc.text(formattedYear, yearBoxX + yearBoxW / 2, yearBoxY + 3.9, { align: 'center' })
 
-  // 4. Colonne Centrale : Infos élève
+  // 4. Colonne Centrale : Infos élève avec couleurs par défaut dédiées :
+  //    Matricule = Bleu (#1D4ED8), Nom & Prénoms = Rouge (#C8102E),
+  //    Date / Lieu / Sexe = Noir (#0F172A), Classe = Vert (#007A33)
   const fieldStartX = cardX + 24.4
   const fieldEndX = cardX + 66.8
   const rowStartY = cardY + 17.6
@@ -779,14 +812,17 @@ export function drawTogoIeppIdCardRecto(
 
   const dobText = formatCardDateFr(data.dateOfBirth)
   const birthPlaceText = (data.birthPlace || '').trim()
-  const [studentR, studentG, studentB] = parseHexRgb(typo.studentName.color, [14, 27, 82])
-  const [detailR, detailG, detailB] = parseHexRgb(typo.studentDetails.color, [15, 23, 42])
+
+  const matriculeZone = typo.studentMatricule || FALLBACK_TOGO_TYPOGRAPHY.studentMatricule!
+  const classZone = typo.studentClass || FALLBACK_TOGO_TYPOGRAPHY.studentClass!
 
   const drawFieldRow = (
     rowIndex: number,
     label: string,
     value: string,
-    isProminentName = false
+    zoneStyle: CardZoneTextStyle,
+    fallbackRgb: [number, number, number],
+    defaultBasePt = 6.45
   ) => {
     const ry = rowStartY + rowIndex * rowStep
     doc.setFont('helvetica', 'bold')
@@ -800,16 +836,13 @@ export function drawTogoIeppIdCardRecto(
 
     const trimmedVal = value.trim()
     if (trimmedVal) {
-      const z = isProminentName ? typo.studentName : typo.studentDetails
-      doc.setFont(mapFontFamily(z.fontFamily), mapFontStyle(z))
-      const valBasePt = (isProminentName ? 6.85 : 6.4) * Math.max(0.75, Math.min(1.25, z.sizeScale || 1))
-      fitTextSize(doc, trimmedVal, maxValW, valBasePt, 4.7)
-      if (isProminentName) {
-        doc.setTextColor(studentR, studentG, studentB)
-      } else {
-        doc.setTextColor(detailR, detailG, detailB)
-      }
-      doc.text(trimmedVal, valStartX, ry)
+      const displayVal = zoneStyle.uppercase ? trimmedVal.toUpperCase() : trimmedVal
+      doc.setFont(mapFontFamily(zoneStyle.fontFamily), mapFontStyle(zoneStyle))
+      const valBasePt = defaultBasePt * Math.max(0.75, Math.min(1.25, zoneStyle.sizeScale || 1))
+      fitTextSize(doc, displayVal, maxValW, valBasePt, 4.7)
+      const [vr, vg, vb] = parseHexRgb(zoneStyle.color, fallbackRgb)
+      doc.setTextColor(vr, vg, vb)
+      doc.text(displayVal, valStartX, ry)
     } else {
       doc.setDrawColor(148, 163, 184)
       doc.setLineWidth(0.18)
@@ -819,11 +852,11 @@ export function drawTogoIeppIdCardRecto(
     }
   }
 
-  drawFieldRow(0, 'Matricule :', data.matricule || '')
-  drawFieldRow(1, 'Nom :', (data.lastName || '').toUpperCase(), true)
-  drawFieldRow(2, 'Prénoms :', data.firstName || '', true)
-  drawFieldRow(3, 'Date de naissance :', dobText)
-  drawFieldRow(4, 'Lieu de naissance :', birthPlaceText)
+  drawFieldRow(0, 'Matricule :', data.matricule || '', matriculeZone, [29, 78, 216], 6.65)
+  drawFieldRow(1, 'Nom :', (data.lastName || '').toUpperCase(), typo.studentName, [200, 16, 46], 6.85)
+  drawFieldRow(2, 'Prénoms :', data.firstName || '', typo.studentName, [200, 16, 46], 6.75)
+  drawFieldRow(3, 'Date de naissance :', dobText, typo.studentDetails, [15, 23, 42], 6.4)
+  drawFieldRow(4, 'Lieu de naissance :', birthPlaceText, typo.studentDetails, [15, 23, 42], 6.4)
 
   const genderCode = (data.gender || '').trim().toUpperCase()
   const sexDisplay =
@@ -832,10 +865,10 @@ export function drawTogoIeppIdCardRecto(
       : genderCode === 'F' || genderCode.startsWith('FEM')
         ? 'Féminin'
         : ''
-  drawFieldRow(5, 'Sexe :', sexDisplay)
-  drawFieldRow(6, 'Classe :', data.className || '', true)
+  drawFieldRow(5, 'Sexe :', sexDisplay, typo.studentDetails, [15, 23, 42], 6.45)
+  drawFieldRow(6, 'Classe :', data.className || '', classZone, [0, 122, 51], 6.8)
 
-  // 5. QR Code devant la carte du Togo (niveau Classe vers le haut, touchant légèrement le Togo)
+  // 5. QR Code devant la carte du Togo (inclut téléphone école / directeur si présent)
   const qrSize = 9.0
   const qrBoxX = cardX + 67.8
   const qrBoxY = cardY + 27.6
@@ -857,6 +890,8 @@ export function drawTogoIeppIdCardRecto(
       academicYear: data.academicYear,
       inspectionName: sanitizeIeppText(data.inspectionName),
       examCenter: cleanExamCenter,
+      schoolPhone: data.schoolPhone,
+      directorPhone: data.directorPhone,
     })
   )
   const qrPad = 0.65
@@ -877,7 +912,7 @@ export function drawTogoIeppIdCardRecto(
     }
   }
 
-  // 6. Pied de carte : Nom du directeur + Signature + Grand Cachet avec marge de sécurité anti-découpe
+  // 6. Pied de carte : Nom du directeur + Signature + Cachet avec marge sûre
   const directorText = (data.directorName || '').trim()
   if (directorText) {
     doc.setFont(mapFontFamily(typo.footerInfo.fontFamily), mapFontStyle(typo.footerInfo))
@@ -895,7 +930,6 @@ export function drawTogoIeppIdCardRecto(
     }
   }
 
-  // Cachet circulaire grand format mais remonté pour une marge sûre d'au moins ~5.8mm par rapport au bord bas
   const stampCx = cardX + 83.8
   const stampCy = cardY + 41.2
   const stampR = 6.5

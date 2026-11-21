@@ -74,6 +74,8 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
       academicYear: '2026-2027',
       inspectionName: 'IEPP / DRE TONE-EST',
       examCenter: 'LYCEE DE DAPAONG',
+      schoolPhone: '+228 90 11 22 33',
+      directorPhone: '+228 91 44 55 66',
     })
     expect(payload).toContain("CARTE D'IDENTITE SCOLAIRE")
     expect(payload).toContain('Matricule: SCO-2026-0042')
@@ -85,6 +87,8 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
     expect(payload).toContain('Ecole: EPM CANNAN')
     expect(payload).toContain('IEPP: IEPP TONE-EST')
     expect(payload).toContain("Centre d'ecrit: LYCEE DE DAPAONG")
+    expect(payload).toContain('Tel Ecole: +228 90 11 22 33')
+    expect(payload).toContain('Tel Directeur: +228 91 44 55 66')
     expect(payload).toContain('Annee: 2026 - 2027')
 
     const matrix = generateQrMatrix(payload)
@@ -148,6 +152,32 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
     const stampCy = stampFillCircle![1] as number
     const stampR = stampFillCircle![2] as number
     expect(stampCy + stampR).toBeLessThanOrEqual(10 + 48.5)
+
+    // Couleurs par défaut Modèle 2 : Matricule=Bleu (#1D4ED8), Nom/Prénoms=Rouge (#C8102E), Détails=Noir (#0F172A), Classe=Vert (#007A33)
+    const setColorSpy = vi.spyOn(doc, 'setTextColor')
+    drawTogoIeppIdCardRecto(
+      doc,
+      makeSampleStudent({
+        inspectionName: 'IEPP KARA',
+        schoolName: 'EPL TEST',
+        examCenter: 'CENTRE 1',
+      }),
+      8.5,
+      10,
+      94,
+      53.5,
+      {
+        photoDataUrl: null,
+        logoDataUrl: null,
+        stampDataUrl: null,
+        signatureDataUrl: null,
+      }
+    )
+    const defaultRgbCalls = setColorSpy.mock.calls.map((c) => `${c[0]},${c[1]},${c[2]}`)
+    expect(defaultRgbCalls).toContain('29,78,216') // Bleu Matricule
+    expect(defaultRgbCalls).toContain('200,16,46') // Rouge Nom & Prénoms
+    expect(defaultRgbCalls).toContain('15,23,42') // Noir Date / Lieu / Sexe
+    expect(defaultRgbCalls).toContain('0,122,51') // Vert Classe
 
     // Aucune mention textuelle superflue sur la photo, le chef ni la signature
     expect(printedStrings).not.toContain('PHOTO')

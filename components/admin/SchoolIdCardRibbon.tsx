@@ -33,7 +33,11 @@ import type {
   CardZoneTextStyle,
 } from '@/lib/pdf/student-documents'
 import type { CardThemeOption } from '@/components/admin/SchoolIdCardStudioModal'
-import { sanitizeIeppText, type CardTemplateId } from '@/lib/pdf/togo-iepp-card'
+import {
+  FALLBACK_TOGO_TYPOGRAPHY,
+  sanitizeIeppText,
+  type CardTemplateId,
+} from '@/lib/pdf/togo-iepp-card'
 
 export type StudioRibbonTab = 'accueil' | 'typo' | 'couleurs' | 'medias'
 
@@ -42,8 +46,10 @@ export type RibbonTypographyZoneKey =
   | 'headerOfficial'
   | 'examCenter'
   | 'bannerTitle'
+  | 'studentMatricule'
   | 'studentName'
   | 'studentDetails'
+  | 'studentClass'
   | 'footerInfo'
 
 export type RibbonLetterColorFieldKey =
@@ -223,15 +229,8 @@ export function SchoolIdCardRibbon({
   onUploadCustomTheme,
 }: Props) {
   const currentZoneMeta = zoneTabs.find((z) => z.key === activeTypoZone) || zoneTabs[0]
-  const currentZoneStyle: CardZoneTextStyle = typographyConfig[activeTypoZone] || {
-    fontFamily: 'helvetica',
-    sizeScale: 1,
-    bold: true,
-    italic: false,
-    underline: false,
-    uppercase: false,
-    color: '#0E1B52',
-  }
+  const currentZoneStyle: CardZoneTextStyle =
+    typographyConfig[activeTypoZone] || FALLBACK_TOGO_TYPOGRAPHY[activeTypoZone]!
 
   const safeSelectedIdx = Math.min(
     Math.max(0, selectedLetterIndex),

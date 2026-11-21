@@ -28,8 +28,10 @@ export interface CardTypographyConfig {
   examCenter?: CardZoneTextStyle
   bannerTitle: CardZoneTextStyle
   bannerBgColor: string
+  studentMatricule?: CardZoneTextStyle
   studentName: CardZoneTextStyle
   studentDetails: CardZoneTextStyle
+  studentClass?: CardZoneTextStyle
   footerInfo: CardZoneTextStyle
   letterColors?: Record<string, string[]>
 }
@@ -121,6 +123,7 @@ export interface StudentDocumentData {
   schoolName: string
   schoolCity?: string | null
   schoolPhone?: string | null
+  directorPhone?: string | null
   schoolEmail?: string | null
   academicYear: string
   directorName?: string | null

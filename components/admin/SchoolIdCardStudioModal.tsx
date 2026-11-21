@@ -15,7 +15,11 @@ function syncColorsForTemplate(
   prev: CardTypographyConfig
 ): CardTypographyConfig {
   const baseExam = prev.examCenter || FALLBACK_TOGO_TYPOGRAPHY.examCenter!
+  const baseMatricule = prev.studentMatricule || FALLBACK_TOGO_TYPOGRAPHY.studentMatricule!
+  const baseClass = prev.studentClass || FALLBACK_TOGO_TYPOGRAPHY.studentClass!
   if (tpl === 'togo_iepp') {
+    const isLegacyTogoStudentColor =
+      !prev.studentClass && prev.studentName.color.toUpperCase() === '#0E1B52'
     return {
       ...prev,
       schoolName:
@@ -36,10 +40,13 @@ function syncColorsForTemplate(
               color: TOGO_DEFAULT_ZONE_COLORS.bannerTitle,
             }
           : prev.bannerTitle,
+      studentMatricule: baseMatricule,
       studentName:
-        prev.studentName.color.toUpperCase() === '#99121C'
+        prev.studentName.color.toUpperCase() === '#99121C' || isLegacyTogoStudentColor
           ? { ...prev.studentName, color: TOGO_DEFAULT_ZONE_COLORS.studentName }
           : prev.studentName,
+      studentDetails: { ...prev.studentDetails, color: prev.studentDetails.color || '#0F172A' },
+      studentClass: baseClass,
       footerInfo:
         prev.footerInfo.color.toUpperCase() === '#A5181C'
           ? { ...prev.footerInfo, italic: false, color: TOGO_DEFAULT_ZONE_COLORS.footerInfo }
@@ -61,7 +68,8 @@ function syncColorsForTemplate(
         ? { ...prev.bannerTitle, italic: true, underline: true, color: '#122AB9' }
         : prev.bannerTitle,
     studentName:
-      prev.studentName.color.toUpperCase() === TOGO_DEFAULT_ZONE_COLORS.studentName
+      prev.studentName.color.toUpperCase() === TOGO_DEFAULT_ZONE_COLORS.studentName ||
+      prev.studentName.color.toUpperCase() === '#0E1B52'
         ? { ...prev.studentName, color: '#99121C' }
         : prev.studentName,
     footerInfo:
@@ -282,8 +290,10 @@ type TypographyZoneKey =
   | 'headerOfficial'
   | 'examCenter'
   | 'bannerTitle'
+  | 'studentMatricule'
   | 'studentName'
   | 'studentDetails'
+  | 'studentClass'
   | 'footerInfo'
 
 const TYPOGRAPHY_ZONE_TABS: { key: TypographyZoneKey; label: string; basePt: number }[] = [
@@ -291,9 +301,11 @@ const TYPOGRAPHY_ZONE_TABS: { key: TypographyZoneKey; label: string; basePt: num
   { key: 'headerOfficial', label: 'En-tête (MEPST, IEPP...)', basePt: 6.8 },
   { key: 'examCenter', label: "Centre d'Écrit", basePt: 6.4 },
   { key: 'bannerTitle', label: 'Titre Bandeau', basePt: 7.1 },
+  { key: 'studentMatricule', label: 'Matricule', basePt: 6.6 },
   { key: 'studentName', label: 'Nom & Prénoms Élève', basePt: 7.8 },
-  { key: 'studentDetails', label: 'Infos (Né le, Sexe)', basePt: 7.5 },
-  { key: 'footerInfo', label: 'Année, Classe & Directeur', basePt: 7.6 },
+  { key: 'studentDetails', label: 'Date, Lieu & Sexe', basePt: 7.5 },
+  { key: 'studentClass', label: 'Classe', basePt: 6.8 },
+  { key: 'footerInfo', label: 'Année & Directeur', basePt: 7.6 },
 ]
 
 const FONT_FAMILY_OPTIONS: { value: CardFontFamily; label: string; cssFont: string }[] = [
@@ -637,8 +649,16 @@ export function SchoolIdCardStudioModal({
         fontFamily,
       },
       bannerTitle: { ...prev.bannerTitle, fontFamily },
+      studentMatricule: {
+        ...(prev.studentMatricule || FALLBACK_TOGO_TYPOGRAPHY.studentMatricule!),
+        fontFamily,
+      },
       studentName: { ...prev.studentName, fontFamily },
       studentDetails: { ...prev.studentDetails, fontFamily },
+      studentClass: {
+        ...(prev.studentClass || FALLBACK_TOGO_TYPOGRAPHY.studentClass!),
+        fontFamily,
+      },
       footerInfo: { ...prev.footerInfo, fontFamily },
     }))
     toast.success('Police appliquée à toute la carte !')
@@ -652,6 +672,8 @@ export function SchoolIdCardStudioModal({
   // Modèle sélectionné ('classic' = Thèmes Studio MEPST, 'togo_iepp' = Modèle Officiel IEPP / Centre d'écrit)
   const [cardTemplate, setCardTemplate] = useState<CardTemplateId>('classic')
   const [showTogoStampAuto, setShowTogoStampAuto] = useState<boolean>(true)
+  const [schoolPhone, setSchoolPhone] = useState<string>(schoolInfo?.phone || '')
+  const [directorPhone, setDirectorPhone] = useState<string>('')
   const [activeRibbonTab, setActiveRibbonTab] = useState<
     'accueil' | 'typo' | 'couleurs' | 'medias'
   >('accueil')
@@ -942,7 +964,7 @@ export function SchoolIdCardStudioModal({
 
         const { data: roleRow } = await supabase
           .from('user_school_roles')
-          .select('school_id')
+          .select('school_id, phone')
           .eq('user_id', user.id)
           .limit(1)
           .maybeSingle()
@@ -951,10 +973,26 @@ export function SchoolIdCardStudioModal({
         if (!targetSchoolId) return
         setSchoolId(targetSchoolId)
 
+        if (roleRow?.phone) {
+          setDirectorPhone(roleRow.phone)
+        } else {
+          const { data: dirRoleRow } = await supabase
+            .from('user_school_roles')
+            .select('phone')
+            .eq('school_id', targetSchoolId)
+            .in('role', ['school_admin', 'super_admin'])
+            .not('phone', 'is', null)
+            .limit(1)
+            .maybeSingle()
+          if (dirRoleRow?.phone) {
+            setDirectorPhone(dirRoleRow.phone)
+          }
+        }
+
         const { data: schoolRow } = await supabase
           .from('schools')
           .select(
-            'id, name, city, current_academic_year, director_name, logo_url, stamp_url, signature_url'
+            'id, name, city, phone, current_academic_year, director_name, logo_url, stamp_url, signature_url'
           )
           .eq('id', targetSchoolId)
           .maybeSingle()
@@ -972,6 +1010,7 @@ export function SchoolIdCardStudioModal({
             setDirectorName(schoolRow.director_name)
           }
           if (schoolRow.name) setSchoolNameOverride(schoolRow.name)
+          if (schoolRow.phone) setSchoolPhone(schoolRow.phone)
           if (schoolRow.current_academic_year) {
             setCardAcademicYear(schoolRow.current_academic_year)
           }
@@ -1025,10 +1064,24 @@ export function SchoolIdCardStudioModal({
               ...FALLBACK_TOGO_TYPOGRAPHY.examCenter!,
               ...(parsed.typographyConfig.examCenter || {}),
             },
+            studentMatricule: {
+              ...FALLBACK_TOGO_TYPOGRAPHY.studentMatricule!,
+              ...(parsed.typographyConfig.studentMatricule || {}),
+            },
+            studentClass: {
+              ...FALLBACK_TOGO_TYPOGRAPHY.studentClass!,
+              ...(parsed.typographyConfig.studentClass || {}),
+            },
           }
           setTypographyConfig(
             parsed.cardTemplate === 'togo_iepp'
-              ? syncColorsForTemplate('togo_iepp', mergedTypo)
+              ? syncColorsForTemplate('togo_iepp', {
+                  ...mergedTypo,
+                  // Si l'utilisateur vient de l'ancienne version sans studentClass enregistré, appliquer Rouge/Bleu/Noir/Vert par défaut
+                  studentName: !parsed.typographyConfig.studentClass
+                    ? FALLBACK_TOGO_TYPOGRAPHY.studentName
+                    : mergedTypo.studentName,
+                })
               : mergedTypo
           )
         } else if (parsed.cardTemplate === 'togo_iepp') {
@@ -1424,7 +1477,8 @@ export function SchoolIdCardStudioModal({
     avatarUrl: s.avatar_url || null,
     schoolName: schoolNameOverride.trim(),
     schoolCity: schoolInfo?.city || null,
-    schoolPhone: schoolInfo?.phone || null,
+    schoolPhone: (schoolPhone || schoolInfo?.phone || '').trim() || null,
+    directorPhone: directorPhone.trim() || null,
     schoolEmail: schoolInfo?.email || null,
     academicYear: cardAcademicYear.trim(),
     directorName: directorName.trim(),
@@ -1756,6 +1810,8 @@ export function SchoolIdCardStudioModal({
                     academicYear={cardAcademicYear}
                     className={classNameOverride || className}
                     directorName={directorName}
+                    schoolPhone={schoolPhone || schoolInfo?.phone || null}
+                    directorPhone={directorPhone || null}
                     logoUrl={logoUrl}
                     stampUrl={stampUrl}
                     signatureUrl={signatureUrl}
