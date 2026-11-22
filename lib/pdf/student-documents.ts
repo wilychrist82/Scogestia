@@ -1,6 +1,16 @@
 import jsPDF from 'jspdf'
 import { saveOrSharePdf as shareOrSavePdf } from '@/lib/mobile-file-share'
 import { drawTogoIeppIdCardRecto, type CardTemplateId } from '@/lib/pdf/togo-iepp-card'
+import {
+  ID_CARDS_PER_PAGE,
+  ID_CARD_COLUMNS_X_MM,
+  ID_CARD_HEIGHT_MM,
+  ID_CARD_ROWS_Y_MM,
+  ID_CARD_WIDTH_MM,
+  SINGLE_CARD_POSITION_MM,
+  buildCropMarkSegments,
+  buildCropMarksForRect,
+} from '@/lib/pdf/id-card-sheet-layout'
 
 export type { CardTemplateId }
 
@@ -1316,9 +1326,15 @@ export async function generateStudentIdCardPDF(
  * Génère en 1 seul clic un PDF multi-pages contenant 10 CARTES SCOLAIRES DE 10 ÉLÈVES DIFFÉRENTS PAR PAGE A4
  * Disposition : 2 colonnes × 5 lignes = 10 cartes Recto par page A4 (Modèle Officiel Togolais, sans verso)
  */
+export interface IdCardSheetPdfOptions {
+  showCropMarks?: boolean
+  centerSingleCard?: boolean
+}
+
 export async function generateClassStudentIdCardsPDF(
   className: string,
-  studentsData: StudentDocumentData[]
+  studentsData: StudentDocumentData[],
+  options?: IdCardSheetPdfOptions
 ) {
   if (!studentsData.length) return
 
@@ -1333,23 +1349,40 @@ export async function generateClassStudentIdCardsPDF(
     ])
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-  const cardsPerPage = 10
-  const cardW = 94
-  const cardH = 53.5
-  const colX = [8.5, 107.5]
-  const rowY = [10, 66, 122, 178, 234]
+  const cardsPerPage = ID_CARDS_PER_PAGE
+  const cardW = ID_CARD_WIDTH_MM
+  const cardH = ID_CARD_HEIGHT_MM
+  const colX = ID_CARD_COLUMNS_X_MM
+  const rowY = ID_CARD_ROWS_Y_MM
+  const showCropMarks = Boolean(options?.showCropMarks)
+  const centerSingle = Boolean(options?.centerSingleCard && studentsData.length === 1)
+
+  const drawCropMarksOnCurrentPage = (occupiedCount: number) => {
+    if (!showCropMarks) return
+    const segments = centerSingle
+      ? buildCropMarksForRect(SINGLE_CARD_POSITION_MM.x, SINGLE_CARD_POSITION_MM.y)
+      : buildCropMarkSegments(occupiedCount)
+    doc.setDrawColor(71, 85, 105)
+    doc.setLineWidth(0.15)
+    for (const seg of segments) {
+      doc.line(seg.x1, seg.y1, seg.x2, seg.y2)
+    }
+  }
 
   for (let i = 0; i < studentsData.length; i++) {
     const slotIndex = i % cardsPerPage
     if (i > 0 && slotIndex === 0) {
+      drawCropMarksOnCurrentPage(cardsPerPage)
       doc.addPage()
     }
 
     const col = slotIndex % 2
     const row = Math.floor(slotIndex / 2)
     const student = studentsData[i]
+    const x = centerSingle ? SINGLE_CARD_POSITION_MM.x : colX[col]
+    const y = centerSingle ? SINGLE_CARD_POSITION_MM.y : rowY[row]
 
-    drawStudentIdCardRecto(doc, student, colX[col], rowY[row], cardW, cardH, {
+    drawStudentIdCardRecto(doc, student, x, y, cardW, cardH, {
       photoDataUrl: photoDataUrls[i] || null,
       logoDataUrl,
       stampDataUrl,
@@ -1357,6 +1390,10 @@ export async function generateClassStudentIdCardsPDF(
       themeDataUrl,
     })
   }
+
+  const lastPageCount =
+    studentsData.length % cardsPerPage === 0 ? cardsPerPage : studentsData.length % cardsPerPage
+  drawCropMarksOnCurrentPage(lastPageCount)
 
   const cleanClass = className.replace(/\s+/g, '_')
   const filename = `Planche_10_Cartes_Scolaires_${cleanClass}_${first.academicYear.replace(/\//g, '-')}.pdf`

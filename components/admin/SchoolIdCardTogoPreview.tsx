@@ -46,6 +46,29 @@ interface Props {
   showVectorStampIfNoStamp: boolean
   typography: CardTypographyConfig
   onPhotoTrigger?: () => void
+  /** 'studio' = atelier interactif ; 'paper' = rendu à plat pour la planche A4 / impression */
+  variant?: 'studio' | 'paper'
+}
+
+/** Largeur de conception (px) du Modèle 2 — utilisée pour la mise à l'échelle exacte sur la planche A4. */
+export const TOGO_CARD_DESIGN_WIDTH = 500
+
+/** Convertit la matrice QR en un unique tracé SVG (segments horizontaux fusionnés) : rendu net et léger. */
+function buildQrPath(matrix: boolean[][]): string {
+  const parts: string[] = []
+  for (let r = 0; r < matrix.length; r++) {
+    let c = 0
+    while (c < matrix.length) {
+      if (matrix[r][c]) {
+        const start = c
+        while (c < matrix.length && matrix[r][c]) c++
+        parts.push(`M${start} ${r}h${c - start}v1h-${c - start}z`)
+      } else {
+        c++
+      }
+    }
+  }
+  return parts.join('')
 }
 
 function getCssFontFamily(fontFamily: CardFontFamily): string {
@@ -116,7 +139,9 @@ export function SchoolIdCardTogoPreview({
   showVectorStampIfNoStamp,
   typography,
   onPhotoTrigger,
+  variant = 'studio',
 }: Props) {
+  const isPaper = variant === 'paper'
   const uid = useId().replace(/:/g, '')
   const glowId = `togoCardGlow-${uid}`
   const greenId = `togoRibbonGreen-${uid}`
@@ -223,9 +248,14 @@ export function SchoolIdCardTogoPreview({
       directorPhone,
     ]
   )
+  const qrPath = useMemo(() => buildQrPath(qrMatrix), [qrMatrix])
 
   return (
-    <div className="mx-auto w-full max-w-[500px] aspect-[94/53.5] relative rounded-xl overflow-hidden bg-[#FFFDF9] border border-slate-300 shadow-[0_14px_36px_-12px_rgba(15,23,42,0.3)] select-none text-slate-900">
+    <div
+      className={`mx-auto w-full max-w-[500px] aspect-[94/53.5] relative rounded-xl overflow-hidden bg-[#FFFDF9] border border-slate-300 select-none text-slate-900 ${
+        isPaper ? '' : 'shadow-[0_14px_36px_-12px_rgba(15,23,42,0.3)]'
+      }`}
+    >
       {/* COUCHE ARRIÈRE-PLAN : Voile lumineux + Bâtiment scolaire filigrane + Carte Togo floutée + Ruban bas */}
       <svg
         viewBox="0 0 940 535"
@@ -359,20 +389,7 @@ export function SchoolIdCardTogoPreview({
           shapeRendering="crispEdges"
         >
           <rect width={qrMatrix.length} height={qrMatrix.length} fill="#FFFFFF" />
-          {qrMatrix.map((row, rIdx) =>
-            row.map((cell, cIdx) =>
-              cell ? (
-                <rect
-                  key={`${rIdx}-${cIdx}`}
-                  x={cIdx}
-                  y={rIdx}
-                  width={1}
-                  height={1}
-                  fill="#0F172A"
-                />
-              ) : null
-            )
-          )}
+          <path d={qrPath} fill="#0F172A" />
         </svg>
       </div>
 
@@ -509,12 +526,17 @@ export function SchoolIdCardTogoPreview({
             <button
               type="button"
               onClick={onPhotoTrigger}
+              tabIndex={isPaper ? -1 : undefined}
               title={
-                student.avatar_url
-                  ? "Cliquez pour changer la photo de l'élève"
-                  : "Cliquez pour ajouter la photo de l'élève"
+                isPaper
+                  ? undefined
+                  : student.avatar_url
+                    ? "Cliquez pour changer la photo de l'élève"
+                    : "Cliquez pour ajouter la photo de l'élève"
               }
-              className="w-full aspect-[19.0/21.4] rounded-[6px] bg-white border-[2px] border-[#A80744] p-[2px] overflow-hidden shadow-2xs cursor-pointer hover:ring-2 hover:ring-[#A80744]/40 transition-all flex items-center justify-center"
+              className={`w-full aspect-[19.0/21.4] rounded-[6px] bg-white border-[2px] border-[#A80744] p-[2px] overflow-hidden shadow-2xs flex items-center justify-center ${
+                isPaper ? 'pointer-events-none' : 'cursor-pointer hover:ring-2 hover:ring-[#A80744]/40 transition-all'
+              }`}
             >
               {student.avatar_url ? (
                 <img

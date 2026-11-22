@@ -1,9 +1,30 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { SchoolIdCardTogoPreview } from '@/components/admin/SchoolIdCardTogoPreview'
-import { SchoolIdCardRibbon } from '@/components/admin/SchoolIdCardRibbon'
 import {
+  SchoolIdCardTogoPreview,
+  TOGO_CARD_DESIGN_WIDTH,
+} from '@/components/admin/SchoolIdCardTogoPreview'
+import {
+  SchoolIdCardClassicPreview,
+  CLASSIC_CARD_DESIGN_WIDTH,
+} from '@/components/admin/SchoolIdCardClassicPreview'
+import {
+  SchoolIdCardRibbon,
+  type PalettePresetId,
+  type PreflightSummary,
+  type StudioRibbonTab,
+  type StudioViewMode,
+} from '@/components/admin/SchoolIdCardRibbon'
+import {
+  IdCardPrintPages,
+  SchoolIdCardPrintSheetPreview,
+  buildPaperPages,
+  type PaperLayout,
+  type PaperZoom,
+} from '@/components/admin/SchoolIdCardPrintSheetPreview'
+import {
+  buildStudentQrPayload,
   FALLBACK_TOGO_TYPOGRAPHY,
   sanitizeIeppText,
   TOGO_DEFAULT_ZONE_COLORS,
@@ -687,12 +708,61 @@ export function SchoolIdCardStudioModal({
   const [showTogoStampAuto, setShowTogoStampAuto] = useState<boolean>(true)
   const [schoolPhone, setSchoolPhone] = useState<string>(schoolInfo?.phone || '')
   const [directorPhone, setDirectorPhone] = useState<string>('')
-  const [activeRibbonTab, setActiveRibbonTab] = useState<
-    'accueil' | 'typo' | 'couleurs' | 'medias'
-  >('accueil')
+  const [activeRibbonTab, setActiveRibbonTab] = useState<StudioRibbonTab>('accueil')
   const [ribbonCollapsed, setRibbonCollapsed] = useState<boolean>(false)
+  const [viewMode, setViewMode] = useState<StudioViewMode>('edit')
+  const [paperLayout, setPaperLayout] = useState<PaperLayout>('sheet')
+  const [paperZoom, setPaperZoom] = useState<PaperZoom>('fit')
+  const [effectivePaperZoom, setEffectivePaperZoom] = useState<number>(0.7)
+  const [showCropMarks, setShowCropMarks] = useState<boolean>(true)
+  const [showSlotNumbers, setShowSlotNumbers] = useState<boolean>(false)
+  const [showMmGrid, setShowMmGrid] = useState<boolean>(false)
+  const [useSampleCardOnSheet, setUseSampleCardOnSheet] = useState<boolean>(false)
+  const [onlyWithPhotoForPrint, setOnlyWithPhotoForPrint] = useState<boolean>(false)
+  const [isPrinting, setIsPrinting] = useState<boolean>(false)
   const [previewZoom, setPreviewZoom] = useState<number>(1)
   const photoInputRef = useRef<HTMLInputElement | null>(null)
+  const studentListSectionRef = useRef<HTMLDivElement | null>(null)
+
+  const applyPalettePreset = (preset: PalettePresetId) => {
+    if (preset === 'togo_official') {
+      setTypographyConfig((prev) =>
+        syncColorsForTemplate('togo_iepp', {
+          ...prev,
+          togoPaletteVersion: 0,
+        })
+      )
+      toast.success('Palette « Officiel Togo IEPP » appliquée !')
+      return
+    }
+    if (preset === 'classic_institutional') {
+      setTypographyConfig(syncColorsForTemplate('classic', DEFAULT_CARD_TYPOGRAPHY))
+      toast.success('Palette « Classique Institutionnel » appliquée !')
+      return
+    }
+    setTypographyConfig((prev) => ({
+      ...prev,
+      schoolName: {
+        ...prev.schoolName,
+        color: cardTemplate === 'togo_iepp' ? '#FFFFFF' : '#0F172A',
+      },
+      headerOfficial: { ...prev.headerOfficial, color: '#0F172A' },
+      examCenter: { ...(prev.examCenter || FALLBACK_TOGO_TYPOGRAPHY.examCenter!), color: '#334155' },
+      bannerTitle: { ...prev.bannerTitle, color: '#B45309' },
+      studentMatricule: {
+        ...(prev.studentMatricule || FALLBACK_TOGO_TYPOGRAPHY.studentMatricule!),
+        color: '#334155',
+      },
+      studentName: { ...prev.studentName, color: '#0F172A' },
+      studentDetails: { ...prev.studentDetails, color: '#334155' },
+      studentClass: {
+        ...(prev.studentClass || FALLBACK_TOGO_TYPOGRAPHY.studentClass!),
+        color: '#006B38',
+      },
+      footerInfo: { ...prev.footerInfo, color: '#B45309' },
+    }))
+    toast.success('Palette « Sobre Noir & Or » appliquée !')
+  }
 
   // Champs 100% modifiables de la carte (aucune inspection imposée par défaut : chaque IEPP complète la sienne)
   const [ministryAcronym, setMinistryAcronym] = useState('MEPST')
@@ -1060,6 +1130,15 @@ export function SchoolIdCardStudioModal({
         if (typeof parsed.directorName === 'string' && parsed.directorName.trim()) {
           setDirectorName(parsed.directorName)
         }
+        if (typeof parsed.schoolPhone === 'string' && parsed.schoolPhone.trim()) {
+          setSchoolPhone(parsed.schoolPhone)
+        }
+        if (typeof parsed.directorPhone === 'string' && parsed.directorPhone.trim()) {
+          setDirectorPhone(parsed.directorPhone)
+        }
+        if (typeof parsed.showCropMarks === 'boolean') {
+          setShowCropMarks(parsed.showCropMarks)
+        }
         if (parsed.logoUrl) setLogoUrl(parsed.logoUrl)
         if (parsed.stampUrl) setStampUrl(parsed.stampUrl)
         if (parsed.signatureUrl) setSignatureUrl(parsed.signatureUrl)
@@ -1136,6 +1215,9 @@ export function SchoolIdCardStudioModal({
           cardBannerTitle,
           directorName:
             overrides?.directorName !== undefined ? overrides.directorName : directorName,
+          schoolPhone,
+          directorPhone,
+          showCropMarks,
           activeThemeIndex,
           customThemes,
           typographyConfig,
@@ -1513,7 +1595,11 @@ export function SchoolIdCardStudioModal({
   })
 
   // Génère soit tous les lots de 10 (ex: 47 élèves -> 10, 10, 10, 10, 7), soit un lot spécifique de 10 (ou le reste)
-  const handleGenerateSheets = async (targetStudents: StudioStudentItem[], batchLabel?: string) => {
+  const handleGenerateSheets = async (
+    targetStudents: StudioStudentItem[],
+    batchLabel?: string,
+    pdfOptions?: { centerSingleCard?: boolean }
+  ) => {
     if (targetStudents.length === 0) {
       toast.error('Veuillez sélectionner au moins un élève.')
       return
@@ -1531,7 +1617,10 @@ export function SchoolIdCardStudioModal({
       const label = batchLabel
         ? `${classNameOverride || className}_${batchLabel}`
         : classNameOverride || className
-      await generateClassStudentIdCardsPDF(label, docs)
+      await generateClassStudentIdCardsPDF(label, docs, {
+        showCropMarks,
+        centerSingleCard: pdfOptions?.centerSingleCard,
+      })
 
       const pagesCount = Math.ceil(docs.length / 10)
       const lastPageCount = docs.length % 10 === 0 ? 10 : docs.length % 10
@@ -1546,6 +1635,200 @@ export function SchoolIdCardStudioModal({
     } finally {
       setIsGenerating(false)
     }
+  }
+
+  const printableStudents = useMemo(
+    () =>
+      onlyWithPhotoForPrint
+        ? selectedStudentsOrdered.filter((s) => Boolean(s.avatar_url))
+        : selectedStudentsOrdered,
+    [selectedStudentsOrdered, onlyWithPhotoForPrint]
+  )
+
+  const qrPayloadPreview = useMemo(
+    () =>
+      buildStudentQrPayload({
+        matricule: activeStudent.matricule || 'N/A',
+        lastName: activeStudent.last_name,
+        firstName: activeStudent.first_name,
+        dateOfBirth: activeStudent.date_of_birth,
+        birthPlace: activeStudent.birth_place,
+        gender: activeStudent.gender,
+        className: classNameOverride || className,
+        schoolName: (schoolNameOverride || 'ÉTABLISSEMENT SCOLAIRE').trim(),
+        academicYear: cardAcademicYear,
+        inspectionName: sanitizeIeppText(inspectionName),
+        examCenter,
+        schoolPhone: (schoolPhone || schoolInfo?.phone || '').trim() || null,
+        directorPhone: directorPhone.trim() || null,
+      }),
+    [
+      activeStudent,
+      classNameOverride,
+      className,
+      schoolNameOverride,
+      cardAcademicYear,
+      inspectionName,
+      examCenter,
+      schoolPhone,
+      schoolInfo?.phone,
+      directorPhone,
+    ]
+  )
+
+  const preflight = useMemo<PreflightSummary>(() => {
+    const list = printableStudents
+    const photosReady = list.filter((s) => Boolean(s.avatar_url)).length
+    const infoComplete = list.filter(
+      (s) => Boolean(s.date_of_birth && (s.birth_place || '').trim() && (s.gender || '').trim())
+    ).length
+    const incompleteStudentsCount = list.filter(
+      (s) =>
+        !s.avatar_url ||
+        !s.date_of_birth ||
+        !(s.birth_place || '').trim() ||
+        !(s.gender || '').trim()
+    ).length
+    return {
+      totalSelected: list.length,
+      photosReady,
+      infoComplete,
+      hasIeppAndCenter: Boolean(sanitizeIeppText(inspectionName) && examCenter.trim()),
+      hasStampOrSignature: Boolean(
+        stampUrl ||
+          signatureUrl ||
+          (cardTemplate === 'togo_iepp' ? showTogoStampAuto : showVectorStampIfNoStamp)
+      ),
+      incompleteStudentsCount,
+    }
+  }, [
+    printableStudents,
+    inspectionName,
+    examCenter,
+    stampUrl,
+    signatureUrl,
+    cardTemplate,
+    showTogoStampAuto,
+    showVectorStampIfNoStamp,
+  ])
+
+  const paperPagesForPrint = useMemo(
+    () => buildPaperPages(paperLayout, printableStudents, activeStudent, useSampleCardOnSheet),
+    [paperLayout, printableStudents, activeStudent, useSampleCardOnSheet]
+  )
+
+  const handleQuickSave = async () => {
+    persistHeaderConfig()
+    if (dirtyStudentIds.size > 0) {
+      const ok = await saveAllModifiedStudentsToDb()
+      if (ok) toast.success('Modifications enregistrées avec succès !')
+    } else {
+      const ok = await saveStudentToDb(activeStudent.id)
+      if (ok) toast.success('Réglages et carte active enregistrés !')
+    }
+  }
+
+  const handleDirectPrint = () => {
+    if (typeof window === 'undefined' || paperPagesForPrint.length === 0) return
+    setIsPrinting(true)
+    document.body.classList.add('idcard-printing')
+    const cleanup = () => {
+      document.body.classList.remove('idcard-printing')
+      setIsPrinting(false)
+      window.removeEventListener('afterprint', cleanup)
+    }
+    window.addEventListener('afterprint', cleanup)
+    window.setTimeout(() => {
+      window.print()
+      window.setTimeout(cleanup, 1200)
+    }, 80)
+  }
+
+  // Raccourcis clavier (Ctrl+S pour enregistrer, ← / → pour naviguer entre élèves)
+  useEffect(() => {
+    if (!isOpen) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        persistHeaderConfig()
+        void saveStudentToDb(activeStudent.id).then((ok) => {
+          if (ok) toast.success('Carte enregistrée (Ctrl+S)')
+        })
+        return
+      }
+      const tag = (e.target as HTMLElement | null)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (e.key === 'ArrowLeft' && activeIndex > 0) {
+        e.preventDefault()
+        selectStudentById(localStudents[activeIndex - 1].id)
+      } else if (e.key === 'ArrowRight' && activeIndex < localStudents.length - 1) {
+        e.preventDefault()
+        selectStudentById(localStudents[activeIndex + 1].id)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  })
+
+  // Nettoyage de la classe d'impression au démontage
+  useEffect(() => {
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('idcard-printing')
+      }
+    }
+  }, [])
+
+  const renderCardForStudent = (student: StudioStudentItem, variant: 'studio' | 'paper') => {
+    if (cardTemplate === 'togo_iepp') {
+      return (
+        <SchoolIdCardTogoPreview
+          student={student}
+          inspectionName={inspectionName}
+          schoolName={schoolNameOverride}
+          examCenter={examCenter}
+          cardBannerTitle={cardBannerTitle}
+          academicYear={cardAcademicYear}
+          className={classNameOverride || className}
+          directorName={directorName}
+          schoolPhone={schoolPhone || schoolInfo?.phone || null}
+          directorPhone={directorPhone || null}
+          logoUrl={logoUrl}
+          stampUrl={stampUrl}
+          signatureUrl={signatureUrl}
+          showVectorEmblemIfNoLogo={showVectorEmblemIfNoLogo}
+          showVectorStampIfNoStamp={showTogoStampAuto}
+          typography={typographyConfig}
+          variant={variant}
+          onPhotoTrigger={variant === 'studio' ? () => photoInputRef.current?.click() : undefined}
+        />
+      )
+    }
+    return (
+      <SchoolIdCardClassicPreview
+        student={student}
+        typography={typographyConfig}
+        ministryAcronym={ministryAcronym}
+        republicTitle={republicTitle}
+        republicMotto={republicMotto}
+        inspectionName={inspectionName}
+        schoolName={schoolNameOverride}
+        examCenter={examCenter}
+        cardBannerTitle={cardBannerTitle}
+        academicYear={cardAcademicYear}
+        className={classNameOverride || className}
+        directorName={directorName}
+        logoUrl={logoUrl}
+        stampUrl={stampUrl}
+        signatureUrl={signatureUrl}
+        showVectorEmblemIfNoLogo={showVectorEmblemIfNoLogo}
+        showVectorStampIfNoStamp={showVectorStampIfNoStamp}
+        themeUrl={activeTheme?.url || null}
+        variant={variant}
+        onPhotoFile={variant === 'studio' ? (f) => handlePhotoUpload(student.id, f) : undefined}
+        isUploadingPhoto={variant === 'studio' && uploadingId === student.id}
+      />
+    )
   }
 
   const toggleSelectAll = () => {
@@ -1567,7 +1850,7 @@ export function SchoolIdCardStudioModal({
 
   if (!isOpen) return null
 
-  const selectedCount = selectedStudentsOrdered.length
+  const selectedCount = printableStudents.length
   const pagesCount = Math.max(1, Math.ceil(selectedCount / 10))
   const remainderOnLastPage =
     selectedCount === 0 ? 0 : selectedCount % 10 === 0 ? 10 : selectedCount % 10
@@ -1622,21 +1905,28 @@ export function SchoolIdCardStudioModal({
 
         {/* Contenu Principal Défilant */}
         <div className={mode === 'embedded' ? 'p-4 sm:p-5 space-y-5 bg-slate-50/70' : 'flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 bg-slate-50/70'}>
-          {/* RUBAN INFOGRAPHIQUE PRO (STYLE MICROSOFT WORD — ONGLETS & GROUPES DE TÂCHES) */}
+          {/* RUBAN INFOGRAPHIQUE PRO (STYLE MICROSOFT WORD — 5 ONGLETS & BARRE D'ACCÈS RAPIDE) */}
           <SchoolIdCardRibbon
             activeTab={activeRibbonTab}
             onTabChange={setActiveRibbonTab}
             collapsed={ribbonCollapsed}
             onToggleCollapse={() => setRibbonCollapsed((c) => !c)}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            hasUnsavedChanges={dirtyStudentIds.size > 0}
+            isSaving={isSavingCurrent}
+            onQuickSave={handleQuickSave}
+            onQuickPrint={handleDirectPrint}
             previewZoom={previewZoom}
             onZoomChange={setPreviewZoom}
             onQuickExportSingle={() =>
               handleGenerateSheets(
                 [activeStudent],
-                `${activeStudent.last_name}_${activeStudent.first_name}`
+                `${activeStudent.last_name}_${activeStudent.first_name}`,
+                { centerSingleCard: true }
               )
             }
-            onQuickExportBatch={() => handleGenerateSheets(selectedStudentsOrdered)}
+            onQuickExportBatch={() => handleGenerateSheets(printableStudents)}
             isGenerating={isGenerating}
             selectedCount={selectedCount}
             cardTemplate={cardTemplate}
@@ -1667,6 +1957,10 @@ export function SchoolIdCardStudioModal({
             onAcademicYearChange={setCardAcademicYear}
             directorName={directorName}
             onDirectorNameChange={setDirectorName}
+            schoolPhone={schoolPhone}
+            onSchoolPhoneChange={setSchoolPhone}
+            directorPhone={directorPhone}
+            onDirectorPhoneChange={setDirectorPhone}
             cardBannerTitle={cardBannerTitle}
             onCardBannerTitleChange={setCardBannerTitle}
             republicTitle={republicTitle}
@@ -1689,6 +1983,7 @@ export function SchoolIdCardStudioModal({
               }))
             }
             onResetTypography={resetTypographyToDefault}
+            onApplyPalettePreset={applyPalettePreset}
             letterColorField={letterColorField}
             onLetterColorFieldChange={setLetterColorField}
             selectedLetterIndex={selectedLetterIndex}
@@ -1742,9 +2037,79 @@ export function SchoolIdCardStudioModal({
             onPrevTheme={handlePrevTheme}
             onNextTheme={handleNextTheme}
             onUploadCustomTheme={handleUploadCustomTheme}
+            qrPayloadPreview={qrPayloadPreview}
+            paperLayout={paperLayout}
+            onPaperLayoutChange={setPaperLayout}
+            showCropMarks={showCropMarks}
+            onShowCropMarksChange={setShowCropMarks}
+            showSlotNumbers={showSlotNumbers}
+            onShowSlotNumbersChange={setShowSlotNumbers}
+            showMmGrid={showMmGrid}
+            onShowMmGridChange={setShowMmGrid}
+            useSampleCardOnSheet={useSampleCardOnSheet}
+            onUseSampleCardOnSheetChange={setUseSampleCardOnSheet}
+            onlyWithPhotoForPrint={onlyWithPhotoForPrint}
+            onOnlyWithPhotoForPrintChange={setOnlyWithPhotoForPrint}
+            preflight={preflight}
+            onShowIncompleteStudents={() => {
+              setFilterMode('missing_info')
+              setShowStudentList(true)
+              window.setTimeout(() => {
+                studentListSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }, 60)
+            }}
           />
 
-          {/* ESPACE DE TRAVAIL INFOGRAPHIQUE : CANVAS HAUTE PRÉCISION (GAUCHE) + FICHE ÉLÈVE ACTIF (DROITE) */}
+          {/* MODE APERÇU PAPIER A4 (FEUILLE BLANCHE 210×297 MM AVANT IMPRESSION) OU MODE ÉDITION CARTE */}
+          {viewMode === 'paper' ? (
+            <SchoolIdCardPrintSheetPreview
+              students={printableStudents}
+              singleStudent={activeStudent}
+              layout={paperLayout}
+              onLayoutChange={setPaperLayout}
+              designWidth={
+                cardTemplate === 'togo_iepp' ? TOGO_CARD_DESIGN_WIDTH : CLASSIC_CARD_DESIGN_WIDTH
+              }
+              renderCard={(st) => renderCardForStudent(st, 'paper')}
+              templateLabel={
+                cardTemplate === 'togo_iepp' ? 'Modèle 2 : Officiel IEPP' : 'Modèle 1 : Classique'
+              }
+              showCropMarks={showCropMarks}
+              onShowCropMarksChange={setShowCropMarks}
+              showSlotNumbers={showSlotNumbers}
+              onShowSlotNumbersChange={setShowSlotNumbers}
+              showMmGrid={showMmGrid}
+              onShowMmGridChange={setShowMmGrid}
+              useSampleCard={useSampleCardOnSheet}
+              activeStudentId={activeStudent.id}
+              onSelectStudent={(id) => {
+                selectStudentById(id)
+                setViewMode('edit')
+                toast.success("Élève sélectionné pour édition rapide !")
+              }}
+              zoom={paperZoom}
+              onZoomChange={setPaperZoom}
+              onEffectiveZoomChange={setEffectivePaperZoom}
+              onDownloadPdf={() => {
+                if (paperLayout === 'single') {
+                  void handleGenerateSheets(
+                    [activeStudent],
+                    `${activeStudent.last_name}_${activeStudent.first_name}`,
+                    { centerSingleCard: true }
+                  )
+                } else {
+                  const list = useSampleCardOnSheet
+                    ? Array.from({ length: 10 }, () => activeStudent)
+                    : printableStudents
+                  void handleGenerateSheets(list)
+                }
+              }}
+              onPrint={handleDirectPrint}
+              isGenerating={isGenerating}
+              isPrinting={isPrinting}
+            />
+          ) : (
+          /* ESPACE DE TRAVAIL INFOGRAPHIQUE : CANVAS HAUTE PRÉCISION (GAUCHE) + FICHE ÉLÈVE ACTIF (DROITE) */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
             {/* ZONE GAUCHE (7 cols) : Atelier Canvas avec Aperçu Temps Réel */}
             <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-[0_1px_3px_rgba(15,23,42,0.05),0_10px_28px_-14px_rgba(15,23,42,0.1)] space-y-4">
@@ -1772,7 +2137,7 @@ export function SchoolIdCardStudioModal({
                     disabled={activeIndex <= 0}
                     onClick={handlePrevStudent}
                     className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-2xs transition-all flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none"
-                    title="Revenir à l'élève précédent"
+                    title="Revenir à l'élève précédent (←)"
                   >
                     <ChevronLeft className="h-3.5 w-3.5 text-slate-600" />
                     Précédent
@@ -1795,13 +2160,59 @@ export function SchoolIdCardStudioModal({
                     disabled={activeIndex >= localStudents.length - 1}
                     onClick={handleNextStudent}
                     className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-bold text-white shadow-2xs transition-all flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none"
-                    title="Passer à l'élève suivant"
+                    title="Passer à l'élève suivant (→)"
                   >
                     Suivant
                     <ChevronRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
+
+              {/* Barre de thème rapide (Modèle 1 uniquement) */}
+              {cardTemplate === 'classic' && (
+                <div className="rounded-xl border border-slate-200/90 bg-slate-50/70 px-3.5 py-2 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Palette className="h-4 w-4 text-indigo-600" />
+                    <span className="text-xs font-bold text-slate-800">
+                      Thème : {activeTheme.name}
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-400">
+                      ({activeThemeIndex + 1} / {allThemes.length})
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={activeThemeIndex <= 0}
+                      onClick={handlePrevTheme}
+                      className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-800 flex items-center gap-1 disabled:opacity-40"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5 text-indigo-600" />
+                      Précédent
+                    </button>
+                    <button
+                      type="button"
+                      disabled={activeThemeIndex >= allThemes.length - 1}
+                      onClick={handleNextTheme}
+                      className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-800 flex items-center gap-1 disabled:opacity-40"
+                    >
+                      Suivant
+                      <ChevronRight className="h-3.5 w-3.5 text-indigo-600" />
+                    </button>
+                    <label className="cursor-pointer px-2.5 py-1 rounded-lg border border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 text-[11px] font-bold text-emerald-800 flex items-center gap-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleUploadCustomTheme(e.target.files?.[0])}
+                      />
+                      <Upload className="h-3 w-3" />
+                      + Fond
+                    </label>
+                  </div>
+                </div>
+              )}
 
               {/* Surface de travail Infographie (grille micro-points + zoom fluide) */}
               <div className="rounded-2xl border border-slate-200/90 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] bg-slate-100/75 p-4 sm:p-6 overflow-x-auto flex items-center justify-center min-h-[330px]">
@@ -1812,454 +2223,7 @@ export function SchoolIdCardStudioModal({
                     transformOrigin: 'center center',
                   }}
                 >
-              {cardTemplate === 'togo_iepp' ? (
-                <div className="space-y-3">
-                  <SchoolIdCardTogoPreview
-                    student={activeStudent}
-                    inspectionName={inspectionName}
-                    schoolName={schoolNameOverride}
-                    examCenter={examCenter}
-                    cardBannerTitle={cardBannerTitle}
-                    academicYear={cardAcademicYear}
-                    className={classNameOverride || className}
-                    directorName={directorName}
-                    schoolPhone={schoolPhone || schoolInfo?.phone || null}
-                    directorPhone={directorPhone || null}
-                    logoUrl={logoUrl}
-                    stampUrl={stampUrl}
-                    signatureUrl={signatureUrl}
-                    showVectorEmblemIfNoLogo={showVectorEmblemIfNoLogo}
-                    showVectorStampIfNoStamp={showTogoStampAuto}
-                    typography={typographyConfig}
-                    onPhotoTrigger={() => photoInputRef.current?.click()}
-                  />
-                </div>
-              ) : (
-                <>
-              {/* NAVIGATION DU THÈME (UNIQUEMENT PAR FLÈCHES PRÉCÉDENT / SUIVANT — SANS BOUCLER AU DÉBUT) */}
-              <div className="rounded-xl border border-slate-200/90 bg-slate-50/70 px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Palette className="h-4 w-4 text-indigo-600" />
-                  <span className="text-xs font-bold text-slate-800">
-                    Thème d&apos;arrière-plan de la carte
-                  </span>
-                  <span className="text-[11px] font-semibold text-slate-400">
-                    ({activeThemeIndex + 1} / {allThemes.length})
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    disabled={activeThemeIndex <= 0}
-                    onClick={handlePrevTheme}
-                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-800 shadow-2xs transition-all flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none"
-                    title="Thème précédent (aperçu direct sur la carte)"
-                  >
-                    <ChevronLeft className="h-3.5 w-3.5 text-indigo-600" />
-                    Précédent
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={activeThemeIndex >= allThemes.length - 1}
-                    onClick={handleNextTheme}
-                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-800 shadow-2xs transition-all flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none"
-                    title="Thème suivant (aperçu direct sur la carte)"
-                  >
-                    Suivant
-                    <ChevronRight className="h-3.5 w-3.5 text-indigo-600" />
-                  </button>
-
-                  <label
-                    className="cursor-pointer px-2.5 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50/80 hover:bg-emerald-100 text-[11px] font-bold text-emerald-800 transition-colors flex items-center gap-1"
-                    title="Importer un fond personnalisé"
-                  >
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleUploadCustomTheme(e.target.files?.[0])}
-                    />
-                    <Upload className="h-3 w-3" />
-                    + Fond
-                  </label>
-                </div>
-              </div>
-
-              {/* APERÇU VISUEL TEMPS RÉEL DE LA CARTE OFFICIELLE (AVEC THÈME EN ARRIÈRE-PLAN) */}
-              <div className="mx-auto w-full max-w-[465px] rounded-md p-[5px] bg-[#007A33] shadow-md select-none">
-                <div className="rounded-[2px] p-[4px] bg-[#FFCE00]">
-                  <div className="relative bg-[#EEF4FA] text-slate-900 overflow-hidden">
-                    {/* Image du Thème en arrière-plan sous tous les éléments de la carte */}
-                    {activeTheme.url && (
-                      <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
-                        <img
-                          src={activeTheme.url}
-                          alt=""
-                          className="h-full w-full object-fill"
-                        />
-                        {/* Voile de lisibilité calibré pour que toutes les écritures ressortent parfaitement */}
-                        <div className="absolute inset-0 bg-white/30" />
-                        <div
-                          className="absolute inset-0"
-                          style={{
-                            background:
-                              'radial-gradient(circle at 58% 52%, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.36) 65%, rgba(255,255,255,0.08) 100%)',
-                          }}
-                        />
-                      </div>
-                    )}
-
-                    {/* En-tête de la carte */}
-                    <div className="px-2.5 pt-1.5 pb-1.5 relative z-10 min-h-[62px]">
-                      <div className="flex items-start justify-between gap-2">
-                        {/* Gauche : Sigle Ministère (MEPST ou personnalisé avec couleur lettre par lettre !) + Logo École */}
-                        <div className="flex flex-col items-center shrink-0 min-w-[44px]">
-                          <div
-                            className="leading-none tracking-tight h-[14px]"
-                            style={getZoneCssStyle(typographyConfig.headerOfficial, 13, '#0F172A')}
-                          >
-                            {ministryAcronym.trim().length > 0 ? (
-                              <span style={getZoneCssStyle(typographyConfig.headerOfficial, 12.5)}>
-                                {renderMulticolorPreview(
-                                  (typographyConfig.headerOfficial.uppercase
-                                    ? ministryAcronym.trim().toUpperCase()
-                                    : ministryAcronym.trim()
-                                  ).slice(0, 12),
-                                  'ministryAcronym',
-                                  typographyConfig.headerOfficial.color
-                                )}
-                              </span>
-                            ) : null}
-                          </div>
-
-                          {logoUrl ? (
-                            <div className="mt-1 h-11 w-10 rounded-full border border-emerald-600 bg-white flex items-center justify-center shadow-2xs overflow-hidden">
-                              <img
-                                src={logoUrl}
-                                alt="Logo école"
-                                className="h-9 w-9 object-contain"
-                              />
-                            </div>
-                          ) : showVectorEmblemIfNoLogo ? (
-                            <div className="mt-1 h-11 w-10 rounded-full border border-emerald-600 bg-white flex flex-col items-center justify-center shadow-2xs">
-                              <span className="text-[6px] font-bold text-emerald-800">🇹🇬</span>
-                              <span className="px-1 py-0.5 rounded-full bg-amber-300 text-[8px] font-serif font-black text-slate-950 border border-amber-500">
-                                RT
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="mt-1 h-11 w-10" />
-                          )}
-                        </div>
-
-                        {/* Centre + Droite */}
-                        <div className="flex-1 flex flex-col">
-                          <div className="text-right leading-tight min-h-[22px]">
-                            {republicTitle.trim() && (
-                              <div
-                                className="tracking-tight"
-                                style={getZoneCssStyle(
-                                  typographyConfig.headerOfficial,
-                                  10.5,
-                                  '#0F172A'
-                                )}
-                              >
-                                {renderMulticolorPreview(
-                                  (typographyConfig.headerOfficial.uppercase
-                                    ? republicTitle.trim().toUpperCase()
-                                    : republicTitle.trim()
-                                  ).slice(0, 28),
-                                  'republicTitle',
-                                  '#0F172A'
-                                )}
-                              </div>
-                            )}
-                            {republicMotto.trim() && (
-                              <div
-                                className="pr-2"
-                                style={getZoneCssStyle(
-                                  typographyConfig.headerOfficial,
-                                  9.5,
-                                  '#0F172A'
-                                )}
-                              >
-                                {republicMotto}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="text-center mt-0.5 space-y-0.5">
-                            {inspectionName.trim() && (
-                              <div
-                                className="tracking-wide truncate"
-                                style={getZoneCssStyle(typographyConfig.headerOfficial, 10.5)}
-                              >
-                                {renderMulticolorPreview(
-                                  (typographyConfig.headerOfficial.uppercase
-                                    ? inspectionName.trim().toUpperCase()
-                                    : inspectionName.trim()
-                                  ).slice(0, 38),
-                                  'inspectionName',
-                                  typographyConfig.headerOfficial.color
-                                )}
-                              </div>
-                            )}
-                            {schoolNameOverride.trim() && (
-                              <div
-                                className="leading-none tracking-tight truncate"
-                                style={getZoneCssStyle(typographyConfig.schoolName, 15)}
-                              >
-                                {renderMulticolorPreview(
-                                  (typographyConfig.schoolName.uppercase
-                                    ? schoolNameOverride.trim().toUpperCase()
-                                    : schoolNameOverride.trim()
-                                  ).slice(0, 34),
-                                  'schoolName',
-                                  typographyConfig.schoolName.color
-                                )}
-                              </div>
-                            )}
-                            {examCenter.trim() && (
-                              <div
-                                className="leading-tight"
-                                style={getZoneCssStyle(typographyConfig.headerOfficial, 11)}
-                              >
-                                <span className="text-slate-950">Centre d&apos;Ecrit: </span>
-                                <span style={{ color: typographyConfig.headerOfficial.color }}>
-                                  {renderMulticolorPreview(
-                                    examCenter.trim().slice(0, 26),
-                                    'examCenter',
-                                    typographyConfig.headerOfficial.color
-                                  )}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Double trait tricolore de séparation */}
-                    <div className="relative z-10 h-[2px] w-full bg-red-700" />
-                    <div className="relative z-10 h-[2px] w-full bg-[#007A33]" />
-                    <div className="relative z-10 h-[1.5px] w-full bg-[#FFCE00]" />
-
-                    {/* Corps de la carte : Photo à gauche + Infos à droite */}
-                    <div
-                      className={`relative z-10 grid grid-cols-12 ${
-                        activeTheme.url ? 'bg-transparent' : 'bg-[#F8FAFC]'
-                      }`}
-                    >
-                      {/* Photo Passeport (Gauche — cliquable pour changer la photo) */}
-                      <div className="col-span-4 p-1">
-                        <label
-                          className="w-full h-[142px] border-2 border-[#C2410C] bg-sky-100 overflow-hidden flex flex-col items-center justify-center relative cursor-pointer group"
-                          title="Cliquez pour importer la photo de cet élève"
-                        >
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={uploadingId === activeStudent.id}
-                            onChange={(e) =>
-                              handlePhotoUpload(activeStudent.id, e.target.files?.[0])
-                            }
-                          />
-                          {activeStudent.avatar_url ? (
-                            <img
-                              src={activeStudent.avatar_url}
-                              alt={activeStudent.first_name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex flex-col items-center justify-center text-center p-2">
-                              <Camera className="h-6 w-6 text-blue-800 mb-1" />
-                              <span className="text-[9px] font-extrabold text-blue-900 uppercase">
-                                + Cliquer pour Photo
-                              </span>
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
-                            {uploadingId === activeStudent.id ? (
-                              <Loader2 className="h-5 w-5 animate-spin" />
-                            ) : (
-                              'Changer Photo'
-                            )}
-                          </div>
-                        </label>
-                      </div>
-
-                      {/* Informations d'état civil (Droite) */}
-                      <div className="col-span-8 flex flex-col justify-between pb-1.5 pr-1.5">
-                        <div>
-                          {/* Bandeau CARTE D'IDENTITE SCOLAIRE */}
-                          <div
-                            className="py-0.5 px-2 text-center border-b border-amber-200/80 min-h-[20px]"
-                            style={{ backgroundColor: typographyConfig.bannerBgColor || '#FDE0C6' }}
-                          >
-                            {cardBannerTitle.trim() && (
-                              <span
-                                className="tracking-tight"
-                                style={getZoneCssStyle(typographyConfig.bannerTitle, 11.5)}
-                              >
-                                {renderMulticolorPreview(
-                                  (typographyConfig.bannerTitle.uppercase
-                                    ? cardBannerTitle.trim().toUpperCase()
-                                    : cardBannerTitle.trim()
-                                  ).slice(0, 34),
-                                  'bannerTitle',
-                                  typographyConfig.bannerTitle.color
-                                )}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="px-2 pt-1.5 space-y-0.5 leading-snug">
-                            <div className="truncate">
-                              <span style={getZoneCssStyle(typographyConfig.studentDetails, 12)}>
-                                Nom:{' '}
-                              </span>
-                              <span
-                                className="uppercase"
-                                style={getZoneCssStyle(typographyConfig.studentName, 12)}
-                              >
-                                {activeStudent.last_name}
-                              </span>
-                            </div>
-                            <div className="truncate">
-                              <span style={getZoneCssStyle(typographyConfig.studentDetails, 12)}>
-                                Prénoms:{' '}
-                              </span>
-                              <span style={getZoneCssStyle(typographyConfig.studentName, 12)}>
-                                {activeStudent.first_name}
-                              </span>
-                            </div>
-                            <div className="truncate">
-                              <span style={getZoneCssStyle(typographyConfig.studentDetails, 11.5)}>
-                                Né (e) le{' '}
-                                {activeStudent.date_of_birth
-                                  ? new Date(activeStudent.date_of_birth).toLocaleDateString(
-                                      'fr-FR'
-                                    )
-                                  : '—'}{' '}
-                                {activeStudent.birth_place
-                                  ? `à ${activeStudent.birth_place}`
-                                  : ''}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <span
-                                  style={getZoneCssStyle(
-                                    typographyConfig.studentDetails,
-                                    12,
-                                    '#D94619'
-                                  )}
-                                >
-                                  Sexe{' '}
-                                </span>
-                                <span style={getZoneCssStyle(typographyConfig.studentDetails, 12)}>
-                                  :{' '}
-                                </span>
-                                <span
-                                  style={getZoneCssStyle(
-                                    typographyConfig.studentName,
-                                    12,
-                                    '#122AB9'
-                                  )}
-                                >
-                                  {activeStudent.gender || '—'}
-                                </span>
-                              </div>
-                              <span className="text-[9px] font-sans font-bold text-slate-400">
-                                Mle: {activeStudent.matricule}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Bas de la carte : Année scolaire + Classe + Vrai Cachet/Signature (ou blanc) + Directeur */}
-                        <div className="px-2 pt-1 flex items-end justify-between relative">
-                          <div className="leading-tight">
-                            <div
-                              className="underline decoration-[#122AB9]"
-                              style={getZoneCssStyle(typographyConfig.footerInfo, 11, '#0F172A')}
-                            >
-                              <span className="text-slate-950">Année </span>
-                              <span className="text-[#122AB9]">Scolaire</span>
-                            </div>
-                            <div
-                              className="pl-1 min-h-[16px]"
-                              style={getZoneCssStyle(typographyConfig.footerInfo, 13)}
-                            >
-                              {cardAcademicYear}
-                            </div>
-                            <div
-                              className="mt-0.5"
-                              style={getZoneCssStyle(typographyConfig.footerInfo, 12, '#0F172A')}
-                            >
-                              <span className="text-slate-950 font-semibold">Classe : </span>
-                              <span
-                                style={getZoneCssStyle(
-                                  typographyConfig.footerInfo,
-                                  12,
-                                  '#192AB9'
-                                )}
-                              >
-                                {classNameOverride || className}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Zone Cachet + Signature + Nom du Directeur (si rien n'est saisi, reste blanc !) */}
-                          <div className="flex flex-col items-end min-w-[100px] min-h-[58px] justify-end">
-                            <div className="relative flex items-center justify-center h-14 w-28">
-                              {stampUrl ? (
-                                <img
-                                  src={stampUrl}
-                                  alt="Cachet officiel"
-                                  className="h-14 w-16 object-contain"
-                                />
-                              ) : showVectorStampIfNoStamp ? (
-                                <div className="h-12 w-12 rounded-full border-2 border-[#122ABE] flex flex-col items-center justify-center text-[#122ABE] text-center p-0.5 bg-white/60">
-                                  <span className="text-[4.2px] font-black uppercase leading-none">
-                                    REPUBLIQUE TOGOLAISE
-                                  </span>
-                                  <span className="text-[6.5px] font-black my-0.5">★ RT ★</span>
-                                  <span className="text-[4px] font-extrabold uppercase leading-none truncate max-w-[36px]">
-                                    {(schoolNameOverride || 'ÉCOLE').slice(0, 14)}
-                                  </span>
-                                </div>
-                              ) : null}
-
-                              {signatureUrl && (
-                                <img
-                                  src={signatureUrl}
-                                  alt="Signature Directeur"
-                                  className="h-11 w-20 object-contain absolute right-0 bottom-0 pointer-events-none"
-                                />
-                              )}
-                            </div>
-
-                            {directorName.trim() && (
-                              <div
-                                className="leading-none mt-0.5"
-                                style={getZoneCssStyle(typographyConfig.footerInfo, 11)}
-                              >
-                                {directorName}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              </>
-              )}
+                  {renderCardForStudent(activeStudent, 'studio')}
                 </div>
               </div>
 
@@ -2440,7 +2404,8 @@ export function SchoolIdCardStudioModal({
                       onClick={() =>
                         handleGenerateSheets(
                           [activeStudent],
-                          `${activeStudent.last_name}_${activeStudent.first_name}`
+                          `${activeStudent.last_name}_${activeStudent.first_name}`,
+                          { centerSingleCard: true }
                         )
                       }
                       className="px-3 py-2 rounded-xl border border-indigo-200 bg-white hover:bg-indigo-50 text-indigo-900 text-xs font-extrabold transition-colors flex items-center gap-1.5"
@@ -2500,11 +2465,15 @@ export function SchoolIdCardStudioModal({
               </div>
             </div>
           </div>
+          )}
 
           {/* SECTION 3 : Liste Complète des Élèves de la Classe (Masquée par défaut, affichable en 1 clic) */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+          <div
+            ref={studentListSectionRef}
+            className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden"
+          >
             <div className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70">
-              <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={() => setShowStudentList((prev) => !prev)}
@@ -2513,8 +2482,8 @@ export function SchoolIdCardStudioModal({
                   <Layers className="h-3.5 w-3.5 text-amber-300" />
                   <span>
                     {showStudentList
-                      ? `Masquer la liste complète des élèves (${localStudents.length}) ▴`
-                      : `Afficher la liste complète des élèves de la classe (${localStudents.length} élèves) ▾`}
+                      ? `Masquer la liste des élèves (${localStudents.length}) ▴`
+                      : `Afficher la liste des élèves de la classe (${localStudents.length} élèves) ▾`}
                   </span>
                 </button>
 
@@ -2532,6 +2501,29 @@ export function SchoolIdCardStudioModal({
                   )}
                   {photosReadyCount}/{localStudents.length} avec photo
                 </span>
+
+                {showStudentList && (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIds(new Set(localStudents.map((s) => s.id)))}
+                      className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-[11px] font-bold text-slate-700"
+                    >
+                      Tout cocher
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedIds(
+                          new Set(localStudents.filter((s) => Boolean(s.avatar_url)).map((s) => s.id))
+                        )
+                      }
+                      className="px-2.5 py-1 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-[11px] font-bold text-emerald-800"
+                    >
+                      Avec photo uniquement
+                    </button>
+                  </div>
+                )}
               </div>
 
               {showStudentList && (
@@ -2738,34 +2730,89 @@ export function SchoolIdCardStudioModal({
           </div>
         </div>
 
-        {/* Barre d'Action Inférieure */}
-        <div className="border-t border-slate-200 bg-white px-5 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-2.5 text-xs text-slate-600">
-            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+        {/* Barre d'État Inférieure (Status Bar façon Word / Affinity Publisher) */}
+        <div className="border-t border-slate-200 bg-slate-900 text-slate-200 px-4 py-2.5 flex flex-col lg:flex-row items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-3 flex-wrap text-[11px]">
+            <span className="inline-flex items-center gap-1.5 font-extrabold text-white">
+              <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+              {cardTemplate === 'togo_iepp' ? 'Modèle 2 : Officiel IEPP' : 'Modèle 1 : Classique'}
+            </span>
+            <span className="text-slate-600">|</span>
             <span>
-              <strong>{selectedCount} carte{selectedCount > 1 ? 's' : ''}</strong> à générer •{' '}
-              {pagesCount > 1 ? (
-                <>
-                  <strong>{pagesCount} pages A4</strong> (10 par page, et{' '}
-                  <strong className="text-indigo-950">
-                    {remainderOnLastPage} carte{remainderOnLastPage > 1 ? 's' : ''} sur la dernière page
-                  </strong>
-                  )
-                </>
-              ) : (
-                <strong className="text-indigo-950">
-                  {selectedCount} carte{selectedCount > 1 ? 's' : ''} sur 1 page A4
-                </strong>
+              <strong className="text-white">
+                {selectedCount} carte{selectedCount > 1 ? 's' : ''}
+              </strong>{' '}
+              →{' '}
+              <strong className="text-amber-300">
+                {pagesCount} page{pagesCount > 1 ? 's' : ''} A4
+              </strong>
+              {pagesCount > 1 && (
+                <span className="text-slate-400">
+                  {' '}
+                  (10/page + {remainderOnLastPage} sur la dernière)
+                </span>
               )}
+            </span>
+            <span className="text-slate-600 hidden sm:inline">|</span>
+            <span className="hidden sm:inline text-slate-300">
+              Photos : <strong className="text-emerald-300">{photosReadyCount}/{localStudents.length}</strong>
             </span>
           </div>
 
-          <div className="flex items-center gap-2.5 flex-wrap w-full sm:w-auto justify-end">
+          <div className="flex items-center gap-3 flex-wrap w-full lg:w-auto justify-end">
+            {/* Curseur de zoom dans la barre d'état */}
+            <div className="hidden sm:flex items-center gap-1.5 bg-white/5 rounded-lg px-2 py-1 ring-1 ring-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  if (viewMode === 'paper') {
+                    setPaperZoom(Math.max(0.4, Number((effectivePaperZoom - 0.1).toFixed(2))))
+                  } else {
+                    setPreviewZoom((z) => Math.max(0.75, Number((z - 0.1).toFixed(2))))
+                  }
+                }}
+                className="text-slate-300 hover:text-white"
+                title="Dézoomer"
+              >
+                <Minus className="h-3 w-3" />
+              </button>
+              <input
+                type="range"
+                min={viewMode === 'paper' ? 0.4 : 0.75}
+                max={viewMode === 'paper' ? 1.25 : 1.3}
+                step={0.05}
+                value={viewMode === 'paper' ? effectivePaperZoom : previewZoom}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value)
+                  if (viewMode === 'paper') setPaperZoom(v)
+                  else setPreviewZoom(v)
+                }}
+                className="w-20 accent-amber-300 cursor-pointer"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (viewMode === 'paper') {
+                    setPaperZoom(Math.min(1.25, Number((effectivePaperZoom + 0.1).toFixed(2))))
+                  } else {
+                    setPreviewZoom((z) => Math.min(1.3, Number((z + 0.1).toFixed(2))))
+                  }
+                }}
+                className="text-slate-300 hover:text-white"
+                title="Zoomer"
+              >
+                <Plus className="h-3 w-3" />
+              </button>
+              <span className="text-[10.5px] font-mono font-bold text-amber-200 min-w-[36px] text-right">
+                {Math.round((viewMode === 'paper' ? effectivePaperZoom : previewZoom) * 100)}%
+              </span>
+            </div>
+
             {mode === 'modal' && onClose && (
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors"
+                className="px-3.5 py-2 rounded-xl border border-white/15 text-slate-200 text-xs font-bold hover:bg-white/10 transition-colors"
               >
                 Fermer
               </button>
@@ -2774,22 +2821,31 @@ export function SchoolIdCardStudioModal({
             <button
               type="button"
               disabled={isGenerating || selectedCount === 0}
-              onClick={() => handleGenerateSheets(selectedStudentsOrdered)}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#1E293B] via-[#312E81] to-[#4338CA] text-white text-xs sm:text-sm font-extrabold shadow-md hover:opacity-95 transition-all flex items-center gap-2 disabled:opacity-50"
+              onClick={() => handleGenerateSheets(printableStudents)}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 text-xs sm:text-sm font-extrabold shadow-md hover:brightness-105 transition-all flex items-center gap-2 disabled:opacity-50"
             >
               {isGenerating ? (
-                <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Printer className="h-4 w-4 text-amber-300" />
+                <Printer className="h-4 w-4" />
               )}
-              Générer le PDF ({selectedCount} carte{selectedCount > 1 ? 's' : ''} •{' '}
-              {pagesCount > 1
-                ? `10/page + ${remainderOnLastPage} sur la dernière`
-                : `${selectedCount} sur la page A4`}
-              )
+              Générer le PDF ({selectedCount} carte{selectedCount > 1 ? 's' : ''})
             </button>
           </div>
         </div>
+      </div>
+
+      {/* CONTENEUR D'IMPRESSION DIRECTE A4 (masqué à l'écran, visible uniquement lors de window.print()) */}
+      <div className="idcard-print-root" aria-hidden={!isPrinting}>
+        <IdCardPrintPages
+          pages={paperPagesForPrint}
+          layout={paperLayout}
+          designWidth={
+            cardTemplate === 'togo_iepp' ? TOGO_CARD_DESIGN_WIDTH : CLASSIC_CARD_DESIGN_WIDTH
+          }
+          renderCard={(st) => renderCardForStudent(st, 'paper')}
+          showCropMarks={showCropMarks}
+        />
       </div>
     </div>
   )

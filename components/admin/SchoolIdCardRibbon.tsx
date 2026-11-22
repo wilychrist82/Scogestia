@@ -1,23 +1,35 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
+  AlertTriangle,
   Bold,
   Building2,
+  CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
-  ChevronDown,
+  Eye,
+  FileSpreadsheet,
+  Filter,
+  Grid3x3,
+  Hash,
   IdCard,
   Image as ImageIcon,
   Italic,
+  LayoutGrid,
   Loader2,
   Minus,
   Palette,
   PenTool,
+  Phone,
   Plus,
   Printer,
+  QrCode,
   RotateCcw,
+  Save,
+  Scissors,
   Sparkles,
   Stamp,
   Trash2,
@@ -33,13 +45,17 @@ import type {
   CardZoneTextStyle,
 } from '@/lib/pdf/student-documents'
 import type { CardThemeOption } from '@/components/admin/SchoolIdCardStudioModal'
+import type { PaperLayout } from '@/components/admin/SchoolIdCardPrintSheetPreview'
 import {
   FALLBACK_TOGO_TYPOGRAPHY,
+  generateQrMatrix,
   sanitizeIeppText,
   type CardTemplateId,
 } from '@/lib/pdf/togo-iepp-card'
 
-export type StudioRibbonTab = 'accueil' | 'typo' | 'couleurs' | 'medias'
+export type StudioRibbonTab = 'accueil' | 'typo' | 'couleurs' | 'medias' | 'impression'
+export type StudioViewMode = 'edit' | 'paper'
+export type PalettePresetId = 'togo_official' | 'classic_institutional' | 'noir_or'
 
 export type RibbonTypographyZoneKey =
   | 'schoolName'
@@ -76,11 +92,28 @@ interface ColorPreset {
   name: string
 }
 
+export interface PreflightSummary {
+  totalSelected: number
+  photosReady: number
+  infoComplete: number
+  hasIeppAndCenter: boolean
+  hasStampOrSignature: boolean
+  incompleteStudentsCount: number
+}
+
 interface Props {
   activeTab: StudioRibbonTab
   onTabChange: (tab: StudioRibbonTab) => void
   collapsed: boolean
   onToggleCollapse: () => void
+
+  // Vue & Barre d'accès rapide
+  viewMode: StudioViewMode
+  onViewModeChange: (mode: StudioViewMode) => void
+  hasUnsavedChanges: boolean
+  isSaving: boolean
+  onQuickSave: () => void
+  onQuickPrint: () => void
   previewZoom: number
   onZoomChange: (zoom: number) => void
   onQuickExportSingle?: () => void
@@ -92,7 +125,7 @@ interface Props {
   cardTemplate: CardTemplateId
   onSelectTemplate: (tpl: CardTemplateId) => void
 
-  // Textes de la carte
+  // Textes & Contacts QR
   ministryAcronym: string
   onMinistryAcronymChange: (v: string) => void
   inspectionName: string
@@ -105,6 +138,10 @@ interface Props {
   onAcademicYearChange: (v: string) => void
   directorName: string
   onDirectorNameChange: (v: string) => void
+  schoolPhone: string
+  onSchoolPhoneChange: (v: string) => void
+  directorPhone: string
+  onDirectorPhoneChange: (v: string) => void
   cardBannerTitle: string
   onCardBannerTitleChange: (v: string) => void
   republicTitle: string
@@ -124,6 +161,7 @@ interface Props {
   onApplyFontFamilyToAll: (fontFamily: CardFontFamily) => void
   onSetBannerBgColor: (hex: string) => void
   onResetTypography: () => void
+  onApplyPalettePreset: (preset: PalettePresetId) => void
 
   // Couleur lettre par lettre
   letterColorField: RibbonLetterColorFieldKey
@@ -136,7 +174,7 @@ interface Props {
   onSetLetterColor: (hex: string) => void
   onResetFieldLetterColors: (field: RibbonLetterColorFieldKey) => void
 
-  // Médias & Thèmes
+  // Médias, Thèmes & Inspecteur QR
   logoUrl: string
   stampUrl: string
   signatureUrl: string
@@ -152,20 +190,113 @@ interface Props {
   onPrevTheme: () => void
   onNextTheme: () => void
   onUploadCustomTheme: (file?: File | null) => void
+  qrPayloadPreview: string
+
+  // Onglet 5 : Mise en page & Impression A4
+  paperLayout: PaperLayout
+  onPaperLayoutChange: (layout: PaperLayout) => void
+  showCropMarks: boolean
+  onShowCropMarksChange: (v: boolean) => void
+  showSlotNumbers: boolean
+  onShowSlotNumbersChange: (v: boolean) => void
+  showMmGrid: boolean
+  onShowMmGridChange: (v: boolean) => void
+  useSampleCardOnSheet: boolean
+  onUseSampleCardOnSheetChange: (v: boolean) => void
+  onlyWithPhotoForPrint: boolean
+  onOnlyWithPhotoForPrintChange: (v: boolean) => void
+  preflight: PreflightSummary
+  onShowIncompleteStudents: () => void
 }
 
-const RIBBON_TABS: { id: StudioRibbonTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: 'accueil', label: 'Accueil & Modèles', icon: IdCard },
-  { id: 'typo', label: 'Typographie & Style', icon: Type },
-  { id: 'couleurs', label: 'Couleurs & Effets', icon: Palette },
-  { id: 'medias', label: 'Logo, Cachet & Fond', icon: ImageIcon },
+const RIBBON_TABS: {
+  id: StudioRibbonTab
+  label: string
+  shortLabel: string
+  icon: React.ComponentType<{ className?: string }>
+}[] = [
+  { id: 'accueil', label: 'Accueil & Données', shortLabel: 'Accueil', icon: IdCard },
+  { id: 'typo', label: 'Typographie', shortLabel: 'Typo', icon: Type },
+  { id: 'couleurs', label: 'Couleurs & Effets', shortLabel: 'Couleurs', icon: Palette },
+  { id: 'medias', label: 'Médias & Sécurité QR', shortLabel: 'Médias & QR', icon: ImageIcon },
+  { id: 'impression', label: 'Mise en page & Impression A4', shortLabel: 'Impression A4', icon: LayoutGrid },
 ]
+
+const PALETTE_PRESETS: {
+  id: PalettePresetId
+  label: string
+  desc: string
+  swatches: string[]
+}[] = [
+  {
+    id: 'togo_official',
+    label: 'Officiel Togo IEPP',
+    desc: 'Rouge, Bleu, Vert & Bordeaux',
+    swatches: ['#9E053F', '#006B38', '#C8102E', '#1D4ED8'],
+  },
+  {
+    id: 'classic_institutional',
+    label: 'Classique Institutionnel',
+    desc: 'Marine, Rouge & Or',
+    swatches: ['#0F1D5F', '#B41218', '#122AB9', '#B45309'],
+  },
+  {
+    id: 'noir_or',
+    label: 'Sobre Noir & Or',
+    desc: 'Anthracite, Or & Émeraude',
+    swatches: ['#0F172A', '#B45309', '#334155', '#006B38'],
+  },
+]
+
+function buildQrSvgPath(matrix: boolean[][]): string {
+  const parts: string[] = []
+  for (let r = 0; r < matrix.length; r++) {
+    let c = 0
+    while (c < matrix.length) {
+      if (matrix[r][c]) {
+        const start = c
+        while (c < matrix.length && matrix[r][c]) c++
+        parts.push(`M${start} ${r}h${c - start}v1h-${c - start}z`)
+      } else {
+        c++
+      }
+    }
+  }
+  return parts.join('')
+}
+
+function RibbonGroup({
+  title,
+  className = '',
+  children,
+}: {
+  title: string
+  className?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div
+      className={`flex flex-col justify-between rounded-xl border border-slate-200/80 bg-white/90 px-3 pt-2.5 pb-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] ${className}`}
+    >
+      <div className="flex-1">{children}</div>
+      <div className="mt-2 pt-1 border-t border-slate-100 text-center text-[9px] font-extrabold uppercase tracking-[0.14em] text-slate-400">
+        {title}
+      </div>
+    </div>
+  )
+}
 
 export function SchoolIdCardRibbon({
   activeTab,
   onTabChange,
   collapsed,
   onToggleCollapse,
+  viewMode,
+  onViewModeChange,
+  hasUnsavedChanges,
+  isSaving,
+  onQuickSave,
+  onQuickPrint,
   previewZoom,
   onZoomChange,
   onQuickExportSingle,
@@ -186,6 +317,10 @@ export function SchoolIdCardRibbon({
   onAcademicYearChange,
   directorName,
   onDirectorNameChange,
+  schoolPhone,
+  onSchoolPhoneChange,
+  directorPhone,
+  onDirectorPhoneChange,
   cardBannerTitle,
   onCardBannerTitleChange,
   republicTitle,
@@ -203,6 +338,7 @@ export function SchoolIdCardRibbon({
   onApplyFontFamilyToAll,
   onSetBannerBgColor,
   onResetTypography,
+  onApplyPalettePreset,
   letterColorField,
   onLetterColorFieldChange,
   selectedLetterIndex,
@@ -227,6 +363,21 @@ export function SchoolIdCardRibbon({
   onPrevTheme,
   onNextTheme,
   onUploadCustomTheme,
+  qrPayloadPreview,
+  paperLayout,
+  onPaperLayoutChange,
+  showCropMarks,
+  onShowCropMarksChange,
+  showSlotNumbers,
+  onShowSlotNumbersChange,
+  showMmGrid,
+  onShowMmGridChange,
+  useSampleCardOnSheet,
+  onUseSampleCardOnSheetChange,
+  onlyWithPhotoForPrint,
+  onOnlyWithPhotoForPrintChange,
+  preflight,
+  onShowIncompleteStudents,
 }: Props) {
   const currentZoneMeta = zoneTabs.find((z) => z.key === activeTypoZone) || zoneTabs[0]
   const currentZoneStyle: CardZoneTextStyle =
@@ -239,10 +390,135 @@ export function SchoolIdCardRibbon({
   const selectedChar = activeLetterText[safeSelectedIdx] || ''
   const selectedCharColor = activeLetterColors[safeSelectedIdx] || letterFallbackColor
 
+  const qrMatrix = useMemo(() => generateQrMatrix(qrPayloadPreview), [qrPayloadPreview])
+  const qrPath = useMemo(() => buildQrSvgPath(qrMatrix), [qrMatrix])
+  const qrLines = useMemo(
+    () => qrPayloadPreview.split('\n').filter(Boolean),
+    [qrPayloadPreview]
+  )
+
   return (
-    <div className="rounded-2xl border border-slate-200/90 bg-white shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] overflow-hidden">
-      {/* BARRE D'ONGLETS DU RUBAN (STYLE MICROSOFT WORD / LOGICIEL D'INFOGRAPHIE) */}
-      <div className="flex flex-wrap items-center justify-between gap-2 bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#312E81] px-3 pt-2 text-white">
+    <div className="rounded-2xl border border-slate-200/90 bg-white shadow-[0_4px_16px_-6px_rgba(15,23,42,0.12)] overflow-hidden">
+      {/* A. BARRE D'ACCÈS RAPIDE (QUICK ACCESS TOOLBAR — STYLE OFFICE / AFFINITY) */}
+      <div className="flex flex-wrap items-center justify-between gap-2 bg-[#0B1120] px-3.5 py-2 text-white border-b border-white/10">
+        {/* Gauche : Badge modèle actif + statut enregistrement */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[10.5px] font-extrabold ring-1 ${
+              cardTemplate === 'togo_iepp'
+                ? 'bg-rose-500/15 text-rose-200 ring-rose-400/30'
+                : 'bg-indigo-500/20 text-indigo-200 ring-indigo-400/30'
+            }`}
+          >
+            <IdCard className="h-3.5 w-3.5" />
+            {cardTemplate === 'togo_iepp' ? 'Modèle 2 : Officiel IEPP' : 'Modèle 1 : Classique'}
+          </span>
+
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+              hasUnsavedChanges
+                ? 'bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/30'
+                : 'bg-emerald-400/15 text-emerald-200 ring-1 ring-emerald-400/30'
+            }`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                hasUnsavedChanges ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'
+              }`}
+            />
+            {hasUnsavedChanges ? 'Modifications non enregistrées' : 'Enregistré'}
+          </span>
+        </div>
+
+        {/* Droite : Bascule Édition / Papier A4 + Actions rapides */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center rounded-lg bg-white/10 p-0.5 ring-1 ring-white/15">
+            <button
+              type="button"
+              onClick={() => onViewModeChange('edit')}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold flex items-center gap-1 transition-all ${
+                viewMode === 'edit'
+                  ? 'bg-white text-slate-950 shadow-xs'
+                  : 'text-slate-200 hover:text-white'
+              }`}
+            >
+              <Eye className="h-3.5 w-3.5" />
+              <span>Édition Carte</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onViewModeChange('paper')}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold flex items-center gap-1 transition-all ${
+                viewMode === 'paper'
+                  ? 'bg-amber-300 text-slate-950 shadow-xs'
+                  : 'text-slate-200 hover:text-white'
+              }`}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              <span>Aperçu Papier A4</span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={onQuickSave}
+            className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[11px] font-bold text-white flex items-center gap-1 transition-colors disabled:opacity-50"
+            title="Enregistrer les réglages et l'élève actif (Ctrl+S)"
+          >
+            {isSaving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-300" />
+            ) : (
+              <Save className="h-3.5 w-3.5 text-emerald-300" />
+            )}
+            <span className="hidden md:inline">Enregistrer</span>
+          </button>
+
+          {onQuickExportSingle && (
+            <button
+              type="button"
+              disabled={isGenerating}
+              onClick={onQuickExportSingle}
+              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[11px] font-bold text-white flex items-center gap-1 transition-colors disabled:opacity-50"
+              title="Exporter uniquement la carte de l'élève actif en PDF"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5 text-sky-300" />
+              <span className="hidden lg:inline">Carte PDF</span>
+            </button>
+          )}
+
+          {onQuickExportBatch && (
+            <button
+              type="button"
+              disabled={isGenerating || selectedCount === 0}
+              onClick={onQuickExportBatch}
+              className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-[11px] font-extrabold text-slate-950 flex items-center gap-1 transition-colors disabled:opacity-50"
+              title="Générer la planche PDF A4 (10 cartes/page)"
+            >
+              {isGenerating ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" />
+              )}
+              <span>Planche A4 ({selectedCount})</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            disabled={selectedCount === 0}
+            onClick={onQuickPrint}
+            className="px-2.5 py-1 rounded-lg bg-indigo-500/80 hover:bg-indigo-500 text-[11px] font-bold text-white flex items-center gap-1 transition-colors disabled:opacity-50"
+            title="Imprimer directement la planche A4"
+          >
+            <Printer className="h-3.5 w-3.5 text-amber-200" />
+            <span className="hidden sm:inline">Imprimer</span>
+          </button>
+        </div>
+      </div>
+
+      {/* B. BARRE D'ONGLETS DU RUBAN (5 ONGLETS STRUCTURÉS) */}
+      <div className="flex flex-wrap items-center justify-between gap-2 bg-gradient-to-r from-[#131C31] via-[#1E293B] to-[#2E2A6E] px-3 pt-1.5 text-white">
         <div className="flex items-end gap-1 overflow-x-auto no-scrollbar">
           {RIBBON_TABS.map((tab) => {
             const Icon = tab.icon
@@ -259,6 +535,8 @@ export function SchoolIdCardRibbon({
                     if (collapsed) onToggleCollapse()
                   }
                 }}
+                onDoubleClick={onToggleCollapse}
+                title="Cliquer pour ouvrir • Double-cliquer pour réduire/déplier le ruban"
                 className={`px-3.5 py-2 rounded-t-xl text-xs font-bold flex items-center gap-1.5 whitespace-nowrap transition-all ${
                   isActive
                     ? 'bg-slate-50 text-indigo-950 shadow-sm'
@@ -266,60 +544,37 @@ export function SchoolIdCardRibbon({
                 }`}
               >
                 <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-indigo-600' : 'text-amber-300'}`} />
-                {tab.label}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.shortLabel}</span>
               </button>
             )
           })}
         </div>
 
-        {/* CONTRÔLES RAPIDES À DROITE DU RUBAN (ZOOM, EXPORT, RÉDUIRE) */}
-        <div className="flex items-center gap-1.5 pb-1.5">
-          <div className="hidden sm:flex items-center gap-0.5 rounded-lg bg-white/10 px-1.5 py-0.5 ring-1 ring-white/15">
-            <button
-              type="button"
-              onClick={() => onZoomChange(Math.max(0.85, Number((previewZoom - 0.1).toFixed(2))))}
-              className="p-1 text-slate-200 hover:text-white rounded"
-              title="Dézoomer l'aperçu"
-            >
-              <ZoomOut className="h-3.5 w-3.5" />
-            </button>
-            <span className="text-[10.5px] font-mono font-bold px-1 min-w-[38px] text-center text-amber-200">
-              {Math.round(previewZoom * 100)}%
-            </span>
-            <button
-              type="button"
-              onClick={() => onZoomChange(Math.min(1.2, Number((previewZoom + 0.1).toFixed(2))))}
-              className="p-1 text-slate-200 hover:text-white rounded"
-              title="Zoomer l'aperçu"
-            >
-              <ZoomIn className="h-3.5 w-3.5" />
-            </button>
-          </div>
-
-          {onQuickExportSingle && (
-            <button
-              type="button"
-              disabled={isGenerating}
-              onClick={onQuickExportSingle}
-              className="px-2.5 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-[11px] font-bold text-white flex items-center gap-1 transition-colors disabled:opacity-50"
-              title="Exporter l'élève actif en PDF"
-            >
-              <Printer className="h-3.5 w-3.5 text-amber-300" />
-              <span className="hidden md:inline">Carte PDF</span>
-            </button>
-          )}
-
-          {onQuickExportBatch && (
-            <button
-              type="button"
-              disabled={isGenerating || selectedCount === 0}
-              onClick={onQuickExportBatch}
-              className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-[11px] font-extrabold text-slate-950 flex items-center gap-1 transition-colors disabled:opacity-50"
-              title="Générer la planche 10 cartes / page A4"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Planche A4 ({selectedCount})</span>
-            </button>
+        {/* Contrôles Zoom rapide & Réduire le ruban */}
+        <div className="flex items-center gap-1.5 pb-1">
+          {viewMode === 'edit' && (
+            <div className="hidden sm:flex items-center gap-0.5 rounded-lg bg-white/10 px-1.5 py-0.5 ring-1 ring-white/15">
+              <button
+                type="button"
+                onClick={() => onZoomChange(Math.max(0.75, Number((previewZoom - 0.1).toFixed(2))))}
+                className="p-1 text-slate-200 hover:text-white rounded"
+                title="Dézoomer l'aperçu"
+              >
+                <ZoomOut className="h-3.5 w-3.5" />
+              </button>
+              <span className="text-[10.5px] font-mono font-bold px-1 min-w-[38px] text-center text-amber-200">
+                {Math.round(previewZoom * 100)}%
+              </span>
+              <button
+                type="button"
+                onClick={() => onZoomChange(Math.min(1.3, Number((previewZoom + 0.1).toFixed(2))))}
+                className="p-1 text-slate-200 hover:text-white rounded"
+                title="Zoomer l'aperçu"
+              >
+                <ZoomIn className="h-3.5 w-3.5" />
+              </button>
+            </div>
           )}
 
           <button
@@ -333,21 +588,20 @@ export function SchoolIdCardRibbon({
         </div>
       </div>
 
-      {/* CORPS DU RUBAN ACTIF (BLOCS STRUCTURÉS PAR GROUPES AVEC SÉPARATEURS) */}
+      {/* C. CORPS DU RUBAN ACTIF */}
       {!collapsed && (
-        <div className="bg-gradient-to-b from-slate-50 to-white border-t border-slate-200/80 px-3 py-3">
-          {/* ONGLET 1 : ACCUEIL & MODÈLES */}
+        <div className="bg-slate-50/95 border-t border-slate-200/80 px-3 py-3">
+          {/* ONGLET 1 : ACCUEIL & DONNÉES */}
           {activeTab === 'accueil' && (
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
-              {/* Groupe 1 : Modèle de Carte */}
-              <div className="xl:col-span-4 xl:border-r xl:border-slate-200/80 xl:pr-3 flex flex-col justify-between">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-2.5 items-stretch">
+              <RibbonGroup title="Modèle de carte (2 au choix)" className="xl:col-span-3">
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => onSelectTemplate('classic')}
                     className={`rounded-xl border p-2 text-left transition-all flex flex-col gap-1.5 ${
                       cardTemplate === 'classic'
-                        ? 'border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-600/20 shadow-2xs'
+                        ? 'border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-600/20'
                         : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                   >
@@ -372,7 +626,7 @@ export function SchoolIdCardRibbon({
                     onClick={() => onSelectTemplate('togo_iepp')}
                     className={`rounded-xl border p-2 text-left transition-all flex flex-col gap-1.5 ${
                       cardTemplate === 'togo_iepp'
-                        ? 'border-[#9E053F] bg-rose-50/60 ring-2 ring-[#9E053F]/20 shadow-2xs'
+                        ? 'border-[#9E053F] bg-rose-50/60 ring-2 ring-[#9E053F]/20'
                         : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                   >
@@ -382,7 +636,7 @@ export function SchoolIdCardRibbon({
                         <span className="h-1.5 w-8 rounded-full bg-[#9E053F]" />
                         <span className="h-2 w-3 bg-gradient-to-b from-[#006C3E] via-[#FACC15] to-[#006C3E]" />
                       </div>
-                      <span className="h-1 w-10 mx-auto rounded-full bg-[#081B58]" />
+                      <span className="h-1 w-10 mx-auto rounded-full bg-[#006B38]" />
                     </div>
                     <div className="flex items-center justify-between gap-1">
                       <span className="text-[11px] font-extrabold text-slate-900 truncate">
@@ -394,27 +648,20 @@ export function SchoolIdCardRibbon({
                     </div>
                   </button>
                 </div>
-                <div className="text-center text-[9.5px] font-bold uppercase tracking-widest text-slate-400 mt-1.5">
-                  Modèle de carte (2 au choix)
-                </div>
-              </div>
+              </RibbonGroup>
 
-              {/* Groupe 2 : Inspection IEPP, École & Centre d'écrit */}
-              <div className="xl:col-span-4 xl:border-r xl:border-slate-200/80 xl:pr-3 flex flex-col justify-between">
+              <RibbonGroup title="Établissement & Circonscription" className="xl:col-span-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
                     <div className="flex items-center justify-between mb-0.5">
                       <label className="block text-[10.5px] font-bold text-slate-700">
-                        {cardTemplate === 'togo_iepp'
-                          ? "Nom de l'IEPP (à compléter)"
-                          : 'Inspection / IEPP'}
+                        {cardTemplate === 'togo_iepp' ? "Nom de l'IEPP" : 'Inspection / IEPP'}
                       </label>
                       {inspectionName.trim() && (
                         <button
                           type="button"
                           onClick={() => onInspectionNameChange('')}
                           className="text-[9.5px] font-bold text-slate-500 hover:text-red-600"
-                          title="Effacer pour laisser vierge / à compléter"
                         >
                           Effacer
                         </button>
@@ -430,7 +677,7 @@ export function SchoolIdCardRibbon({
                             : e.target.value
                         )
                       }
-                      placeholder="Ex : IEPP + nom inspection"
+                      placeholder="Ex : IEPP LACS-OUEST"
                       className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-extrabold text-[#0E1B52] focus:border-indigo-600 outline-none"
                     />
                   </div>
@@ -473,14 +720,10 @@ export function SchoolIdCardRibbon({
                     />
                   </div>
                 </div>
-                <div className="text-center text-[9.5px] font-bold uppercase tracking-widest text-slate-400 mt-1.5">
-                  IEPP &amp; Établissement
-                </div>
-              </div>
+              </RibbonGroup>
 
-              {/* Groupe 3 : Année, Chef d'établissement & Titre */}
-              <div className="xl:col-span-4 flex flex-col justify-between">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <RibbonGroup title="Direction & Contacts QR" className="xl:col-span-5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div>
                     <label className="block text-[10.5px] font-bold text-slate-700 mb-0.5">
                       Année Scolaire
@@ -490,11 +733,11 @@ export function SchoolIdCardRibbon({
                       value={academicYear}
                       onChange={(e) => onAcademicYearChange(e.target.value)}
                       placeholder="2026-2027"
-                      className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-red-800 focus:border-indigo-600 outline-none"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-red-800 focus:border-indigo-600 outline-none"
                     />
                   </div>
 
-                  <div>
+                  <div className="sm:col-span-2">
                     <label className="block text-[10.5px] font-bold text-slate-700 mb-0.5">
                       Chef d&apos;établissement (Directeur)
                     </label>
@@ -503,11 +746,39 @@ export function SchoolIdCardRibbon({
                       value={directorName}
                       onChange={(e) => onDirectorNameChange(e.target.value)}
                       placeholder="Nom du Directeur"
-                      className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-600 outline-none"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-[#99121C] focus:border-indigo-600 outline-none"
                     />
                   </div>
 
-                  <div className={cardTemplate === 'togo_iepp' ? 'sm:col-span-2' : ''}>
+                  <div>
+                    <label className="flex items-center gap-1 text-[10.5px] font-bold text-slate-700 mb-0.5">
+                      <Phone className="h-3 w-3 text-emerald-600" />
+                      Tél. École (QR)
+                    </label>
+                    <input
+                      type="tel"
+                      value={schoolPhone}
+                      onChange={(e) => onSchoolPhoneChange(e.target.value)}
+                      placeholder="+228 90 00 00 00"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold text-slate-900 focus:border-indigo-600 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="flex items-center gap-1 text-[10.5px] font-bold text-slate-700 mb-0.5">
+                      <Phone className="h-3 w-3 text-indigo-600" />
+                      Tél. Directeur (QR)
+                    </label>
+                    <input
+                      type="tel"
+                      value={directorPhone}
+                      onChange={(e) => onDirectorPhoneChange(e.target.value)}
+                      placeholder="+228 91 00 00 00"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold text-slate-900 focus:border-indigo-600 outline-none"
+                    />
+                  </div>
+
+                  <div>
                     <label className="block text-[10.5px] font-bold text-slate-700 mb-0.5">
                       Titre de la Carte
                     </label>
@@ -516,84 +787,75 @@ export function SchoolIdCardRibbon({
                       value={cardBannerTitle}
                       onChange={(e) => onCardBannerTitleChange(e.target.value)}
                       placeholder="CARTE D'IDENTITÉ SCOLAIRE"
-                      className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-blue-950 focus:border-indigo-600 outline-none"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-blue-950 focus:border-indigo-600 outline-none"
                     />
                   </div>
-
-                  {cardTemplate === 'classic' && (
-                    <div>
-                      <label className="block text-[10.5px] font-bold text-slate-700 mb-0.5">
-                        Sigle Ministère
-                      </label>
-                      <input
-                        type="text"
-                        value={ministryAcronym}
-                        onChange={(e) => onMinistryAcronymChange(e.target.value)}
-                        placeholder="MEPST"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-600 outline-none"
-                      />
-                    </div>
-                  )}
                 </div>
 
                 {cardTemplate === 'classic' && (
-                  <div className="grid grid-cols-2 gap-2 mt-1.5">
+                  <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-100">
+                    <input
+                      type="text"
+                      value={ministryAcronym}
+                      onChange={(e) => onMinistryAcronymChange(e.target.value)}
+                      placeholder="Sigle (MEPST)"
+                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-800 outline-none focus:bg-white focus:border-indigo-600"
+                    />
                     <input
                       type="text"
                       value={republicTitle}
                       onChange={(e) => onRepublicTitleChange(e.target.value)}
                       placeholder="REPUBLIQUE TOGOLAISE"
-                      className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-800 outline-none"
+                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-800 outline-none focus:bg-white focus:border-indigo-600"
                     />
                     <input
                       type="text"
                       value={republicMotto}
                       onChange={(e) => onRepublicMottoChange(e.target.value)}
                       placeholder="Travail-Liberté-Patrie"
-                      className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-800 outline-none"
+                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-800 outline-none focus:bg-white focus:border-indigo-600"
                     />
                   </div>
                 )}
-
-                <div className="text-center text-[9.5px] font-bold uppercase tracking-widest text-slate-400 mt-1.5">
-                  Direction &amp; En-tête
-                </div>
-              </div>
+              </RibbonGroup>
             </div>
           )}
 
-          {/* ONGLET 2 : TYPOGRAPHIE & STYLE */}
+          {/* ONGLET 2 : TYPOGRAPHIE */}
           {activeTab === 'typo' && (
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
-              {/* Groupe 1 : Zone ciblée */}
-              <div className="xl:col-span-4 xl:border-r xl:border-slate-200/80 xl:pr-3 flex flex-col justify-between">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-2.5 items-stretch">
+              <RibbonGroup title={`Élément ciblé (${currentZoneMeta.label})`} className="xl:col-span-4">
                 <div className="flex flex-wrap gap-1.5">
                   {zoneTabs.map((tab) => {
                     const active = activeTypoZone === tab.key
+                    const zoneColor =
+                      typographyConfig[tab.key]?.color ||
+                      FALLBACK_TOGO_TYPOGRAPHY[tab.key]?.color ||
+                      '#0F172A'
                     return (
                       <button
                         key={tab.key}
                         type="button"
                         onClick={() => onActiveTypoZoneChange(tab.key)}
-                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all ${
                           active
                             ? 'bg-indigo-600 text-white shadow-2xs'
-                            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                            : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'
                         }`}
                       >
+                        <span
+                          className="h-2.5 w-2.5 rounded-full border border-black/20 shrink-0"
+                          style={{ backgroundColor: zoneColor }}
+                        />
                         {tab.label}
                       </button>
                     )
                   })}
                 </div>
-                <div className="text-center text-[9.5px] font-bold uppercase tracking-widest text-slate-400 mt-2">
-                  Élément ciblé ({currentZoneMeta.label})
-                </div>
-              </div>
+              </RibbonGroup>
 
-              {/* Groupe 2 : Police & Police Globale */}
-              <div className="xl:col-span-3 xl:border-r xl:border-slate-200/80 xl:pr-3 flex flex-col justify-between gap-2">
-                <div className="space-y-1.5">
+              <RibbonGroup title="Police" className="xl:col-span-3">
+                <div className="space-y-2">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 mb-0.5">
                       Police de la zone
@@ -614,7 +876,6 @@ export function SchoolIdCardRibbon({
                       ))}
                     </select>
                   </div>
-
                   <div>
                     <label className="block text-[10px] font-bold text-indigo-800 mb-0.5">
                       Appliquer à toute la carte :
@@ -622,7 +883,7 @@ export function SchoolIdCardRibbon({
                     <select
                       value={currentZoneStyle.fontFamily}
                       onChange={(e) => onApplyFontFamilyToAll(e.target.value as CardFontFamily)}
-                      className="w-full rounded-lg border border-indigo-200 bg-indigo-50/50 px-2.5 py-1 text-[11px] font-extrabold text-indigo-950 outline-none"
+                      className="w-full rounded-lg border border-indigo-200 bg-indigo-50/60 px-2.5 py-1 text-[11px] font-extrabold text-indigo-950 outline-none"
                     >
                       {fontOptions.map((f) => (
                         <option key={f.value} value={f.value}>
@@ -632,13 +893,9 @@ export function SchoolIdCardRibbon({
                     </select>
                   </div>
                 </div>
-                <div className="text-center text-[9.5px] font-bold uppercase tracking-widest text-slate-400">
-                  Police
-                </div>
-              </div>
+              </RibbonGroup>
 
-              {/* Groupe 3 : Taille */}
-              <div className="xl:col-span-2 xl:border-r xl:border-slate-200/80 xl:pr-3 flex flex-col justify-between">
+              <RibbonGroup title="Corps & Taille" className="xl:col-span-2">
                 <div className="space-y-2 pt-1">
                   <div className="text-center text-xs font-extrabold text-indigo-950">
                     {(currentZoneMeta.basePt * currentZoneStyle.sizeScale).toFixed(1)} pt{' '}
@@ -658,7 +915,7 @@ export function SchoolIdCardRibbon({
                         })
                       }
                       className="h-8 w-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-700"
-                      title="Réduire"
+                      title="Réduire la taille"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
@@ -686,19 +943,15 @@ export function SchoolIdCardRibbon({
                         })
                       }
                       className="h-8 w-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-700"
-                      title="Agrandir"
+                      title="Agrandir la taille"
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
-                <div className="text-center text-[9.5px] font-bold uppercase tracking-widest text-slate-400 mt-2">
-                  Corps &amp; Taille
-                </div>
-              </div>
+              </RibbonGroup>
 
-              {/* Groupe 4 : Style Word (B / I / U / AA / Reset) */}
-              <div className="xl:col-span-3 flex flex-col justify-between">
+              <RibbonGroup title="Style & Casse" className="xl:col-span-3">
                 <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
                   <button
                     type="button"
@@ -707,14 +960,13 @@ export function SchoolIdCardRibbon({
                     }
                     className={`h-9 px-3 rounded-lg border text-xs font-black flex items-center gap-1 transition-all ${
                       currentZoneStyle.bold
-                        ? 'bg-indigo-950 text-white border-indigo-950 shadow-2xs'
+                        ? 'bg-indigo-950 text-white border-indigo-950'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
+                    title="Gras"
                   >
-                    <Bold className="h-3.5 w-3.5" />
-                    Gras
+                    <Bold className="h-3.5 w-3.5" />G
                   </button>
-
                   <button
                     type="button"
                     onClick={() =>
@@ -722,14 +974,13 @@ export function SchoolIdCardRibbon({
                     }
                     className={`h-9 px-3 rounded-lg border text-xs italic font-bold flex items-center gap-1 transition-all ${
                       currentZoneStyle.italic
-                        ? 'bg-indigo-950 text-white border-indigo-950 shadow-2xs'
+                        ? 'bg-indigo-950 text-white border-indigo-950'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
+                    title="Italique"
                   >
-                    <Italic className="h-3.5 w-3.5" />
-                    Italique
+                    <Italic className="h-3.5 w-3.5" />I
                   </button>
-
                   <button
                     type="button"
                     onClick={() =>
@@ -739,14 +990,13 @@ export function SchoolIdCardRibbon({
                     }
                     className={`h-9 px-3 rounded-lg border text-xs underline font-bold flex items-center gap-1 transition-all ${
                       currentZoneStyle.underline
-                        ? 'bg-indigo-950 text-white border-indigo-950 shadow-2xs'
+                        ? 'bg-indigo-950 text-white border-indigo-950'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
+                    title="Souligné"
                   >
-                    <Underline className="h-3.5 w-3.5" />
-                    Souligné
+                    <Underline className="h-3.5 w-3.5" />S
                   </button>
-
                   <button
                     type="button"
                     onClick={() =>
@@ -756,40 +1006,46 @@ export function SchoolIdCardRibbon({
                     }
                     className={`h-9 px-3 rounded-lg border text-xs font-extrabold transition-all ${
                       currentZoneStyle.uppercase
-                        ? 'bg-indigo-950 text-white border-indigo-950 shadow-2xs'
+                        ? 'bg-indigo-950 text-white border-indigo-950'
                         : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
+                    title="Majuscules"
                   >
                     AA
                   </button>
-
                   <button
                     type="button"
                     onClick={onResetTypography}
                     className="h-9 px-2.5 rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-700 flex items-center gap-1"
-                    title="Réinitialiser la typographie"
+                    title="Réinitialiser la typographie par défaut"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
                     Défaut
                   </button>
                 </div>
-                <div className="text-center text-[9.5px] font-bold uppercase tracking-widest text-slate-400 mt-2">
-                  Style &amp; Casse
-                </div>
-              </div>
+              </RibbonGroup>
             </div>
           )}
 
-          {/* ONGLET 3 : COULEURS & STUDIO LETTRE PAR LETTRE */}
+          {/* ONGLET 3 : COULEURS & EFFETS */}
           {activeTab === 'couleurs' && (
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
-              {/* Groupe 1 : Nuancier de la zone active */}
-              <div className="xl:col-span-5 xl:border-r xl:border-slate-200/80 xl:pr-3 flex flex-col justify-between gap-2">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-2.5 items-stretch">
+              <RibbonGroup title="Couleur de zone" className="xl:col-span-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <span className="text-[11px] font-bold text-slate-700">
-                      Couleur ({currentZoneMeta.label}) :
-                    </span>
+                    <select
+                      value={activeTypoZone}
+                      onChange={(e) =>
+                        onActiveTypoZoneChange(e.target.value as RibbonTypographyZoneKey)
+                      }
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-extrabold text-indigo-950 outline-none"
+                    >
+                      {zoneTabs.map((z) => (
+                        <option key={z.key} value={z.key}>
+                          {z.label}
+                        </option>
+                      ))}
+                    </select>
                     <label className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-0.5 cursor-pointer">
                       <input
                         type="color"
@@ -813,7 +1069,7 @@ export function SchoolIdCardRibbon({
                         onClick={() => onUpdateZoneTypography(activeTypoZone, { color: c.hex })}
                         className={`h-6 w-6 rounded-full border transition-transform ${
                           currentZoneStyle.color.toUpperCase() === c.hex.toUpperCase()
-                            ? 'scale-120 ring-2 ring-indigo-600 border-white'
+                            ? 'scale-115 ring-2 ring-indigo-600 border-white'
                             : 'border-slate-300 hover:scale-110'
                         }`}
                         style={{ backgroundColor: c.hex }}
@@ -823,7 +1079,7 @@ export function SchoolIdCardRibbon({
                   </div>
 
                   {cardTemplate === 'classic' && activeTypoZone === 'bannerTitle' && (
-                    <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-slate-200/80">
+                    <div className="flex items-center gap-1 flex-wrap pt-1.5 border-t border-slate-100">
                       <span className="text-[10px] font-bold text-slate-500">Fond bandeau :</span>
                       {bannerBgPalette.map((bg) => (
                         <button
@@ -843,60 +1099,50 @@ export function SchoolIdCardRibbon({
                     </div>
                   )}
                 </div>
-                <div className="text-center text-[9.5px] font-bold uppercase tracking-widest text-slate-400">
-                  Nuancier chromatique
-                </div>
-              </div>
+              </RibbonGroup>
 
-              {/* Groupe 2 : Studio Couleur Lettre par Lettre */}
-              <div className="xl:col-span-7 flex flex-col justify-between gap-2">
+              <RibbonGroup title="Studio Lettre par Lettre" className="xl:col-span-5">
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                      <span className="text-[11px] font-bold text-indigo-950 shrink-0">
-                        Texte :
-                      </span>
-                      <select
-                        value={letterColorField}
-                        onChange={(e) => {
-                          onLetterColorFieldChange(e.target.value as RibbonLetterColorFieldKey)
-                          onSelectLetterIndex(0)
-                        }}
-                        className="flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-900 outline-none"
-                      >
-                        <option value="ministryAcronym">
-                          Sigle Ministère ({ministryAcronym || 'MEPST'})
-                        </option>
-                        <option value="schoolName">
-                          Nom de l&apos;École ({schoolName.slice(0, 18)})
-                        </option>
-                        <option value="inspectionName">
-                          IEPP ({inspectionName.slice(0, 18) || 'IEPP'})
-                        </option>
-                        <option value="bannerTitle">
-                          Titre Carte ({cardBannerTitle.slice(0, 18)})
-                        </option>
-                        <option value="examCenter">
-                          Centre d&apos;Écrit ({examCenter.slice(0, 18)})
-                        </option>
-                        <option value="republicTitle">
-                          République ({republicTitle.slice(0, 18)})
-                        </option>
-                      </select>
-                    </div>
-
+                    <select
+                      value={letterColorField}
+                      onChange={(e) => {
+                        onLetterColorFieldChange(e.target.value as RibbonLetterColorFieldKey)
+                        onSelectLetterIndex(0)
+                      }}
+                      className="flex-1 min-w-[160px] rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-900 outline-none"
+                    >
+                      <option value="ministryAcronym">
+                        Sigle Ministère ({ministryAcronym || 'MEPST'})
+                      </option>
+                      <option value="schoolName">
+                        Nom École ({schoolName.slice(0, 18)})
+                      </option>
+                      <option value="inspectionName">
+                        IEPP ({inspectionName.slice(0, 18) || 'IEPP'})
+                      </option>
+                      <option value="bannerTitle">
+                        Titre Carte ({cardBannerTitle.slice(0, 18)})
+                      </option>
+                      <option value="examCenter">
+                        Centre d&apos;Écrit ({examCenter.slice(0, 18)})
+                      </option>
+                      <option value="republicTitle">
+                        République ({republicTitle.slice(0, 18)})
+                      </option>
+                    </select>
                     <button
                       type="button"
                       onClick={() => onResetFieldLetterColors(letterColorField)}
-                      className="text-[10.5px] font-bold text-slate-600 hover:text-indigo-700 px-2 py-1 rounded-lg bg-white border border-slate-200"
+                      className="text-[10.5px] font-bold text-slate-600 hover:text-indigo-700 px-2 py-1 rounded-lg bg-slate-50 border border-slate-200"
                     >
-                      Réinitialiser lettres
+                      Réinitialiser
                     </button>
                   </div>
 
                   {activeLetterText.length > 0 ? (
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-1 flex-wrap bg-white p-1.5 rounded-xl border border-slate-200/90 flex-1">
+                      <div className="flex items-center gap-1 flex-wrap bg-slate-50/70 p-1.5 rounded-xl border border-slate-200/90 flex-1">
                         {Array.from(activeLetterText).map((ch, idx) => {
                           const isSel = idx === safeSelectedIdx
                           const charColor = activeLetterColors[idx] || '#0F172A'
@@ -905,10 +1151,10 @@ export function SchoolIdCardRibbon({
                               key={idx}
                               type="button"
                               onClick={() => onSelectLetterIndex(idx)}
-                              className={`min-w-[24px] h-6.5 px-1 rounded border text-xs font-black transition-all flex items-center justify-center ${
+                              className={`min-w-[22px] h-6 px-1 rounded border text-xs font-black transition-all flex items-center justify-center ${
                                 isSel
-                                  ? 'ring-2 ring-indigo-600 border-indigo-600 bg-indigo-50 scale-110'
-                                  : 'border-slate-200 bg-slate-50/70 hover:bg-slate-100'
+                                  ? 'ring-2 ring-indigo-600 border-indigo-600 bg-white scale-110'
+                                  : 'border-slate-200 bg-white/80 hover:bg-white'
                               }`}
                               style={{ color: charColor }}
                             >
@@ -918,30 +1164,25 @@ export function SchoolIdCardRibbon({
                         })}
                       </div>
 
-                      <div className="flex items-center gap-1 bg-indigo-50/60 px-2 py-1.5 rounded-xl border border-indigo-100">
+                      <div className="flex items-center gap-1 bg-indigo-50/70 px-2 py-1 rounded-xl border border-indigo-100">
                         <span className="text-[10px] font-extrabold text-indigo-950 mr-0.5">
                           « {selectedChar === ' ' ? '␣' : selectedChar} »
                         </span>
-                        {[
-                          '#0F172A',
-                          '#DC2626',
-                          '#F59E0B',
-                          '#1D4ED8',
-                          '#007A33',
-                          '#99121C',
-                        ].map((hex) => (
-                          <button
-                            key={hex}
-                            type="button"
-                            onClick={() => onSetLetterColor(hex)}
-                            className={`h-4 w-4 rounded-full border ${
-                              selectedCharColor.toUpperCase() === hex.toUpperCase()
-                                ? 'scale-125 ring-2 ring-indigo-600 border-white'
-                                : 'border-slate-300'
-                            }`}
-                            style={{ backgroundColor: hex }}
-                          />
-                        ))}
+                        {['#0F172A', '#DC2626', '#F59E0B', '#1D4ED8', '#007A33', '#99121C'].map(
+                          (hex) => (
+                            <button
+                              key={hex}
+                              type="button"
+                              onClick={() => onSetLetterColor(hex)}
+                              className={`h-4 w-4 rounded-full border ${
+                                selectedCharColor.toUpperCase() === hex.toUpperCase()
+                                  ? 'scale-125 ring-2 ring-indigo-600 border-white'
+                                  : 'border-slate-300'
+                              }`}
+                              style={{ backgroundColor: hex }}
+                            />
+                          )
+                        )}
                         <input
                           type="color"
                           value={selectedCharColor}
@@ -953,199 +1194,233 @@ export function SchoolIdCardRibbon({
                     </div>
                   ) : (
                     <p className="text-[11px] text-slate-400 italic">
-                      Renseignez ce champ dans l&apos;onglet Accueil pour personnaliser ses lettres.
+                      Renseignez ce champ dans l&apos;onglet Accueil pour colorer ses lettres.
                     </p>
                   )}
                 </div>
-                <div className="text-center text-[9.5px] font-bold uppercase tracking-widest text-slate-400">
-                  Studio Lettre par Lettre
+              </RibbonGroup>
+
+              <RibbonGroup title="Thèmes de Palette (1 clic)" className="xl:col-span-3">
+                <div className="space-y-1.5">
+                  {PALETTE_PRESETS.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => onApplyPalettePreset(p.id)}
+                      className="w-full rounded-lg border border-slate-200 bg-slate-50/70 hover:bg-indigo-50 hover:border-indigo-300 px-2.5 py-1.5 flex items-center justify-between gap-2 text-left transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-extrabold text-slate-900 truncate">
+                          {p.label}
+                        </div>
+                        <div className="text-[9.5px] text-slate-500 truncate">{p.desc}</div>
+                      </div>
+                      <div className="flex items-center -space-x-1 shrink-0">
+                        {p.swatches.map((hex) => (
+                          <span
+                            key={hex}
+                            className="h-3.5 w-3.5 rounded-full ring-1 ring-white"
+                            style={{ backgroundColor: hex }}
+                          />
+                        ))}
+                      </div>
+                    </button>
+                  ))}
                 </div>
-              </div>
+              </RibbonGroup>
             </div>
           )}
 
-          {/* ONGLET 4 : LOGO, CACHET, SIGNATURE & ARRIÈRE-PLAN */}
+          {/* ONGLET 4 : MÉDIAS & SÉCURITÉ QR */}
           {activeTab === 'medias' && (
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-stretch">
-              {/* Groupe 1 : Identité Visuelle (Logo, Cachet, Signature) */}
-              <div className="xl:col-span-8 xl:border-r xl:border-slate-200/80 xl:pr-3 flex flex-col justify-between">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-2.5 items-stretch">
+              <RibbonGroup title="Identité visuelle officielle" className="xl:col-span-5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {/* Logo */}
-                  <div className="rounded-xl border border-slate-200 bg-white p-2.5 flex items-center gap-2.5">
-                    <div className="h-12 w-12 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
-                      {logoUrl ? (
-                        <img src={logoUrl} alt="Logo" className="h-full w-full object-contain" />
-                      ) : (
-                        <Building2 className="h-5 w-5 text-slate-400" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="text-[11px] font-extrabold text-slate-800">Logo École</div>
-                      <div className="flex items-center gap-1">
-                        <label className="flex-1 cursor-pointer rounded-md bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-1 text-[10px] font-bold text-indigo-800 flex items-center justify-center gap-1">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={uploadingAssetType === 'logo'}
-                            onChange={(e) => {
-                              const f = e.target.files?.[0]
-                              e.currentTarget.value = ''
-                              onUploadAsset('logo', f)
-                            }}
-                          />
-                          {uploadingAssetType === 'logo' ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Upload className="h-3 w-3" />
-                          )}
-                          {logoUrl ? 'Changer' : 'Importer'}
-                        </label>
-                        {logoUrl && (
-                          <button
-                            type="button"
-                            onClick={() => onClearAsset('logo')}
-                            className="p-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-2 flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="h-10 w-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                        {logoUrl ? (
+                          <img src={logoUrl} alt="Logo" className="h-full w-full object-contain" />
+                        ) : (
+                          <Building2 className="h-4 w-4 text-slate-400" />
                         )}
                       </div>
-                      {!logoUrl && (
-                        <label className="flex items-center gap-1 text-[9.5px] text-slate-600 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={showVectorEmblemIfNoLogo}
-                            onChange={(e) => onToggleVectorEmblem(e.target.checked)}
-                          />
-                          Emblème auto
-                        </label>
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-extrabold text-slate-800 truncate">
+                          Logo École
+                        </div>
+                        {!logoUrl && (
+                          <label className="flex items-center gap-1 text-[9.5px] text-slate-600 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={showVectorEmblemIfNoLogo}
+                              onChange={(e) => onToggleVectorEmblem(e.target.checked)}
+                            />
+                            Emblème auto
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <label className="flex-1 cursor-pointer rounded-md bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-1 text-[10px] font-bold text-indigo-800 flex items-center justify-center gap-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingAssetType === 'logo'}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            e.currentTarget.value = ''
+                            onUploadAsset('logo', f)
+                          }}
+                        />
+                        {uploadingAssetType === 'logo' ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Upload className="h-3 w-3" />
+                        )}
+                        {logoUrl ? 'Changer' : 'Importer'}
+                      </label>
+                      {logoUrl && (
+                        <button
+                          type="button"
+                          onClick={() => onClearAsset('logo')}
+                          className="p-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
+                          title="Supprimer le logo"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
                       )}
                     </div>
                   </div>
 
                   {/* Cachet */}
-                  <div className="rounded-xl border border-slate-200 bg-white p-2.5 flex items-center gap-2.5">
-                    <div className="h-12 w-12 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
-                      {stampUrl ? (
-                        <img src={stampUrl} alt="Cachet" className="h-full w-full object-contain" />
-                      ) : (
-                        <Stamp className="h-5 w-5 text-slate-400" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="text-[11px] font-extrabold text-slate-800">
-                        Cachet Officiel
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <label className="flex-1 cursor-pointer rounded-md bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-1 text-[10px] font-bold text-indigo-800 flex items-center justify-center gap-1">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={uploadingAssetType === 'stamp'}
-                            onChange={(e) => {
-                              const f = e.target.files?.[0]
-                              e.currentTarget.value = ''
-                              onUploadAsset('stamp', f)
-                            }}
-                          />
-                          {uploadingAssetType === 'stamp' ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Upload className="h-3 w-3" />
-                          )}
-                          {stampUrl ? 'Changer' : 'Importer'}
-                        </label>
-                        {stampUrl && (
-                          <button
-                            type="button"
-                            onClick={() => onClearAsset('stamp')}
-                            className="p-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-2 flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="h-10 w-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                        {stampUrl ? (
+                          <img src={stampUrl} alt="Cachet" className="h-full w-full object-contain" />
+                        ) : (
+                          <Stamp className="h-4 w-4 text-slate-400" />
                         )}
                       </div>
-                      {!stampUrl && (
-                        <label className="flex items-center gap-1 text-[9.5px] text-slate-600 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={showVectorStampAuto}
-                            onChange={(e) => onToggleVectorStampAuto(e.target.checked)}
-                          />
-                          Cachet auto
-                        </label>
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-extrabold text-slate-800 truncate">
+                          Cachet
+                        </div>
+                        {!stampUrl && (
+                          <label className="flex items-center gap-1 text-[9.5px] text-slate-600 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={showVectorStampAuto}
+                              onChange={(e) => onToggleVectorStampAuto(e.target.checked)}
+                            />
+                            Cachet auto
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <label className="flex-1 cursor-pointer rounded-md bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-1 text-[10px] font-bold text-indigo-800 flex items-center justify-center gap-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingAssetType === 'stamp'}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            e.currentTarget.value = ''
+                            onUploadAsset('stamp', f)
+                          }}
+                        />
+                        {uploadingAssetType === 'stamp' ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Upload className="h-3 w-3" />
+                        )}
+                        {stampUrl ? 'Changer' : 'Importer'}
+                      </label>
+                      {stampUrl && (
+                        <button
+                          type="button"
+                          onClick={() => onClearAsset('stamp')}
+                          className="p-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
+                          title="Supprimer le cachet"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
                       )}
                     </div>
                   </div>
 
                   {/* Signature */}
-                  <div className="rounded-xl border border-slate-200 bg-white p-2.5 flex items-center gap-2.5">
-                    <div className="h-12 w-12 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
-                      {signatureUrl ? (
-                        <img
-                          src={signatureUrl}
-                          alt="Signature"
-                          className="h-full w-full object-contain"
-                        />
-                      ) : (
-                        <PenTool className="h-5 w-5 text-slate-400" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="text-[11px] font-extrabold text-slate-800">
-                        Signature Directeur
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <label className="flex-1 cursor-pointer rounded-md bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-1 text-[10px] font-bold text-indigo-800 flex items-center justify-center gap-1">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={uploadingAssetType === 'signature'}
-                            onChange={(e) => {
-                              const f = e.target.files?.[0]
-                              e.currentTarget.value = ''
-                              onUploadAsset('signature', f)
-                            }}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-2 flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="h-10 w-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                        {signatureUrl ? (
+                          <img
+                            src={signatureUrl}
+                            alt="Signature"
+                            className="h-full w-full object-contain"
                           />
-                          {uploadingAssetType === 'signature' ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Upload className="h-3 w-3" />
-                          )}
-                          {signatureUrl ? 'Changer' : 'Importer'}
-                        </label>
-                        {signatureUrl && (
-                          <button
-                            type="button"
-                            onClick={() => onClearAsset('signature')}
-                            className="p-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
+                        ) : (
+                          <PenTool className="h-4 w-4 text-slate-400" />
                         )}
                       </div>
-                      <span className="block text-[9.5px] text-slate-400 truncate">
-                        Sync Paramètres
-                      </span>
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-extrabold text-slate-800 truncate">
+                          Signature
+                        </div>
+                        <span className="block text-[9px] text-emerald-700 font-semibold truncate">
+                          Sync Paramètres
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <label className="flex-1 cursor-pointer rounded-md bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-1 text-[10px] font-bold text-indigo-800 flex items-center justify-center gap-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingAssetType === 'signature'}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            e.currentTarget.value = ''
+                            onUploadAsset('signature', f)
+                          }}
+                        />
+                        {uploadingAssetType === 'signature' ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Upload className="h-3 w-3" />
+                        )}
+                        {signatureUrl ? 'Changer' : 'Importer'}
+                      </label>
+                      {signatureUrl && (
+                        <button
+                          type="button"
+                          onClick={() => onClearAsset('signature')}
+                          className="p-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
+                          title="Supprimer la signature"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
-                <div className="text-center text-[9.5px] font-bold uppercase tracking-widest text-slate-400 mt-1.5">
-                  Authentification &amp; Visuels Officiels
-                </div>
-              </div>
+              </RibbonGroup>
 
-              {/* Groupe 2 : Thème Arrière-plan */}
-              <div className="xl:col-span-4 flex flex-col justify-between">
+              <RibbonGroup title="Arrière-plan de la carte" className="xl:col-span-3">
                 {cardTemplate === 'classic' ? (
-                  <div className="rounded-xl border border-slate-200 bg-white p-2.5 space-y-2">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between text-[11px] font-bold text-slate-700">
-                      <span>Thème d&apos;arrière-plan</span>
-                      <span className="text-slate-400">
-                        {activeThemeIndex + 1} / {allThemes.length}
+                      <span className="truncate">
+                        {allThemes[activeThemeIndex]?.name || 'Thème'}
+                      </span>
+                      <span className="text-slate-400 shrink-0 ml-1">
+                        {activeThemeIndex + 1}/{allThemes.length}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -1153,44 +1428,271 @@ export function SchoolIdCardRibbon({
                         type="button"
                         disabled={activeThemeIndex <= 0}
                         onClick={onPrevTheme}
-                        className="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[11px] font-bold text-slate-800 flex items-center justify-center gap-1 disabled:opacity-40"
+                        className="flex-1 px-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[11px] font-bold text-slate-800 flex items-center justify-center gap-1 disabled:opacity-40"
                       >
                         <ChevronLeft className="h-3.5 w-3.5" />
-                        Précédent
+                        Préc.
                       </button>
                       <button
                         type="button"
                         disabled={activeThemeIndex >= allThemes.length - 1}
                         onClick={onNextTheme}
-                        className="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[11px] font-bold text-slate-800 flex items-center justify-center gap-1 disabled:opacity-40"
+                        className="flex-1 px-2 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[11px] font-bold text-slate-800 flex items-center justify-center gap-1 disabled:opacity-40"
                       >
-                        Suivant
+                        Suiv.
                         <ChevronRight className="h-3.5 w-3.5" />
                       </button>
-                      <label className="cursor-pointer px-2.5 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-[11px] font-bold text-emerald-800 flex items-center gap-1">
+                      <label className="cursor-pointer px-2 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-[11px] font-bold text-emerald-800 flex items-center gap-1">
                         <input
                           type="file"
                           accept="image/*"
                           className="hidden"
                           onChange={(e) => onUploadCustomTheme(e.target.files?.[0])}
                         />
-                        <Upload className="h-3 w-3" />
-                        + Fond
+                        <Upload className="h-3 w-3" />+ Fond
                       </label>
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-rose-200/80 bg-rose-50/50 p-3 text-[11px] text-rose-950 font-semibold flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-[#9E053F] shrink-0" />
+                  <div className="rounded-xl border border-rose-200/80 bg-rose-50/50 p-2.5 text-[10.5px] text-rose-950 font-semibold flex items-start gap-2">
+                    <Sparkles className="h-4 w-4 text-[#9E053F] shrink-0 mt-0.5" />
                     <span>
-                      Le Modèle 2 (Officiel IEPP) intègre automatiquement la carte filigrane du Togo, le drapeau et le QR Code de sécurité.
+                      Modèle 2 (Officiel IEPP) : fond filigrane Togo, drapeau vectoriel Bézier,
+                      ruban tricolore et QR Code haute netteté intégrés.
                     </span>
                   </div>
                 )}
-                <div className="text-center text-[9.5px] font-bold uppercase tracking-widest text-slate-400 mt-1.5">
-                  Arrière-plan de la carte
+              </RibbonGroup>
+
+              <RibbonGroup title="Inspecteur QR Code (contenu scanné)" className="xl:col-span-4">
+                <div className="flex items-start gap-2.5">
+                  <div className="h-[82px] w-[82px] shrink-0 rounded-lg border border-slate-300 bg-white p-1.5 shadow-2xs flex items-center justify-center">
+                    <svg
+                      viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}
+                      className="h-full w-full"
+                      shapeRendering="crispEdges"
+                    >
+                      <rect width={qrMatrix.length} height={qrMatrix.length} fill="#FFFFFF" />
+                      <path d={qrPath} fill="#0F172A" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0 max-h-[82px] overflow-y-auto rounded-lg border border-slate-200 bg-slate-900 px-2 py-1.5 text-[10px] font-mono text-emerald-200 leading-snug space-y-0.5">
+                    <div className="flex items-center gap-1 text-[9px] font-sans font-bold uppercase tracking-wider text-slate-400 pb-0.5 border-b border-white/10">
+                      <QrCode className="h-3 w-3 text-amber-300" />
+                      Texte lu par smartphone
+                    </div>
+                    {qrLines.map((line, i) => (
+                      <div key={i} className="truncate">
+                        {line}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </RibbonGroup>
+            </div>
+          )}
+
+          {/* ONGLET 5 : MISE EN PAGE & IMPRESSION A4 */}
+          {activeTab === 'impression' && (
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-2.5 items-stretch">
+              <RibbonGroup title="Mode d'affichage" className="xl:col-span-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onPaperLayoutChange('single')
+                      onViewModeChange('paper')
+                    }}
+                    className={`rounded-xl border p-2.5 text-left transition-all ${
+                      viewMode === 'paper' && paperLayout === 'single'
+                        ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-600/20'
+                        : 'border-slate-200 bg-white hover:bg-slate-50'
+                    }`}
+                  >
+                    <IdCard className="h-4 w-4 text-indigo-600 mb-1" />
+                    <div className="text-[11px] font-extrabold text-slate-900">Carte unitaire</div>
+                    <div className="text-[9.5px] text-slate-500">1 carte centrée sur A4</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onPaperLayoutChange('sheet')
+                      onViewModeChange('paper')
+                    }}
+                    className={`rounded-xl border p-2.5 text-left transition-all ${
+                      viewMode === 'paper' && paperLayout === 'sheet'
+                        ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-600/20'
+                        : 'border-slate-200 bg-white hover:bg-slate-50'
+                    }`}
+                  >
+                    <LayoutGrid className="h-4 w-4 text-emerald-600 mb-1" />
+                    <div className="text-[11px] font-extrabold text-slate-900">Planche A4</div>
+                    <div className="text-[9.5px] text-slate-500">10 cartes / page (2×5)</div>
+                  </button>
+                </div>
+              </RibbonGroup>
+
+              <RibbonGroup title="Gabarit A4, Découpe & Filtre" className="xl:col-span-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => onShowCropMarksChange(!showCropMarks)}
+                    className={`rounded-lg border px-2 py-1.5 text-[11px] font-bold flex items-center gap-1.5 transition-colors ${
+                      showCropMarks
+                        ? 'border-indigo-300 bg-indigo-50 text-indigo-950'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                    }`}
+                    title="Afficher et exporter les repères de découpe dans le PDF"
+                  >
+                    <Scissors className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                    <span className="truncate">Traits de coupe</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onShowSlotNumbersChange(!showSlotNumbers)}
+                    className={`rounded-lg border px-2 py-1.5 text-[11px] font-bold flex items-center gap-1.5 transition-colors ${
+                      showSlotNumbers
+                        ? 'border-indigo-300 bg-indigo-50 text-indigo-950'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Hash className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                    <span className="truncate">Numéros 1–10</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onShowMmGridChange(!showMmGrid)}
+                    className={`rounded-lg border px-2 py-1.5 text-[11px] font-bold flex items-center gap-1.5 transition-colors ${
+                      showMmGrid
+                        ? 'border-indigo-300 bg-indigo-50 text-indigo-950'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Grid3x3 className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
+                    <span className="truncate">Grille 10 mm</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onUseSampleCardOnSheetChange(!useSampleCardOnSheet)}
+                    className={`rounded-lg border px-2 py-1.5 text-[11px] font-bold flex items-center gap-1.5 transition-colors ${
+                      useSampleCardOnSheet
+                        ? 'border-amber-300 bg-amber-50 text-amber-950'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                    }`}
+                    title="Répéter la carte active sur les 10 emplacements pour tester le gabarit"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                    <span className="truncate">
+                      {useSampleCardOnSheet ? 'Exemple ×10' : 'Élèves réels'}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onOnlyWithPhotoForPrintChange(!onlyWithPhotoForPrint)}
+                    className={`col-span-2 rounded-lg border px-2 py-1.5 text-[11px] font-bold flex items-center gap-1.5 transition-colors ${
+                      onlyWithPhotoForPrint
+                        ? 'border-emerald-300 bg-emerald-50 text-emerald-950'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Filter className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                    <span className="truncate">
+                      {onlyWithPhotoForPrint
+                        ? 'Filtre actif : Uniquement avec photo'
+                        : 'Imprimer : Tous les élèves sélectionnés'}
+                    </span>
+                  </button>
+                </div>
+              </RibbonGroup>
+
+              <RibbonGroup title="Contrôle qualité Pré-impression" className="xl:col-span-4">
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-1.5 text-[10.5px] font-bold">
+                    <div
+                      className={`rounded-lg px-2 py-1 border flex items-center gap-1.5 ${
+                        preflight.photosReady === preflight.totalSelected &&
+                        preflight.totalSelected > 0
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                          : 'bg-amber-50 border-amber-200 text-amber-900'
+                      }`}
+                    >
+                      {preflight.photosReady === preflight.totalSelected &&
+                      preflight.totalSelected > 0 ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                      ) : (
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                      )}
+                      <span className="truncate">
+                        Photos {preflight.photosReady}/{preflight.totalSelected}
+                      </span>
+                    </div>
+
+                    <div
+                      className={`rounded-lg px-2 py-1 border flex items-center gap-1.5 ${
+                        preflight.infoComplete === preflight.totalSelected &&
+                        preflight.totalSelected > 0
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                          : 'bg-amber-50 border-amber-200 text-amber-900'
+                      }`}
+                    >
+                      {preflight.infoComplete === preflight.totalSelected &&
+                      preflight.totalSelected > 0 ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                      ) : (
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                      )}
+                      <span className="truncate">
+                        Infos {preflight.infoComplete}/{preflight.totalSelected}
+                      </span>
+                    </div>
+
+                    <div
+                      className={`rounded-lg px-2 py-1 border flex items-center gap-1.5 ${
+                        preflight.hasIeppAndCenter
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                          : 'bg-amber-50 border-amber-200 text-amber-900'
+                      }`}
+                    >
+                      {preflight.hasIeppAndCenter ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                      ) : (
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                      )}
+                      <span className="truncate">IEPP &amp; Centre</span>
+                    </div>
+
+                    <div
+                      className={`rounded-lg px-2 py-1 border flex items-center gap-1.5 ${
+                        preflight.hasStampOrSignature
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                          : 'bg-amber-50 border-amber-200 text-amber-900'
+                      }`}
+                    >
+                      {preflight.hasStampOrSignature ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                      ) : (
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                      )}
+                      <span className="truncate">Cachet &amp; Sign.</span>
+                    </div>
+                  </div>
+
+                  {preflight.incompleteStudentsCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={onShowIncompleteStudents}
+                      className="w-full rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-950 px-2.5 py-1 text-[10.5px] font-extrabold transition-colors"
+                    >
+                      Filtrer les {preflight.incompleteStudentsCount} élève(s) incomplet(s) ↓
+                    </button>
+                  )}
+                </div>
+              </RibbonGroup>
             </div>
           )}
         </div>
