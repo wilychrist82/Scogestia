@@ -18,7 +18,7 @@ export const TOGO_DEFAULT_ZONE_COLORS = {
   studentName: '#C8102E',
   studentDetails: '#0F172A',
   studentClass: '#007A33',
-  footerInfo: '#0E1B52',
+  footerInfo: '#99121C',
 } as const
 
 export const FALLBACK_TOGO_TYPOGRAPHY: CardTypographyConfig = {
@@ -200,7 +200,7 @@ export function buildStudentQrPayload(data: {
 
   return [
     "CARTE D'IDENTITE SCOLAIRE",
-    `Matricule: ${clean(data.matricule) || 'N/A'}`,
+    `Mle: ${clean(data.matricule) || 'N/A'}`,
     `Nom: ${clean(data.lastName).toUpperCase()}`,
     `Prenoms: ${clean(data.firstName)}`,
     birthLine,
@@ -208,9 +208,9 @@ export function buildStudentQrPayload(data: {
     `Classe: ${clean(data.className)}`,
     `Ecole: ${clean(data.schoolName)}`,
     iepp && iepp.toUpperCase() !== 'IEPP' ? `IEPP: ${iepp}` : '',
-    center ? `Centre d'ecrit: ${center}` : '',
+    center ? `Centre: ${center}` : '',
     sPhone ? `Tel Ecole: ${sPhone}` : '',
-    dPhone && dPhone !== sPhone ? `Tel Directeur: ${dPhone}` : '',
+    dPhone && dPhone !== sPhone ? `Tel Dir: ${dPhone}` : '',
     `Annee: ${formatAcademicYearLabel(data.academicYear)}`,
   ]
     .filter(Boolean)
@@ -218,12 +218,11 @@ export function buildStudentQrPayload(data: {
 }
 
 /**
- * Génère une matrice booléenne réelle de QR Code (niveau de correction M) utilisable à la fois
- * pour l'aperçu SVG React et pour le rendu vectoriel jsPDF (100% hors-ligne).
+ * Génère une matrice booléenne de QR Code (correction L pour des modules plus larges et très faciles à scanner à l'impression).
  */
 export function generateQrMatrix(value: string): boolean[][] {
   try {
-    const qr = QRCode.create(value || 'SCOGESTIA', { errorCorrectionLevel: 'M' })
+    const qr = QRCode.create(value || 'SCOGESTIA', { errorCorrectionLevel: 'L' })
     const size = qr.modules.size
     const matrix: boolean[][] = []
     for (let r = 0; r < size; r++) {
@@ -376,7 +375,34 @@ function drawIeppLaurelBookEmblem(doc: jsPDF, cx: number, cy: number, scale = 1)
 }
 
 /**
- * Drapeau Togolais flottant en haut à droite (5 bandes vert/jaune + canton rouge + étoile blanche).
+ * Dessine une bande ondulée parfaitement lisse (courbe de Bézier cubique vectorielle sans escaliers).
+ */
+function drawSmoothFlagStripe(
+  doc: jsPDF,
+  x: number,
+  yTop: number,
+  yBottom: number,
+  w: number,
+  rgb: [number, number, number]
+) {
+  doc.setFillColor(rgb[0], rgb[1], rgb[2])
+  const c1x = x + w * 0.34
+  const c2x = x + w * 0.67
+  const endShift = 0.25
+  const dip = 0.85
+  const crest = -0.65
+
+  doc
+    .moveTo(x, yTop)
+    .curveTo(c1x, yTop + dip, c2x, yTop + crest, x + w, yTop + endShift)
+    .lineTo(x + w, yBottom + endShift)
+    .curveTo(c2x, yBottom + crest, c1x, yBottom + dip, x, yBottom)
+    .close()
+    .fill()
+}
+
+/**
+ * Drapeau Togolais flottant en haut à droite tracé en courbes vectorielles lisses (zéro zig-zag à l'impression).
  */
 function drawWavingTogoFlagTopRight(doc: jsPDF, x: number, y: number, w: number, h: number) {
   const stripeH = h / 5
@@ -388,31 +414,46 @@ function drawWavingTogoFlagTopRight(doc: jsPDF, x: number, y: number, w: number,
     [0, 108, 62],
   ]
 
+  // Légère superposition (+0.08mm) entre bandes pour éviter tout micro-filet blanc à l'impression
   colors.forEach((col, i) => {
-    doc.setFillColor(col[0], col[1], col[2])
-    const sy = y + i * stripeH
-    const steps = 6
-    const segW = w / steps
-    for (let s = 0; s < steps; s++) {
-      const waveY = Math.sin((s / steps) * Math.PI * 1.4) * 0.42
-      doc.rect(x + s * segW, sy + waveY, segW + 0.15, stripeH + 0.12, 'F')
-    }
+    const y0 = y + i * stripeH
+    const y1 = y + (i + 1) * stripeH + (i < 4 ? 0.08 : 0)
+    drawSmoothFlagStripe(doc, x, y0, y1, w, col)
   })
 
-  doc.setFillColor(0, 82, 46)
-  doc.rect(x + w * 0.55, y + 0.15, w * 0.14, stripeH, 'F')
-
-  const cantonW = w * 0.42
-  const cantonH = stripeH * 3
+  // Canton rouge lisse épousant exactement la vague supérieure du drapeau
+  const cantonW = w * 0.43
+  const cantonBottom = y + stripeH * 3 + 0.05
   doc.setFillColor(210, 16, 52)
-  doc.rect(x, y, cantonW, cantonH, 'F')
+  doc
+    .moveTo(x, y)
+    .curveTo(
+      x + cantonW * 0.45,
+      y + 0.42,
+      x + cantonW * 0.82,
+      y + 0.45,
+      x + cantonW,
+      y + 0.28
+    )
+    .lineTo(x + cantonW, cantonBottom + 0.28)
+    .curveTo(
+      x + cantonW * 0.82,
+      cantonBottom + 0.45,
+      x + cantonW * 0.45,
+      cantonBottom + 0.42,
+      x,
+      cantonBottom
+    )
+    .close()
+    .fill()
 
+  // Étoile blanche à 5 branches nette centrée dans le canton rouge
   drawStarPolygon(
     doc,
-    x + cantonW * 0.5,
-    y + cantonH * 0.5,
-    Math.min(cantonW, cantonH) * 0.34,
-    Math.min(cantonW, cantonH) * 0.14,
+    x + cantonW * 0.49,
+    y + (cantonBottom - y) * 0.5 + 0.22,
+    Math.min(cantonW, cantonBottom - y) * 0.34,
+    Math.min(cantonW, cantonBottom - y) * 0.14,
     [255, 255, 255]
   )
 }
@@ -472,30 +513,44 @@ function drawTogoSoftWatermarkMap(doc: jsPDF, x: number, y: number, w: number, h
 }
 
 /**
- * Ruban national ondulé discret tout en bas de la carte (vert / jaune / rouge).
+ * Ruban national ondulé tout en bas tracé en vraies courbes de Bézier vectorielles lisses (zéro marches d'escalier).
  */
 function drawBottomNationalRibbon(doc: jsPDF, cardX: number, cardY: number, cardW: number, cardH: number) {
-  const bottomY = cardY + cardH
-  const segments = 24
-  const segW = cardW / segments
+  const px = (nx: number) => cardX + (nx / 940) * cardW
+  const py = (ny: number) => cardY + (ny / 535) * cardH
 
-  for (let i = 0; i < segments; i++) {
-    const t0 = i / segments
-    const x0 = cardX + t0 * cardW
-    const leftLift = Math.max(0, 1 - t0 * 5.2)
-    const greenH = 1.2 + leftLift * 10.5 + Math.sin(t0 * Math.PI * 2.1) * 0.35
-    const yellowH = 0.9 + leftLift * 6.8 + Math.cos(t0 * Math.PI * 1.8) * 0.3
-    const redH = 0.6 + leftLift * 3.4 + Math.sin(t0 * Math.PI * 2.4) * 0.2
+  // 1. Vague verte extérieure
+  doc.setFillColor(0, 108, 62)
+  doc
+    .moveTo(px(0), py(382))
+    .curveTo(px(18), py(472), px(86), py(508), px(230), py(517))
+    .curveTo(px(425), py(529), px(675), py(512), px(940), py(522))
+    .lineTo(px(940), py(535))
+    .lineTo(px(0), py(535))
+    .close()
+    .fill()
 
-    doc.setFillColor(0, 108, 62)
-    doc.rect(x0, bottomY - greenH, segW + 0.15, greenH, 'F')
+  // 2. Vague jaune or intermédiaire
+  doc.setFillColor(246, 198, 22)
+  doc
+    .moveTo(px(0), py(418))
+    .curveTo(px(24), py(490), px(104), py(515), px(265), py(522))
+    .curveTo(px(470), py(532), px(700), py(516), px(940), py(526))
+    .lineTo(px(940), py(535))
+    .lineTo(px(0), py(535))
+    .close()
+    .fill()
 
-    doc.setFillColor(246, 198, 22)
-    doc.rect(x0, bottomY - yellowH, segW + 0.15, yellowH, 'F')
-
-    doc.setFillColor(198, 16, 62)
-    doc.rect(x0, bottomY - redH, segW + 0.15, redH, 'F')
-  }
+  // 3. Vague rouge carmin inférieure
+  doc.setFillColor(198, 16, 62)
+  doc
+    .moveTo(px(0), py(460))
+    .curveTo(px(38), py(508), px(130), py(522), px(308), py(527))
+    .curveTo(px(518), py(533), px(740), py(522), px(940), py(530))
+    .lineTo(px(940), py(535))
+    .lineTo(px(0), py(535))
+    .close()
+    .fill()
 }
 
 /**
@@ -591,7 +646,7 @@ export function drawTogoIeppIdCardRecto(
   drawSubtleSchoolBuildingBackdrop(doc, cardX, cardY)
   drawTogoSoftWatermarkMap(doc, cardX + 76.0, cardY + 14.5, 16.5, 25.5)
 
-  // Ruban national ondulé tout en bas
+  // Ruban national ondulé tout en bas (courbes lisses)
   drawBottomNationalRibbon(doc, cardX, cardY, cardW, cardH)
 
   // Cadre fin de découpe
@@ -599,7 +654,7 @@ export function drawTogoIeppIdCardRecto(
   doc.setLineWidth(0.16)
   doc.rect(cardX, cardY, cardW, cardH, 'S')
 
-  // 2. En-tête : Logo agrandi gauche + Drapeau flottant droite + Bloc central IEPP / École / Centre d'écrit
+  // 2. En-tête : Logo agrandi gauche + Drapeau flottant lisse droite + Bloc central
   if (assets.logoDataUrl) {
     try {
       doc.setFillColor(255, 255, 255)
@@ -614,12 +669,12 @@ export function drawTogoIeppIdCardRecto(
     drawIeppLaurelBookEmblem(doc, cardX + 11.4, cardY + 6.4, 1.1)
   }
 
-  // Drapeau Togolais flottant en haut à droite
-  drawWavingTogoFlagTopRight(doc, cardX + 72.2, cardY + 0.4, 21.4, 10.6)
+  // Drapeau Togolais lisse en haut à droite
+  drawWavingTogoFlagTopRight(doc, cardX + 72.0, cardY + 0.5, 21.6, 10.6)
 
   const headerCenterX = cardX + 46.8
 
-  // Ligne 1 : IEPP (réactif à la police, taille, style et couleur du ruban)
+  // Ligne 1 : IEPP
   const ieppDisplayText = formatIeppHeaderDisplay(
     data.inspectionName,
     typo.headerOfficial.uppercase
@@ -652,7 +707,7 @@ export function drawTogoIeppIdCardRecto(
     doc.line(rightRuleStart, cardY + 2.5, rightEdge, cardY + 2.5)
   }
 
-  // Ligne 2 : Bannière arrondie auto-adaptative au Nom de l'établissement (couleur & typo dynamiques)
+  // Ligne 2 : Bannière arrondie auto-adaptative au Nom de l'établissement
   const rawSchoolName = (data.schoolName || 'ÉTABLISSEMENT SCOLAIRE').trim()
   const displaySchoolName = typo.schoolName.uppercase
     ? rawSchoolName.toUpperCase()
@@ -717,7 +772,7 @@ export function drawTogoIeppIdCardRecto(
     typo.letterColors?.examCenter
   )
 
-  // Ligne 4 : Titre "CARTE D'IDENTITÉ SCOLAIRE" style prestige, couleur distincte & réactive
+  // Ligne 4 : Titre "CARTE D'IDENTITÉ SCOLAIRE" style prestige
   const rawBanner = (data.cardBannerTitle || '').trim()
   const bannerBase =
     !rawBanner || rawBanner.toUpperCase() === "CARTE D'IDENTITE SCOLAIRE"
@@ -802,11 +857,9 @@ export function drawTogoIeppIdCardRecto(
   doc.setTextColor(166, 7, 68)
   doc.text(formattedYear, yearBoxX + yearBoxW / 2, yearBoxY + 3.9, { align: 'center' })
 
-  // 4. Colonne Centrale : Infos élève avec couleurs par défaut dédiées :
-  //    Matricule = Bleu (#1D4ED8), Nom & Prénoms = Rouge (#C8102E),
-  //    Date / Lieu / Sexe = Noir (#0F172A), Classe = Vert (#007A33)
+  // 4. Colonne Centrale : Infos élève
   const fieldStartX = cardX + 24.4
-  const fieldEndX = cardX + 66.8
+  const fieldEndX = cardX + 66.0
   const rowStartY = cardY + 17.6
   const rowStep = 3.22
 
@@ -868,10 +921,10 @@ export function drawTogoIeppIdCardRecto(
   drawFieldRow(5, 'Sexe :', sexDisplay, typo.studentDetails, [15, 23, 42], 6.45)
   drawFieldRow(6, 'Classe :', data.className || '', classZone, [0, 122, 51], 6.8)
 
-  // 5. QR Code devant la carte du Togo (inclut téléphone école / directeur si présent)
-  const qrSize = 9.0
-  const qrBoxX = cardX + 67.8
-  const qrBoxY = cardY + 27.6
+  // 5. QR Code ultra net (sans débordement + fusion horizontale des modules pour zéro aspect "tout noir")
+  const qrSize = 9.8
+  const qrBoxX = cardX + 66.8
+  const qrBoxY = cardY + 26.8
   doc.setFillColor(255, 255, 255)
   doc.setDrawColor(148, 163, 184)
   doc.setLineWidth(0.22)
@@ -894,44 +947,47 @@ export function drawTogoIeppIdCardRecto(
       directorPhone: data.directorPhone,
     })
   )
-  const qrPad = 0.65
+  const qrPad = 0.75
   const qrDrawSize = qrSize - qrPad * 2
   const cell = qrDrawSize / qrMatrix.length
   doc.setFillColor(15, 23, 42)
   for (let r = 0; r < qrMatrix.length; r++) {
-    for (let c = 0; c < qrMatrix.length; c++) {
+    let c = 0
+    while (c < qrMatrix.length) {
       if (qrMatrix[r][c]) {
-        doc.rect(
-          qrBoxX + qrPad + c * cell,
-          qrBoxY + qrPad + r * cell,
-          cell + 0.015,
-          cell + 0.015,
-          'F'
-        )
+        const startC = c
+        while (c < qrMatrix.length && qrMatrix[r][c]) {
+          c++
+        }
+        const runW = (c - startC) * cell
+        doc.rect(qrBoxX + qrPad + startC * cell, qrBoxY + qrPad + r * cell, runW, cell, 'F')
+      } else {
+        c++
       }
     }
   }
 
-  // 6. Pied de carte : Nom du directeur + Signature + Cachet avec marge sûre
+  // 6. Pied de carte bien ordonné : Nom du directeur (Rouge Bordeaux) & Signature descendus harmonieusement
   const directorText = (data.directorName || '').trim()
   if (directorText) {
     doc.setFont(mapFontFamily(typo.footerInfo.fontFamily), mapFontStyle(typo.footerInfo))
     fitTextSize(doc, directorText, 32, 6.45, 4.6)
-    const [dirR, dirG, dirB] = parseHexRgb(typo.footerInfo.color, [14, 27, 82])
+    const [dirR, dirG, dirB] = parseHexRgb(typo.footerInfo.color, [153, 18, 28])
     doc.setTextColor(dirR, dirG, dirB)
-    doc.text(directorText, cardX + 41.0, cardY + 44.0, { align: 'center' })
+    doc.text(directorText, cardX + 39.5, cardY + 47.6, { align: 'center' })
   }
 
   if (assets.signatureDataUrl) {
     try {
-      doc.addImage(assets.signatureDataUrl, 'PNG', cardX + 56.5, cardY + 38.8, 18.5, 6.8)
+      doc.addImage(assets.signatureDataUrl, 'PNG', cardX + 55.6, cardY + 42.0, 18.8, 6.8)
     } catch {
       // Ignorer si l'image de signature est invalide
     }
   }
 
-  const stampCx = cardX + 83.8
-  const stampCy = cardY + 41.2
+  // Cachet circulaire grand format aligné avec le bas de signature et marge sûre anti-découpe
+  const stampCx = cardX + 83.4
+  const stampCy = cardY + 42.6
   const stampR = 6.5
   if (assets.stampDataUrl) {
     try {

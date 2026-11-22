@@ -352,7 +352,7 @@ export function SchoolIdCardTogoPreview({
       </svg>
 
       {/* QR CODE À DROITE DEVANT LA CARTE DU TOGO */}
-      <div className="absolute right-[18.2%] bottom-[30%] w-[10.2%] aspect-square rounded-[4px] bg-white border border-slate-300 p-[2px] shadow-2xs z-20">
+      <div className="absolute right-[18.4%] bottom-[29.8%] w-[10.8%] aspect-square rounded-[4px] bg-white border border-slate-300 p-[2px] shadow-2xs z-20">
         <svg
           viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}
           className="h-full w-full"
@@ -644,9 +644,9 @@ export function SchoolIdCardTogoPreview({
           </div>
         </div>
 
-        {/* 3. PIED DE CARTE : DIRECTEUR + SIGNATURE + GRAND CACHET */}
-        <div className="flex items-center justify-end gap-2 pt-0 pb-3 pl-[24%] pr-1">
-          <div className="flex-1 min-w-0 flex items-center justify-center">
+        {/* 3. PIED DE CARTE : DIRECTEUR + SIGNATURE + GRAND CACHET BIEN ORDONNÉS EN BAS */}
+        <div className="flex items-end justify-end gap-2 pt-0 pb-1.5 pl-[23%] pr-1">
+          <div className="flex-1 min-w-0 flex items-center justify-center pb-0.5">
             {directorName.trim() && (
               <span
                 className="truncate font-bold leading-tight text-center"
@@ -657,8 +657,8 @@ export function SchoolIdCardTogoPreview({
             )}
           </div>
 
-          <div className="flex items-center justify-end gap-1 shrink-0">
-            <div className="h-9 w-20 -mt-1 flex items-center justify-center overflow-hidden">
+          <div className="flex items-end justify-end gap-1 shrink-0">
+            <div className="h-9 w-20 flex items-center justify-center overflow-hidden">
               {signatureUrl ? (
                 <img
                   src={signatureUrl}
@@ -668,7 +668,7 @@ export function SchoolIdCardTogoPreview({
               ) : null}
             </div>
 
-            <div className="h-[60px] w-[60px] shrink-0 -ml-2 -mt-5 mb-2 z-20 flex items-center justify-center">
+            <div className="h-[60px] w-[60px] shrink-0 -ml-2 -mt-3 mb-2 z-20 flex items-center justify-center">
               {stampUrl ? (
                 <img
                   src={stampUrl}

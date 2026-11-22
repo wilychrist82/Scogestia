@@ -34,6 +34,7 @@ export interface CardTypographyConfig {
   studentClass?: CardZoneTextStyle
   footerInfo: CardZoneTextStyle
   letterColors?: Record<string, string[]>
+  togoPaletteVersion?: number
 }
 
 export const DEFAULT_CARD_TYPOGRAPHY: CardTypographyConfig = {

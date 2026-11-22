@@ -78,7 +78,7 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
       directorPhone: '+228 91 44 55 66',
     })
     expect(payload).toContain("CARTE D'IDENTITE SCOLAIRE")
-    expect(payload).toContain('Matricule: SCO-2026-0042')
+    expect(payload).toContain('Mle: SCO-2026-0042')
     expect(payload).toContain('Nom: AGBODJAN')
     expect(payload).toContain('Prenoms: Koffi')
     expect(payload).toContain('Ne(e): 09/03/2015 a Aného')
@@ -86,9 +86,9 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
     expect(payload).toContain('Classe: CM2')
     expect(payload).toContain('Ecole: EPM CANNAN')
     expect(payload).toContain('IEPP: IEPP TONE-EST')
-    expect(payload).toContain("Centre d'ecrit: LYCEE DE DAPAONG")
+    expect(payload).toContain('Centre: LYCEE DE DAPAONG')
     expect(payload).toContain('Tel Ecole: +228 90 11 22 33')
-    expect(payload).toContain('Tel Directeur: +228 91 44 55 66')
+    expect(payload).toContain('Tel Dir: +228 91 44 55 66')
     expect(payload).toContain('Annee: 2026 - 2027')
 
     const matrix = generateQrMatrix(payload)
@@ -104,6 +104,7 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
     const textSpy = vi.spyOn(doc, 'text')
     const circleSpy = vi.spyOn(doc, 'circle')
     const roundedRectSpy = vi.spyOn(doc, 'roundedRect')
+    const curveSpy = vi.spyOn(doc, 'curveTo')
 
     drawTogoIeppIdCardRecto(
       doc,
@@ -124,6 +125,9 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
       }
     )
 
+    // Drapeau et bande tricolore tracés en courbes de Bézier vectorielles lisses
+    expect(curveSpy.mock.calls.length).toBeGreaterThanOrEqual(16)
+
     const printedStrings = textSpy.mock.calls.map((c) => String(c[0]))
     expect(printedStrings).toContain('IEPP : .........................')
     expect(printedStrings.some((s) => /\bDRE\b/i.test(s))).toBe(false)
@@ -136,22 +140,23 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
     expect(printedStrings.some((s) => s.startsWith("Centre d'écrit : ......."))).toBe(true)
     expect(printedStrings).toContain('M. GNAMAVO Kodjo')
 
-    // Nom du directeur bien remonté (y = 10 + 44 = 54 <= 54.5, bien au-dessus du bas de la carte 63.5)
+    // Nom du directeur ordonné (y = 10 + 47.6 = 57.6, entre la zone haute et le ruban du bas)
     const dirCall = textSpy.mock.calls.find((c) => String(c[0]) === 'M. GNAMAVO Kodjo')
-    expect(dirCall?.[2]).toBeLessThanOrEqual(55)
+    expect(dirCall?.[2]).toBeGreaterThanOrEqual(56)
+    expect(dirCall?.[2]).toBeLessThanOrEqual(59.5)
 
-    // QR Code positionné à droite devant la carte du Togo (cardX 8.5 + 67.8 = 76.3mm) au niveau de la classe vers le haut
-    const qrRect = roundedRectSpy.mock.calls.find((args) => args[2] === 9.0 && args[3] === 9.0)
+    // QR Code agrandi et net positionné à droite devant la carte du Togo (cardX 8.5 + 66.8 = 75.3mm)
+    const qrRect = roundedRectSpy.mock.calls.find((args) => args[2] === 9.8 && args[3] === 9.8)
     expect(qrRect).toBeTruthy()
-    expect(qrRect?.[0]).toBeCloseTo(8.5 + 67.8, 1)
-    expect(qrRect?.[1]).toBeCloseTo(10 + 27.6, 1)
+    expect(qrRect?.[0]).toBeCloseTo(8.5 + 66.8, 1)
+    expect(qrRect?.[1]).toBeCloseTo(10 + 26.8, 1)
 
-    // Cachet circulaire grand format remonté avec marge sûre anti-découpe (y_bottom <= cardY + 48.0 < 53.5mm)
+    // Cachet circulaire grand format remonté avec marge sûre anti-découpe (y_bottom <= cardY + 49.5 < 53.5mm)
     const stampFillCircle = circleSpy.mock.calls.find((args) => args[2] === 6.5)
     expect(stampFillCircle).toBeTruthy()
     const stampCy = stampFillCircle![1] as number
     const stampR = stampFillCircle![2] as number
-    expect(stampCy + stampR).toBeLessThanOrEqual(10 + 48.5)
+    expect(stampCy + stampR).toBeLessThanOrEqual(10 + 49.5)
 
     // Couleurs par défaut Modèle 2 : Matricule=Bleu (#1D4ED8), Nom/Prénoms=Rouge (#C8102E), Détails=Noir (#0F172A), Classe=Vert (#007A33)
     const setColorSpy = vi.spyOn(doc, 'setTextColor')
@@ -174,10 +179,12 @@ describe('Modèle 2 Carte Scolaire Officielle IEPP / Togo', () => {
       }
     )
     const defaultRgbCalls = setColorSpy.mock.calls.map((c) => `${c[0]},${c[1]},${c[2]}`)
+    expect(defaultRgbCalls).toContain('255,255,255') // Blanc Nom École sur bannière
     expect(defaultRgbCalls).toContain('29,78,216') // Bleu Matricule
     expect(defaultRgbCalls).toContain('200,16,46') // Rouge Nom & Prénoms
     expect(defaultRgbCalls).toContain('15,23,42') // Noir Date / Lieu / Sexe
     expect(defaultRgbCalls).toContain('0,122,51') // Vert Classe
+    expect(defaultRgbCalls).toContain('153,18,28') // Rouge bordeaux Nom du directeur
 
     // Aucune mention textuelle superflue sur la photo, le chef ni la signature
     expect(printedStrings).not.toContain('PHOTO')

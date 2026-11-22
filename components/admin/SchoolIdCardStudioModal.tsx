@@ -18,12 +18,16 @@ function syncColorsForTemplate(
   const baseMatricule = prev.studentMatricule || FALLBACK_TOGO_TYPOGRAPHY.studentMatricule!
   const baseClass = prev.studentClass || FALLBACK_TOGO_TYPOGRAPHY.studentClass!
   if (tpl === 'togo_iepp') {
-    const isLegacyTogoStudentColor =
-      !prev.studentClass && prev.studentName.color.toUpperCase() === '#0E1B52'
+    const needsPaletteUpgrade = (prev.togoPaletteVersion || 0) < 2
+    const isClassicSchoolRed = prev.schoolName.color.toUpperCase() === '#B41218'
+    const isClassicOrOldFooter =
+      prev.footerInfo.color.toUpperCase() === '#A5181C' ||
+      prev.footerInfo.color.toUpperCase() === '#0E1B52'
     return {
       ...prev,
+      togoPaletteVersion: 2,
       schoolName:
-        prev.schoolName.color.toUpperCase() === '#B41218'
+        isClassicSchoolRed || needsPaletteUpgrade
           ? { ...prev.schoolName, color: TOGO_DEFAULT_ZONE_COLORS.schoolName }
           : prev.schoolName,
       headerOfficial:
@@ -32,7 +36,7 @@ function syncColorsForTemplate(
           : prev.headerOfficial,
       examCenter: baseExam,
       bannerTitle:
-        prev.bannerTitle.color.toUpperCase() === '#122AB9'
+        prev.bannerTitle.color.toUpperCase() === '#122AB9' || needsPaletteUpgrade
           ? {
               ...prev.bannerTitle,
               italic: false,
@@ -40,15 +44,23 @@ function syncColorsForTemplate(
               color: TOGO_DEFAULT_ZONE_COLORS.bannerTitle,
             }
           : prev.bannerTitle,
-      studentMatricule: baseMatricule,
+      studentMatricule: needsPaletteUpgrade
+        ? { ...baseMatricule, color: TOGO_DEFAULT_ZONE_COLORS.studentMatricule }
+        : baseMatricule,
       studentName:
-        prev.studentName.color.toUpperCase() === '#99121C' || isLegacyTogoStudentColor
+        prev.studentName.color.toUpperCase() === '#99121C' ||
+        prev.studentName.color.toUpperCase() === '#0E1B52' ||
+        needsPaletteUpgrade
           ? { ...prev.studentName, color: TOGO_DEFAULT_ZONE_COLORS.studentName }
           : prev.studentName,
-      studentDetails: { ...prev.studentDetails, color: prev.studentDetails.color || '#0F172A' },
-      studentClass: baseClass,
+      studentDetails: needsPaletteUpgrade
+        ? { ...prev.studentDetails, color: TOGO_DEFAULT_ZONE_COLORS.studentDetails }
+        : { ...prev.studentDetails, color: prev.studentDetails.color || '#0F172A' },
+      studentClass: needsPaletteUpgrade
+        ? { ...baseClass, color: TOGO_DEFAULT_ZONE_COLORS.studentClass }
+        : baseClass,
       footerInfo:
-        prev.footerInfo.color.toUpperCase() === '#A5181C'
+        isClassicOrOldFooter || needsPaletteUpgrade
           ? { ...prev.footerInfo, italic: false, color: TOGO_DEFAULT_ZONE_COLORS.footerInfo }
           : prev.footerInfo,
     }
@@ -73,7 +85,8 @@ function syncColorsForTemplate(
         ? { ...prev.studentName, color: '#99121C' }
         : prev.studentName,
     footerInfo:
-      prev.footerInfo.color.toUpperCase() === TOGO_DEFAULT_ZONE_COLORS.footerInfo
+      prev.footerInfo.color.toUpperCase() === TOGO_DEFAULT_ZONE_COLORS.footerInfo ||
+      prev.footerInfo.color.toUpperCase() === '#0E1B52'
         ? { ...prev.footerInfo, italic: true, color: '#A5181C' }
         : prev.footerInfo,
   }
