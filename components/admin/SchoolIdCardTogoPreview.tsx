@@ -665,89 +665,110 @@ export function SchoolIdCardTogoPreview({
             </div>
           </div>
         </div>
-
-        {/* 3. PIED DE CARTE : DIRECTEUR + SIGNATURE + GRAND CACHET BIEN ORDONNÉS EN BAS */}
-        <div className="flex items-end justify-end gap-2 pt-0 pb-1.5 pl-[23%] pr-1">
-          <div className="flex-1 min-w-0 flex items-center justify-center pb-0.5">
-            {directorName.trim() && (
-              <span
-                className="truncate font-bold leading-tight text-center"
-                style={buildTextCss(typo.footerInfo, 10.4)}
-              >
-                {directorName.trim()}
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-end justify-end gap-1 shrink-0">
-            <div className="h-9 w-20 flex items-center justify-center overflow-hidden">
-              {signatureUrl ? (
-                <img
-                  src={signatureUrl}
-                  alt="Signature chef d'établissement"
-                  className="h-full w-auto max-w-full object-contain"
-                />
-              ) : null}
-            </div>
-
-            <div className="h-[60px] w-[60px] shrink-0 -ml-2 -mt-3 mb-2 z-20 flex items-center justify-center">
-              {stampUrl ? (
-                <img
-                  src={stampUrl}
-                  alt="Cachet officiel"
-                  className="h-[60px] w-[60px] object-contain"
-                />
-              ) : showVectorStampIfNoStamp ? (
-                <svg viewBox="0 0 100 100" className="h-[60px] w-[60px] drop-shadow-2xs">
-                  <circle cx="50" cy="50" r="46" fill="#FFFFFF" stroke="#10329E" strokeWidth="3.5" />
-                  <circle cx="50" cy="50" r="41" fill="none" stroke="#10329E" strokeWidth="1.4" />
-                  <circle cx="50" cy="50" r="28" fill="none" stroke="#10329E" strokeWidth="1.8" />
-                  <path
-                    d="M32,40 Q41,37 50,41 Q59,37 68,40 L68,61 Q59,57 50,61 Q41,57 32,61 Z"
-                    fill="#1D4ED8"
-                    stroke="#0F2670"
-                    strokeWidth="1.5"
-                  />
-                  <line x1="50" y1="41" x2="50" y2="61" stroke="#FFFFFF" strokeWidth="1.5" />
-                  <polygon
-                    points="16,46 17.5,50 22,50 18.5,52.5 19.8,56.5 16,54 12.2,56.5 13.5,52.5 10,50 14.5,50"
-                    fill="#10329E"
-                  />
-                  <polygon
-                    points="84,46 85.5,50 90,50 86.5,52.5 87.8,56.5 84,54 80.2,56.5 81.5,52.5 78,50 82.5,50"
-                    fill="#10329E"
-                  />
-                  <defs>
-                    <path id={stampArcId} d="M 15,50 A 35,35 0 1,1 85,50" />
-                  </defs>
-                  <text
-                    fill="#10329E"
-                    fontSize="8.6"
-                    fontWeight="900"
-                    fontFamily="Arial, sans-serif"
-                    letterSpacing="0.5"
-                  >
-                    <textPath href={`#${stampArcId}`} startOffset="50%" textAnchor="middle">
-                      ÉTABLISSEMENT SCOLAIRE
-                    </textPath>
-                  </text>
-                  <text
-                    x="50"
-                    y="87"
-                    textAnchor="middle"
-                    fill="#10329E"
-                    fontSize="10"
-                    fontWeight="900"
-                    fontFamily="Arial, sans-serif"
-                  >
-                    TOGO
-                  </text>
-                </svg>
-              ) : null}
-            </div>
-          </div>
-        </div>
       </div>
+
+      {/* 3. PIED DE CARTE CALIBRÉ AUX COORDONNÉES EXACTES DU PDF (94 × 53,5 mm) : DIRECTEUR, SIGNATURE & CACHET */}
+      {directorName.trim() && (
+        <div
+          className="pointer-events-none absolute z-20 flex items-center justify-center"
+          style={{
+            left: '25%',
+            width: '34%',
+            bottom: '11.2%',
+          }}
+        >
+          <span
+            className="truncate font-bold leading-tight text-center"
+            style={buildTextCss(typo.footerInfo, 10.6)}
+          >
+            {directorName.trim()}
+          </span>
+        </div>
+      )}
+
+      {signatureUrl && (
+        <div
+          className="pointer-events-none absolute z-20 flex items-center justify-center overflow-hidden"
+          style={{
+            left: '59.15%',
+            top: '78.5%',
+            width: '20%',
+            height: '12.7%',
+          }}
+        >
+          <img
+            src={signatureUrl}
+            alt="Signature chef d'établissement"
+            className="h-full w-full object-contain"
+          />
+        </div>
+      )}
+
+      {(stampUrl || showVectorStampIfNoStamp) && (
+        <div
+          className="pointer-events-none absolute z-20 flex items-center justify-center"
+          style={{
+            left: '81.8%',
+            top: '67.5%',
+            width: '13.83%',
+            height: '24.3%',
+          }}
+        >
+          {stampUrl ? (
+            <img
+              src={stampUrl}
+              alt="Cachet officiel"
+              className="h-full w-full object-contain"
+            />
+          ) : (
+            <svg viewBox="0 0 100 100" className="h-full w-full drop-shadow-2xs">
+              <circle cx="50" cy="50" r="46" fill="#FFFFFF" stroke="#10329E" strokeWidth="3.5" />
+              <circle cx="50" cy="50" r="41" fill="none" stroke="#10329E" strokeWidth="1.4" />
+              <circle cx="50" cy="50" r="28" fill="none" stroke="#10329E" strokeWidth="1.8" />
+              <path
+                d="M32,40 Q41,37 50,41 Q59,37 68,40 L68,61 Q59,57 50,61 Q41,57 32,61 Z"
+                fill="#1D4ED8"
+                stroke="#0F2670"
+                strokeWidth="1.5"
+              />
+              <line x1="50" y1="41" x2="50" y2="61" stroke="#FFFFFF" strokeWidth="1.5" />
+              <polygon
+                points="16,46 17.5,50 22,50 18.5,52.5 19.8,56.5 16,54 12.2,56.5 13.5,52.5 10,50 14.5,50"
+                fill="#10329E"
+              />
+              <polygon
+                points="84,46 85.5,50 90,50 86.5,52.5 87.8,56.5 84,54 80.2,56.5 81.5,52.5 78,50 82.5,50"
+                fill="#10329E"
+              />
+              <defs>
+                <path id={stampArcId} d="M 15,50 A 35,35 0 1,1 85,50" />
+              </defs>
+              <text
+                fill="#10329E"
+                fontSize="8.6"
+                fontWeight="900"
+                fontFamily="Arial, sans-serif"
+                letterSpacing="0.5"
+              >
+                <textPath href={`#${stampArcId}`} startOffset="50%" textAnchor="middle">
+                  ÉTABLISSEMENT SCOLAIRE
+                </textPath>
+              </text>
+              <text
+                x="50"
+                y="87"
+                textAnchor="middle"
+                fill="#10329E"
+                fontSize="10"
+                fontWeight="900"
+                fontFamily="Arial, sans-serif"
+              >
+                TOGO
+              </text>
+            </svg>
+          )}
+        </div>
+      )}
     </div>
   )
 }
